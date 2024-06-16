@@ -451,7 +451,7 @@ namespace PKISharp.WACS.Clients.Acme
             var client = await GetClient(name);
             var contacts = await GetContacts();
             var newDetails = await client.UpdateAccountAsync(contacts);
-            if (newDetails != null)
+            if (newDetails.Payload != null)
             {
                 client.Account.Details = newDetails;
                 _accountManager.StoreAccount(client.Account, name);
