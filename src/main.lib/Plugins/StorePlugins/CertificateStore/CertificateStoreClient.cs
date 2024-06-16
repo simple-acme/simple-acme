@@ -1,15 +1,16 @@
-﻿using Org.BouncyCastle.Tls;
-using PKISharp.WACS.DomainObjects;
+﻿using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
+    [SupportedOSPlatform("windows")]
     public class CertificateStoreClient : IDisposable
     {
         private readonly X509Store _store;

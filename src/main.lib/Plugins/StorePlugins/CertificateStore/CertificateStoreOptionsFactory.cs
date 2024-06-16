@@ -4,12 +4,12 @@ using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
+    [SupportedOSPlatform("windows")]
     internal class CertificateStoreOptionsFactory : PluginOptionsFactory<CertificateStoreOptions>
     {
         private readonly ArgumentsInputService _arguments;

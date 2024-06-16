@@ -183,7 +183,11 @@ namespace PKISharp.WACS.Plugins.Resolvers
             var defaultStore = _arguments.Store ?? _settings.Store.DefaultStore;
             if (string.IsNullOrWhiteSpace(defaultStore))
             {
+#if LINUX
+                defaultStore = StorePlugins.PemFiles.Name;
+#else
                 defaultStore = StorePlugins.CertificateStore.Name;
+#endif
             }
             var parts = defaultStore.ParseCsv();
             if (parts == null)
