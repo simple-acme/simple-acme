@@ -543,7 +543,7 @@ namespace PKISharp.WACS.Clients.IIS
             public bool Secure => throw new NotImplementedException();
             string IIISBinding.Host => _host;
             string IIISBinding.Protocol => throw new NotImplementedException();
-            byte[]? IIISBinding.CertificateHash => throw new NotImplementedException();
+            IEnumerable<byte>? IIISBinding.CertificateHash => throw new NotImplementedException();
             string IIISBinding.CertificateStoreName => throw new NotImplementedException();
             string IIISBinding.BindingInformation => throw new NotImplementedException();
             string? IIISBinding.IP => _ip;

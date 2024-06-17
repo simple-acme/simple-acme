@@ -61,10 +61,7 @@ namespace TransIp.Library
 
         protected async Task<TransIpResponse> ParseResponse(HttpResponseMessage response, TransIpResponse? output = null)
         {
-            if (output == null)
-            {
-                output = new TransIpResponse();
-            }
+            output ??= new TransIpResponse();
             output.Success = response.IsSuccessStatusCode;
             output.Payload = await response.Content.ReadAsStringAsync();
             if (!output.Success)

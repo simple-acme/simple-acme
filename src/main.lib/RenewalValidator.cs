@@ -183,7 +183,8 @@ namespace PKISharp.WACS
         private async Task<Dictionary<ValidationPluginOptions, List<AuthorizationContext>>?> CreateMapping(IEnumerable<AuthorizationContext> authorisationContexts)
         {
             var ret = new Dictionary<ValidationPluginOptions, List<AuthorizationContext>>();
-            var add = (ValidationPluginOptions o, AuthorizationContext a) => {
+            void add(ValidationPluginOptions o, AuthorizationContext a)
+            {
                 if (ret.TryGetValue(o, out var value))
                 {
                     value.Add(a);
@@ -192,7 +193,7 @@ namespace PKISharp.WACS
                 {
                     ret.Add(o, new List<AuthorizationContext>() { a });
                 }
-            };
+            }
             foreach (var authorisationContext in authorisationContexts)
             {
                 if (authorisationContext.Authorization == default)

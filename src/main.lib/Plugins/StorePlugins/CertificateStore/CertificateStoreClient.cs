@@ -38,9 +38,9 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         public bool InstallCertificate(ICertificateInfo certificate, X509KeyStorageFlags flags)
         {
             // Determine storage flags
+#pragma warning disable CS0618 // Type or member is obsolete
             var exportable =
                 _settings.Store.CertificateStore.PrivateKeyExportable == true ||
-#pragma warning disable CS0618 // Type or member is obsolete
                 (_settings.Store.CertificateStore.PrivateKeyExportable == null && _settings.Security.PrivateKeyExportable == true);
 #pragma warning restore CS0618 // Type or member is obsolete
             if (exportable)

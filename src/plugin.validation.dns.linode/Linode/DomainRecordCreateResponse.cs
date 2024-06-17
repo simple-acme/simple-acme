@@ -2,7 +2,7 @@
 {
     internal class DomainRecordCreateResponse
     {
-        public int id { get; set; }
-        public object? errors { get; set; }
+        public int Id { get; set; }
+        public object? Errors { get; set; }
     }
 }

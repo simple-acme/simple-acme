@@ -66,7 +66,7 @@ internal class InfomaniakClient
         //Get new Record ID - used for deleting
         var jsonResponse = await response.Content.ReadAsStringAsync();
         var createResponse = JsonConvert.DeserializeObject<DomainRecordCreateResponse>(jsonResponse);
-        var id = (createResponse?.Data ?? 0);
+        var id = createResponse?.Data ?? 0;
         if (id == 0)
         {
             _log.Error($"Infomaniak did not create record: {jsonResponse}");

@@ -102,7 +102,7 @@ namespace PKISharp.WACS.Clients.DNS
             if (followCnames)
             {
                 string? cname;
-                if (!_cnames.ContainsKey(domainName))
+                if (!_cnames.TryGetValue(domainName, out var value))
                 {
                     var pickNs = result.Nameservers.First();
                     _log.Verbose("Query CNAME for {domainName} at {pickNs}", domainName, pickNs.IpAddress);
@@ -111,7 +111,7 @@ namespace PKISharp.WACS.Clients.DNS
                 }
                 else
                 {
-                    cname = _cnames[domainName];
+                    cname = value;
                 }
                 if (cname != null)
                 {

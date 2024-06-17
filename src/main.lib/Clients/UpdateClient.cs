@@ -10,13 +10,11 @@ namespace PKISharp.WACS.Clients
     {
         private readonly ILogService _log;
         private readonly IProxyService _proxy;
-        private readonly WacsJson _wacsJson;
 
-        public UpdateClient(ILogService log, IProxyService proxy, WacsJson wacsJson)
+        public UpdateClient(ILogService log, IProxyService proxy)
         {
             _log = log;
             _proxy = proxy;
-            _wacsJson = wacsJson;   
         }
 
         public async Task CheckNewVersion()

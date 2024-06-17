@@ -35,7 +35,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
                 var postData = new
                 {
                     apikey = _apiKey,
-                    domain = domain,
+                    domain,
                     add = new
                     {
                         type = type.ToString(),
@@ -76,7 +76,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
                 var postData = new
                 {
                     apikey = _apiKey,
-                    domain = domain,
+                    domain,
                     delete = new
                     {
                         type = type.ToString(),

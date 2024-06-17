@@ -17,7 +17,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
         {
             _renewalsCache = new List<Renewal>
             {
-                new Renewal() { Id = "1" }
+                new() { Id = "1" }
             };
         }
 

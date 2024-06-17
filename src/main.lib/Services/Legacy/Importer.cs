@@ -103,12 +103,12 @@ namespace PKISharp.WACS.Services.Legacy
             ret.CsrPluginOptions = new RsaOptions();
             ret.LastFriendlyName = legacy.Binding?.Host;
             ret.History = new List<RenewResult> {
-                new RenewResult("Imported") { }
+                new("Imported") { }
             };
             return ret;
         }
 
-        public void ConvertTarget(LegacyScheduledRenewal legacy, Renewal ret)
+        public static void ConvertTarget(LegacyScheduledRenewal legacy, Renewal ret)
         {
             if (legacy.Binding == null)
             {
@@ -296,7 +296,7 @@ namespace PKISharp.WACS.Services.Legacy
             });
         }
 
-        public void ConvertInstallation(LegacyScheduledRenewal legacy, Renewal ret)
+        public static void ConvertInstallation(LegacyScheduledRenewal legacy, Renewal ret)
         {
             if (legacy.Binding == null)
             {

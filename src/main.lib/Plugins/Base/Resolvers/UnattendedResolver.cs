@@ -50,7 +50,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             where TOptions : PluginOptions, new()
             where TCapability : IPluginCapability;
 
-        private async Task<PluginFrontend<TCapability, TOptions>?> 
+        private Task<PluginFrontend<TCapability, TOptions>?> 
             GetPlugin<TCapability, TOptions>(
                 Steps step,
                 Type defaultBackend,
@@ -87,9 +87,10 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 ToList();
 
             // Default out when there are no reasonable plugins to pick
+            var nullRet = Task.FromResult<PluginFrontend<TCapability, TOptions>?>(null);
             if (!options.Any() || options.All(x => x.State.Disabled))
             {
-                return null;
+                return nullRet;
             }
 
             var className = step.ToString().ToLower();
@@ -99,7 +100,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 if (defaultPlugin == null)
                 {
                     _log.Error("Unable to find {n} plugin {p}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultParam1, $"--{className}");
-                    return null;
+                    return nullRet;
                 }
                 else
                 {
@@ -111,10 +112,10 @@ namespace PKISharp.WACS.Plugins.Resolvers
             if (defaultOption.State.Disabled)
             {
                 _log.Error("{n} plugin {x} not available: {m}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultOption.Frontend.Meta.Name ?? "Unknown", defaultOption.State.Reason?.TrimEnd('.'), $"--{className}");
-                return null;
+                return nullRet;
             }
 
-            return defaultOption.Frontend;
+            return Task.FromResult<PluginFrontend<TCapability, TOptions>?>(defaultOption.Frontend);
         }
 
         /// <summary>

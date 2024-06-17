@@ -9,15 +9,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     public class ALiYunOptionsFactory : PluginOptionsFactory<ALiYunOptions>
     {
-        private ArgumentsInputService _arguments { get; }
+        private ArgumentsInputService Arguments { get; }
 
-        public ALiYunOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
+        public ALiYunOptionsFactory(ArgumentsInputService arguments) => Arguments = arguments;
 
-        private ArgumentResult<string?> ApiServer => _arguments.GetString<ALiYunArguments>(a => a.ALiYunServer).Required();
+        private ArgumentResult<string?> ApiServer => Arguments.GetString<ALiYunArguments>(a => a.ALiYunServer).Required();
 
-        private ArgumentResult<ProtectedString?> ApiID => _arguments.GetProtectedString<ALiYunArguments>(a => a.ALiYunApiID).Required();
+        private ArgumentResult<ProtectedString?> ApiID => Arguments.GetProtectedString<ALiYunArguments>(a => a.ALiYunApiID).Required();
 
-        private ArgumentResult<ProtectedString?> ApiSecret => _arguments.GetProtectedString<ALiYunArguments>(a => a.ALiYunApiSecret).Required();
+        private ArgumentResult<ProtectedString?> ApiSecret => Arguments.GetProtectedString<ALiYunArguments>(a => a.ALiYunApiSecret).Required();
 
         public override async Task<ALiYunOptions?> Aquire(IInputService inputService, RunLevel runLevel)
         {

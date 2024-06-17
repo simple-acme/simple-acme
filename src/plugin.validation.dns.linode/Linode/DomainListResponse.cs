@@ -2,16 +2,16 @@
 {
     internal class DomainListResponse
     {
-        public int page { get; set; }
-        public int pages { get; set; }
-        public int results { get; set; }
+        public int Page { get; set; }
+        public int Pages { get; set; }
+        public int Results { get; set; }
 
-        public List<Domain>? data { get; set; }
+        public List<DomainItem>? Data { get; set; }
     }
 
-    internal class Domain
+    internal class DomainItem
     {
-        public int id { get; set; }
-        public string? domain { get; set; }
+        public int Id { get; set; }
+        public string? Domain { get; set; }
     }
 }

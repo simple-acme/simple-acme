@@ -156,7 +156,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
             Host = options.Host;
             Protocol = "https";
             Port = options.Port;
-            CertificateHash = options.Thumbprint?.ToArray();
+            CertificateHash = options.Thumbprint;
             CertificateStoreName = options.Store ?? "";
             IP = options.IP;
             SSLFlags = options.Flags;
@@ -166,7 +166,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         public string Protocol { get; set; } = "";
         public int Port { get; set; }
         public string IP { get; set; } = "";
-        public byte[]? CertificateHash { get; set; }
+        public IEnumerable<byte>? CertificateHash { get; set; }
         public string CertificateStoreName { get; set; } = "";
         public string BindingInformation
         {

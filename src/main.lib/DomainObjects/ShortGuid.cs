@@ -58,7 +58,7 @@ namespace PKISharp.WACS.DomainObjects
         /// </summary>
         public Guid Guid
         {
-            get => _guid;
+            readonly get => _guid;
             set
             {
                 if (value != _guid)
@@ -74,7 +74,7 @@ namespace PKISharp.WACS.DomainObjects
         /// </summary>
         public string Value
         {
-            get => _value;
+            readonly get => _value;
             set
             {
                 if (value != _value)
@@ -93,7 +93,7 @@ namespace PKISharp.WACS.DomainObjects
         /// Returns the base64 encoded guid as a string
         /// </summary>
         /// <returns></returns>
-        public override string ToString() => _value;
+        public override readonly string ToString() => _value;
 
         #endregion
 
@@ -105,7 +105,7 @@ namespace PKISharp.WACS.DomainObjects
         /// </summary>
         /// <param name="obj">The object to compare</param>
         /// <returns></returns>
-        public override bool Equals(object? obj)
+        public override readonly bool Equals(object? obj)
         {
             if (obj is ShortGuid shortGuid)
             {
@@ -130,7 +130,7 @@ namespace PKISharp.WACS.DomainObjects
         /// Returns the HashCode for underlying Guid.
         /// </summary>
         /// <returns></returns>
-        public override int GetHashCode() => _guid.GetHashCode();
+        public override readonly int GetHashCode() => _guid.GetHashCode();
 
         #endregion
 
@@ -170,7 +170,7 @@ namespace PKISharp.WACS.DomainObjects
             encoded = encoded
                 .Replace("/", "_")
                 .Replace("+", "-");
-            return encoded.Substring(0, 22);
+            return encoded[..22];
         }
 
         #endregion
@@ -204,9 +204,9 @@ namespace PKISharp.WACS.DomainObjects
         /// <returns></returns>
         public static bool operator ==(ShortGuid x, ShortGuid y)
         {
-            if ((object)x == null)
+            if ((x as object) == null)
             {
-                return (object)y == null;
+                return (y as object) == null;
             }
 
             return x._guid == y._guid;

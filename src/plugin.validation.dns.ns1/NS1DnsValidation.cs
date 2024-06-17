@@ -30,7 +30,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             _client = new DnsManagementClient(
                 ssm.EvaluateSecret(options.ApiKey) ?? "",
-                logService, proxyService);
+                proxyService);
         }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)

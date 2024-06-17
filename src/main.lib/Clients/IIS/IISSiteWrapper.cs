@@ -88,7 +88,7 @@ namespace PKISharp.WACS.Clients.IIS
             }
         }
 
-        public byte[]? CertificateHash
+        public IEnumerable<byte>? CertificateHash
         {
             get
             {

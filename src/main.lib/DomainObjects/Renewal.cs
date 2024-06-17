@@ -137,7 +137,7 @@ namespace PKISharp.WACS.DomainObjects
             {
                 ret += $", {orders} orders";
             }
-            var format = (DateTime date) =>
+            string format(DateTime date)
             {
                 if (inputService != null)
                 {
@@ -147,7 +147,7 @@ namespace PKISharp.WACS.DomainObjects
                 {
                     return date.ToShortDateString();
                 }
-            };
+            }
 
             if (dueDateService != null)
             {

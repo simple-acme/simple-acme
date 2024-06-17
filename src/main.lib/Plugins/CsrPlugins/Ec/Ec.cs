@@ -46,10 +46,9 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
             var ret = "secp384r1"; // Default
             try
             {
-                var config = _settings.Csr?.Ec?.CurveName ??
-#pragma warning disable CS0618
-                _settings.Security?.ECCurve;
-#pragma warning restore CS0618
+#pragma warning disable CS0618 // Type or member is obsolete
+                var config = _settings.Csr?.Ec?.CurveName ?? _settings.Security?.ECCurve;
+#pragma warning restore CS0618 // Type or member is obsolete
                 if (config != null)
                 {
                     DerObjectIdentifier? curveOid = null;

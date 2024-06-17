@@ -10,14 +10,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.NS1
     public class DnsManagementClient
     {
         private readonly string _apiKey;
-        private readonly ILogService _log;
         readonly IProxyService _proxyService;
         private readonly string _uri = "https://api.nsone.net/v1/";
 
-        public DnsManagementClient(string apiKey, ILogService logService, IProxyService proxyService)
+        public DnsManagementClient(string apiKey, IProxyService proxyService)
         {
             _apiKey = apiKey;
-            _log = logService;
             _proxyService = proxyService;
         }
 
@@ -32,12 +30,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.NS1
                     return null;
                 }
 
-#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
                 return JsonDocument.Parse(response.Content.ReadAsStream())
                     .RootElement.EnumerateArray()
                     .Select(x => x.GetProperty("zone").GetString())
+                    .OfType<string>()
                     .ToArray();
-#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
             }
             catch
             {

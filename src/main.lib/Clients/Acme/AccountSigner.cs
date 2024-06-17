@@ -60,7 +60,7 @@ namespace PKISharp.WACS.Clients.Acme
             {
                 ret = new ESJwsTool
                 {
-                    HashSize = int.Parse(KeyType.Substring(2))
+                    HashSize = int.Parse(KeyType[2..])
                 };
             }
             else if (KeyType.StartsWith("RS"))

@@ -139,7 +139,7 @@ namespace PKISharp.WACS.Clients.IIS
             return targets;
         }
 
-        private List<IISSiteOption> GetSites(IEnumerable<IIISSite> sites)
+        private static List<IISSiteOption> GetSites(IEnumerable<IIISSite> sites)
         {
             // Get all bindings matched together with their respective sites
             var secure = sites.Where(site =>
@@ -220,10 +220,10 @@ namespace PKISharp.WACS.Clients.IIS
                 || regex.IsMatch(binding.HostPunycode);
         }
 
-        internal string HostsToRegex(IEnumerable<string> hosts) =>
-            $"^({string.Join('|', hosts.Select(x => Regex.Escape(x)))})$";
+        internal static string HostsToRegex(IEnumerable<string> hosts) =>
+            $"^({string.Join('|', hosts.Select(Regex.Escape))})$";
 
-        private Regex? GetRegex(IISOptions options)
+        private static Regex? GetRegex(IISOptions options)
         {
             if (!string.IsNullOrEmpty(options.IncludePattern))
             {
@@ -240,7 +240,7 @@ namespace PKISharp.WACS.Clients.IIS
             return null;
         }
 
-        private List<string> GetHosts(IIISSite site)
+        private static List<string> GetHosts(IIISSite site)
         {
             return site.Bindings.Select(x => x.Host.ToLower()).
                             Where(x => !string.IsNullOrWhiteSpace(x)).

@@ -56,11 +56,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             byte[] csrBytes;
             try
             {
-                var pem = PemService.ParsePem<Pkcs10CertificationRequest>(csrString);
-                if (pem == null)
-                {
-                    throw new Exception("Unable decode PEM bytes to Pkcs10CertificationRequest");
-                }
+                var pem = PemService.ParsePem<Pkcs10CertificationRequest>(csrString) ?? throw new Exception("Unable decode PEM bytes to Pkcs10CertificationRequest");
                 var info = pem.GetCertificationRequestInfo();
                 csrBytes = pem.GetEncoded();
                 commonName = ParseCn(info);
@@ -115,7 +111,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             var ret = new Target($"[{nameof(Csr)}] {_options.CsrFile}",
                 commonName,
                 new List<TargetPart> {
-                    new TargetPart(alternativeNames)
+                    new(alternativeNames)
                 })
             {
                 UserCsrBytes = csrBytes,

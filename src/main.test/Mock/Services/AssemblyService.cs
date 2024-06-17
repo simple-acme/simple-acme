@@ -13,7 +13,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
         {
             if (typeof(T) == typeof(ISecretService))
             {
-                return new List<TypeDescriptor>() { new TypeDescriptor(typeof(SecretService)) };
+                return new List<TypeDescriptor>() { new(typeof(SecretService)) };
             }
             return base.GetResolvable<T>();
 

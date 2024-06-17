@@ -1,5 +1,4 @@
 ﻿using Autofac.Core;
-using Fclp.Internals.Extensions;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Services;
@@ -46,7 +45,7 @@ namespace PKISharp.WACS
         {
             // List the command line that may be used to (re)create this renewal
             var args = new Dictionary<string, string?>();
-            var addArgs = (PluginOptions p) =>
+            void addArgs(PluginOptions p)
             {
                 var arguments = p.Describe(_container, _scopeBuilder, _plugin);
                 foreach (var arg in arguments)
@@ -89,7 +88,7 @@ namespace PKISharp.WACS
                         }
                     }
                 }
-            };
+            }
 
             args.Add("source", _plugin.GetPlugin(renewal.TargetPluginOptions).Name.ToLower());
             addArgs(renewal.TargetPluginOptions);

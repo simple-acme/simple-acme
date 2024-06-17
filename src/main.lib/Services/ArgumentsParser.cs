@@ -28,11 +28,7 @@ namespace PKISharp.WACS.Configuration
             return argumentGroups.Select(x =>
                 {
                     var type = typeof(BaseArgumentsProvider<>).MakeGenericType(x.Type);
-                    var constr = type.GetConstructor(Array.Empty<Type>());
-                    if (constr == null)
-                    {
-                        throw new Exception("IArgumentsProvider should have parameterless constructor");
-                    }
+                    var constr = type.GetConstructor(Array.Empty<Type>()) ?? throw new Exception("IArgumentsProvider should have parameterless constructor");
                     try
                     {
                         var ret = (IArgumentsProvider)constr.Invoke(Array.Empty<object>());

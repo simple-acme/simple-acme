@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PKISharp.WACS.Clients.IIS
 {
@@ -28,6 +29,7 @@ namespace PKISharp.WACS.Clients.IIS
         /// <summary>
         /// Incompatibiliy between certain flags
         /// </summary>
+        [SuppressMessage("Design", "CA1069:Enums values should not be duplicated", Justification = "Forwards compatibility")]
         NotWithCentralSsl = DisableHttp2 | DisableOcspStapling | DisableQuic | DisableTls13OverTcp | DisableLegacyTls
     }
 }

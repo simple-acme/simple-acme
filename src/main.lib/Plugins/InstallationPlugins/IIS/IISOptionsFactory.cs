@@ -5,7 +5,6 @@ using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
@@ -56,7 +55,8 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             };
 
             var explained = false;
-            var explain = () => {
+            void explain()
+            {
                 if (explained)
                 {
                     return;
@@ -72,8 +72,8 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                     "the source identifiers. If new bindings are needed, by default it will create those at " +
                     "the same site where the HTTP binding for that host was found.");
                 explained = true;
-            };
-            
+            }
+
             var askSite = !_target.IIS;
             if (_target.IIS && runLevel.HasFlag(RunLevel.Advanced))
             {
