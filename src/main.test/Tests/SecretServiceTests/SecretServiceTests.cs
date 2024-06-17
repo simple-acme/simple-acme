@@ -24,7 +24,7 @@ namespace PKISharp.WACS.UnitTests.Tests.SecretServiceTests
         [TestInitialize]
         public void Init()
         {
-            _container = new MockContainer().TestScope();
+            _container = MockContainer.TestScope();
             var secretService = _container.Resolve<Real.ISecretService>();
             secretService.PutSecret(theKey, theSecret);
         }

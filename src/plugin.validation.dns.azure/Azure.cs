@@ -12,10 +12,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
-[assembly: SupportedOSPlatform("windows")]
 [assembly: InternalsVisibleTo("wacs.test")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
@@ -70,27 +68,28 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 return false;
             }
             var relativeKey = RelativeRecordName(zone.Data.Name, record.Authority.Domain);
-            if (!_recordSets.ContainsKey(zone))
+            if (!_recordSets.TryGetValue(zone, out var value))
             {
-                _recordSets.Add(zone, new());
+                value = new();
+                _recordSets.Add(zone, value);
             }
-            if (!_recordSets[zone].ContainsKey(relativeKey))
+            if (!value.ContainsKey(relativeKey))
             {
                 try
                 {
                     var existing = await zone.GetDnsTxtRecords().GetAsync(relativeKey);
-                    _recordSets[zone].Add(relativeKey, existing.Value.Data);
+                    value.Add(relativeKey, existing.Value.Data);
                 } 
                 catch
                 {
-                    _recordSets[zone].Add(relativeKey, new DnsTxtRecordData() { TtlInSeconds = 60 });
+                    value.Add(relativeKey, new DnsTxtRecordData() { TtlInSeconds = 60 });
                 }
             }
-            if (!_recordSets[zone][relativeKey].DnsTxtRecords.Any(x => x.Values.Contains(record.Value)))
+            if (!value[relativeKey].DnsTxtRecords.Any(x => x.Values.Contains(record.Value)))
             {
                 var txtRecord = new DnsTxtRecordInfo();
                 txtRecord.Values.Add(record.Value);
-                _recordSets[zone][relativeKey].DnsTxtRecords.Add(txtRecord);
+                value[relativeKey].DnsTxtRecords.Add(txtRecord);
             }
             return true;
         }
@@ -108,15 +107,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 return;
             }
             var relativeKey = RelativeRecordName(zone.Data.Name, record.Authority.Domain);
-            if (!_recordSets.ContainsKey(zone))
+            if (!_recordSets.TryGetValue(zone, out var recordSet))
             {
                 return;
             }
-            if (!_recordSets[zone].ContainsKey(relativeKey))
+            if (!recordSet.TryGetValue(relativeKey, out var txtResource))
             {
                 return;
             }
-            var txtResource = _recordSets[zone][relativeKey];
             var removeList = txtResource.DnsTxtRecords.Where(x => x.Values.Contains(record.Value)).ToList();
             foreach (var remove in removeList)
             {
@@ -189,10 +187,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <returns></returns>
         private async Task<SubscriptionResource> Subscription()
         {
-            if (_subscriptionResource == null)
-            {
-                _subscriptionResource = await Client.GetDefaultSubscriptionAsync();
-            }
+            _subscriptionResource ??= await Client.GetDefaultSubscriptionAsync();
             if (_subscriptionResource == null)
             {
                 throw new Exception($"Unable to find subscription {_options.SubscriptionId ?? "default"}");

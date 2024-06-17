@@ -129,10 +129,11 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
             }
         }
 
-        public IEnumerable<string> ListKeys()
-        {
-            return _secrets.Select(x => x.Key).Where(x => !string.IsNullOrEmpty(x)).OfType<string>();
-        }
+        public IEnumerable<string> ListKeys() => 
+            _secrets.
+                Select(x => x.Key).
+                Where(x => !string.IsNullOrEmpty(x)).
+                OfType<string>();
 
         public void DeleteSecret(string key)
         {

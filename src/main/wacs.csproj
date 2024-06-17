@@ -4,7 +4,7 @@
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net7.0</TargetFramework>
 		<RuntimeIdentifiers>win-x64;win-x86;win-arm64;linux-x64</RuntimeIdentifiers>
-		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;ReleaseLinux</Configurations>
+		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;</Configurations>
 		<ApplicationIcon>icon.ico</ApplicationIcon>
 		<StartupObject />
 		<Version>2.1.0.0</Version>

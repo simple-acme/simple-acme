@@ -2,9 +2,11 @@
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Host.Services.Legacy;
 using System;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services.Legacy
 {
+    [SupportedOSPlatform("windows")]
     internal class RegistryLegacyRenewalService : BaseLegacyRenewalService
     {
         private const string _renewalsKey = "Renewals";
@@ -33,6 +35,6 @@ namespace PKISharp.WACS.Services.Legacy
 
         private string Key => $"\\Software\\{_clientName}\\{_baseUri}";
 
-        internal override string[] RenewalsRaw => Registry.GetValue(_hive, _renewalsKey, null) as string[] ?? new string[] { };
+        internal override string[] RenewalsRaw => Registry.GetValue(_hive, _renewalsKey, null) as string[] ?? Array.Empty<string>();
     }
 }

@@ -3,6 +3,7 @@ using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -40,11 +41,14 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             inputService.Show("{CacheFile}", ".pfx full path");
             inputService.Show("{CertFriendlyName}", "Certificate friendly name");
             inputService.Show("{CertThumbprint}", "Certificate thumbprint");
-#if LINUX
-            inputService.Show("{StoreType}", $"Type of store (e.g. {CentralSsl.Name}, {PemFiles.Name}, ...)");
-#else
-            inputService.Show("{StoreType}", $"Type of store (e.g. {CentralSsl.Name}, {CertificateStore.Name}, {PemFiles.Name}, ...)");
-#endif
+            if (OperatingSystem.IsWindows())
+            {
+                inputService.Show("{StoreType}", $"Type of store (e.g. {CentralSsl.Name}, {CertificateStore.Name}, {PemFiles.Name}, ...)");
+            }
+            else
+            {
+                inputService.Show("{StoreType}", $"Type of store (e.g. {CentralSsl.Name}, {PemFiles.Name}, ...)");
+            }
             inputService.Show("{StorePath}", "Path to the store");
             inputService.Show("{RenewalId}", "Renewal identifier");
             inputService.Show("{OldCertCommonName}", "Common name (primary domain name) of the previously issued certificate");

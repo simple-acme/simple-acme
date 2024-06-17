@@ -13,7 +13,7 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
         [TestMethod]
         public void Simple()
         {
-            var container = new MockContainer().TestScope(new List<string>()
+            var container = MockContainer.TestScope(new List<string>()
             {
                 "C", // Cancel command
                 "y", // Confirm cancel all

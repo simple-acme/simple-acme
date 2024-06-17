@@ -6,12 +6,9 @@ using PKISharp.WACS.Services;
 using System;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using TencentCloud.Common;
 using TencentCloud.Common.Profile;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -22,10 +19,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         "Tencent", "Create verification records in Tencent DNS")]
     public class Tencent : DnsValidation<Tencent>, IDisposable
     {
-        private TencentOptions _options { get; }
-        private SecretServiceManager _ssm { get; }
-        private HttpClient _hc { get; }
-        private Credential _cred { get; }
+        private TencentOptions Options { get; }
+        private SecretServiceManager Ssm { get; }
+        private HttpClient Hc { get; }
+        private Credential Cred { get; }
 
         public Tencent(
             TencentOptions options,
@@ -35,14 +32,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             ILogService log,
             ISettingsService settings) : base(dnsClient, log, settings)
         {
-            _options = options;
-            _ssm = ssm;
-            _hc = proxyService.GetHttpClient();
+            Options = options;
+            Ssm = ssm;
+            Hc = proxyService.GetHttpClient();
             //
-            _cred = new Credential
+            Cred = new Credential
             {
-                SecretId = _ssm.EvaluateSecret(_options.ApiID),
-                SecretKey = _ssm.EvaluateSecret(_options.ApiKey),
+                SecretId = Ssm.EvaluateSecret(Options.ApiID),
+                SecretKey = Ssm.EvaluateSecret(Options.ApiKey),
             };
         }
 
@@ -110,7 +107,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             };
             var req = new CommonRequest(param);
             var act = "CreateRecord";
-            var resp = client.Call(req, act);
+            client.Call(req, act);
             //Console.WriteLine(resp);
             return true;
         }
@@ -132,7 +129,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             var param = new { Domain = domain, RecordId = recordId };
             var req = new CommonRequest(param);
             var act = "DeleteRecord";
-            var resp = client.Call(req, act);
+            client.Call(req, act);
             //Console.WriteLine(resp);
             return true;
         }
@@ -202,12 +199,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 Endpoint = endpointTemp ?? DnsPodServer,
             };
             var cpf = new ClientProfile(ClientProfile.SIGN_TC3SHA256, hpf);
-            var client = new CommonClient(mod, ver, _cred, region, cpf);
+            var client = new CommonClient(mod, ver, Cred, region, cpf);
             return client;
         }
 
         #endregion PrivateLogic
 
-        public void Dispose() => _hc.Dispose();
+        public void Dispose()
+        {
+            Hc.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

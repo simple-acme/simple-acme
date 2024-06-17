@@ -5,10 +5,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Models;
 using PKISharp.WACS.Services;
 using System;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -109,6 +106,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
         }
 
-        public void Dispose() => _client.Dispose();
+        public void Dispose()
+        {
+            _client.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

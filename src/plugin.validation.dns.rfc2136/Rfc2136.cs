@@ -9,13 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Reflection;
-using System.Runtime.Versioning;
-using System.Security.Policy;
 using System.Threading.Tasks;
 using ArDnsClient = ARSoft.Tools.Net.Dns.DnsClient;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -67,8 +62,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             var domain = record.Authority.Domain;
-            var topZone = _zoneMap.ContainsKey(domain) ? 
-                _zoneMap[domain] : 
+            var topZone = _zoneMap.TryGetValue(domain, out string? value) ? value : 
                 _domainParser.GetRegisterableDomain(domain);
             var subDomains = domain.
                 Split(".").
@@ -125,8 +119,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
             var domain = record.Authority.Domain;
-            var topZone = _zoneMap.ContainsKey(domain) ?
-                _zoneMap[domain] :
+            var topZone = _zoneMap.TryGetValue(domain, out string? value) ? value :
                 _domainParser.GetRegisterableDomain(domain);
             var msg = new DnsUpdateMessage { ZoneName = DomainName.Parse(topZone) };
             var txtRecord = new TxtRecord(DomainName.Parse(domain), 0, record.Value);

@@ -1,15 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Runtime.Versioning;
-using System.Threading.Tasks;
-using DigitalOcean.API;
+﻿using DigitalOcean.API;
 using DigitalOcean.API.Models.Requests;
 using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
-
-[assembly: SupportedOSPlatform("windows")]
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {

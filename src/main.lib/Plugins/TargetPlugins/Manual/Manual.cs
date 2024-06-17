@@ -20,14 +20,15 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
 
         public Manual(ManualOptions options) => _options = options;
 
-        public async Task<Target?> Generate()
+        public Task<Target?> Generate()
         {
-            return new Target(
-                $"[{nameof(Manual)}] {_options.CommonName ?? _options.AlternativeNames.First()}",
-                _options.CommonName,
-                new List<TargetPart> {
-                    new TargetPart(_options.AlternativeNames.Select(ParseIdentifier))
-                });
+            return Task.FromResult<Target?>(
+                new Target(
+                    $"[{nameof(Manual)}] {_options.CommonName ?? _options.AlternativeNames.First()}",
+                    _options.CommonName,
+                    new List<TargetPart> {
+                        new(_options.AlternativeNames.Select(ParseIdentifier))
+                    }));
         }
 
         internal static Identifier ParseIdentifier(string identifier)

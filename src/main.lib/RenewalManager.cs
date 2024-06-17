@@ -334,19 +334,21 @@ namespace PKISharp.WACS
                     if (targetPart.SiteId != null)
                     {
                         var siteId = targetPart.SiteId.Value;
-                        if (!foundSites.ContainsKey(siteId))
+                        if (!foundSites.TryGetValue(siteId, out var value))
                         {
-                            foundSites.Add(siteId, new List<Renewal>());
+                            value = new List<Renewal>();
+                            foundSites.Add(siteId, value);
                         }
-                        foundSites[siteId].Add(renewal);
+                        value.Add(renewal);
                     }
                     foreach (var host in targetPart.GetIdentifiers(true))
                     {
-                        if (!foundHosts.ContainsKey(host))
+                        if (!foundHosts.TryGetValue(host, out var value))
                         {
-                            foundHosts.Add(host, new List<Renewal>());
+                            value = new List<Renewal>();
+                            foundHosts.Add(host, value);
                         }
-                        foundHosts[host].Add(renewal);
+                        value.Add(renewal);
                     }
                 }
             }

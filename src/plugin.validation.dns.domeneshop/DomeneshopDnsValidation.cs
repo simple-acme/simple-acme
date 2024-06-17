@@ -1,5 +1,4 @@
 ﻿using Abstractions.Integrations.Domeneshop;
-
 using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -7,11 +6,8 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Services;
 using System;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Options = Abstractions.Integrations.Domeneshop.DomeneshopOptions;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {

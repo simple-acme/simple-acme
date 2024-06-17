@@ -7,13 +7,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.Versioning;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -125,7 +122,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
-            if (!_recordsMap.ContainsKey(record.Authority.Domain))
+            if (!_recordsMap.TryGetValue(record.Authority.Domain, out RecordData? value))
             {
                 _log.Warning($"No record with name {record.Authority.Domain} was created");
                 return;
@@ -134,7 +131,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             _log.Information("Deleting LuaDNS verification record");
 
             using var client = GetClient();
-            var created = _recordsMap[record.Authority.Domain];
+            var created = value;
             var response = await client.DeleteAsync(new Uri(_LuaDnsApiEndpoint, $"zones/{created.ZoneId}/records/{created.Id}"));
             if (!response.IsSuccessStatusCode)
             {

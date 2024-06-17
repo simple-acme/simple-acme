@@ -15,6 +15,7 @@ using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services.Legacy;
 using PKISharp.WACS.Services.Serialization;
 using System;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services
 {
@@ -36,6 +37,7 @@ namespace PKISharp.WACS.Services
         /// <param name="fromUri"></param>
         /// <param name="toUri"></param>
         /// <returns></returns>
+        [SupportedOSPlatform("windows")]
         public ILifetimeScope Legacy(ILifetimeScope main, Uri fromUri, Uri toUri)
         {
             return main.BeginLifetimeScope(builder =>

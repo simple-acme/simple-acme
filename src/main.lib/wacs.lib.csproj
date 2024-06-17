@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>net7.0</TargetFramework>
 		<RootNamespace>PKISharp.WACS</RootNamespace>
-		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;ReleaseLinux</Configurations>
+		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;</Configurations>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='Debug' OR '$(Configuration)'=='DebugTrimmed'">
@@ -21,9 +21,6 @@
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)'=='ReleaseTrimmed'">
 		<DefineConstants>RELEASE</DefineConstants>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)'=='ReleaseLinux'">
-		<DefineConstants>RELEASE;LINUX</DefineConstants>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)'=='DebugTrimmed' OR '$(Configuration)'=='ReleaseTrimmed'">

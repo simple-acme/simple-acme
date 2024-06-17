@@ -76,22 +76,25 @@ namespace PKISharp.WACS.Services
                 Environment.Exit(ex.HResult);
             }
 
-            try
+            if (OperatingSystem.IsWindows())
             {
-                var _eventConfig = new ConfigurationBuilder()
-                   .AddJsonFile(ConfigurationPath, true, true)
-                   .Build();
+                try
+                {
+                    var _eventConfig = new ConfigurationBuilder()
+                       .AddJsonFile(ConfigurationPath, true, true)
+                       .Build();
 
-                _eventLogger = new LoggerConfiguration()
-                    .MinimumLevel.ControlledBy(_levelSwitch)
-                    .Enrich.FromLogContext()
-                    .WriteTo.EventLog("win-acme", manageEventSource: true)
-                    .ReadFrom.Configuration(_eventConfig, new ConfigurationReaderOptions(typeof(LogService).Assembly) { SectionName = "event" })
-                    .CreateLogger();
-            }
-            catch (Exception ex)
-            {
-                Warning("Error creating event logger: {ex}", ex.Message);
+                    _eventLogger = new LoggerConfiguration()
+                        .MinimumLevel.ControlledBy(_levelSwitch)
+                        .Enrich.FromLogContext()
+                        .WriteTo.EventLog("win-acme", manageEventSource: true)
+                        .ReadFrom.Configuration(_eventConfig, new ConfigurationReaderOptions(typeof(LogService).Assembly) { SectionName = "event" })
+                        .CreateLogger();
+                }
+                catch (Exception ex)
+                {
+                    Warning("Error creating event logger: {ex}", ex.Message);
+                }
             }
 
             _notificationLogger = new LoggerConfiguration()
@@ -165,13 +168,13 @@ namespace PKISharp.WACS.Services
 
         public void Information(string message, params object?[] items) => Information(LogType.Screen | LogType.Disk, message, items);
 
-        public void Information(LogType logType, string message, params object?[] items) => _Information(logType, message, items);
+        public void Information(LogType logType, string message, params object?[] items) => Information2(logType, message, items);
 
         public void Verbose(LogType type, string message, params object?[] items) => Write(type, LogEventLevel.Verbose, message, items);
 
         private void Debug(LogType type, string message, params object?[] items) => Write(type, LogEventLevel.Debug, message, items);
 
-        private void _Information(LogType type, string message, params object?[] items) => Write(type, LogEventLevel.Information, message, items);
+        private void Information2(LogType type, string message, params object?[] items) => Write(type, LogEventLevel.Information, message, items);
 
         private void Warning(LogType type, string message, params object?[] items) => Write(type, LogEventLevel.Warning, message, items);
 
@@ -189,14 +192,11 @@ namespace PKISharp.WACS.Services
                 {
                     _screenLogger.Write(level, ex, message, items);
                 }
-                else if (_debugScreenLogger != null)
+                else
                 {
-                    _debugScreenLogger.Write(level, ex, message, items);
+                    _debugScreenLogger?.Write(level, ex, message, items);
                 }
-                if (_notificationLogger != null)
-                {
-                    _notificationLogger.Write(level, ex, message, items);
-                }
+                _notificationLogger?.Write(level, ex, message, items);
             }
             if (_eventLogger != null && type.HasFlag(LogType.Event))
             {

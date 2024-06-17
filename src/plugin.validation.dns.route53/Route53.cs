@@ -12,8 +12,6 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
-[assembly: SupportedOSPlatform("windows")]
-
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     [IPlugin.Plugin<
@@ -45,15 +43,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     : new AmazonRoute53Client(config);
         }
 
-        private void CreateOrUpdateResourceRecordSet(string hostedZone, string name, string value)
+        private void CreateOrUpdateResourceRecordSet(string hostedZone, string name, string record)
         {
             lock (_pendingZoneUpdates)
             {
-                if (!_pendingZoneUpdates.ContainsKey(hostedZone))
+                if (!_pendingZoneUpdates.TryGetValue(hostedZone, out List<ResourceRecordSet>? value))
                 {
-                    _pendingZoneUpdates.Add(hostedZone, new List<ResourceRecordSet>());
+                    value = new List<ResourceRecordSet>();
+                    _pendingZoneUpdates.Add(hostedZone, value);
                 }
-                var pendingRecordSets = _pendingZoneUpdates[hostedZone];
+                var pendingRecordSets = value;
                 var existing = pendingRecordSets.FirstOrDefault(x => x.Name == name);
                 if (existing == null)
                 {
@@ -66,7 +65,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     };
                     pendingRecordSets.Add(existing);
                 }
-                var formattedValue = $"\"{value}\"";
+                var formattedValue = $"\"{record}\"";
                 if (!existing.ResourceRecords.Any(x => x.Value == formattedValue))
                 {
                     existing.ResourceRecords.Add(new ResourceRecord(formattedValue));

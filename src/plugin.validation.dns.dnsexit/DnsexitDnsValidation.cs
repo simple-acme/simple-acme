@@ -6,8 +6,6 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit;
 using PKISharp.WACS.Services;
 using System.Runtime.Versioning;
 
-[assembly: SupportedOSPlatform("windows")]
-
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
     [IPlugin.Plugin<

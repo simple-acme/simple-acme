@@ -1,5 +1,4 @@
 ﻿using PKISharp.WACS.Clients;
-using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
@@ -221,10 +220,10 @@ namespace PKISharp.WACS.Host
         {
             // Version information
             _input.CreateSpace();
-            _log.Information(LogType.Screen, "A simple Windows ACMEv2 client (WACS)");
+            _log.Information(LogType.Screen, "A simple cross platform ACME client (WACS)");
             _log.Information(LogType.Screen, "Software version {version} ({build}, {bitness})", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
             _log.Information(LogType.Disk | LogType.Event, "Software version {version} ({build}, {bitness}) started", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
-            _log.Debug("Running on Windows {version}", Environment.OSVersion.Version);
+            _log.Debug("Running on {platform} {version}", Environment.OSVersion.Platform, Environment.OSVersion.Version);
  
             // Connection test
             _log.Information("Connecting to {ACME}...", _settings.BaseUri);

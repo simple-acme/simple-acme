@@ -7,12 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
-[assembly: InternalsVisibleTo("wacs.test")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 

@@ -5,9 +5,6 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Plugins.ValidationPlugins.Linode;
 using PKISharp.WACS.Services;
 using System.Collections.Concurrent;
-using System.Runtime.Versioning;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {

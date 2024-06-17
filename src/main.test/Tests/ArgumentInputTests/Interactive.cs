@@ -20,7 +20,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             string[] userInput, 
             string output)
         {
-            var container = new MockContainer().TestScope(
+            var container = MockContainer.TestScope(
                 userInput.ToList(), 
                 commandLine: argument);
             var mock = container.Resolve<ArgumentsInputService>();
@@ -41,7 +41,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("--centralsslstore command", new[] { "" }, null, "command", DisplayName = "CommandBecomesDefault")]
         public void DefaultValue(string? commandLine, string[] userInput, string @default, string output)
         {
-            var container = new MockContainer().TestScope(userInput.ToList(), commandLine ?? "");
+            var container = MockContainer.TestScope(userInput.ToList(), commandLine ?? "");
             var mock = container.Resolve<ArgumentsInputService>();
             var input = container.Resolve<IInputService>(); 
             var result = mock.GetString<CentralSslArguments>(x => x.CentralSslStore).

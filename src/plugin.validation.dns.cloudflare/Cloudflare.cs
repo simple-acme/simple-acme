@@ -10,10 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -137,6 +134,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             await DeleteRecord(record.Authority.Domain, record.Value, ctx, zone);
         }
 
-        public void Dispose() => _hc.Dispose();
+        public void Dispose()
+        {
+            _hc.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

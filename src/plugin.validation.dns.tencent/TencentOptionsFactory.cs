@@ -9,15 +9,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     public class TencentOptionsFactory : PluginOptionsFactory<TencentOptions>
     {
-        private ArgumentsInputService _arguments { get; }
+        private ArgumentsInputService Arguments { get; }
 
-        public TencentOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
+        public TencentOptionsFactory(ArgumentsInputService arguments) => Arguments = arguments;
 
-        private ArgumentResult<ProtectedString?> ApiID => _arguments.
+        private ArgumentResult<ProtectedString?> ApiID => Arguments.
             GetProtectedString<TencentArguments>(a => a.TencentApiID).
             Required();
 
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => Arguments.
             GetProtectedString<TencentArguments>(a => a.TencentApiKey).
             Required();
 

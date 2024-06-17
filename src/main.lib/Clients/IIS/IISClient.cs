@@ -137,11 +137,11 @@ namespace PKISharp.WACS.Clients.IIS
 
         public IISSiteWrapper GetSite(long id, IISSiteType? type)
         {
-            var ret = Sites.Where(s => s.Site.Id == id).FirstOrDefault();
-            if (ret == null)
-            {
+            var ret = Sites.
+                Where(s => s.Site.Id == id).
+                FirstOrDefault() ?? 
                 throw new Exception($"Unable to find IIS SiteId #{id}");
-            }
+
             if (type != null && ret.Type != type)
             {
                 throw new Exception($"IIS SiteId #{id} is not of the expected type {type}");
@@ -335,6 +335,12 @@ namespace PKISharp.WACS.Clients.IIS
         /// <returns></returns>
         private Version GetIISVersion(AdminService adminService)
         {
+            // Obviously...
+            if (!OperatingSystem.IsWindows())
+            {
+                return new Version(0, 0);
+            }
+
             // Get the W3SVC service
             try
             {

@@ -51,7 +51,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                 {
                     ApplicationProtocols = new List<SslApplicationProtocol>
                     {
-                        new SslApplicationProtocol("acme-tls/1")
+                        new("acme-tls/1")
                     },
                     ServerCertificate = _certificate
                 };
@@ -106,7 +106,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                 _tokenSource = new();
                 _listener = new TcpListener(IPAddress.IPv6Any, _options.Port ?? DefaultValidationPort);
                 _listener.Server.DualMode = true;
-                _listener.AllowNatTraversal(true);
+                if (OperatingSystem.IsWindows())
+                {
+                    _listener.AllowNatTraversal(true);
+                }
                 _listener.Start();
 
                 Task.Run(RecieveRequests);

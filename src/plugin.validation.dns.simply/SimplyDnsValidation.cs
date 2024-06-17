@@ -6,10 +6,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Simply;
 using PKISharp.WACS.Services;
 using System;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
@@ -77,11 +74,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             var products = await _client.GetAllProducts();
             var product = FindBestMatch(products.ToDictionary(x => x.Domain?.NameIdn ?? "", x => x), recordName);
-            if (product is null)
-            {
-                throw new Exception($"Unable to find product for record '{recordName}'");
-            }
-            return product;
+            return product is null ? throw new Exception($"Unable to find product for record '{recordName}'") : product;
         }
     }
 }

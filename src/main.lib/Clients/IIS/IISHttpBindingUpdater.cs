@@ -467,7 +467,7 @@ namespace PKISharp.WACS.Clients.IIS
         /// <param name=""></param>
         /// <param name=""></param>
         /// <returns></returns>
-        private int Fits(IIISBinding iis, Identifier certificate, SSLFlags flags)
+        private static int Fits(IIISBinding iis, Identifier certificate, SSLFlags flags)
         {
             // The default (emtpy) binding matches with all hostnames.
             // But it's not supported with Central SSL

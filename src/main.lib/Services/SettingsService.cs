@@ -4,6 +4,7 @@ using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Extensions;
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.Json;
@@ -127,11 +128,7 @@ namespace PKISharp.WACS.Services
                     : _arguments?.Test ?? false ?
                         Acme.DefaultBaseUriTest :
                         Acme.DefaultBaseUri;
-                if (ret == null)
-                {
-                    throw new Exception("Unable to determine BaseUri");
-                }
-                return ret;
+                return ret ?? throw new Exception("Unable to determine BaseUri");
             }
         }
 
@@ -219,7 +216,7 @@ namespace PKISharp.WACS.Services
             {
                 _log.Debug($"Use existing {label} folder {{path}}", path);
             }
-            if (checkAcl)
+            if (checkAcl && OperatingSystem.IsWindows())
             {
                 EnsureFolderAcl(di, label, created);
             }
@@ -228,6 +225,7 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// Ensure proper access rights to a folder
         /// </summary>
+        [SupportedOSPlatform("windows")]
         private void EnsureFolderAcl(DirectoryInfo di, string label, bool created)
         {
             // Test access control rules
@@ -290,6 +288,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="di"></param>
         /// <returns></returns>
+        [SupportedOSPlatform("windows")]
         private static (bool, bool) UsersHaveAccess(DirectoryInfo di)
         {
             var acl = di.GetAccessControl();

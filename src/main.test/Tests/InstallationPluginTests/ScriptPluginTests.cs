@@ -110,7 +110,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
                 Script = script,
                 ScriptParameters = parameters
             };
-            var container = new MockContainer().TestScope();
+            var container = MockContainer.TestScope();
             var installer = new Script(renewal, options, new Clients.ScriptClient(log, settings), container.Resolve<SecretServiceManager>());
             installer.Install(storeInfo, newCert, oldCert).Wait();
         }

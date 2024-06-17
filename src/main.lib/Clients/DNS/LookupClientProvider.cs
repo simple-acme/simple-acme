@@ -156,15 +156,9 @@ namespace PKISharp.WACS.Clients.DNS
                     // get the name servers for b.c.d
                     var levelUp = string.Join('.', domainName.Split('.').Skip(1));
                     backup = await GetNameServers(levelUp);
-                    LookupClientWrapper specifiedClient;
-                    if (!backup.Any())
-                    {
-                        specifiedClient = _systemClient;
-                    }
-                    else
-                    {
-                        specifiedClient = Produce(backup.First());
-                    }
+                    var specifiedClient = !backup.Any() ? 
+                        _systemClient : 
+                        Produce(backup.First());
                     unverified = await specifiedClient.GetNameServers(domainName);
                 }
 

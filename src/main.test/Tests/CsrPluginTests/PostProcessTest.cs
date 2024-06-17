@@ -17,7 +17,7 @@ namespace PKISharp.WACS.UnitTests.Tests.CsrPluginTests
         {
             var log = new Mock.Services.LogService(false);
             var settings = new Mock.Services.MockSettingsService();
-            var x = new Rsa(log, settings, new RsaOptions());
+            _ = new Rsa(log, settings, new RsaOptions());
             var data = Assembly.
                 GetAssembly(typeof(PostProcessTest))!.
                 GetManifestResourceStream($"PKISharp.WACS.UnitTests.Tests.CsrPluginTests.{name}.pfx");
