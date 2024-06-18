@@ -2,6 +2,7 @@
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
+using System;
 using System.Linq;
 
 namespace PKISharp.WACS.Plugins.TargetPlugins
@@ -21,6 +22,10 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         {
             get
             {
+                if (!OperatingSystem.IsWindows())
+                {
+                    return State.DisabledState("Not supported on this platform.");
+                }
                 var state = _userRole.IISState;
                 if (state.Disabled)
                 {

@@ -4,10 +4,12 @@ using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.TargetPlugins
 {
+    [SupportedOSPlatform("windows")]
     [IPlugin.Plugin<
         IISSitesOptions, IISSitesOptionsFactory, 
         IISCapability, WacsJsonPlugins>

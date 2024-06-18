@@ -153,9 +153,14 @@ namespace PKISharp.WACS.Services
                     configRoot = configRootWithClient;
                 }
             }
-            else
+            else if (OperatingSystem.IsWindows())
             {
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                configRoot = Path.Combine(appData, Client.ClientName);
+            }
+            else
+            {
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 configRoot = Path.Combine(appData, Client.ClientName);
             }
             return configRoot;

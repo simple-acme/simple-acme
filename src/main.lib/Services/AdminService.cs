@@ -13,6 +13,10 @@ namespace PKISharp.WACS.Services
 
         private bool DetermineAdmin()
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                return false;
+            }
             bool isAdmin;
             WindowsIdentity? user = null;
             try
@@ -39,6 +43,10 @@ namespace PKISharp.WACS.Services
 
         private bool DetermineSystem()
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                return false;
+            }
             try
             {
                 return WindowsIdentity.GetCurrent().IsSystem;

@@ -64,6 +64,11 @@ function PlatformRelease
 			./sign-exe.ps1 "$MainBinDir\publish\$MainBinFile" "$Root\build\codesigning.pfx" $Password
 		}
 		Copy-Item "$MainBinDir\publish\$MainBinFile" $Temp
+		if ($Platform -eq "linux-64") {
+			Copy-Item "$MainBinDir\settings.linux.json" "$Temp\settings_default.json"
+		} else {
+			Copy-Item "$MainBinDir\settings.json" "$Temp\settings_default.json"
+		}
 		Copy-Item "$MainBinDir\settings.json" "$Temp\settings_default.json"
 		Copy-Item "$Root\dist\*" $Temp -Recurse
 		Set-Content -Path "$Temp\version.txt" -Value "v$Version ($Platform, $ReleaseType)"

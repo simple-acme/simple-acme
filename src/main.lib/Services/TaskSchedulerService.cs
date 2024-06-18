@@ -41,6 +41,11 @@ namespace PKISharp.WACS.Services
 
         public bool ConfirmTaskScheduler()
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                _log.Information("Scheduled task not supported on this platform");
+                return false;
+            }
             try
             {
                 var existingTask = ExistingTask;
@@ -154,6 +159,10 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public async System.Threading.Tasks.Task EnsureTaskScheduler(RunLevel runLevel)
         {
+            if (!OperatingSystem.IsWindows()) {
+                _log.Warning("Auto-creating a renewal task is only supported on Windows. Please create a cronjob or similar to call \"./wacs {arguments}\" every day.", Arguments);
+                return;
+            }
             var existingTask = ExistingTask;
             var create = runLevel.HasFlag(RunLevel.Force) || existingTask == null;
             if (!create && existingTask != null && !IsHealthy(existingTask))

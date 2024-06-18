@@ -61,7 +61,7 @@ namespace PKISharp.WACS.Services.Serialization
                 }
                 else
                 {
-                    throw new InvalidOperationException();
+                    throw new InvalidOperationException("Configuration encryption is only supported on Windows. Disable the setting in settings.json.");
                 }
             } 
             else

@@ -112,7 +112,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="settings.json" Pack="true" PackagePath="settings_default.json">
+		<None Update="settings.linux.json">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  <Pack>true</Pack>
+		</None>
+		<None Update="settings.json" PackagePath="settings_default.json">
+			<Pack>true</Pack>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

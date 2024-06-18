@@ -1,0 +1,122 @@
+{
+  "Client": {
+    "ClientName": "win-acme",
+    "ConfigurationPath": null,
+    "LogPath": null,
+    "VersionCheck": false
+  },
+  "UI": {
+    "DateFormat": "yyyy/M/d",
+    "PageSize": 50,
+    "TextEncoding": "utf-8",
+    "Color": {
+      "Background": null
+    }
+  },
+  "Acme": {
+    "DefaultBaseUri": "https://acme-v02.api.letsencrypt.org/",
+    "DefaultBaseUriTest": "https://acme-staging-v02.api.letsencrypt.org/",
+    "DefaultBaseUriImport": "https://acme-v01.api.letsencrypt.org/",
+    "PostAsGet": true,
+    "ValidateServerCertificate": true,
+    "RetryCount": 15,
+    "RetryInterval": 5,
+    "PreferredIssuer": null
+  },
+  "Execution": {
+    "DefaultPreExecutionScript": null,
+    "DefaultPostExecutionScript": null
+  },
+  "Proxy": {
+    "Url": null,
+    "UserName": null,
+    "Password": null
+  },
+  "Cache": {
+    "ReuseDays": 1,
+    "DeleteStaleFiles": false,
+    "DeleteStaleFilesDays": 120,
+    "Path": null,
+    "ProtectionMode": "default"
+  },
+  "Notification": {
+    "SmtpServer": null,
+    "SmtpPort": 25,
+    "SmtpUser": null,
+    "SmtpPassword": null,
+    "SmtpSecure": false,
+    "SmtpSecureMode": 1,
+    "SenderName": null,
+    "SenderAddress": null,
+    "ReceiverAddresses": [],
+    "EmailOnSuccess": false,
+    "ComputerName": null
+  },
+  "Security": {
+    "FriendlyNameDateTimeStamp": true
+  },
+  "Script": {
+    "Timeout": 600,
+    "PowershellExecutablePath": "powershell.exe"
+  },
+  "Source": {
+    "DefaultSource": null
+  },
+  "Validation": {
+    "DefaultValidation": null,
+    "DefaultValidationMode": null,
+    "DisableMultiThreading": true,
+    "ParallelBatchSize": 20,
+    "CleanupFolders": true,
+    "PreValidateDns": true,
+    "PreValidateDnsRetryCount": 10,
+    "PreValidateDnsRetryInterval": 30,
+    "AllowDnsSubstitution": true,
+    "DnsServers": [ "[System]" ]
+  },
+  "Order": {
+    "DefaultOrder": null,
+    "DefaultValidDays": null
+  },
+  "Csr": {
+    "DefaultCsr": null,
+    "Rsa": {
+      "KeyBits": 3072,
+      "SignatureAlgorithm": "SHA512withRSA"
+    },
+    "Ec": {
+      "CurveName": "secp384r1",
+      "SignatureAlgorithm": "SHA512withECDSA"
+    }
+  },
+  "Store": {
+    "DefaultStore": null,
+    "CertificateStore": {
+      "DefaultStore": null,
+      "PrivateKeyExportable": false,
+      "UseNextGenerationCryptoApi": false
+    },
+    "CentralSsl": {
+      "DefaultPath": null,
+      "DefaultPassword": null,
+      "DefaultProtectionMode": "default"
+    },
+    "PemFiles": {
+      "DefaultPath": null,
+      "DefaultPassword": null
+    },
+    "PfxFile": {
+      "DefaultPath": null,
+      "DefaultPassword": null,
+      "DefaultProtectionMode": "default"
+    }
+  },
+  "Installation": {
+    "DefaultInstallation": null
+  },
+  "Secrets": {
+    "Json": {
+      "FilePath": null
+    }
+  }
+}
