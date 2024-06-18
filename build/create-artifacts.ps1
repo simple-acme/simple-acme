@@ -49,10 +49,10 @@ function PlatformRelease
 	}
 	$MainZip = "win-acme.v$Version.$Platform.$Postfix.zip"
 	$MainZipPath = "$Out\$MainZip"
-	$MainBinDir = "$Root\src\main\bin\$ReleaseType\net7.0\$Platform"
+	$MainBinDir = "$Root\src\main\bin\$ReleaseType\net8.0\$Platform"
 	if (!(Test-Path $MainBinDir))
 	{
-		$MainBinDir = "$Root\src\main\bin\Any CPU\$ReleaseType\net7.0\$Platform"
+		$MainBinDir = "$Root\src\main\bin\Any CPU\$ReleaseType\net8.0\$Platform"
 	}
 	$MainBinFile = "wacs.exe"
 	if ($Platform -like "linux*") {
@@ -64,7 +64,7 @@ function PlatformRelease
 			./sign-exe.ps1 "$MainBinDir\publish\$MainBinFile" "$Root\build\codesigning.pfx" $Password
 		}
 		Copy-Item "$MainBinDir\publish\$MainBinFile" $Temp
-		if ($Platform -eq "linux-64") {
+		if ($Platform -like "linux*") {
 			Copy-Item "$MainBinDir\settings.linux.json" "$Temp\settings_default.json"
 		} else {
 			Copy-Item "$MainBinDir\settings.json" "$Temp\settings_default.json"
@@ -102,10 +102,10 @@ function PluginRelease
 	Remove-Item $Temp\* -recurse
 	$PlugZip = "$Dir.v$Version.zip"
 	$PlugZipPath = "$Out\$PlugZip"
-	$PlugBin = "$Root\src\$Dir\bin\Release\net7.0\publish"
+	$PlugBin = "$Root\src\$Dir\bin\Release\net8.0\publish"
 	if (!(Test-Path $PlugBin))
 	{
-		$PlugBin = "$Root\src\$Dir\bin\Any CPU\Release\net7.0\publish"
+		$PlugBin = "$Root\src\$Dir\bin\Any CPU\Release\net8.0\publish"
 	}
 	CreateArtifact $PlugBin $Files $PlugZipPath
 

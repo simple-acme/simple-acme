@@ -190,7 +190,7 @@ namespace PKISharp.WACS
                 // We only need to pick validation for those identifiers that
                 // do not have global options configured. 
                 var allIdentifiers = initialTarget.Parts.SelectMany(x => x.Identifiers).Distinct().Order().ToList();
-                var mapping = allIdentifiers.ToDictionary(x => x, x => (PluginFrontend<IValidationPluginCapability, ValidationPluginOptions>?)null);
+                var mapping = allIdentifiers.ToDictionary(x => x, x => (PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>?)null);
                 foreach (var identifier in allIdentifiers)
                 {
                     var options = await _validation.GetValidationOptions(identifier);

@@ -87,27 +87,38 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             {
                 if (_listener == null)
                 {
-                    var protocol = _options.Https == true ? "https" : "http";
-                    var port = _options.Port ?? (_options.Https == true ?
-                        DefaultHttpsValidationPort :
-                        DefaultHttpValidationPort);
-                    var prefix = $"{protocol}://+:{port}/.well-known/acme-challenge/";
+                    var port = DefaultHttpValidationPort; 
                     try
                     {
-                        Listener = new HttpListener();
-                        Listener.Prefixes.Add(prefix);
-                        Listener.Start();
+                        var (listener, listenerPort) = CreateFromOptions(_options);
+                        port = listenerPort;
+                        listener.Start();
+                        Listener = listener;
                         Task.Run(ReceiveRequests);
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        _log.Error("Unable to activate listener, this may be because a non-Microsoft webserver is using port {port}", port);
+                        _log.Error(ex, "Unable to activate listener on port {port}", port);
                         throw;
                     }
                 }
             }
             return Task.CompletedTask;
         }
+
+        private static (HttpListener, int) CreateListener(bool? https, int? userPort)
+        {
+            var protocol = https == true ? "https" : "http";
+            var port = userPort ?? ((https == true) ?
+                DefaultHttpsValidationPort :
+                DefaultHttpValidationPort);
+            var prefix = $"{protocol}://+:{port}/.well-known/acme-challenge/";
+            var testListener = new HttpListener();
+            testListener.Prefixes.Add(prefix);
+            return (testListener, port);
+        }
+
+        public static (HttpListener, int) CreateFromOptions(SelfHostingOptions args) => CreateListener(args.Https, args.Port);
 
         public override Task CleanUp()
         {

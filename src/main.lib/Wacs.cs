@@ -251,20 +251,27 @@ namespace PKISharp.WACS.Host
             // IIS version test
             if (_adminService.IsAdmin)
             {
-                _log.Debug("Running with administrator credentials");
-                var iis = _iis.Version;
-                if (iis.Major > 0)
+                if (OperatingSystem.IsWindows())
                 {
-                    _log.Debug("IIS version {version}", iis);
+                    _log.Debug("Running as administrator");
+                    var iis = _iis.Version;
+                    if (iis.Major > 0)
+                    {
+                        _log.Debug("IIS version {version}", iis);
+                    }
+                    else
+                    {
+                        _log.Debug("IIS not detected");
+                    }
                 }
                 else
                 {
-                    _log.Debug("IIS not detected");
+                    _log.Debug("Running as superuser/root");
                 }
             }
             else
             {
-                _log.Information("Running without administrator credentials, some options disabled");
+                _log.Information("Running as limited user, some options disabled");
             }
 
             // Task scheduler health check
