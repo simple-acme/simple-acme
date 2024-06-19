@@ -39,10 +39,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Linode
 
         public async Task<int> CreateRecord(int domainId, string identifier, string value)
         {
-            if (domainId <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(domainId));
-            }
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(domainId);
             var apiUrl = $"v4/domains/{domainId}/records";
             var postData = new
             {
@@ -73,15 +70,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Linode
 
         public async Task<bool> DeleteRecord(int domainId, int recordId)
         {
-            if (domainId <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(domainId));
-            }
-
-            if (recordId <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(recordId));
-            }
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(domainId);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(recordId);
             var apiUrl = $"v4/domains/{domainId}/records/{recordId}";
             var response = await _httpClient.DeleteAsync(apiUrl);
             if (!response.IsSuccessStatusCode)

@@ -6,12 +6,8 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    internal class RequestLogger
+    internal class RequestLogger(ILogService log)
     {
-        private readonly ILogService _log;
-
-        public RequestLogger(ILogService log) => _log = log;
-
         /// <summary>
         /// Common pre-send functionality
         /// </summary>
@@ -20,13 +16,13 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public async Task PreSend(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            _log.Debug("[HTTP] Send {method} to {uri}", request.Method, request.RequestUri);
+            log.Debug("[HTTP] Send {method} to {uri}", request.Method, request.RequestUri);
             if (request.Content != null)
             {
                 var content = await request.Content.ReadAsStringAsync(cancellationToken);
                 if (!string.IsNullOrWhiteSpace(content))
                 {
-                    _log.Verbose("[HTTP] Request content: {content}", content);
+                    log.Verbose("[HTTP] Request content: {content}", content);
                 }
             }
         }
@@ -41,11 +37,11 @@ namespace PKISharp.WACS.Services
         {
             if (response.IsSuccessStatusCode)
             {
-                _log.Verbose("[HTTP] Request completed with status {s}", response.StatusCode);
+                log.Verbose("[HTTP] Request completed with status {s}", response.StatusCode);
             }
             else
             {
-                _log.Warning("[HTTP] Request completed with status {s}", response.StatusCode);
+                log.Warning("[HTTP] Request completed with status {s}", response.StatusCode);
             }
             if (response.Content != null && response.Content.Headers.ContentLength > 0)
             {
@@ -59,17 +55,17 @@ namespace PKISharp.WACS.Services
                     var content = await response.Content.ReadAsStringAsync(cancellationToken);
                     if (!string.IsNullOrWhiteSpace(content))
                     {
-                        _log.Verbose("[HTTP] Response content: {content}", content);
+                        log.Verbose("[HTTP] Response content: {content}", content);
                     }
                 }
                 else
                 {
-                    _log.Verbose("[HTTP] Response of type {type} ({bytes} bytes)", response.Content.Headers.ContentType?.MediaType, response.Content.Headers.ContentLength);
+                    log.Verbose("[HTTP] Response of type {type} ({bytes} bytes)", response.Content.Headers.ContentType?.MediaType, response.Content.Headers.ContentLength);
                 }
             }
             else
             {
-                _log.Verbose("[HTTP] Empty response");
+                log.Verbose("[HTTP] Empty response");
             }
         }
     }

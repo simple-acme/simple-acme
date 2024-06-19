@@ -8,17 +8,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dreamhost
 {
-    public class DnsManagementClient
+    public class DnsManagementClient(string apiKey, ILogService logService)
     {
-        private readonly string _apiKey;
-        private readonly ILogService _logService;
         private readonly string uri = "https://api.dreamhost.com/";
-
-        public DnsManagementClient(string apiKey, ILogService logService)
-        {
-            _apiKey = apiKey;
-            _logService = logService;
-        }
 
         public async Task CreateRecord(string record, RecordType type, string value)
         {
@@ -30,8 +22,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dreamhost
                     {"value", value}
                 });
             var content = await response.Content.ReadAsStringAsync();
-            _logService.Information("Dreamhost Responded with: {0}", content);
-            _logService.Information("Waiting for 30 seconds");
+            logService.Information("Dreamhost Responded with: {0}", content);
+            logService.Information("Waiting for 30 seconds");
             await Task.Delay(30000);
         }
 
@@ -45,8 +37,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dreamhost
             };
             var response = await SendRequest("dns-remove_record", args);
             var content = await response.Content.ReadAsStringAsync();
-            _logService.Information("Dreamhost Responded with: {0}", content);
-            _logService.Information("Waiting for 30 seconds");
+            logService.Information("Dreamhost Responded with: {0}", content);
+            logService.Information("Waiting for 30 seconds");
             await Task.Delay(30000);
         }
 
@@ -56,7 +48,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dreamhost
             {
                 var queryString = new Dictionary<string, string>
                 {
-                    { "key", _apiKey },
+                    { "key", apiKey },
                     { "unique_id", Guid.NewGuid().ToString() },
                     { "format", "json" },
                     { "cmd", command }

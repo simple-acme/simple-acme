@@ -7,18 +7,10 @@ using System.Linq;
 
 namespace PKISharp.WACS.Services
 {
-    internal class CertificatePicker 
+    internal class CertificatePicker(
+        ILogService log,
+        ISettingsService settingsService)
     {
-        private readonly ISettingsService _settings;
-        private readonly ILogService _log;
-
-        public CertificatePicker(
-            ILogService log,
-            ISettingsService settingsService)
-        {
-            _log = log;
-            _settings = settingsService;
-        }
 
         /// <summary>
         /// Get the name for the root issuer
@@ -39,28 +31,28 @@ namespace PKISharp.WACS.Services
             var selected = options[0];
             if (options.Count > 1)
             {
-                _log.Debug("Found {n} version(s) of the certificate", options.Count);
+                log.Debug("Found {n} version(s) of the certificate", options.Count);
                 foreach (var option in options)
                 {
-                    _log.Debug("Option {n} issued by {issuer} (thumb: {thumb})", 
+                    log.Debug("Option {n} issued by {issuer} (thumb: {thumb})", 
                         options.IndexOf(option) + 1, 
                         Root(option), 
                         option.WithPrivateKey.Thumbprint);
                 }
-                if (!string.IsNullOrEmpty(_settings.Acme.PreferredIssuer))
+                if (!string.IsNullOrEmpty(settingsService.Acme.PreferredIssuer))
                 {
-                    var match = options.FirstOrDefault(x => string.Equals(Root(x), _settings.Acme.PreferredIssuer, StringComparison.InvariantCultureIgnoreCase));
+                    var match = options.FirstOrDefault(x => string.Equals(Root(x), settingsService.Acme.PreferredIssuer, StringComparison.InvariantCultureIgnoreCase));
                     if (match != null)
                     {
                         selected = match;
                     }
                 }
-                _log.Debug("Selected option {n}", options.IndexOf(selected) + 1);
+                log.Debug("Selected option {n}", options.IndexOf(selected) + 1);
             }
-            if (!string.IsNullOrEmpty(_settings.Acme.PreferredIssuer) &&
-                !string.Equals(Root(selected), _settings.Acme.PreferredIssuer, StringComparison.InvariantCultureIgnoreCase))
+            if (!string.IsNullOrEmpty(settingsService.Acme.PreferredIssuer) &&
+                !string.Equals(Root(selected), settingsService.Acme.PreferredIssuer, StringComparison.InvariantCultureIgnoreCase))
             {
-                _log.Warning("Unable to find certificate issued by preferred issuer {issuer}", _settings.Acme.PreferredIssuer);
+                log.Warning("Unable to find certificate issued by preferred issuer {issuer}", settingsService.Acme.PreferredIssuer);
             }
             return selected;
         }

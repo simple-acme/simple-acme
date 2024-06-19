@@ -13,33 +13,24 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         DnsValidationCapability, LinodeJson>
         ("12fdc54c-be30-4458-8066-2c1c565fe2d9",
         "Linode", "Create verification records in Linode DNS")]
-    internal class LinodeDnsValidation : DnsValidation<LinodeDnsValidation>
+    internal class LinodeDnsValidation(
+        LookupClientProvider dnsClient,
+        ILogService logService,
+        ISettingsService settings,
+        DomainParseService domainParser,
+        LinodeOptions options,
+        SecretServiceManager ssm,
+        IProxyService proxyService) : DnsValidation<LinodeDnsValidation>(dnsClient, logService, settings)
     {
-        private readonly DnsManagementClient _client;
-        private readonly DomainParseService _domainParser;
-        private readonly Dictionary<string, int> _domainIds = new();
+        private readonly DnsManagementClient _client = new(ssm.EvaluateSecret(options.ApiToken) ?? "", logService, proxyService);
+        private readonly Dictionary<string, int> _domainIds = [];
         private readonly ConcurrentDictionary<int, List<int>> _recordIds = new();
-        private new readonly ILogService _log;
-
-        public LinodeDnsValidation(
-            LookupClientProvider dnsClient,
-            ILogService logService,
-            ISettingsService settings,
-            DomainParseService domainParser,
-            LinodeOptions options,
-            SecretServiceManager ssm,
-            IProxyService proxyService) : base(dnsClient, logService, settings)
-        {
-            _client = new DnsManagementClient(ssm.EvaluateSecret(options.ApiToken) ?? "", logService, proxyService);
-            _domainParser = domainParser;
-            _log = logService;
-        }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             try
             {
-                var domain = _domainParser.GetRegisterableDomain(record.Authority.Domain);
+                var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var domainId = await _client.GetDomainId(domain);
                 if (domainId == 0)
                 {
@@ -55,8 +46,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 }
                 _ = _recordIds.AddOrUpdate(
                     domainId,
-                    new List<int> { recordId }, 
-                    (b, s) => s.Append(recordId).ToList());
+                    [recordId], 
+                    (b, s) => [.. s, recordId]);
                 return true;
             }
             catch (Exception ex)

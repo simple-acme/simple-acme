@@ -39,13 +39,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             _client = CreateDnsService();
         }
 
-        private class ProxyFactory : HttpClientFactory
+        private class ProxyFactory(IProxyService proxy) : HttpClientFactory
         {
-            private readonly IProxyService _proxy;
-            public ProxyFactory(IProxyService proxy) => _proxy = proxy;
             protected override HttpMessageHandler CreateHandler(CreateHttpClientArgs args)
             {
-                return _proxy.GetHttpMessageHandler();
+                return proxy.GetHttpMessageHandler();
             }
         }
 

@@ -9,35 +9,24 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
-    internal class PfxFileOptionsFactory : PluginOptionsFactory<PfxFileOptions>
+    internal class PfxFileOptionsFactory(
+        ILogService log,
+        ISettingsService settings,
+        ArgumentsInputService arguments) : PluginOptionsFactory<PfxFileOptions>
     {
-        private readonly ILogService _log;
-        private readonly ArgumentsInputService _arguments;
-        private readonly ISettingsService _settings;
-
-        public PfxFileOptionsFactory(
-            ILogService log,
-            ISettingsService settings,
-            ArgumentsInputService arguments)
-        {
-            _log = log;
-            _arguments = arguments;
-            _settings = settings;
-        }
-
-        private ArgumentResult<ProtectedString?> Password => _arguments.
+        private ArgumentResult<ProtectedString?> Password => arguments.
             GetProtectedString<PfxFileArguments>(args => args.PfxPassword, true).
-            WithDefault(PfxFile.DefaultPassword(_settings).Protect(true)).
+            WithDefault(PfxFile.DefaultPassword(settings).Protect(true)).
             DefaultAsNull();
 
-        private ArgumentResult<string?> Path => _arguments.
+        private ArgumentResult<string?> Path => arguments.
             GetString<PfxFileArguments>(args => args.PfxFilePath).
-            WithDefault(PfxFile.DefaultPath(_settings)).
+            WithDefault(PfxFile.DefaultPath(settings)).
             Required().
-            Validate(x => Task.FromResult(x.ValidPath(_log)), "invalid path").
+            Validate(x => Task.FromResult(x.ValidPath(log)), "invalid path").
             DefaultAsNull();
 
-        private ArgumentResult<string?> Name => _arguments.
+        private ArgumentResult<string?> Name => arguments.
             GetString<PfxFileArguments>(args => args.PfxFileName);
 
         public override async Task<PfxFileOptions?> Aquire(IInputService input, RunLevel runLevel)

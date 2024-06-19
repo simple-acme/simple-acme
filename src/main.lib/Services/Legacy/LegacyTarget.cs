@@ -81,7 +81,7 @@ namespace PKISharp.WACS.Services.Legacy
         /// <summary>
         /// List of alternative names for the certificate
         /// </summary>
-        public List<string> AlternativeNames { get; set; } = new List<string>();
+        public List<string> AlternativeNames { get; set; } = [];
 
         /// <summary>
         /// Name of the plugin to use for refreshing the target

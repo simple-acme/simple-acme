@@ -6,18 +6,8 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Clients
 {
-    public class ScriptClient
+    public class ScriptClient(ILogService logService, ISettingsService settings)
     {
-        protected ILogService _log;
-        protected ISettingsService _settings;
-
-        public ScriptClient(ILogService logService, ISettingsService settings)
-        {
-            _log = logService;
-            _settings = settings;
-        }
-
-
         public async Task<bool> RunScript(string script, string parameters, string? censoredParameters = null)
         {
             if (!string.IsNullOrWhiteSpace(script))
@@ -26,7 +16,7 @@ namespace PKISharp.WACS.Clients
                 var actualParameters = parameters;
                 if (actualScript.EndsWith(".ps1"))
                 {
-                    actualScript = _settings.Script.PowershellExecutablePath ?? "powershell.exe";
+                    actualScript = settings.Script.PowershellExecutablePath ?? "powershell.exe";
                     actualParameters = $"-windowstyle hidden -noninteractive -executionpolicy bypass -command \"&{{&'{script.Replace("'", "''")}' {parameters.Replace("\"", "\"\"\"")}; exit $LastExitCode}}\"";
                 }
                 var PSI = new ProcessStartInfo(actualScript)
@@ -41,12 +31,12 @@ namespace PKISharp.WACS.Clients
                 };
                 if (!string.IsNullOrWhiteSpace(actualParameters))
                 {
-                    _log.Information(LogType.All, "Script {script} starting with parameters {parameters}", script, censoredParameters ?? parameters);
+                    logService.Information(LogType.All, "Script {script} starting with parameters {parameters}", script, censoredParameters ?? parameters);
                     PSI.Arguments = actualParameters;
                 }
                 else
                 {
-                    _log.Information(LogType.All, "Script {script} starting", script);
+                    logService.Information(LogType.All, "Script {script} starting", script);
                 }
                 try
                 {
@@ -57,11 +47,11 @@ namespace PKISharp.WACS.Clients
                         if (e.Data != null)
                         {
                             output.AppendLine(e.Data);
-                            _log.Verbose(e.Data);
+                            logService.Verbose(e.Data);
                         }
                         else
                         {
-                            _log.Verbose("Process output without data received");
+                            logService.Verbose("Process output without data received");
                         }
                     };
                     process.ErrorDataReceived += (s, e) =>
@@ -69,31 +59,31 @@ namespace PKISharp.WACS.Clients
                         if (!string.IsNullOrWhiteSpace(e.Data) && !string.Equals(e.Data, "null"))
                         {
                             output.AppendLine($"Error: {e.Data}");
-                            _log.Error("Script error: {0}", e.Data);
+                            logService.Error("Script error: {0}", e.Data);
                         }
                         else
                         {
-                            _log.Verbose("Process error without data received");
+                            logService.Verbose("Process error without data received");
                         }
                     };
                     var exited = false;
                     process.EnableRaisingEvents = true;
                     process.Exited += (s, e) =>
                     {
-                        _log.Information(LogType.Event | LogType.Disk | LogType.Notification, output.ToString());
+                        logService.Information(LogType.Event | LogType.Disk | LogType.Notification, output.ToString());
                         exited = true;
                         if (process.ExitCode != 0)
                         {
-                            _log.Error("Script finished with exit code {code}", process.ExitCode);
+                            logService.Error("Script finished with exit code {code}", process.ExitCode);
                         }
                         else
                         {
-                            _log.Information("Script finished");
+                            logService.Information("Script finished");
                         }
                     };
                     if (process.Start())
                     {
-                        _log.Debug("Process launched: {actualScript} (ID: {Id})", actualScript, process.Id);
+                        logService.Debug("Process launched: {actualScript} (ID: {Id})", actualScript, process.Id);
                     }
                     else
                     {
@@ -105,22 +95,22 @@ namespace PKISharp.WACS.Clients
                     process.StandardInput.Close(); // Helps end the process
                     var totalWait = 0;
                     var interval = 2000;
-                    while (!exited && totalWait < _settings.Script.Timeout * 1000)
+                    while (!exited && totalWait < settings.Script.Timeout * 1000)
                     {
                         await Task.Delay(interval);
                         totalWait += interval;
-                        _log.Verbose("Waiting for process to finish...");
+                        logService.Verbose("Waiting for process to finish...");
                     }
                     if (!exited)
                     {
-                        _log.Error($"Script execution timed out after {_settings.Script.Timeout} seconds, trying to kill");
+                        logService.Error($"Script execution timed out after {settings.Script.Timeout} seconds, trying to kill");
                         try
                         {
                             process.Kill();
                         }
                         catch (Exception ex)
                         {
-                            _log.Error(ex, "Killing process {Id} failed", process.Id);
+                            logService.Error(ex, "Killing process {Id} failed", process.Id);
                         }
                         return false;
                     } 
@@ -131,13 +121,13 @@ namespace PKISharp.WACS.Clients
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Script is unable to start");
+                    logService.Error(ex, "Script is unable to start");
                     return false;
                 }
             }
             else
             {
-                _log.Warning("No script configured.");
+                logService.Warning("No script configured.");
                 return false;
             }
         }

@@ -89,15 +89,14 @@ namespace PKISharp.WACS.Client
         {
             var exists = _client.Propfind(path).Result;
             return exists.IsSuccessful &&
-                exists.Resources.Any() &&
+                exists.Resources.Count != 0 &&
                 exists.Resources.First().IsCollection;
         }
 
         internal bool IsEmpty(string path)
         {
             var exists = _client.Propfind(path).Result;
-            return exists.IsSuccessful &&
-                !exists.Resources.Any();
+            return exists.IsSuccessful && exists.Resources.Count == 0;
         }
 
         public void Delete(string path)
@@ -129,7 +128,7 @@ namespace PKISharp.WACS.Client
             {
                 _log.Verbose("WebDav error {@ex}", ex);
             }
-            return Array.Empty<string>();
+            return [];
         }
 
         #region IDisposable

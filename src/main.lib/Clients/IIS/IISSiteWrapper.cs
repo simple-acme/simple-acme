@@ -50,9 +50,9 @@ namespace PKISharp.WACS.Clients.IIS
     }
 
     [DebuggerDisplay("{BindingInformation}")]
-    internal class IISBindingWrapper : IIISBinding
+    internal class IISBindingWrapper(Binding binding, bool secure) : IIISBinding
     {
-        internal Binding Binding { get; }
+        internal Binding Binding { get; } = binding;
 
         public string Host 
         {
@@ -106,12 +106,6 @@ namespace PKISharp.WACS.Clients.IIS
         public string CertificateStoreName => Binding.CertificateStoreName;
         public string BindingInformation => Binding.NormalizedBindingInformation();
         public SSLFlags SSLFlags => Binding.SSLFlags();
-        public bool Secure { get; private set; }
-
-        public IISBindingWrapper(Binding binding, bool secure)
-        {
-            Binding = binding;
-            Secure = secure;
-        }
+        public bool Secure { get; private set; } = secure;
     }
 }

@@ -6,27 +6,18 @@ using System.Security.Authentication;
 
 namespace PKISharp.WACS.Services
 {
-    public partial class ProxyService : IProxyService
+    public partial class ProxyService(ILogService log, ISettingsService settings, SecretServiceManager secretService) : IProxyService
     {
-        private readonly ILogService _log;
         private IWebProxy? _proxy;
-        private readonly ISettingsService _settings;
-        private readonly SecretServiceManager _secretService;
-        public SslProtocols SslProtocols { get; set; } = SslProtocols.None;
 
-        public ProxyService(ILogService log, ISettingsService settings, SecretServiceManager secretService)
-        {
-            _log = log;
-            _settings = settings;
-            _secretService = secretService;
-        }
+        public SslProtocols SslProtocols { get; set; } = SslProtocols.None;
 
         /// <summary>
         /// Is the user requesting the system proxy
         /// </summary>
         [SupportedOSPlatform("windows")]
         public WindowsProxyUsePolicy ProxyType => 
-            _settings.Proxy.Url?.ToLower().Trim() switch
+            settings.Proxy.Url?.ToLower().Trim() switch
             {
                 "[winhttp]" => WindowsProxyUsePolicy.UseWinHttpProxy,
                 "[wininet]" => WindowsProxyUsePolicy.UseWinInetProxy,
@@ -40,7 +31,7 @@ namespace PKISharp.WACS.Services
         /// Is the user requesting the system proxy
         /// </summary>
         public bool CustomProxy =>
-            _settings.Proxy.Url?.ToLower().Trim() switch
+            settings.Proxy.Url?.ToLower().Trim() switch
             {
                 "[winhttp]" => false,
                 "[wininet]" => false,
@@ -53,7 +44,7 @@ namespace PKISharp.WACS.Services
         public HttpMessageHandler GetHttpMessageHandler() => GetHttpMessageHandler(true);
         public HttpMessageHandler GetHttpMessageHandler(bool checkSsl = true)
         {
-            var logger = new RequestLogger(_log);
+            var logger = new RequestLogger(log);
             if (OperatingSystem.IsWindows())
             {
                 var winHandler = new WindowsHandler(logger)
@@ -109,15 +100,15 @@ namespace PKISharp.WACS.Services
         {
             if (_proxy == null)
             {
-                var proxy = CustomProxy ? new WebProxy(_settings.Proxy.Url) : null;
+                var proxy = CustomProxy ? new WebProxy(settings.Proxy.Url) : null;
                 if (proxy != null)
                 {
-                    if (!string.IsNullOrWhiteSpace(_settings.Proxy.Username))
+                    if (!string.IsNullOrWhiteSpace(settings.Proxy.Username))
                     {
-                        var password = _secretService.EvaluateSecret(_settings.Proxy.Password);
-                        proxy.Credentials = new NetworkCredential(_settings.Proxy.Username, password);
+                        var password = secretService.EvaluateSecret(settings.Proxy.Password);
+                        proxy.Credentials = new NetworkCredential(settings.Proxy.Username, password);
                     }
-                    _log.Warning("Proxying via {proxy}:{port}", proxy.Address?.Host, proxy.Address?.Port);
+                    log.Warning("Proxying via {proxy}:{port}", proxy.Address?.Host, proxy.Address?.Port);
                 }
                 _proxy = proxy;
             }

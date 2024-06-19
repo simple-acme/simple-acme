@@ -11,21 +11,10 @@ using System.Security.Cryptography.X509Certificates;
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
     [SupportedOSPlatform("windows")]
-    public class CertificateStoreClient : IDisposable
+    public class CertificateStoreClient(string storeName, StoreLocation storeLocation, ILogService log, ISettingsService settings) : IDisposable
     {
-        private readonly X509Store _store;
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-        private readonly StoreLocation _location;
+        private readonly X509Store _store = new(storeName, storeLocation);
         private bool disposedValue;
-
-        public CertificateStoreClient(string storeName, StoreLocation storeLocation, ILogService log, ISettingsService settings)
-        {
-            _log = log;
-            _location = storeLocation;
-            _store = new X509Store(storeName, storeLocation);
-            _settings = settings;
-        }
 
         public X509Certificate2? FindByThumbprint(string thumbprint) => GetCertificate(x => string.Equals(x.Thumbprint, thumbprint));
 
@@ -40,8 +29,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             // Determine storage flags
 #pragma warning disable CS0618 // Type or member is obsolete
             var exportable =
-                _settings.Store.CertificateStore.PrivateKeyExportable == true ||
-                (_settings.Store.CertificateStore.PrivateKeyExportable == null && _settings.Security.PrivateKeyExportable == true);
+                settings.Store.CertificateStore.PrivateKeyExportable == true ||
+                (settings.Store.CertificateStore.PrivateKeyExportable == null && settings.Security.PrivateKeyExportable == true);
 #pragma warning restore CS0618 // Type or member is obsolete
             if (exportable)
             {
@@ -50,13 +39,13 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             flags |= X509KeyStorageFlags.PersistKeySet;
             var password = PasswordGenerator.Generate();
             var success = false;
-            var attemptConvert = _settings.Store.CertificateStore.UseNextGenerationCryptoApi != true;
+            var attemptConvert = settings.Store.CertificateStore.UseNextGenerationCryptoApi != true;
             if (attemptConvert)
             {
                 success = SaveWithRetry(certificate, (input) => ConvertAndSave(input, flags, password));
                 if (!success)
                 {
-                    _log.Warning("Unable to save using CryptoAPI, retrying with CNG...");
+                    log.Warning("Unable to save using CryptoAPI, retrying with CNG...");
                 }
             }
             if (!success)
@@ -83,7 +72,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 if (original.Collection.ProtectionMode != PfxProtectionMode.Legacy)
                 {
                     // Retry with legacy PFX protection instead of modern one
-                    _log.Warning("Unable to save using PfxProtectionMode {chosen}, retrying with {legacy}...", original.Collection.ProtectionMode, PfxProtectionMode.Legacy);
+                    log.Warning("Unable to save using PfxProtectionMode {chosen}, retrying with {legacy}...", original.Collection.ProtectionMode, PfxProtectionMode.Legacy);
                     var legacy = new CertificateInfo(original, PfxProtectionMode.Legacy);
                     return execute(legacy);
                 }
@@ -116,7 +105,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                _log.Verbose("{ex}", ex);
+                log.Verbose("{ex}", ex);
                 return false;
             }
             if (dotnet == null)
@@ -132,7 +121,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                _log.Verbose("{ex}", ex);
+                log.Verbose("{ex}", ex);
                 return false;
             }
             if (dotnet == null)
@@ -146,7 +135,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                _log.Verbose("{ex}", ex);
+                log.Verbose("{ex}", ex);
                 return false;
             }
 
@@ -201,7 +190,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             var close = false;
             if (!store.IsOpen)
             {
-                _log.Debug("Open store {name}", store.Name);
+                log.Debug("Open store {name}", store.Name);
                 store.Open(OpenFlags.ReadWrite);
                 close = true;
             }
@@ -213,17 +202,17 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 {
                     label = dotnet.Subject;
                 }
-                _log.Information(LogType.All, "{verb} certificate {FriendlyName} in store {name}", found ? "Replacing" : "Adding", label, store.Name);
-                _log.Verbose("{sub}/{iss} ({thumb})", dotnet.Subject, dotnet.Issuer, dotnet.Thumbprint);
+                log.Information(LogType.All, "{verb} certificate {FriendlyName} in store {name}", found ? "Replacing" : "Adding", label, store.Name);
+                log.Verbose("{sub}/{iss} ({thumb})", dotnet.Subject, dotnet.Issuer, dotnet.Thumbprint);
                 store.Add(dotnet);
             }
             else
             {
-                _log.Verbose("{sub} - {iss} ({thumb}) already exists in {store}", dotnet.Subject, dotnet.Issuer, dotnet.Thumbprint, store.Name);
+                log.Verbose("{sub} - {iss} ({thumb}) already exists in {store}", dotnet.Subject, dotnet.Issuer, dotnet.Thumbprint, store.Name);
             }
             if (close)
             {
-                _log.Debug("Close store {name}", store.Name);
+                log.Debug("Close store {name}", store.Name);
                 store.Close();
             }
         }
@@ -234,7 +223,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         /// <param name="certificate"></param>
         public void InstallCertificateChain(ICertificateInfo certificate)
         {
-            using var imStore = new X509Store(StoreName.CertificateAuthority, _location);
+            using var imStore = new X509Store(StoreName.CertificateAuthority, storeLocation);
             var store = imStore;
             try
             {
@@ -246,7 +235,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Error opening intermediate certificate store: {ex.Message}");
+                log.Warning($"Error opening intermediate certificate store: {ex.Message}");
                 store = _store;
             }
             foreach (var bcCert in certificate.Chain)
@@ -258,7 +247,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 }
                 catch
                 {
-                    _log.Warning("Error saving intermediate certificate");
+                    log.Warning("Error saving intermediate certificate");
                 }
             }
             store.Close();
@@ -270,17 +259,17 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         /// <param name="thumbprint"></param>
         public void UninstallCertificate(string thumbprint)
         {
-            _log.Information("Uninstalling certificate from the certificate store");
+            log.Information("Uninstalling certificate from the certificate store");
             try
             {
                 _store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadWrite);
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Error encountered while opening certificate store");
+                log.Error(ex, "Error encountered while opening certificate store");
                 throw;
             }
-            _log.Debug("Opened certificate store {Name}", _store.Name);
+            log.Debug("Opened certificate store {Name}", _store.Name);
             try
             {
                 var col = _store.Certificates;
@@ -288,15 +277,15 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 {
                     if (string.Equals(cert.Thumbprint, thumbprint, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        _log.Information(LogType.All, "Removing certificate {cert} from store {name}", cert.FriendlyName, _store.Name);
+                        log.Information(LogType.All, "Removing certificate {cert} from store {name}", cert.FriendlyName, _store.Name);
                         _store.Remove(cert);
                     }
                 }
-                _log.Debug("Closing certificate store");
+                log.Debug("Closing certificate store");
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Error removing certificate");
+                log.Error(ex, "Error removing certificate");
                 throw;
             }
             _store.Close();
@@ -320,12 +309,12 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             using var rsaPrivateKey = original.GetRSAPrivateKey();
             if (rsaPrivateKey == null)
             {
-                _log.Verbose("No RSA private key detected");
+                log.Verbose("No RSA private key detected");
                 return null;
             }
             else
             {
-                _log.Debug("Converting private key...");
+                log.Debug("Converting private key...");
             }
 
             // Export private key parameters
@@ -374,7 +363,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Error encountered while opening certificate store");
+                log.Error(ex, "Error encountered while opening certificate store");
                 return null;
             }
             try
@@ -390,7 +379,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Error finding certificate in certificate store");
+                log.Error(ex, "Error finding certificate in certificate store");
                 return null;
             }
             _store.Close();

@@ -54,7 +54,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
                         _ = builder.RegisterType<SecretService>().As<SecretService>().As<ISecretService>().SingleInstance();
             _ = builder.RegisterType<MockAssemblyService>().As<AssemblyService>();
 
-            var input = new Mock.Services.InputService(new List<string>());
+            var input = new Mock.Services.InputService([]);
             _ = builder.RegisterInstance(input).As<IInputService>();
             _ = builder.RegisterType<SecretService>().As<ISecretService>();
             _ = builder.RegisterType<SecretServiceManager>(); 

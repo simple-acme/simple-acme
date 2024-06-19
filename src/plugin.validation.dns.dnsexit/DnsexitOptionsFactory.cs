@@ -10,15 +10,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// Dnsexit DNS validation
     /// </summary>
-    internal class DnsexitOptionsFactory : PluginOptionsFactory<DnsexitOptions>
+    internal class DnsexitOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<DnsexitOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public DnsexitOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<DnsexitArguments>(a => a.ApiKey).Required();
-
 
         public override async Task<DnsexitOptions?> Aquire(IInputService input, RunLevel runLevel)
         {

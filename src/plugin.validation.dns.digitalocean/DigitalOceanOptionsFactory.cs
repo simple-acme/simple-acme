@@ -7,13 +7,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    internal class DigitalOceanOptionsFactory : PluginOptionsFactory<DigitalOceanOptions>
+    internal class DigitalOceanOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<DigitalOceanOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public DigitalOceanOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<DigitalOceanArguments>(a => a.ApiToken).
             Required();
 

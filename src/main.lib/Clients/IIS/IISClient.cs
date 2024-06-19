@@ -103,9 +103,9 @@ namespace PKISharp.WACS.Clients.IIS
             {
                 if (ServerManager == null)
                 {
-                    return new List<IISSiteWrapper>();
+                    return [];
                 }
-                _sites ??= ServerManager.Sites.AsEnumerable().
+                _sites ??= [.. ServerManager.Sites.AsEnumerable().
                        Select(x => new IISSiteWrapper(x)).
                        Where(s =>
                        {
@@ -129,8 +129,7 @@ namespace PKISharp.WACS.Clients.IIS
                                    return false;
                            }
                        }).
-                       OrderBy(s => s.Name).
-                       ToList();
+                       OrderBy(s => s.Name)];
                 return _sites;
             }
         }

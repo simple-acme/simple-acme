@@ -1,36 +1,24 @@
 ﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
-using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.TargetPlugins
 {
-    internal class CsrOptionsFactory : PluginOptionsFactory<CsrOptions>
+    internal class CsrOptionsFactory(ILogService log, ArgumentsInputService arguments) : PluginOptionsFactory<CsrOptions>
     {
-        private readonly ILogService _log;
-        private readonly ArgumentsInputService _arguments;
-
-        public CsrOptionsFactory(ILogService log, ArgumentsInputService arguments)
-        {
-            _log = log;
-            _arguments = arguments;
-        }
-
         public override int Order => 6;
 
-        private ArgumentResult<string?> CsrFile => _arguments.
+        private ArgumentResult<string?> CsrFile => arguments.
             GetString<CsrArguments>(x => x.CsrFile).
             Required().
-            Validate(x => Task.FromResult(x.ValidFile(_log)), "invalid file");
+            Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
-        private ArgumentResult<string?> PkFile => _arguments.
+        private ArgumentResult<string?> PkFile => arguments.
             GetString<CsrArguments>(x => x.PkFile).
-            Validate(x => Task.FromResult(x.ValidFile(_log)), "invalid file");
+            Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
         public override async Task<CsrOptions?> Aquire(IInputService inputService, RunLevel runLevel)
         {

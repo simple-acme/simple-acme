@@ -22,20 +22,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
         SelfHostingCapability, WacsJsonPlugins>
         ("a1565064-b208-4467-8ca1-1bd3c08aa500", 
         "SelfHosting", "Answer TLS verification request from win-acme")]
-    internal class SelfHosting : Validation<TlsAlpn01ChallengeValidationDetails>
+    internal class SelfHosting(ILogService log, SelfHostingOptions options) : Validation<TlsAlpn01ChallengeValidationDetails>
     {
         internal const int DefaultValidationPort = 443;
         private TcpListener? _listener;
         private CancellationTokenSource? _tokenSource;
         private X509Certificate2? _certificate;
-        private readonly SelfHostingOptions _options;
-        private readonly ILogService _log;
-
-        public SelfHosting(ILogService log, SelfHostingOptions options)
-        {
-            _log = log;
-            _options = options;
-        }
 
         public async Task RecieveRequests()
         {
@@ -49,10 +41,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                 using var sslStream = new SslStream(client.GetStream());
                 var sslOptions = new SslServerAuthenticationOptions
                 {
-                    ApplicationProtocols = new List<SslApplicationProtocol>
-                    {
-                        new("acme-tls/1")
-                    },
+                    ApplicationProtocols = [new("acme-tls/1")],
                     ServerCertificate = _certificate
                 };
                 sslStream.AuthenticateAsServer(sslOptions);
@@ -71,8 +60,21 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
             return Task.CompletedTask;
         }
 
+        public static (TcpListener, int) CreateListener(int? userPort)
+        {
+            var port = userPort ?? DefaultValidationPort;
+            var testListener = new TcpListener(IPAddress.IPv6Any, port);
+            testListener.Server.DualMode = true;
+            if (OperatingSystem.IsWindows())
+            {
+                testListener.AllowNatTraversal(true);
+            }
+            return (testListener, port);
+        }
+
         public override Task PrepareChallenge(ValidationContext context, TlsAlpn01ChallengeValidationDetails challenge)
         {
+            var port = DefaultValidationPort;
             try
             {
                 using var rsa = RSA.Create(2048);
@@ -104,19 +106,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                     X509KeyStorageFlags.MachineKeySet);
 
                 _tokenSource = new();
-                _listener = new TcpListener(IPAddress.IPv6Any, _options.Port ?? DefaultValidationPort);
-                _listener.Server.DualMode = true;
-                if (OperatingSystem.IsWindows())
-                {
-                    _listener.AllowNatTraversal(true);
-                }
-                _listener.Start();
 
+                var (newListener, newPort) = CreateListener(options.Port);
+                port = newPort;
+                newListener.Start();
+                _listener = newListener;
                 Task.Run(RecieveRequests);
             }
             catch
             {
-                _log.Error("Unable to activate TcpClient, this may be because of insufficient rights or another application using port 443");
+                log.Error("Unable to activate TcpClient for port {port}", port);
                 throw;
             }
             return Task.CompletedTask;

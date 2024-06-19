@@ -5,10 +5,10 @@ using System.Linq;
 
 namespace PKISharp.WACS.Plugins.OrderPlugins
 {
-    internal class SiteCapability : DefaultCapability
+    internal class SiteCapability(Target target) : DefaultCapability
     {
-        protected readonly Target Target;
-        public SiteCapability(Target target) => Target = target;
+        protected readonly Target Target = target;
+
         public override State State
         {
             get

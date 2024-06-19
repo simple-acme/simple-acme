@@ -1,38 +1,34 @@
 ﻿using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Plugins.Interfaces;
+using System;
 
 namespace PKISharp.WACS.Services
 {
-    internal class UserRoleService : IUserRoleService
+    internal class UserRoleService(IIISClient iisClient, AdminService adminService) : IUserRoleService
     {
-        private readonly IIISClient _iisClient;
-        private readonly AdminService _adminService;
+        public bool AllowTaskScheduler => adminService.IsAdmin;
 
-        public UserRoleService(IIISClient iisClient, AdminService adminService)
-        {
-            _iisClient = iisClient;
-            _adminService = adminService;
-        }
+        public bool AllowCertificateStore => adminService.IsAdmin;
 
-        public bool AllowTaskScheduler => _adminService.IsAdmin;
+        public bool AllowLegacy => adminService.IsAdmin;
 
-        public bool AllowCertificateStore => _adminService.IsAdmin;
-
-        public bool AllowLegacy => _adminService.IsAdmin;
-
-        public bool AllowSelfHosting => _adminService.IsAdmin;
+        public bool AllowSelfHosting => adminService.IsAdmin;
 
         public State IISState
         {
             get
             {
-                if (!_adminService.IsAdmin)
+                if (!OperatingSystem.IsWindows())
+                {
+                    return State.DisabledState("Not support on this platform.");
+                }
+                if (!adminService.IsAdmin)
                 {
                     return State.DisabledState("Run as administrator to allow access to IIS.");
                 }
-                if (_iisClient.Version.Major <= 6)
+                if (iisClient.Version.Major <= 6)
                 {
-                    return State.DisabledState("No supported version of IIS detected.");
+                    return State.DisabledState("Unsupported version of IIS detected.");
                 }
                 return State.EnabledState();
             }

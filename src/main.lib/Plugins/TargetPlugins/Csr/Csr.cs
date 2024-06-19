@@ -20,33 +20,24 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         DefaultCapability, WacsJsonPlugins>
         ("5C3DB0FB-840B-469F-B5A7-0635D8E9A93D", 
         CsrOptions.NameLabel, "CSR created by another program")]
-    internal class Csr : ITargetPlugin
+    internal class Csr(ILogService logService, CsrOptions options) : ITargetPlugin
     {
-        private readonly ILogService _log;
-        private readonly CsrOptions _options;
-
-        public Csr(ILogService logService, CsrOptions options)
-        {
-            _log = logService;
-            _options = options;
-        }
-
         public Task<Target?> Generate()
         {
             // Read CSR
             string csrString;
-            if (string.IsNullOrEmpty(_options.CsrFile))
+            if (string.IsNullOrEmpty(options.CsrFile))
             {
-                _log.Error("No CsrFile specified in options");
+                logService.Error("No CsrFile specified in options");
                 return Task.FromResult<Target?>(null);
             }
             try
             {
-                csrString = File.ReadAllText(_options.CsrFile);
+                csrString = File.ReadAllText(options.CsrFile);
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Unable to read CSR from {CsrFile}", _options.CsrFile);
+                logService.Error(ex, "Unable to read CSR from {CsrFile}", options.CsrFile);
                 return Task.FromResult<Target?>(null);
             }
 
@@ -68,22 +59,22 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Unable to parse CSR");
+                logService.Error(ex, "Unable to parse CSR");
                 return Task.FromResult<Target?>(null);
             }
 
             AsymmetricKeyParameter? pkBytes = null;
-            if (!string.IsNullOrWhiteSpace(_options.PkFile))
+            if (!string.IsNullOrWhiteSpace(options.PkFile))
             {
                 // Read PK
                 string pkString;
                 try
                 {
-                    pkString = File.ReadAllText(_options.PkFile);
+                    pkString = File.ReadAllText(options.PkFile);
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Unable to read private key from {PkFile}", _options.PkFile);
+                    logService.Error(ex, "Unable to read private key from {PkFile}", options.PkFile);
                     return Task.FromResult<Target?>(null);
                 }
 
@@ -103,16 +94,16 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Unable to parse private key");
+                    logService.Error(ex, "Unable to parse private key");
                     return Task.FromResult<Target?>(null);
                 }
             }
 
-            var ret = new Target($"[{nameof(Csr)}] {_options.CsrFile}",
+            var ret = new Target($"[{nameof(Csr)}] {options.CsrFile}",
                 commonName,
-                new List<TargetPart> {
+                [
                     new(alternativeNames)
-                })
+                ])
             {
                 UserCsrBytes = csrBytes,
                 PrivateKey = pkBytes

@@ -18,42 +18,19 @@ namespace PKISharp.WACS
     /// <summary>
     /// This part of the code handles the actual order process of ACME certificates
     /// </summary>
-    internal class OrderProcessor
+    internal class OrderProcessor(
+        IAutofacBuilder scopeBuilder,
+        ILogService log,
+        IInputService input,
+        ISettingsService settings,
+        ICertificateService certificateService,
+        ICacheService cacheService,
+        RenewalValidator validator,
+        DueDateRuntimeService dueDate,
+        ExceptionHandler exceptionHandler,
+        AcmeClient clientManager)
     {
-        private readonly IAutofacBuilder _scopeBuilder;
-        private readonly ILogService _log;
-        private readonly IInputService _input;
-        private readonly ISettingsService _settings;
-        private readonly ICertificateService _certificateService;
-        private readonly ICacheService _cacheService;
-        private readonly ExceptionHandler _exceptionHandler;
-        private readonly RenewalValidator _validator;
-        private readonly DueDateRuntimeService _dueDate;
-        private readonly AcmeClient _client;
-
-        public OrderProcessor(
-            IAutofacBuilder scopeBuilder,
-            ILogService log,
-            IInputService input,
-            ISettingsService settings,
-            ICertificateService certificateService,
-            ICacheService cacheService,
-            RenewalValidator validator,
-            DueDateRuntimeService dueDate,
-            ExceptionHandler exceptionHandler, 
-            AcmeClient clientManager)
-        {
-            _validator = validator;
-            _scopeBuilder = scopeBuilder;
-            _log = log;
-            _input = input;
-            _settings = settings;
-            _exceptionHandler = exceptionHandler;
-            _dueDate = dueDate; 
-            _certificateService = certificateService;
-            _cacheService = cacheService;
-            _client = clientManager;
-        }
+        private readonly DueDateRuntimeService _dueDate = dueDate;
 
         /// <summary>
         /// Get metadata about the previous certificate and 
@@ -68,10 +45,10 @@ namespace PKISharp.WACS
                 // sub order regardless of the fact that it may have another
                 // shape (e.g. different SAN names or common name etc.). This
                 // means we cannot use the cache key for it.
-                order.PreviousCertificate = _cacheService.PreviousInfo(order.Renewal, order.OrderCacheKey);
+                order.PreviousCertificate = cacheService.PreviousInfo(order.Renewal, order.OrderCacheKey);
                 if (order.PreviousCertificate != null)
                 {
-                    _log.Debug("Previous certificate found at {fi}", order.PreviousCertificate.CacheFile.FullName);
+                    log.Debug("Previous certificate found at {fi}", order.PreviousCertificate.CacheFile.FullName);
                 }
 
                 var orderInfo = orderInfos.Where(x => x.Key == order.OrderCacheKey).FirstOrDefault();
@@ -83,22 +60,22 @@ namespace PKISharp.WACS
                         // either because it's a new one, or because it's an order that has changed
                         // shape due to a dynamic source plugin.
                         order.ShouldRun = true;
-                        _log.Information(LogType.All, "Order {order} must renew because its certificate was revoked", order.OrderFriendlyName);
+                        log.Information(LogType.All, "Order {order} must renew because its certificate was revoked", order.OrderFriendlyName);
                         continue;
                     }
                 }
 
                 // Match using exact cache key
-                order.CachedCertificate = _cacheService.CachedInfo(order.Order);
+                order.CachedCertificate = cacheService.CachedInfo(order.Order);
                 if (order.CachedCertificate != null)
                 {
                     try
                     {
-                        order.RenewalInfo = await _client.GetRenewalInfo(order.CachedCertificate);
+                        order.RenewalInfo = await clientManager.GetRenewalInfo(order.CachedCertificate);
                     } 
                     catch (Exception ex)
                     {
-                        _log.Error(ex, "Error getting renewal information from server");
+                        log.Error(ex, "Error getting renewal information from server");
                     }
                 } 
                 else 
@@ -109,7 +86,7 @@ namespace PKISharp.WACS
                     order.ShouldRun = true;
                     if (!order.Renewal.New)
                     {
-                        _log.Information(LogType.All, "Source change in order {order} detected", order.OrderFriendlyName);
+                        log.Information(LogType.All, "Source change in order {order} detected", order.OrderFriendlyName);
                     }
                 }
             }
@@ -147,14 +124,14 @@ namespace PKISharp.WACS
             // Validate all orders that need it
             var alwaysTryValidation = runLevel.HasFlag(RunLevel.Test) || runLevel.HasFlag(RunLevel.NoCache);
             var validationRequired = fromServer.Where(x => x.Order.Details != null && (x.Order.Valid == false || alwaysTryValidation));
-            await _validator.ValidateOrders(validationRequired, runLevel);
+            await validator.ValidateOrders(validationRequired, runLevel);
 
             // Download all the orders in parallel
             await Task.WhenAll(context.Select(async order =>
             {
                 if (order.OrderResult.Success == false)
                 {
-                    _log.Verbose("Order {n}/{m} ({friendly}): error {error}",
+                    log.Verbose("Order {n}/{m} ({friendly}): error {error}",
                          context.IndexOf(order) + 1,
                          context.Count,
                          order.OrderFriendlyName,
@@ -162,7 +139,7 @@ namespace PKISharp.WACS
                 }
                 else if (order.NewCertificate == null)
                 {
-                    _log.Verbose("Order {n}/{m} ({friendly}): processing...",
+                    log.Verbose("Order {n}/{m} ({friendly}): processing...",
                          context.IndexOf(order) + 1,
                          context.Count,
                          order.OrderFriendlyName);
@@ -170,7 +147,7 @@ namespace PKISharp.WACS
                 }
                 else
                 {
-                    _log.Verbose("Order {n}/{m} ({friendly}): handle from cache",
+                    log.Verbose("Order {n}/{m} ({friendly}): handle from cache",
                          context.IndexOf(order) + 1,
                          context.Count,
                          order.OrderFriendlyName);
@@ -188,7 +165,7 @@ namespace PKISharp.WACS
             // Process store/install steps
             foreach (var order in orderContexts)
             {
-                _log.Verbose("Processing order {n}/{m}: {friendly}",
+                log.Verbose("Processing order {n}/{m}: {friendly}",
                    orderContexts.IndexOf(order) + 1,
                    orderContexts.Count,
                    order.OrderFriendlyName);
@@ -221,11 +198,11 @@ namespace PKISharp.WACS
                 var renewalInfo = default(AcmeRenewalInfo);
                 try
                 {
-                    renewalInfo = await _client.GetRenewalInfo(order.NewCertificate);
+                    renewalInfo = await clientManager.GetRenewalInfo(order.NewCertificate);
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Error getting renewal information from server");
+                    log.Error(ex, "Error getting renewal information from server");
                 }
                 var dueDate = _dueDate.ComputeDueDate(order.NewCertificate.Certificate, renewalInfo);
                 
@@ -257,7 +234,7 @@ namespace PKISharp.WACS
                 // Early escape for testing validation only
                 if (context.Renewal.New &&
                     context.RunLevel.HasFlag(RunLevel.Test) &&
-                    !await _input.PromptYesNo($"[--test] Store and install the certificate for order {context.OrderFriendlyName}?", true))
+                    !await input.PromptYesNo($"[--test] Store and install the certificate for order {context.OrderFriendlyName}?", true))
                 {
                     return true;
                 }
@@ -265,7 +242,7 @@ namespace PKISharp.WACS
                 // Load the store plugins
                 var storeContexts = context.Renewal.StorePluginOptions.
                     Where(x => x is not Plugins.StorePlugins.NullOptions).
-                    Select(x => _scopeBuilder.PluginBackend<IStorePlugin, StorePluginOptions>(context.OrderScope, x)).
+                    Select(x => scopeBuilder.PluginBackend<IStorePlugin, StorePluginOptions>(context.OrderScope, x)).
                     ToList();
                 var storeInfo = new Dictionary<Type, StoreInfo>();
                 if (!await HandleStoreAdd(context, context.NewCertificate, storeContexts, storeInfo))
@@ -288,7 +265,7 @@ namespace PKISharp.WACS
             }
             catch (Exception ex)
             {
-                var message = _exceptionHandler.HandleException(ex);
+                var message = exceptionHandler.HandleException(ex);
                 context.OrderResult.AddErrorMessage(message);
             }
             return false;
@@ -308,7 +285,7 @@ namespace PKISharp.WACS
                 return null;
             }
             if (cachedCertificate.CacheFile.LastWriteTime <
-                DateTime.Now.AddDays(_settings.Cache.ReuseDays * -1))
+                DateTime.Now.AddDays(settings.Cache.ReuseDays * -1))
             {
                 return null;
             }
@@ -320,16 +297,16 @@ namespace PKISharp.WACS
             }
             if (runLevel.HasFlag(RunLevel.NoCache))
             {
-                _log.Warning(
+                log.Warning(
                     "Cached certificate available but not used due to --{switch} switch.",
                     nameof(MainArguments.NoCache).ToLower());
                 return null;
             }
-            _log.Warning(
+            log.Warning(
                 "Using cache for {friendlyName}. To get a new certificate " +
                 "within {days} days, run with --{switch}.",
                 context.Order.FriendlyNameIntermediate,
-                _settings.Cache.ReuseDays,
+                settings.Cache.ReuseDays,
                 nameof(MainArguments.NoCache).ToLower());
             return cachedCertificate;
         }
@@ -341,13 +318,13 @@ namespace PKISharp.WACS
         /// <returns></returns>
         private async Task CreateOrder(OrderContext context)
         {
-            _log.Verbose("Obtain order details for {order}", context.OrderFriendlyName);
+            log.Verbose("Obtain order details for {order}", context.OrderFriendlyName);
 
             // Place the order
             var orderManager = context.OrderScope.Resolve<OrderManager>();
             context.Order.KeyPath = context.Order.Renewal.CsrPluginOptions?.ReusePrivateKey == true
-                ? _cacheService.Key(context.Order).FullName : null;
-            context.Order.Details = await orderManager.GetOrCreate(context.Order, _client, context.PreviousCertificate, context.RunLevel);
+                ? cacheService.Key(context.Order).FullName : null;
+            context.Order.Details = await orderManager.GetOrCreate(context.Order, clientManager, context.PreviousCertificate, context.RunLevel);
 
             // Sanity checks
             if (context.Order.Details == null)
@@ -383,11 +360,11 @@ namespace PKISharp.WACS
             // Request the certificate
             try
             {
-                return await _certificateService.RequestCertificate(csrPlugin?.Backend, context.Order);
+                return await certificateService.RequestCertificate(csrPlugin?.Backend, context.Order);
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Error requesting certificate {friendlyName}", context.Order.FriendlyNameIntermediate);
+                log.Error(ex, "Error requesting certificate {friendlyName}", context.Order.FriendlyNameIntermediate);
                 return null;
             }
         }
@@ -413,11 +390,11 @@ namespace PKISharp.WACS
                     var store = stores[i].Resolve<PluginBackend<IStorePlugin, IPluginCapability, StorePluginOptions>>();
                     if (steps > 1)
                     {
-                        _log.Information("Store step {n}/{m}: {name}...", i + 1, steps, store.Meta.Name);
+                        log.Information("Store step {n}/{m}: {name}...", i + 1, steps, store.Meta.Name);
                     }
                     else
                     {
-                        _log.Information("Store with {name}...", store.Meta.Name);
+                        log.Information("Store with {name}...", store.Meta.Name);
                     }
                     var state = store.Capability.State;
                     if (state.Disabled)
@@ -432,13 +409,13 @@ namespace PKISharp.WACS
                     }
                     else
                     {
-                        _log.Warning("Store {name} didn't provide feedback, this may affect installation steps", store.Meta.Name);
+                        log.Warning("Store {name} didn't provide feedback, this may affect installation steps", store.Meta.Name);
                     }
                 }
             }
             catch (Exception ex)
             {
-                var reason = _exceptionHandler.HandleException(ex, "Unable to store certificate");
+                var reason = exceptionHandler.HandleException(ex, "Unable to store certificate");
                 context.OrderResult.AddErrorMessage($"Store failed: {reason}");
                 return false;
             }
@@ -469,7 +446,7 @@ namespace PKISharp.WACS
                     }
                     catch (Exception ex)
                     {
-                        _log.Error(ex, "Unable to delete previous certificate");
+                        log.Error(ex, "Unable to delete previous certificate");
                         // not a show-stopper, consider the renewal a success
                         context.OrderResult.AddErrorMessage($"Delete failed: {ex.Message}", false);
                     }
@@ -495,7 +472,7 @@ namespace PKISharp.WACS
             {
                 var installContext = context.Renewal.InstallationPluginOptions.
                     Where(x => x is not Plugins.InstallationPlugins.NullOptions).
-                    Select(x => _scopeBuilder.PluginBackend<IInstallationPlugin, IInstallationPluginCapability, InstallationPluginOptions>(context.OrderScope, x)).
+                    Select(x => scopeBuilder.PluginBackend<IInstallationPlugin, IInstallationPluginCapability, InstallationPluginOptions>(context.OrderScope, x)).
                     ToList();
 
                 var steps = installContext.Count;
@@ -504,11 +481,11 @@ namespace PKISharp.WACS
                     var installationPlugin = installContext[i].Resolve<PluginBackend<IInstallationPlugin, IInstallationPluginCapability, InstallationPluginOptions>>();
                     if (steps > 1)
                     {
-                        _log.Information("Installation step {n}/{m}: {name}...", i + 1, steps, installationPlugin.Meta.Name);
+                        log.Information("Installation step {n}/{m}: {name}...", i + 1, steps, installationPlugin.Meta.Name);
                     }
                     else
                     {
-                        _log.Information("Installing with {name}...", installationPlugin.Meta.Name);
+                        log.Information("Installing with {name}...", installationPlugin.Meta.Name);
                     }
                     var state = installationPlugin.Capability.State;
                     if (state.Disabled)
@@ -527,7 +504,7 @@ namespace PKISharp.WACS
             }
             catch (Exception ex)
             {
-                var reason = _exceptionHandler.HandleException(ex, "Unable to install certificate");
+                var reason = exceptionHandler.HandleException(ex, "Unable to install certificate");
                 context.OrderResult.AddErrorMessage($"Install failed: {reason}");
                 return false;
             }
@@ -543,7 +520,7 @@ namespace PKISharp.WACS
         {
             foreach (var missing in missingOrders)
             {
-                _cacheService.Delete(renewal, missing);
+                cacheService.Delete(renewal, missing);
             }
         }
     }

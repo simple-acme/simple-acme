@@ -58,7 +58,7 @@ namespace PKISharp.WACS.Services
             var renewals = Renewals.ToList();
             if (renewal.New)
             {
-                renewal.History = new List<RenewResult>();
+                renewal.History = [];
                 renewals.Add(renewal);
                 _log.Information(LogType.All, "Adding renewal for {friendlyName}", renewal.LastFriendlyName);
             }

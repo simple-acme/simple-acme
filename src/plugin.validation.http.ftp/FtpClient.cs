@@ -108,7 +108,7 @@ namespace PKISharp.WACS.Clients
             var list = await client.GetListing(uri.PathAndQuery);
             if (list == null)
             {
-                return new List<string>();
+                return [];
             }
             return list.Select(x => x.Name);
         }

@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -10,43 +9,60 @@ namespace PKISharp.WACS.Clients.IIS
     /// Class to communicate desired binding state to the IISclient
     /// Follows the fluent/immutable pattern
     /// </summary>
+    /// <remarks>
+    /// Regular constructor
+    /// </remarks>
+    /// <param name="flags"></param>
+    /// <param name="port"></param>
+    /// <param name="ip"></param>
+    /// <param name="thumbprint"></param>
+    /// <param name="store"></param>
+    /// <param name="host"></param>
+    /// <param name="siteId"></param>
     [DebuggerDisplay("Binding {Binding}")]
-    public class BindingOptions
+    public class BindingOptions(
+        SSLFlags flags = SSLFlags.None,
+        int port = IISClient.DefaultBindingPort,
+        string ip = IISClient.DefaultBindingIp,
+        IEnumerable<byte>? thumbprint = null,
+        string? store = null,
+        string host = "",
+        long? siteId = null)
     {
         /// <summary>
         /// Desired flags 
         /// </summary>
-        public SSLFlags Flags { get; }
+        public SSLFlags Flags { get; } = flags;
 
         /// <summary>
         /// Port to use when a new binding has to be created
         /// </summary>
-        public int Port { get; }
+        public int Port { get; } = port;
 
         /// <summary>
         /// IP address to use when a new binding has to be created
         /// </summary>
-        public string IP { get; }
+        public string IP { get; } = ip;
 
         /// <summary>
         /// Certificate thumbprint that should be set for the binding
         /// </summary>
-        public IEnumerable<byte>? Thumbprint { get; }
+        public IEnumerable<byte>? Thumbprint { get; } = thumbprint;
 
         /// <summary>
         /// Certificate store where the certificate can be found
         /// </summary>
-        public string? Store { get; }
+        public string? Store { get; } = store;
 
         /// <summary>
         /// Hostname that should be set for the binding
         /// </summary>
-        public string Host { get; } = "";
+        public string Host { get; } = host;
 
         /// <summary>
         /// Optional: SiteId where new binding are supposed to be created
         /// </summary>
-        public long? SiteId { get; }
+        public long? SiteId { get; } = siteId;
 
         /// <summary>
         /// Binding string to use in IIS
@@ -74,34 +90,6 @@ namespace PKISharp.WACS.Clients.IIS
         }
       
         public override string ToString() => Binding;
-
-        /// <summary>
-        /// Regular constructor
-        /// </summary>
-        /// <param name="flags"></param>
-        /// <param name="port"></param>
-        /// <param name="ip"></param>
-        /// <param name="thumbprint"></param>
-        /// <param name="store"></param>
-        /// <param name="host"></param>
-        /// <param name="siteId"></param>
-        public BindingOptions(
-            SSLFlags flags = SSLFlags.None,
-            int port = IISClient.DefaultBindingPort,
-            string ip = IISClient.DefaultBindingIp,
-            IEnumerable<byte>? thumbprint = null,
-            string? store = null,
-            string host = "",
-            long? siteId = null)
-        {
-            Flags = flags;
-            Port = port;
-            IP = ip;
-            Thumbprint = thumbprint;
-            Store = store;
-            Host = host;
-            SiteId = siteId;
-        }
 
         public BindingOptions WithFlags(SSLFlags flags) => new(flags, Port, IP, Thumbprint, Store, Host, SiteId);
         public BindingOptions WithPort(int port) => new(Flags, port, IP, Thumbprint, Store, Host, SiteId);

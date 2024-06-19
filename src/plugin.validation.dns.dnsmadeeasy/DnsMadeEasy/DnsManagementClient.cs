@@ -12,19 +12,12 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
 {
-    public class DnsManagementClient
+    public class DnsManagementClient(string apiKey, string apiSecret, IProxyService proxyService)
     {
-        private readonly string _apiKey;
-        private readonly string _apiSecret;
-        readonly IProxyService _proxyService;
+        private readonly string _apiKey = apiKey;
+        private readonly string _apiSecret = apiSecret;
+        readonly IProxyService _proxyService = proxyService;
         private readonly string _uri = "https://api.dnsmadeeasy.com/";
-
-        public DnsManagementClient(string apiKey, string apiSecret, IProxyService proxyService)
-        {
-            _apiKey = apiKey;
-            _apiSecret = apiSecret;
-            _proxyService = proxyService;
-        }
 
         #region Lookup Domain Id
         public async Task<string> LookupDomainId(string domain)
@@ -74,9 +67,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
                 var request = JsonConvert.DeserializeObject<DomainResponseCollection>(json);
 
                 if (request == null || request.Data == null || request.Data.Length == 0)
-                    return Array.Empty<string>();
+                    return [];
 
-                List<string> recordId = new();
+                List<string> recordId = [];
                 foreach (var result in request.Data)
                 {
                     if (string.Equals(result.Name, recordName, StringComparison.InvariantCultureIgnoreCase) &&
@@ -87,7 +80,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
                     }
                 }
 
-                return recordId.ToArray();
+                return [.. recordId];
             }
             else
             {

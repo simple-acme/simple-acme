@@ -28,7 +28,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         private ManualOptions? Options(string commandLine)
         {
             var optionsParser = new ArgumentsParser(log, new MockAssemblyService(log), commandLine.Split(' '));
-            var input = new Mock.Services.InputService(new());
+            var input = new Mock.Services.InputService([]);
             var secretService = new SecretServiceManager(MockContainer.TestScope(), input, plugins, log);
             var argsInput = new ArgumentsInputService(log, optionsParser, input, secretService);
             var x = new ManualOptionsFactory(argsInput);

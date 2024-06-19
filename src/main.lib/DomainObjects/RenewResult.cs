@@ -66,12 +66,12 @@ namespace PKISharp.WACS.DomainObjects
                 var ret = OrderResultsJson;
                 if (ret == null)
                 {
-                    ret = new List<OrderResult>();
-                    if (ThumbprintsJson != null && ThumbprintsJson.Any())
+                    ret = [];
+                    if (ThumbprintsJson != null && ThumbprintsJson.Count != 0)
                     {
                         foreach (var thumb in ThumbprintsJson)
                         {
-                            ret.Add(new OrderResult(!ret.Any() ? "main" : "legacy")
+                            ret.Add(new OrderResult(ret.Count == 0 ? "main" : "legacy")
                             {
                                 Thumbprint = thumb,
                                 ExpireDate = _expireDate,
@@ -101,7 +101,7 @@ namespace PKISharp.WACS.DomainObjects
         {
             get
             {
-                if (OrderResultsJson?.Any() ?? false)
+                if (OrderResultsJson?.Count > 0)
                 {
                     return OrderResultsJson.
                         Where(x => !string.IsNullOrEmpty(x.Thumbprint)).
@@ -113,7 +113,7 @@ namespace PKISharp.WACS.DomainObjects
                 {
                     return ThumbprintsJson;
                 }
-                return new List<string>();
+                return [];
             }
         }
 
@@ -134,7 +134,7 @@ namespace PKISharp.WACS.DomainObjects
         public RenewResult(string error) : this()
         {
             Success = false;
-            ErrorMessages = new List<string> { error };
+            ErrorMessages = [error];
         }
 
         public override string ToString() => $"{Date} " +

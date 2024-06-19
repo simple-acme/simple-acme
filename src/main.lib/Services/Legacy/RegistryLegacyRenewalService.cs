@@ -35,6 +35,6 @@ namespace PKISharp.WACS.Services.Legacy
 
         private string Key => $"\\Software\\{_clientName}\\{_baseUri}";
 
-        internal override string[] RenewalsRaw => Registry.GetValue(_hive, _renewalsKey, null) as string[] ?? Array.Empty<string>();
+        internal override string[] RenewalsRaw => Registry.GetValue(_hive, _renewalsKey, null) as string[] ?? [];
     }
 }

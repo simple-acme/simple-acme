@@ -87,7 +87,6 @@ namespace PKISharp.WACS.Host
             var total = _renewalStore.Renewals.Count();
             var due = _renewalStore.Renewals.Count(x => _dueDateService.IsDue(x));
             var error = _renewalStore.Renewals.Count(x => !x.History.LastOrDefault()?.Success ?? false);
-            var iisState = _userRoleService.IISState;
             var options = new List<Choice<Func<Task>>>
             {
                 Choice.Create<Func<Task>>(

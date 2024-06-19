@@ -21,35 +21,24 @@ namespace PKISharp.WACS.Plugins.Interfaces
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TOptions,
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TOptionsFactory,
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCapability,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TJson> : 
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TJson>(string id, string name, string description) : 
             Attribute, IPluginMeta
             where TOptions : PluginOptions, new()
             where TOptionsFactory : IPluginOptionsFactory<TOptions>
             where TJson : JsonSerializerContext
         {
-            public Guid Id { get; }
+            public Guid Id { get; } = Guid.Parse(id);
             public bool Hidden { get; set; } = false;
-            public string Name { get; set; }
-            public string Description { get; set; }
+            public string Name { get; set; } = name;
+            public string Description { get; set; } = description;
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            public Type Options { get; }
+            public Type Options { get; } = typeof(TOptions);
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            public Type OptionsFactory { get; }
+            public Type OptionsFactory { get; } = typeof(TOptionsFactory);
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            public Type OptionsJson { get; }
+            public Type OptionsJson { get; } = typeof(TJson);
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            public Type Capability { get; }
-
-            public PluginAttribute(string id, string name, string description)
-            {
-                Id = Guid.Parse(id);
-                Options = typeof(TOptions);
-                OptionsFactory = typeof(TOptionsFactory);
-                OptionsJson = typeof(TJson);
-                Capability = typeof(TCapability);
-                Name = name; 
-                Description = description;
-            }
+            public Type Capability { get; } = typeof(TCapability);
         }
     }
 

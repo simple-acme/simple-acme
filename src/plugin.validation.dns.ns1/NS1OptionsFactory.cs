@@ -10,13 +10,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// Azure DNS validation
     /// </summary>
-    internal class NS1OptionsFactory : PluginOptionsFactory<NS1Options>
+    internal class NS1OptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<NS1Options>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public NS1OptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<NS1Arguments>(a => a.ApiKey).
             Required();
 

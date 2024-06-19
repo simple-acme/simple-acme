@@ -8,7 +8,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
     {
         public const string DescriptionText = "Manual input";
         public string? CommonName { get; set; }
-        public List<string> AlternativeNames { get; set; } = new List<string>();
+        public List<string> AlternativeNames { get; set; } = [];
 
         public override void Show(IInputService input)
         {

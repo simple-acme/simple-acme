@@ -39,7 +39,7 @@ namespace PKISharp.WACS.Clients.Acme
         private readonly AccountArguments _accountArguments;
 
         private AcmeProtocolClient? _anonymousClient;
-        private readonly Dictionary<string, AcmeClient> _authorizedClients = new();
+        private readonly Dictionary<string, AcmeClient> _authorizedClients = [];
         private readonly AccountManager _accountManager;
 
         public AcmeClientManager(
@@ -414,7 +414,7 @@ namespace PKISharp.WACS.Clients.Acme
                 newEmails = email.ParseCsv();
                 if (newEmails == null)
                 {
-                    return Array.Empty<string>();
+                    return [];
                 }
             }
             else if (!string.IsNullOrWhiteSpace(email))
@@ -434,7 +434,7 @@ namespace PKISharp.WACS.Clients.Acme
                     return false;
                 }
             }).ToList();
-            if (!newEmails.Any())
+            if (newEmails.Count == 0)
             {
                 _log.Warning("No (valid) email address specified");
             }

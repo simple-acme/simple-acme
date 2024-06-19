@@ -35,12 +35,12 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
         {
             ShouldRun(
                 new Renewal() { 
-                    History = new List<RenewResult>() {
+                    History = [
                         new() {
                             Date = DateTime.Now.AddDays(-3),
                             Success = true
                         }
-                    } 
+                    ] 
                 },
                 false);
         }
@@ -51,12 +51,12 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
             ShouldRun(
                 new Renewal()
                 {
-                    History = new List<RenewResult>() {
+                    History = [
                         new() {
                             Date = DateTime.Now.AddDays(-100),
                             Success = true
                         }
-                    }
+                    ]
                 },
                 true);
         }
@@ -67,12 +67,12 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
             ShouldRun(
                 new Renewal()
                 {
-                    History = new List<RenewResult>() {
+                    History = [
                         new() {
                             Date = DateTime.Now.AddDays(-3),
                             Success = false
                         }
-                    }
+                    ]
                 },
                 true);
         }
@@ -81,15 +81,15 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
         public void LegacyRenewal()
         {
             ShouldRun(
-                new Renewal()
+                new()
                 {
-                    History = new List<RenewResult>() {
+                    History = [
                         new() {
                             Date = DateTime.Now.AddDays(-3),
                             Success = true,
-                            ThumbprintsJson = new List<string> {"bla"}
+                            ThumbprintsJson = ["bla"]
                         }
-                    }
+                    ]
                 },
                 false);
         }
@@ -100,12 +100,12 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
             ShouldRun(
                 new Renewal()
                 {
-                    History = new List<RenewResult>() {
+                    History = [
                         new() {
                             Date = new DateTime(2022,1,1),
                             Success = true,
-                            OrderResults = new List<OrderResult>()
-                            {
+                            OrderResults =
+                            [
                                 new("strange")
                                 {
                                     Success = true,
@@ -116,13 +116,13 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
                                     Success = true,
                                     ExpireDate = new DateTime(2023,1,1)
                                 }
-                            }
+                            ]
                         },
                         new() {
                             Date = DateTime.Now.AddDays(-3),
                             Success = true,
-                            OrderResults = new List<OrderResult>()
-                            {
+                            OrderResults =
+                            [
                                 new("strange")
                                 {
                                     Missing = true
@@ -132,9 +132,9 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
                                     Success = true,
                                     ExpireDate = DateTime.Now.AddDays(20)
                                 }
-                            }
+                            ]
                         }
-                    }
+                    ]
                 },
                 false);
         }
@@ -145,12 +145,12 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
             ShouldRun(
                 new Renewal()
                 {
-                    History = new List<RenewResult>() {
+                    History = [
                         new() {
                             Date = new DateTime(2022,1,1),
                             Success = true,
-                            OrderResults = new List<OrderResult>()
-                            {
+                            OrderResults =
+                            [
                                 new("strange")
                                 {
                                     Success = true,
@@ -161,21 +161,21 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
                                     Success = true,
                                     ExpireDate = new DateTime(2023,1,1)
                                 }
-                            }
+                            ]
                         },
                         new() {
                             Date = DateTime.Now.AddDays(-3),
                             Success = true,
-                            OrderResults = new List<OrderResult>()
-                            {
+                            OrderResults =
+                            [
                                 new("normal")
                                 {
                                     Success = true,
                                     ExpireDate = DateTime.Now.AddDays(20)
                                 }
-                            }
+                            ]
                         }
-                    }
+                    ]
                 },
                 true);
         }
@@ -186,12 +186,12 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
             ShouldRun(
                 new Renewal()
                 {
-                    History = new List<RenewResult>() {
+                    History = [
                         new() {
                             Date = new DateTime(2021,1,1),
                             Success = true,
-                            OrderResults = new List<OrderResult>()
-                            {
+                            OrderResults =
+                            [
                                 new("strange")
                                 {
                                     Success = true,
@@ -202,13 +202,13 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
                                     Success = true,
                                     ExpireDate = new DateTime(2022,1,1)
                                 }
-                            }
+                            ]
                         },
                         new() {
                             Date = new DateTime(2022,2,1),
                             Success = true,
-                            OrderResults = new List<OrderResult>()
-                            {
+                            OrderResults =
+                            [
                                 new("strange")
                                 {
                                     Missing = true
@@ -218,13 +218,13 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
                                     Success = true,
                                     ExpireDate = new DateTime(2022,2,1)
                                 }
-                            }
+                            ]
                         },
                         new() {
                             Date = new DateTime(2023,2,1),
                             Success = true,
-                            OrderResults = new List<OrderResult>()
-                            {
+                            OrderResults =
+                            [
                                 new("strange")
                                 {
                                     Success = true,
@@ -235,9 +235,9 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
                                     Success = true,
                                     ExpireDate = new DateTime(2023,2,28)
                                 }
-                            }
+                            ]
                         }
-                    }
+                    ]
                 },
                 true);
         }

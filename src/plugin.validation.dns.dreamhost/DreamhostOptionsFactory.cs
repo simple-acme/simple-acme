@@ -10,13 +10,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// Azure DNS validation
     /// </summary>
-    internal class DreamhostOptionsFactory : PluginOptionsFactory<DreamhostOptions>
+    internal class DreamhostOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<DreamhostOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public DreamhostOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<DreamhostArguments>(a => a.ApiKey).
             Required();
 

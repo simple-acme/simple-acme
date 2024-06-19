@@ -26,7 +26,7 @@ namespace PKISharp.WACS.Extensions
         /// <returns></returns>
         public static string NormalizedBindingInformation(this Binding binding)
         {
-            if (binding.BindingInformation.StartsWith(":"))
+            if (binding.BindingInformation.StartsWith(':'))
             {
                 return $"*{binding.BindingInformation}";
             }

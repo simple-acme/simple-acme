@@ -3,15 +3,9 @@
     /// <summary>
     /// Represents a certificate
     /// </summary>
-    internal class CertificateOption
+    internal class CertificateOption(ICertificateInfo withPrivateKey, ICertificateInfo withoutPrivateKey)
     {
-        public ICertificateInfo WithPrivateKey { get; set; }
-        public ICertificateInfo WithoutPrivateKey { get; set; }
-
-        public CertificateOption(ICertificateInfo withPrivateKey, ICertificateInfo withoutPrivateKey)
-        {
-            WithPrivateKey = withPrivateKey;
-            WithoutPrivateKey = withoutPrivateKey;
-        }
+        public ICertificateInfo WithPrivateKey { get; set; } = withPrivateKey;
+        public ICertificateInfo WithoutPrivateKey { get; set; } = withoutPrivateKey;
     }
 }

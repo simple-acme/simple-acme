@@ -42,7 +42,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         protected override Task<bool> IsEmpty(string path)
         {
-            return Task.FromResult(!_sshFtpClient.GetFiles(path).Any());
+            return Task.FromResult(_sshFtpClient.GetFiles(path).Length == 0);
         }
 
         protected override Task WriteFile(string path, string content)

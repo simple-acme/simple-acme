@@ -12,29 +12,23 @@ namespace PKISharp.WACS.Plugins.Azure.Common
     /// <summary>
     /// Azure common options
     /// </summary>
-    public class AzureOptionsFactoryCommon<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T> where T: AzureArgumentsCommon, new()
+    public class AzureOptionsFactoryCommon<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(ArgumentsInputService arguments) where T: AzureArgumentsCommon, new()
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public AzureOptionsFactoryCommon(ArgumentsInputService arguments)
-        {
-            _arguments = arguments;
-        }
-        private ArgumentResult<string?> Environment => _arguments.
+        private ArgumentResult<string?> Environment => arguments.
             GetString<T>(a => a.AzureEnvironment);
 
-        private ArgumentResult<bool?> UseMsi => _arguments.
+        private ArgumentResult<bool?> UseMsi => arguments.
             GetBool<T>(a => a.AzureUseMsi);
 
-        private ArgumentResult<string?> TenantId => _arguments.
+        private ArgumentResult<string?> TenantId => arguments.
             GetString<T>(a => a.AzureTenantId).
             Required();
 
-        private ArgumentResult<string?> ClientId => _arguments.
+        private ArgumentResult<string?> ClientId => arguments.
             GetString<T>(a => a.AzureClientId).
             Required();
 
-        private ArgumentResult<ProtectedString?> ClientSecret => _arguments.
+        private ArgumentResult<ProtectedString?> ClientSecret => arguments.
             GetProtectedString<T>(a => a.AzureSecret).
             Required();
 
@@ -42,7 +36,7 @@ namespace PKISharp.WACS.Plugins.Azure.Common
         {
             var defaultEnvironment = (await Environment.GetValue()) ?? AzureEnvironments.AzureCloud;
             var environments = new List<Choice<Func<Task>>>(
-                AzureEnvironments.ResourceManagerUrls
+                AzureEnvironments.ResourceManagerUrls()
                     .OrderBy(kvp => kvp.Key)
                     .Select(kvp =>
                         Choice.Create<Func<Task>>(() =>

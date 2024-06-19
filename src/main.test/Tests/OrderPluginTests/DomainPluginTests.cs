@@ -71,7 +71,7 @@ namespace PKISharp.WACS.UnitTests.Tests.OrderPluginTests
 
             // Second order for X.com, two parts for sites 2 and 3
             Assert.AreEqual(y_com, list[1].Target.CommonName);
-            prts = list[1].Target.Parts.ToList();
+            prts = [.. list[1].Target.Parts];
             Assert.AreEqual(2, prts.Count);
 
             prt = prts[0];

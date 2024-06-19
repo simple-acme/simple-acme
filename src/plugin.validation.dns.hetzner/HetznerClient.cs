@@ -43,7 +43,7 @@ internal sealed class HetznerClient : IDisposable
         if (zonesResponse is null)
         {
             _log.Warning("No zones found in Hetzner DNS");
-            return Array.Empty<Zone>();
+            return [];
         }
 
         // Is only one page returned?

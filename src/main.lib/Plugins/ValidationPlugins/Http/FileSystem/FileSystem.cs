@@ -15,11 +15,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         HttpValidationCapability, WacsJsonPlugins>
         ("1c77b3a4-5310-4c46-92c6-00d866e84d6b", 
         "FileSystem", "Save verification files on (network) path")]
-    internal class FileSystem : HttpValidation<FileSystemOptions>
+    internal class FileSystem(FileSystemOptions options, IIISClient iisClient, RunLevel runLevel, HttpValidationParameters pars) : HttpValidation<FileSystemOptions>(options, runLevel, pars)
     {
-        protected IIISClient _iisClient;
-
-        public FileSystem(FileSystemOptions options, IIISClient iisClient, RunLevel runLevel, HttpValidationParameters pars) : base(options, runLevel, pars) => _iisClient = iisClient;
+        protected IIISClient _iisClient = iisClient;
 
         protected override Task DeleteFile(string path)
         {

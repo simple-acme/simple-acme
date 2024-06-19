@@ -16,18 +16,29 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     /// <summary>
     /// Base implementation for HTTP-01 validation plugins
     /// </summary>
-    public abstract class HttpValidation<TOptions> :
+    /// <remarks>
+    /// Constructor
+    /// </remarks>
+    /// <param name="log"></param>
+    /// <param name="input"></param>
+    /// <param name="options"></param>
+    /// <param name="proxy"></param>
+    /// <param name="renewal"></param>
+    /// <param name="target"></param>
+    /// <param name="runLevel"></param>
+    /// <param name="identifier"></param>
+    public abstract class HttpValidation<TOptions>(TOptions options, RunLevel runLevel, HttpValidationParameters pars) :
         Validation<Http01ChallengeValidationDetails>
         where TOptions : HttpValidationOptions
     {
-        private readonly List<string> _filesWritten = new();
+        private readonly List<string> _filesWritten = [];
 
-        protected TOptions _options;
-        protected ILogService _log;
-        protected IInputService _input;
-        protected ISettingsService _settings;
-        protected Renewal _renewal;
-        protected RunLevel _runLevel;
+        protected TOptions _options = options;
+        protected ILogService _log = pars.LogService;
+        protected IInputService _input = pars.InputService;
+        protected ISettingsService _settings = pars.Settings;
+        protected Renewal _renewal = pars.Renewal;
+        protected RunLevel _runLevel = runLevel;
 
         /// <summary>
         /// Multiple http-01 validation challenges can be answered at the same time
@@ -38,12 +49,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// Path used for the current renewal, may not be same as _options.Path
         /// because of the "Split" function employed by IISSites target
         /// </summary>
-        protected string? _path;
+        protected string? _path = options.Path;
 
         /// <summary>
         /// Provides proxy settings for site warmup
         /// </summary>
-        private readonly IProxyService _proxy;
+        private readonly IProxyService _proxy = pars.ProxyService;
 
         /// <summary>
         /// Where to find the template for the web.config that's copied to the webroot
@@ -54,29 +65,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// Character to separate folders, different for FTP 
         /// </summary>
         protected virtual char PathSeparator => '\\';
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="log"></param>
-        /// <param name="input"></param>
-        /// <param name="options"></param>
-        /// <param name="proxy"></param>
-        /// <param name="renewal"></param>
-        /// <param name="target"></param>
-        /// <param name="runLevel"></param>
-        /// <param name="identifier"></param>
-        public HttpValidation(TOptions options, RunLevel runLevel, HttpValidationParameters pars)
-        {
-            _options = options;
-            _runLevel = runLevel;
-            _path = options.Path;
-            _log = pars.LogService;
-            _input = pars.InputService;
-            _proxy = pars.ProxyService;
-            _settings = pars.Settings;
-            _renewal = pars.Renewal;
-        }
 
         /// <summary>
         /// Handle http challenge

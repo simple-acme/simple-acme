@@ -19,17 +19,8 @@ using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services
 {
-    internal class AutofacBuilder : IAutofacBuilder
+    internal class AutofacBuilder(ILogService log, IPluginService plugins) : IAutofacBuilder
     {
-        private readonly ILogService _log;
-        private readonly IPluginService _plugins;
-
-        public AutofacBuilder(ILogService log, IPluginService plugins)
-        {
-            _plugins = plugins;
-            _log = log;
-        }
-
         /// <summary>
         /// This is used to import renewals from 1.9.x
         /// </summary>
@@ -106,7 +97,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public ILifetimeScope Execution(ILifetimeScope main, Renewal renewal, AcmeClient acmeClient, RunLevel runLevel)
         {
-            _log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Execution), main.Tag);
+            log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Execution), main.Tag);
             var ret = main.BeginLifetimeScope(nameof(Execution), builder =>
             {
                 builder.Register(c => runLevel).As<RunLevel>();
@@ -130,7 +121,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public ILifetimeScope Split(ILifetimeScope execution, Target target)
         {
-            _log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Split), execution.Tag);
+            log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Split), execution.Tag);
             var ret = execution.BeginLifetimeScope(nameof(Split), builder => builder.RegisterInstance(target));
             ret = PluginBackend<IOrderPlugin, OrderPluginOptions>(ret, execution.Resolve<Renewal>().OrderPluginOptions ?? new SingleOptions(), "order");
             return ret;
@@ -145,7 +136,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public ILifetimeScope Order(ILifetimeScope execution, Order order)
         {
-            _log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Order), execution.Tag);
+            log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Order), execution.Tag);
             var ret = execution.BeginLifetimeScope($"order-{order.CacheKeyPart ?? "main"}", builder => 
                 builder.RegisterInstance(order.Target));
             ret = PluginBackend<ICsrPlugin, CsrPluginOptions>(ret, order.Renewal.CsrPluginOptions ?? new RsaOptions(), "csr");
@@ -160,7 +151,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public ILifetimeScope Target(ILifetimeScope execution, Target target)
         {
-            _log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Target), execution.Tag);
+            log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Target), execution.Tag);
             return execution.BeginLifetimeScope($"target", builder => builder.RegisterInstance(target));
         }
 
@@ -190,8 +181,8 @@ namespace PKISharp.WACS.Services
             where TCapability : IPluginCapability
             where TOptions : PluginOptions
         {
-            _log.Verbose("Autofac: creating {name}<{backend}> scope with parent {tag}", nameof(PluginBackend), typeof(TBackend).Name, execution.Tag);
-            if (!_plugins.TryGetPlugin(options, out var plugin)) 
+            log.Verbose("Autofac: creating {name}<{backend}> scope with parent {tag}", nameof(PluginBackend), typeof(TBackend).Name, execution.Tag);
+            if (!plugins.TryGetPlugin(options, out var plugin)) 
             {
                 throw new Exception($"Unknown {typeof(TBackend).Name} plugin {options.Plugin}");
             }
@@ -228,7 +219,7 @@ namespace PKISharp.WACS.Services
             where TCapability : IPluginCapability
             where TOptions : PluginOptionsBase, new()
         {
-            _log.Verbose("Autofac: creating {name}<{backend}> scope with parent {tag}", nameof(PluginFrontend), typeof(TOptions).Name, execution.Tag);
+            log.Verbose("Autofac: creating {name}<{backend}> scope with parent {tag}", nameof(PluginFrontend), typeof(TOptions).Name, execution.Tag);
             if (!plugin.Capability.IsAssignableTo(typeof(TCapability)))
             {
                 throw new Exception($"{plugin.Capability.Name} is not a {typeof(TCapability).Name}");

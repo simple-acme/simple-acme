@@ -7,16 +7,13 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    internal sealed class LuaDnsOptionsFactory : PluginOptionsFactory<LuaDnsOptions>
+    internal sealed class LuaDnsOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<LuaDnsOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-        public LuaDnsOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<LuaDnsArguments>(a => a.LuaDnsAPIKey).
             Required();
 
-        private ArgumentResult<string?> Username => _arguments.
+        private ArgumentResult<string?> Username => arguments.
             GetString<LuaDnsArguments>(a => a.LuaDnsUsername).
             Required();
 

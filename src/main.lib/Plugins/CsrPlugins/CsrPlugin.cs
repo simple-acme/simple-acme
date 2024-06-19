@@ -23,23 +23,16 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
     /// <summary>
     /// Common implementation between RSA and EC certificates
     /// </summary>
-    public abstract class CsrPlugin<TOptions> : 
+    public abstract class CsrPlugin<TOptions>(ILogService log, ISettingsService settings, TOptions options) : 
         ICsrPlugin
         where TOptions : CsrPluginOptions
     {
-        protected readonly ILogService _log;
-        protected readonly ISettingsService _settings;
-        protected readonly TOptions _options;
+        protected readonly ILogService _log = log;
+        protected readonly ISettingsService _settings = settings;
+        protected readonly TOptions _options = options;
 
         protected string? _cacheData;
         private AsymmetricCipherKeyPair? _keyPair;
-
-        public CsrPlugin(ILogService log, ISettingsService settings, TOptions options)
-        {
-            _log = log;
-            _options = options;
-            _settings = settings;
-        }
 
         async Task<Pkcs10CertificationRequest> ICsrPlugin.GenerateCsr(Target target, string? keyPath)
         {
@@ -194,10 +187,10 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
                     new DerObjectIdentifier("1.3.6.1.5.5.7.1.24"),
                     new X509Extension(
                         false,
-                        new DerOctetString(new byte[]
-                        {
+                        new DerOctetString(
+                        [
                             0x30, 0x03, 0x02, 0x01, 0x05
-                        })));
+                        ])));
             }
         }
 

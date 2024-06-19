@@ -9,10 +9,12 @@ using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 
 namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
 {
+    [SupportedOSPlatform("windows")]
     [TestClass]
     public class IISTests
     {
@@ -35,7 +37,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         private IISOptions? Options(string commandLine)
         {
             var optionsParser = new ArgumentsParser(log, new MockAssemblyService(log), commandLine.Split(' '));
-            var input = new Mock.Services.InputService(new());
+            var input = new Mock.Services.InputService([]);
             var secretService = new SecretServiceManager(MockContainer.TestScope(), input, plugins, log);
             var argsInput = new ArgumentsInputService(log, optionsParser, input, secretService);
             var args = new MainArguments();

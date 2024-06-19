@@ -7,21 +7,11 @@ using System.Linq;
 
 namespace PKISharp.WACS.Services
 {
-    public class DueDateRuntimeService
+    public class DueDateRuntimeService(
+        ISettingsService settings,
+        ILogService logService,
+        IInputService input)
     {
-        private readonly IInputService _input;
-        private readonly ISettingsService _settings;
-        private readonly ILogService _log;
-
-        public DueDateRuntimeService(
-            ISettingsService settings,
-            ILogService logService,
-            IInputService input)
-        {
-            _log = logService;
-            _settings = settings;
-            _input = input;
-        }
 
         /// <summary>
         /// Test if the order should run based on static or dynamic information
@@ -35,8 +25,8 @@ namespace PKISharp.WACS.Services
             var previousCert = order.CachedCertificate?.Certificate;
             if (previous != null && previousCert != null)
             {
-                _log.Verbose("{name}: previous thumbprint {thumbprint}", order.OrderFriendlyName, previous.Thumbprint);
-                _log.Verbose("{name}: previous expires {thumbprint}", order.OrderFriendlyName, _input.FormatDate(previousCert.NotAfter));
+                logService.Verbose("{name}: previous thumbprint {thumbprint}", order.OrderFriendlyName, previous.Thumbprint);
+                logService.Verbose("{name}: previous expires {thumbprint}", order.OrderFriendlyName, input.FormatDate(previousCert.NotAfter));
 
                 // Check if the certificate was actually installed
                 // succesfully before we decided to use it as a 
@@ -51,7 +41,7 @@ namespace PKISharp.WACS.Services
                     // because we've established (through the history) that 
                     // this certificate was succesfully stored and installed
                     // at least once.
-                    _log.Verbose("{name}: no historic success found", order.OrderFriendlyName);
+                    logService.Verbose("{name}: no historic success found", order.OrderFriendlyName);
                     previousCert = null;
                 }
             }
@@ -65,15 +55,15 @@ namespace PKISharp.WACS.Services
             var range = ComputeDueDate(previousCert, order.RenewalInfo);
             if (range.Source?.Contains("ri") ?? false)
             {
-                _log.Verbose("Using server side renewal schedule");
+                logService.Verbose("Using server side renewal schedule");
                 if (!string.IsNullOrWhiteSpace(order.RenewalInfo?.ExplanationUrl)) 
                 {
-                    _log.Warning("Schedule modified due to incident: {url}", order.RenewalInfo?.ExplanationUrl);
+                    logService.Warning("Schedule modified due to incident: {url}", order.RenewalInfo?.ExplanationUrl);
                 }
             } 
             else
             {
-                _log.Verbose("Using client side renewal schedule");
+                logService.Verbose("Using client side renewal schedule");
             }
 
             return ShouldRunCommon(range, order.OrderFriendlyName);
@@ -103,11 +93,11 @@ namespace PKISharp.WACS.Services
         public DueDate ComputeDueDate(DateTime validFrom, DateTime validUntil, AcmeRenewalInfo? renewalInfo = null)
         {
             // Basic rule for End: NotBefore + RenewalDays
-            var end = validFrom.AddDays(_settings.ScheduledTask.RenewalDays);
+            var end = validFrom.AddDays(settings.ScheduledTask.RenewalDays);
             var endSource = "rd";
 
             // Guard rail #1: certificate should at least be valid for RenewalMinimumValidDays
-            var endMinValid = validUntil.AddDays(-1 * (_settings.ScheduledTask.RenewalMinimumValidDays ?? DueDateStaticService.DefaultMinValidDays));
+            var endMinValid = validUntil.AddDays(-1 * (settings.ScheduledTask.RenewalMinimumValidDays ?? DueDateStaticService.DefaultMinValidDays));
             if (endMinValid < end)
             {
                 end = endMinValid;
@@ -116,7 +106,7 @@ namespace PKISharp.WACS.Services
 
             // Guard rail #2: server might feel the renewal should happen even earlier,
             // for example during a security incident.
-            if (_settings.ScheduledTask.RenewalDisableServerSchedule != true && 
+            if (settings.ScheduledTask.RenewalDisableServerSchedule != true && 
                 renewalInfo != null && 
                 renewalInfo.SuggestedWindow.End != null &&
                 renewalInfo.SuggestedWindow.End.Value < end)
@@ -126,12 +116,12 @@ namespace PKISharp.WACS.Services
             }
 
             // Basic rule for start: End - RenewalDaysRange
-            var start = end.AddDays((_settings.ScheduledTask.RenewalDaysRange ?? 0) * -1);
+            var start = end.AddDays((settings.ScheduledTask.RenewalDaysRange ?? 0) * -1);
             var startSource = "rd";
 
             // Guard rail #3: server might feel the renewal should happen even earlier,
             // for example during a security incident.
-            if (_settings.ScheduledTask.RenewalDisableServerSchedule != true &&
+            if (settings.ScheduledTask.RenewalDisableServerSchedule != true &&
                 renewalInfo != null &&
                 renewalInfo.SuggestedWindow.Start != null &&
                 renewalInfo.SuggestedWindow.Start.Value < start)
@@ -167,8 +157,8 @@ namespace PKISharp.WACS.Services
             var now = DateTime.Now;
             var latestDueDate = dueDate.End;
             var earliestDueDate = dueDate.Start;
-            _log.Verbose("{name}: latest due date {latestDueDate}", orderName, _input.FormatDate(latestDueDate));
-            _log.Verbose("{name}: earliest due date {earliestDueDate}", orderName, _input.FormatDate(earliestDueDate));
+            logService.Verbose("{name}: latest due date {latestDueDate}", orderName, input.FormatDate(latestDueDate));
+            logService.Verbose("{name}: earliest due date {earliestDueDate}", orderName, input.FormatDate(earliestDueDate));
 
             if (earliestDueDate > now)
             {
@@ -186,12 +176,12 @@ namespace PKISharp.WACS.Services
             var daysLeft = (latestDueDate - now).TotalDays;
             if (daysLeft <= 1)
             {
-                _log.Verbose("{name}: less than a day left", orderName);
+                logService.Verbose("{name}: less than a day left", orderName);
                 return true;
             }
             if (Random.Shared.NextDouble() < (1 / daysLeft))
             {
-                _log.Verbose("{name}: randomly selected", orderName);
+                logService.Verbose("{name}: randomly selected", orderName);
                 return true;
             }
             return false;

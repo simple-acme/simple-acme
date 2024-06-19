@@ -15,19 +15,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         DnsValidationCapability, SimplyJson>
         ("3693c40c-7c2f-4b70-aead-27869d8cbdf3", 
         "Simply", "Create verification records in Simply DNS")]
-    internal class SimplyDnsValidation : DnsValidation<SimplyDnsValidation>
+    internal class SimplyDnsValidation(
+        LookupClientProvider dnsClient,
+        ILogService logService,
+        ISettingsService settings,
+        IProxyService proxyService,
+        SecretServiceManager ssm,
+        SimplyOptions options) : DnsValidation<SimplyDnsValidation>(dnsClient, logService, settings)
     {
-        private readonly SimplyDnsClient _client;
-
-        public SimplyDnsValidation(
-            LookupClientProvider dnsClient, 
-            ILogService logService, 
-            ISettingsService settings,
-            IProxyService proxyService,
-            SecretServiceManager ssm,
-            SimplyOptions options)
-            : base(dnsClient, logService, settings) 
-            => _client = new SimplyDnsClient(
+        private readonly SimplyDnsClient _client = new(
                 options.Account ?? "",
                 ssm.EvaluateSecret(options.ApiKey) ?? "",
                 proxyService.GetHttpClient());

@@ -8,19 +8,13 @@ using System.Text.Json;
 
 namespace PKISharp.WACS.Services.Legacy
 {
-    internal abstract class BaseLegacyRenewalService : ILegacyRenewalService
+    internal abstract class BaseLegacyRenewalService(
+        LegacySettingsService settings,
+        ILogService log) : ILegacyRenewalService
     {
-        internal ILogService _log;
+        internal ILogService _log = log;
         internal List<LegacyScheduledRenewal>? _renewalsCache;
-        internal string? _configPath = null;
-
-        public BaseLegacyRenewalService(
-            LegacySettingsService settings,
-            ILogService log)
-        {
-            _log = log;
-            _configPath = settings.Client.ConfigurationPath;
-        }
+        internal string? _configPath = settings.Client.ConfigurationPath;
 
         public IEnumerable<LegacyScheduledRenewal> Renewals => ReadRenewals();
 
@@ -93,7 +87,7 @@ namespace PKISharp.WACS.Services.Legacy
 
             if (result.Binding.AlternativeNames == null)
             {
-                result.Binding.AlternativeNames = new List<string>();
+                result.Binding.AlternativeNames = [];
             }
 
             if (result.Binding.HostIsDns == null)

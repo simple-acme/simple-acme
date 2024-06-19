@@ -5,11 +5,8 @@ using TransIp.Library.Dto;
 
 namespace TransIp.Library
 {
-    public class DnsService : BaseServiceAuthenticated
+    public class DnsService(AuthenticationService authenticationService, IProxyService proxyService) : BaseServiceAuthenticated(authenticationService, proxyService)
     {
-        public DnsService(AuthenticationService authenticationService, IProxyService proxyService) : 
-            base(authenticationService, proxyService) { }
-       
         public async Task<IEnumerable<Domain>?> ListDomains()
         {
             var response = await Get<DomainList>($"domains");

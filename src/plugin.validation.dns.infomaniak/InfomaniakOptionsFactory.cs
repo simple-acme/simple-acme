@@ -10,11 +10,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 /// <summary>
 /// Infomaniak DNS validation
 /// </summary>
-internal class InfomaniakOptionsFactory : PluginOptionsFactory<InfomaniakOptions>
+internal class InfomaniakOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<InfomaniakOptions>
 {
-    private readonly ArgumentsInputService _arguments;
-
-    public InfomaniakOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
+    private readonly ArgumentsInputService _arguments = arguments;
 
     private ArgumentResult<ProtectedString?> ApiKey => _arguments.
         GetProtectedString<InfomaniakArguments>(a => a.ApiToken).

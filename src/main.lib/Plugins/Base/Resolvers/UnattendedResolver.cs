@@ -17,31 +17,14 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.Resolvers
 {
-    internal class UnattendedResolver : IResolver
+    internal class UnattendedResolver(
+        ILogService log,
+        ISettingsService settings,
+        IAutofacBuilder autofacBuilder,
+        ILifetimeScope scope,
+        MainArguments arguments,
+        IPluginService pluginService) : IResolver
     {
-        private readonly IPluginService _plugins;
-        private readonly MainArguments _arguments;
-        private readonly IAutofacBuilder _autofacBuilder;
-        private readonly ISettingsService _settings;
-        private readonly ILogService _log;
-        private readonly ILifetimeScope _scope;
-
-        public UnattendedResolver(
-            ILogService log, 
-            ISettingsService settings,
-            IAutofacBuilder autofacBuilder,
-            ILifetimeScope scope,
-            MainArguments arguments,
-            IPluginService pluginService)
-        {
-            _log = log;
-            _plugins = pluginService;
-            _arguments = arguments;
-            _autofacBuilder = autofacBuilder;
-            _scope = scope;
-            _settings = settings;
-        }
-
         [DebuggerDisplay("{Meta.Name}")]
         private record PluginChoice<TCapability, TOptions>(
             Plugin Meta,
@@ -79,16 +62,16 @@ namespace PKISharp.WACS.Plugins.Resolvers
             };
 
             // Apply default sorting when no sorting has been provided yet
-            var options = _plugins.
+            var options = pluginService.
                 GetPlugins(step).
-                Select(x => _autofacBuilder.PluginFrontend<TCapability, TOptions>(_scope, x)).
+                Select(x => autofacBuilder.PluginFrontend<TCapability, TOptions>(scope, x)).
                 Select(x => x.Resolve<PluginFrontend<TCapability, TOptions>>()).
                 Select(x => new PluginChoice<TCapability, TOptions>(x.Meta, x, combinedState(x))).
                 ToList();
 
             // Default out when there are no reasonable plugins to pick
             var nullRet = Task.FromResult<PluginFrontend<TCapability, TOptions>?>(null);
-            if (!options.Any() || options.All(x => x.State.Disabled))
+            if (options.Count == 0 || options.All(x => x.State.Disabled))
             {
                 return nullRet;
             }
@@ -96,10 +79,10 @@ namespace PKISharp.WACS.Plugins.Resolvers
             var className = step.ToString().ToLower();
             if (!string.IsNullOrEmpty(defaultParam1))
             {
-                var defaultPlugin = _plugins.GetPlugin(step, defaultParam1, defaultParam2);
+                var defaultPlugin = pluginService.GetPlugin(step, defaultParam1, defaultParam2);
                 if (defaultPlugin == null)
                 {
-                    _log.Error("Unable to find {n} plugin {p}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultParam1, $"--{className}");
+                    log.Error("Unable to find {n} plugin {p}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultParam1, $"--{className}");
                     return nullRet;
                 }
                 else
@@ -111,7 +94,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             var defaultOption = options.OrderBy(x => x.Meta.Hidden).First(x => x.Meta.Backend == defaultBackend);
             if (defaultOption.State.Disabled)
             {
-                _log.Error("{n} plugin {x} not available: {m}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultOption.Frontend.Meta.Name ?? "Unknown", defaultOption.State.Reason?.TrimEnd('.'), $"--{className}");
+                log.Error("{n} plugin {x} not available: {m}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultOption.Frontend.Meta.Name ?? "Unknown", defaultOption.State.Reason?.TrimEnd('.'), $"--{className}");
                 return nullRet;
             }
 
@@ -131,7 +114,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             // get into this code unless it was specified.
             return await GetPlugin<IPluginCapability, TargetPluginOptions>(
                 Steps.Source,
-                defaultParam1: string.IsNullOrWhiteSpace(_arguments.Source) ? _arguments.Target : _arguments.Source,
+                defaultParam1: string.IsNullOrWhiteSpace(arguments.Source) ? arguments.Target : arguments.Source,
                 defaultBackend: typeof(Manual));
         }
 
@@ -144,8 +127,8 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IValidationPluginCapability, ValidationPluginOptions>(
                 Steps.Validation,
-                defaultParam1: _arguments.Validation ?? _settings.Validation.DefaultValidation ?? "selfhosting",
-                defaultParam2: _arguments.ValidationMode ?? _settings.Validation.DefaultValidationMode,
+                defaultParam1: arguments.Validation ?? settings.Validation.DefaultValidation ?? "selfhosting",
+                defaultParam2: arguments.ValidationMode ?? settings.Validation.DefaultValidationMode,
                 defaultBackend: typeof(SelfHosting));
         }
 
@@ -158,7 +141,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IPluginCapability, OrderPluginOptions>(
                 Steps.Order,
-                defaultParam1: _arguments.Order,
+                defaultParam1: arguments.Order,
                 defaultBackend: typeof(OrderPlugins.Single));
         }
 
@@ -171,7 +154,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IPluginCapability, CsrPluginOptions>(
                 Steps.Csr,
-                defaultParam1: _arguments.Csr,
+                defaultParam1: arguments.Csr,
                 defaultBackend: typeof(Rsa));
         }
 
@@ -181,7 +164,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         /// <returns></returns>
         public async Task<PluginFrontend<IPluginCapability, StorePluginOptions>?> GetStorePlugin(IEnumerable<Plugin> chosen)
         {
-            var defaultStore = _arguments.Store ?? _settings.Store.DefaultStore;
+            var defaultStore = arguments.Store ?? settings.Store.DefaultStore;
             if (string.IsNullOrWhiteSpace(defaultStore))
             {
                 defaultStore = OperatingSystem.IsWindows() ? 
@@ -209,7 +192,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         public async Task<PluginFrontend<IInstallationPluginCapability, InstallationPluginOptions>?> 
             GetInstallationPlugin(IEnumerable<Plugin> stores, IEnumerable<Plugin> installation)
         {
-            var defaultInstallation = _arguments.Installation ?? _settings.Installation.DefaultInstallation;
+            var defaultInstallation = arguments.Installation ?? settings.Installation.DefaultInstallation;
             var parts = defaultInstallation.ParseCsv();
             if (parts == null)
             {

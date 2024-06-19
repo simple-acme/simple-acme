@@ -10,22 +10,18 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// Azure DNS validation
     /// </summary>
-    internal class AzureOptionsFactory : PluginOptionsFactory<AzureOptions>
+    internal class AzureOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<AzureOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public AzureOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<string?> SubscriptionId => _arguments.
+        private ArgumentResult<string?> SubscriptionId => arguments.
             GetString<AzureArguments>(a => a.AzureSubscriptionId);
 
-        private ArgumentResult<string?> HostedZone => _arguments.
+        private ArgumentResult<string?> HostedZone => arguments.
              GetString<AzureArguments>(a => a.AzureHostedZone);
 
         public override async Task<AzureOptions?> Aquire(IInputService input, RunLevel runLevel)
         {
             var options = new AzureOptions();
-            var common = new AzureOptionsFactoryCommon<AzureArguments>(_arguments);
+            var common = new AzureOptionsFactoryCommon<AzureArguments>(arguments);
             await common.Aquire(options, input);
             options.SubscriptionId = await SubscriptionId.Interactive(input).GetValue();
             options.HostedZone = await HostedZone.Interactive(input).GetValue();
@@ -35,7 +31,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override async Task<AzureOptions?> Default()
         {
             var options = new AzureOptions();
-            var common = new AzureOptionsFactoryCommon<AzureArguments>(_arguments);
+            var common = new AzureOptionsFactoryCommon<AzureArguments>(arguments);
             await common.Default(options);
             options.SubscriptionId = await SubscriptionId.GetValue();
             options.HostedZone = await HostedZone.GetValue();
@@ -44,7 +40,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(AzureOptions options)
         {
-            var common = new AzureOptionsFactoryCommon<AzureArguments>(_arguments);
+            var common = new AzureOptionsFactoryCommon<AzureArguments>(arguments);
             foreach (var x in common.Describe(options))
             {
                 yield return x;

@@ -21,8 +21,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         "Route53", "Create verification records in AWS Route 53")]
     internal sealed class Route53 : DnsValidation<Route53>
     {
-        private readonly IAmazonRoute53 _route53Client;
-        private readonly Dictionary<string, List<ResourceRecordSet>> _pendingZoneUpdates = new();
+        private readonly AmazonRoute53Client _route53Client;
+        private readonly Dictionary<string, List<ResourceRecordSet>> _pendingZoneUpdates = [];
 
         public override ParallelOperations Parallelism => ParallelOperations.Answer; 
         public Route53(
@@ -49,7 +49,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 if (!_pendingZoneUpdates.TryGetValue(hostedZone, out List<ResourceRecordSet>? value))
                 {
-                    value = new List<ResourceRecordSet>();
+                    value = [];
                     _pendingZoneUpdates.Add(hostedZone, value);
                 }
                 var pendingRecordSets = value;
@@ -60,7 +60,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     {
                         Name = name,
                         Type = RRType.TXT,
-                        ResourceRecords = new(),
+                        ResourceRecords = [],
                         TTL = 1L
                     };
                     pendingRecordSets.Add(existing);

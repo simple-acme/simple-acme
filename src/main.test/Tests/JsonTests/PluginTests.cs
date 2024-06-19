@@ -22,10 +22,7 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
         [ClassInitialize]
         public static void ClassInitialize(TestContext context)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
+            ArgumentNullException.ThrowIfNull(context);
 
             var builder = new ContainerBuilder();
             var log = new Mock.Services.LogService();

@@ -6,20 +6,13 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    internal sealed class CloudDnsService
+    internal sealed class CloudDnsService(DnsService client)
     {
-        private readonly DnsService _client;
-
-        public CloudDnsService(DnsService client)
-        {
-            _client = client;
-        }
-
         public async Task<IList<ManagedZone>> GetManagedZones(string projectId)
         {
-            var request = _client.ManagedZones.List(projectId);
+            var request = client.ManagedZones.List(projectId);
             var response = await request.ExecuteAsync();
-            return response.ManagedZones.ToList();
+            return [.. response.ManagedZones];
         }
 
         public async Task<ManagedZone?> FindZone(string projectId, string dnsName)
@@ -30,7 +23,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public async Task<ResourceRecordSet> CreateTxtRecord(string projectId, ManagedZone zone, string name, string value)
         {
-            if (!name.EndsWith("."))
+            if (!name.EndsWith('.'))
                 name += ".";
 
             var body = new ResourceRecordSet
@@ -39,20 +32,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 Name = name,
                 Type = "TXT",
                 Ttl = 0,
-                Rrdatas = new List<string>() { "\"" + value + "\"" }
+                Rrdatas = ["\"" + value + "\""]
             };
 
-            var request = _client.ResourceRecordSets.Create(body, projectId, zone.Name);
+            var request = client.ResourceRecordSets.Create(body, projectId, zone.Name);
 
             return await request.ExecuteAsync();
         }
 
         public async Task<ResourceRecordSetsDeleteResponse> DeleteTxtRecord(string projectId, ManagedZone zone, string name)
         {
-            if (!name.EndsWith("."))
+            if (!name.EndsWith('.'))
                 name += ".";
 
-            var request = _client.ResourceRecordSets.Delete(projectId, zone.Name, name, "TXT");
+            var request = client.ResourceRecordSets.Delete(projectId, zone.Name, name, "TXT");
             return await request.ExecuteAsync();
         }
     }

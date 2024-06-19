@@ -2,26 +2,21 @@
 
 namespace PKISharp.WACS.Clients.Acme
 {
-    internal class Account
+    /// <summary>
+    /// Constructor requires signer to be present
+    /// </summary>
+    /// <param name="signer"></param>
+    internal class Account(AccountDetails details, AccountSigner signer)
     {
-        /// <summary>
-        /// Constructor requires signer to be present
-        /// </summary>
-        /// <param name="signer"></param>
-        public Account(AccountDetails details, AccountSigner signer) 
-        {
-            Details = details;
-            Signer = signer;
-        }
 
         /// <summary>
         /// Account information
         /// </summary>
-        public AccountDetails Details { get; set; }
+        public AccountDetails Details { get; set; } = details;
 
         /// <summary>
         /// Account "password"
         /// </summary>
-        public AccountSigner Signer { get; set; }
+        public AccountSigner Signer { get; set; } = signer;
     }
 }

@@ -12,22 +12,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
     /// <summary>
     /// Classic FileSystem validation
     /// </summary>
-    internal class FileSystemOptionsFactory : HttpValidationOptionsFactory<FileSystemOptions>
+    internal class FileSystemOptionsFactory(
+        Target target,
+        IIISClient iisClient,
+        ILogService log,
+        ArgumentsInputService arguments) : HttpValidationOptionsFactory<FileSystemOptions>(arguments, target)
     {
-        private readonly IIISClient _iisClient;
-        private readonly ILogService _log;
-
-        public FileSystemOptionsFactory(
-            Target target,
-            IIISClient iisClient, 
-            ILogService log,
-            ArgumentsInputService arguments) : base(arguments, target)
-        {
-            _log = log;
-            _iisClient = iisClient;
-        }
-
-        public override bool PathIsValid(string path) => path.ValidPath(_log);
+        public override bool PathIsValid(string path) => path.ValidPath(log);
         public override bool AllowEmtpy() => _target.IIS;
         private ArgumentResult<long?> ValidationSite => _arguments.GetLong<FileSystemArguments>(x => x.ValidationSiteId);
 
@@ -36,10 +27,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             var ret = new FileSystemOptions(await BaseDefault());
             if (string.IsNullOrEmpty(ret.Path))
             {
-                if (_target.IIS && _iisClient.HasWebSites)
+                if (_target.IIS && iisClient.HasWebSites)
                 {
                     ret.SiteId = await ValidationSite.
-                        Validate(s => Task.FromResult(_iisClient.GetSite(s!.Value, IISSiteType.Web) != null), "site doesn't exist").
+                        Validate(s => Task.FromResult(iisClient.GetSite(s!.Value, IISSiteType.Web) != null), "site doesn't exist").
                         GetValue();
                 }
             }
@@ -51,7 +42,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             // Choose alternative site for validation
             var ret = new FileSystemOptions(await BaseAquire(inputService));
             if (_target.IIS && 
-                _iisClient.HasWebSites &&
+                iisClient.HasWebSites &&
                 string.IsNullOrEmpty(ret.Path) && 
                 runLevel.HasFlag(RunLevel.Advanced))
             {
@@ -59,7 +50,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 if (siteId != null || await inputService.PromptYesNo("Use different site for validation?", false))
                 {
                     var site = await inputService.ChooseOptional("Validation site, must receive requests for all identifiers on port 80",
-                        _iisClient.Sites.Where(x => x.Type == IISSiteType.Web),
+                        iisClient.Sites.Where(x => x.Type == IISSiteType.Web),
                         x => Choice.Create<IIISSite?>(x, x.Name, x.Id.ToString(), @default: x.Id == siteId),
                         "Automatic (target site)");
                     if (site != null)

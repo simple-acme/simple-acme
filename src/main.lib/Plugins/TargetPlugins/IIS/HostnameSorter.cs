@@ -8,18 +8,10 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
     /// <summary>
     /// DNS system aware host sorting
     /// </summary>
-    class HostnameSorter : IComparer<string>
+    class HostnameSorter(DomainParseService domainParser) : IComparer<string>
     {
-        private readonly IComparer<string> _baseComparer;
-        private readonly DomainParseService _domainParser;
-        private readonly Dictionary<string, string> _tldCache;
-
-        public HostnameSorter(DomainParseService domainParser)
-        {
-            _baseComparer = StringComparer.CurrentCulture;
-            _domainParser = domainParser;
-            _tldCache = new Dictionary<string, string>();
-        }
+        private readonly StringComparer _baseComparer = StringComparer.CurrentCulture;
+        private readonly Dictionary<string, string> _tldCache = [];
 
         private string? GetTldCache(string domain)
         {
@@ -28,7 +20,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             }
             try
             {
-                value = _domainParser.GetTLD(domain);
+                value = domainParser.GetTLD(domain);
                 _tldCache.Add(domain, value);
             } 
             catch

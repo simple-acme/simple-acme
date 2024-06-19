@@ -5,19 +5,11 @@ using System.Linq;
 
 namespace PKISharp.WACS.Services
 {
-    public class DueDateStaticService
+    public class DueDateStaticService(
+        DueDateRuntimeService runtime,
+        ILogService logService)
     {
         internal const int DefaultMinValidDays = 7;
-        private readonly ILogService _log;
-        private readonly DueDateRuntimeService _runtime;
-
-        public DueDateStaticService(
-            DueDateRuntimeService runtime,
-            ILogService logService)
-        {
-            _runtime = runtime;
-            _log = logService;
-        }
 
         public DueDate? DueDate(Renewal renewal)
         {
@@ -52,7 +44,7 @@ namespace PKISharp.WACS.Services
                         var info = default(StaticOrderInfo);
                         var key = orderResult.Name.ToLower();
                         var dueDate = orderResult.DueDate ??
-                                _runtime.ComputeDueDate(new DueDate()
+                                runtime.ComputeDueDate(new DueDate()
                                 {
                                     Start = history.Date,
                                     End = history.ExpireDate ?? history.Date.AddYears(1)
@@ -60,14 +52,14 @@ namespace PKISharp.WACS.Services
 
                         if (orderResult.Success != false)
                         {
-                            if (!expireMapping.ContainsKey(key))
+                            if (!expireMapping.TryGetValue(key, out var value))
                             {
                                 info = new StaticOrderInfo(key, dueDate);
                                 expireMapping.Add(key, info);
                             }
                             else
                             {
-                                info = expireMapping[key];
+                                info = value;
                                 info.DueDate = dueDate;
                             }
                             if (orderResult.Success == true)
@@ -87,10 +79,10 @@ namespace PKISharp.WACS.Services
                 } 
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Error reading history for {renewal}: {ex}", renewal.Id, ex.Message);
+                    logService.Error(ex, "Error reading history for {renewal}: {ex}", renewal.Id, ex.Message);
                 }
             }
-            return expireMapping.Values.ToList();
+            return [.. expireMapping.Values];
         }
 
         public List<StaticOrderInfo> CurrentOrders(Renewal renewal) =>
@@ -103,20 +95,14 @@ namespace PKISharp.WACS.Services
     /// Information about a sub-order derived 
     /// and summarized from history entries
     /// </summary>
-    public class StaticOrderInfo
+    public class StaticOrderInfo(string key, DueDate dueDate)
     {
-        public StaticOrderInfo(string key, DueDate dueDate)
-        {
-            Key = key;
-            DueDate = dueDate;
-        }
-
-        public string Key { get; set; }
+        public string Key { get; set; } = key;
         public bool Missing { get; set; }
         public bool Revoked { get; set; }
         public DateTime? LastRenewal { get; set; }
         public string? LastThumbprint { get; set; }
         public int RenewCount { get; set; }
-        public DueDate DueDate { get; set; }
+        public DueDate DueDate { get; set; } = dueDate;
     }
 }

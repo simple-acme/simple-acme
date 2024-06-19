@@ -10,10 +10,9 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
         public abstract string ChallengeType { get; }
     }
 
-    public class HttpValidationCapability : ValidationCapability
+    public class HttpValidationCapability(Target target) : ValidationCapability
     {
-        protected readonly Target Target;
-        public HttpValidationCapability(Target target) => Target = target;
+        protected readonly Target Target = target;
         public override string ChallengeType => Constants.Http01ChallengeType;
         public override State State => 
             Target.GetIdentifiers(false).Any(x => x.Value.StartsWith("*.")) ? 
@@ -21,22 +20,20 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
             State.EnabledState();
     }
 
-    public class DnsValidationCapability : ValidationCapability
+    public class DnsValidationCapability(Target target) : ValidationCapability
     {
-        protected readonly Target Target;
+        protected readonly Target Target = target;
         public override string ChallengeType => Constants.Dns01ChallengeType;
-        public DnsValidationCapability(Target target) => Target = target;
         public override State State =>
             !Target.Parts.SelectMany(x => x.Identifiers).All(x => x.Type == IdentifierType.DnsName) ?
             State.DisabledState("DNS validation can only be used for DNS identifiers") :
             State.EnabledState();
     }
 
-    public class TlsValidationCapability : ValidationCapability
+    public class TlsValidationCapability(Target target) : ValidationCapability
     {
-        protected readonly Target Target;
+        protected readonly Target Target = target;
         public override string ChallengeType => Constants.TlsAlpn01ChallengeType;
-        public TlsValidationCapability(Target target) => Target = target;
         public override State State =>
             Target.GetIdentifiers(false).Any(x => x.Value.StartsWith("*.")) ?
             State.DisabledState("TLS-ALPN validation cannot be used for wildcard identifiers (e.g. *.example.com)") :

@@ -53,11 +53,11 @@ namespace PKISharp.WACS.Host.Services.Legacy
             Validation = settings.Validation;
             Store = settings.Store;
 
-            ClientNames = new List<string>() { 
+            ClientNames = [ 
                 settings.Client.ClientName,
                 "win-acme", 
                 "letsencrypt-win-simple"
-            };
+            ];
 
             // Read legacy configuration file
             var installDir = new FileInfo(VersionService.ExePath).DirectoryName;

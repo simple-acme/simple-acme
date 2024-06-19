@@ -9,32 +9,21 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
-    internal class CentralSslOptionsFactory : PluginOptionsFactory<CentralSslOptions>
+    internal class CentralSslOptionsFactory(
+        ILogService log,
+        ISettingsService settings,
+        ArgumentsInputService argumentInput) : PluginOptionsFactory<CentralSslOptions>
     {
-        private readonly ILogService _log;
-        private readonly ArgumentsInputService _argumentInput;
-        private readonly ISettingsService _settings;
-
-        public CentralSslOptionsFactory(
-            ILogService log, 
-            ISettingsService settings,
-            ArgumentsInputService argumentInput)
-        {
-            _log = log;
-            _argumentInput = argumentInput;
-            _settings = settings;
-        }
-
-        private ArgumentResult<ProtectedString?> PfxPassword => _argumentInput.
+        private ArgumentResult<ProtectedString?> PfxPassword => argumentInput.
             GetProtectedString<CentralSslArguments>(args => args.PfxPassword, true).
-            WithDefault(_settings.Store.CentralSsl.DefaultPassword.Protect(true)).
+            WithDefault(settings.Store.CentralSsl.DefaultPassword.Protect(true)).
             DefaultAsNull();
 
-        private ArgumentResult<string?> Path => _argumentInput.
+        private ArgumentResult<string?> Path => argumentInput.
             GetString<CentralSslArguments>(args => args.CentralSslStore).
-            WithDefault(_settings.Store.CentralSsl.DefaultPath).
+            WithDefault(settings.Store.CentralSsl.DefaultPath).
             Required().
-            Validate(x => Task.FromResult(x.ValidPath(_log)), "invalid path").
+            Validate(x => Task.FromResult(x.ValidPath(log)), "invalid path").
             DefaultAsNull();
 
         public override async Task<CentralSslOptions?> Aquire(IInputService input, RunLevel runLevel)

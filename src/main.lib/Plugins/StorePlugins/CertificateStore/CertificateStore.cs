@@ -94,7 +94,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             if (exportable)
             {
-                _options.AclRead ??= new List<string>();
+                _options.AclRead ??= [];
                 if (!_options.AclRead.Contains("administrators")) {
                     _log.Information("Add local administators to Private Key ACL to allow export");
                     _options.AclRead.Add("administrators");

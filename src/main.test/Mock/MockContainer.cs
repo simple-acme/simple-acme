@@ -24,7 +24,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             var assemblyService = new MockAssemblyService(log);
             var pluginService = new Real.PluginService(log, assemblyService);
             var argumentsParser = new ArgumentsParser(log, assemblyService, commandLine.Split(' '));
-            var input = new InputService(inputSequence ?? new List<string>());
+            var input = new InputService(inputSequence ?? []);
 
             var builder = new ContainerBuilder();
             _ = builder.RegisterType<Real.SecretServiceManager>();

@@ -6,18 +6,13 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    internal class SelfHostingOptionsFactory : PluginOptionsFactory<SelfHostingOptions>
+    internal class SelfHostingOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<SelfHostingOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
         private ArgumentResult<int?> ValidationPort =>
-            _arguments.GetInt<SelfHostingArguments>(x => x.ValidationPort);
+            arguments.GetInt<SelfHostingArguments>(x => x.ValidationPort);
 
         private ArgumentResult<string?> ValidationProtocol =>
-            _arguments.GetString<SelfHostingArguments>(x => x.ValidationProtocol);
-
-        public SelfHostingOptionsFactory(ArgumentsInputService arguments) => 
-            _arguments = arguments;
+            arguments.GetString<SelfHostingArguments>(x => x.ValidationProtocol);
 
         public override async Task<SelfHostingOptions?> Default()
         {

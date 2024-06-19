@@ -8,26 +8,18 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    internal class NotificationService
+    internal class NotificationService(
+        ILifetimeScope scope,
+        ILogService log,
+        IPluginService pluginService,
+        ISettingsService settings)
     {
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-        private readonly IEnumerable<INotificationTarget> _targets;
-
-        public NotificationService(
-            ILifetimeScope scope,
-            ILogService log,
-            IPluginService pluginService,
-            ISettingsService setttings)
-        {
-            _log = log;
-            _settings = setttings;
-            _targets = pluginService.
+        private readonly ILogService _log = log;
+        private readonly IEnumerable<INotificationTarget> _targets = pluginService.
                 GetNotificationTargets().
                 Select(b => scope.Resolve(b.Backend)).
                 OfType<INotificationTarget>().
                 ToList();
-        }
 
         /// <summary>
         /// Handle created notification
@@ -40,7 +32,7 @@ namespace PKISharp.WACS.Services
                 LogType.All, 
                 "Certificate {friendlyName} created", 
                 renewal.LastFriendlyName);
-            if (_settings.Notification.EmailOnSuccess)
+            if (settings.Notification.EmailOnSuccess)
             {
                 foreach (var target in _targets) {
                     try
@@ -67,7 +59,7 @@ namespace PKISharp.WACS.Services
                 LogType.All, 
                 "Renewal for {friendlyName} succeeded" + (withErrors ? " with errors" : ""),
                 renewal.LastFriendlyName);
-            if (withErrors || _settings.Notification.EmailOnSuccess)
+            if (withErrors || settings.Notification.EmailOnSuccess)
             {
                 foreach (var target in _targets)
                 {
@@ -95,8 +87,8 @@ namespace PKISharp.WACS.Services
             IEnumerable<MemoryEntry> log)
         {
             _log.Error("Renewal for {friendlyName} failed, will retry on next run", renewal.LastFriendlyName);
-            var errors = result.ErrorMessages?.ToList() ?? new List<string>();
-            errors.AddRange(result.OrderResults?.SelectMany(o => o.ErrorMessages ?? Enumerable.Empty<string>()) ?? Enumerable.Empty<string>());
+            var errors = result.ErrorMessages?.ToList() ?? [];
+            errors.AddRange(result.OrderResults?.SelectMany(o => o.ErrorMessages ?? Enumerable.Empty<string>()) ?? []);
             if (errors.Count == 0)
             {
                 errors.Add("No specific error reason provided.");
@@ -132,6 +124,21 @@ namespace PKISharp.WACS.Services
                 try
                 {
                     await target.SendTest();
+                }
+                catch
+                {
+                    _log.Error("Unable to send notification using {n}", target.GetType().Name);
+                }
+            }
+        }
+
+        internal async Task NotifyCancel(Renewal renewal) 
+        {
+            foreach (var target in _targets)
+            {
+                try
+                {
+                    await target.SendCancel(renewal);
                 }
                 catch
                 {

@@ -3,18 +3,11 @@ using ACMESharp.Protocol.Resources;
 
 namespace PKISharp.WACS.Context
 {
-    public class AuthorizationContext
+    public class AuthorizationContext(OrderContext order, AcmeAuthorization authorization, string uri)
     {
-        public AcmeAuthorization Authorization { get; }
-        public OrderContext Order { get; }
-        public string Uri { get; }
-        public string Label { get; }
-        public AuthorizationContext(OrderContext order, AcmeAuthorization authorization, string uri)
-        {
-            Order = order;
-            Authorization = authorization;
-            Uri = uri;
-            Label = Identifier.Parse(authorization).Unicode(true).Value;
-        }
+        public AcmeAuthorization Authorization { get; } = authorization;
+        public OrderContext Order { get; } = order;
+        public string Uri { get; } = uri;
+        public string Label { get; } = Identifier.Parse(authorization).Unicode(true).Value;
     }
 }

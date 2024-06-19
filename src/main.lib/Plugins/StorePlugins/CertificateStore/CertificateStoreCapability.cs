@@ -5,12 +5,8 @@ using System;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
-    internal class CertificateStoreCapability : DefaultCapability
+    internal class CertificateStoreCapability(IUserRoleService userRoleService) : DefaultCapability
     {
-        private readonly IUserRoleService _userRoleService;
-        public CertificateStoreCapability(IUserRoleService userRoleService) =>
-            _userRoleService = userRoleService;
-
         public override State State
         {
             get
@@ -19,7 +15,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 {
                     return State.DisabledState("Not supported on this platform.");
                 }
-                return _userRoleService.AllowCertificateStore ?
+                return userRoleService.AllowCertificateStore ?
                     State.EnabledState() : 
                     State.DisabledState("Run as administrator to allow certificate store access.");
             }

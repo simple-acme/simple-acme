@@ -13,13 +13,15 @@ namespace PKISharp.WACS.Plugins.Azure.Common
 
         public const string AzureGermanCloud = "AzureGermanCloud";
 
-        public static IDictionary<string, string> ResourceManagerUrls
-            = new ConcurrentDictionary<string, string>()
+        public static IReadOnlyDictionary<string, string> ResourceManagerUrls()
+        {
+            return new Dictionary<string, string>()
             {
-                [AzureCloud] = "https://management.azure.com",
-                [AzureChinaCloud] = "https://management.chinacloudapi.cn",
-                [AzureUSGovernment] = "https://management.usgovcloudapi.net",
-                [AzureGermanCloud] = "https://management.microsoftazure.de",
-            };
+                   [AzureCloud] = "https://management.azure.com",
+                   [AzureChinaCloud] = "https://management.chinacloudapi.cn",
+                   [AzureUSGovernment] = "https://management.usgovcloudapi.net",
+                   [AzureGermanCloud] = "https://management.microsoftazure.de",
+            }.AsReadOnly();
+        }
     }
 }

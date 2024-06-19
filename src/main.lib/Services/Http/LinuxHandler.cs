@@ -4,12 +4,8 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    internal class LinuxHandler : HttpClientHandler
+    internal class LinuxHandler(RequestLogger log) : HttpClientHandler
     {
-        private readonly RequestLogger _log;
-
-        public LinuxHandler(RequestLogger log) => _log = log;
-
         /// <summary>
         /// Asynchronous request
         /// </summary>
@@ -18,9 +14,9 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            await _log.PreSend(request, cancellationToken);
+            await log.PreSend(request, cancellationToken);
             var response = await base.SendAsync(request, cancellationToken);
-            await _log.PostSend(response, cancellationToken);
+            await log.PostSend(response, cancellationToken);
             return response;
         }
     }

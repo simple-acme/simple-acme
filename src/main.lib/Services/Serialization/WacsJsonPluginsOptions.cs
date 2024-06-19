@@ -3,16 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace PKISharp.WACS.Services.Serialization
 {
-    public class WacsJsonPluginsOptionsFactory
+    public class WacsJsonPluginsOptionsFactory(ILogService log, ISettingsService settings)
     {
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-
-        public WacsJsonPluginsOptionsFactory(ILogService log, ISettingsService settings) 
-        {
-            _log = log;
-            _settings = settings;
-        }
 
         /// <summary>
         /// Return new instance every time because we can create
@@ -29,7 +21,7 @@ namespace PKISharp.WACS.Services.Serialization
                     PropertyNameCaseInsensitive = true,
                     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                 };
-                opt.Converters.Add(new ProtectedStringConverter(_log, _settings));
+                opt.Converters.Add(new ProtectedStringConverter(log, settings));
                 return opt;
             }
         }

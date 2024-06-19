@@ -14,18 +14,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         DnsValidationCapability, DreamhostJson>
         ("2bfb3ef8-64b8-47f1-8185-ea427b793c1a", 
         "Dreamhost", "Create verification records in Dreamhost DNS")]
-    internal class DreamhostDnsValidation : DnsValidation<DreamhostDnsValidation>
+    internal class DreamhostDnsValidation(
+        LookupClientProvider dnsClient,
+        ILogService logService,
+        ISettingsService settings,
+        SecretServiceManager ssm,
+        DreamhostOptions options) : DnsValidation<DreamhostDnsValidation>(dnsClient, logService, settings)
     {
-        private readonly DnsManagementClient _client;
-
-        public DreamhostDnsValidation(
-            LookupClientProvider dnsClient, 
-            ILogService logService, 
-            ISettingsService settings,
-            SecretServiceManager ssm,
-            DreamhostOptions options)
-            : base(dnsClient, logService, settings) 
-            => _client = new DnsManagementClient(ssm.EvaluateSecret(options.ApiKey) ?? "", logService);
+        private readonly DnsManagementClient _client = new(ssm.EvaluateSecret(options.ApiKey) ?? "", logService);
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {

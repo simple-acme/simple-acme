@@ -18,15 +18,13 @@ namespace PKISharp.WACS.Services
         public AssemblyService(ILogService logger)
         {
             _log = logger;
-            _allTypes = new List<TypeDescriptor>();
-            _allTypes.AddRange(BuiltInTypes());
-            _allTypes.AddRange(LoadFromDisk());
+            _allTypes = [.. BuiltInTypes(), .. LoadFromDisk()];
         }
 
         internal static List<TypeDescriptor> BuiltInTypes()
         {
-            return new()
-            {
+            return
+            [
                 // Arguments
                 new(typeof(Configuration.Arguments.MainArguments)),
                 new(typeof(Configuration.Arguments.AccountArguments)),
@@ -73,10 +71,10 @@ namespace PKISharp.WACS.Services
 
                 // Notification targets
                 new(typeof(Plugins.NotificationPlugins.NotificationTargetEmail))
-            };
+            ];
         }
 
-        private static readonly List<string> IgnoreLibraries = new() {
+        private static readonly List<string> IgnoreLibraries = [
             "clrcompression.dll",
             "clrjit.dll",
             "coreclr.dll",
@@ -85,18 +83,18 @@ namespace PKISharp.WACS.Services
             "mscordbi.dll",
             "mscordaccore.dll",
             "Microsoft.Testing.Platform.MSBuild.dll"
-        };
+        ];
 
         protected List<TypeDescriptor> LoadFromDisk()
         {
             if (string.IsNullOrEmpty(VersionService.PluginPath))
             {
-                return new List<TypeDescriptor>();
+                return [];
             }
             var pluginDirectory = new DirectoryInfo(VersionService.PluginPath);
             if (!pluginDirectory.Exists)
             {
-                return new List<TypeDescriptor>();
+                return [];
             }
             var dllFiles = pluginDirectory.
                 EnumerateFiles("*.dll", SearchOption.AllDirectories).
@@ -107,7 +105,7 @@ namespace PKISharp.WACS.Services
                 {
                     _log.Warning("This version of the program does not support external plugins, please download the pluggable version.");
                 }
-                return new List<TypeDescriptor>();
+                return [];
             } 
             else
             {
@@ -143,7 +141,7 @@ namespace PKISharp.WACS.Services
             var ret = new List<Type>();
             foreach (var assembly in allAssemblies)
             {
-                IEnumerable<Type> types = new List<Type>();
+                IEnumerable<Type> types = [];
                 try
                 {
                     types = GetTypesFromAssembly(assembly).ToList();
@@ -170,7 +168,7 @@ namespace PKISharp.WACS.Services
         {
             if (assembly.DefinedTypes == null)
             {
-                return new List<Type>();
+                return [];
             }
             return assembly.DefinedTypes.
                 Where(x =>
@@ -223,11 +221,10 @@ namespace PKISharp.WACS.Services
         /// properties are preserved during the build.
         /// </summary>
         [DebuggerDisplay("{Type.Name}")]
-        public readonly struct TypeDescriptor
+        public readonly struct TypeDescriptor([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] Type type)
         {
-            public TypeDescriptor([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] Type type) => Type = type;
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-            public Type Type { get; init; }
+            public Type Type { get; init; } = type;
         }
     }
 }

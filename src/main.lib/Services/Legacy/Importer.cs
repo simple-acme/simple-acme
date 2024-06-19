@@ -17,61 +17,38 @@ using Target = PKISharp.WACS.Plugins.TargetPlugins;
 
 namespace PKISharp.WACS.Services.Legacy
 {
-    internal class Importer
+    internal class Importer(
+        ILogService log, ILegacyRenewalService legacyRenewal,
+        ISettingsService settings, IRenewalStore currentRenewal,
+        IInputService input, MainArguments arguments,
+        LegacyTaskSchedulerService legacyTaskScheduler,
+        TaskSchedulerService currentTaskScheduler,
+        AcmeClientManager clientManager)
     {
-        private readonly ILegacyRenewalService _legacyRenewal;
-        private readonly IRenewalStore _currentRenewal;
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-        private readonly IInputService _input;
-        private readonly TaskSchedulerService _currentTaskScheduler;
-        private readonly LegacyTaskSchedulerService _legacyTaskScheduler;
-        private readonly AcmeClientManager _clientManager;
-        private readonly MainArguments _mainArguments;
-
-        public Importer(
-            ILogService log, ILegacyRenewalService legacyRenewal,
-            ISettingsService settings, IRenewalStore currentRenewal,
-            IInputService input, MainArguments arguments, 
-            LegacyTaskSchedulerService legacyTaskScheduler,
-            TaskSchedulerService currentTaskScheduler,
-            AcmeClientManager clientManager)
-        {
-            _legacyRenewal = legacyRenewal;
-            _currentRenewal = currentRenewal;
-            _log = log;
-            _settings = settings;
-            _input = input;
-            _mainArguments = arguments;
-            _currentTaskScheduler = currentTaskScheduler;
-            _legacyTaskScheduler = legacyTaskScheduler;
-            _clientManager = clientManager;
-        }
-
         public async Task Import(RunLevel runLevel)
         {
 
-            if (!_legacyRenewal.Renewals.Any())
+            if (!legacyRenewal.Renewals.Any())
             {
-                _log.Warning("No legacy renewals found");
+                log.Warning("No legacy renewals found");
             }
-            _log.Information("Legacy renewals {x}", _legacyRenewal.Renewals.Count().ToString());
-            _log.Information("Current renewals {x}", _currentRenewal.Renewals.Count().ToString());
-            _log.Information("Step {x}/3: convert renewals", 1);
-            foreach (var legacyRenewal in _legacyRenewal.Renewals)
+            log.Information("Legacy renewals {x}", legacyRenewal.Renewals.Count().ToString());
+            log.Information("Current renewals {x}", currentRenewal.Renewals.Count().ToString());
+            log.Information("Step {x}/3: convert renewals", 1);
+            foreach (var legacyRenewal in legacyRenewal.Renewals)
             {
                 var converted = Convert(legacyRenewal);
-                _currentRenewal.Import(converted);
+                currentRenewal.Import(converted);
             }
-            if (!_mainArguments.NoTaskScheduler)
+            if (!arguments.NoTaskScheduler)
             {
-                _log.Information("Step {x}/3: create new scheduled task", 2);
-                await _currentTaskScheduler.EnsureTaskScheduler(runLevel | RunLevel.Import);
-                _legacyTaskScheduler.StopTaskScheduler();
+                log.Information("Step {x}/3: create new scheduled task", 2);
+                await currentTaskScheduler.EnsureTaskScheduler(runLevel | RunLevel.Import);
+                legacyTaskScheduler.StopTaskScheduler();
             }
 
-            _log.Information("Step {x}/3: ensure ACMEv2 account", 3);
-            await _clientManager.GetClient();
+            log.Information("Step {x}/3: ensure ACMEv2 account", 3);
+            await clientManager.GetClient();
             var listCommand = "--list";
             var renewCommand = "--renew";
             if (runLevel.HasFlag(RunLevel.Interactive))
@@ -79,8 +56,8 @@ namespace PKISharp.WACS.Services.Legacy
                 listCommand = "Manage renewals";
                 renewCommand = "Run";
             }
-            _input.CreateSpace();
-            _input.Show(null,
+            input.CreateSpace();
+            input.Show(null,
                 value: $"The renewals have now been imported into this new version " +
                 "of the program. Nothing else will happen until new scheduled task is " +
                 "first run *or* you trigger them manually. It is highly recommended " +
@@ -102,9 +79,9 @@ namespace PKISharp.WACS.Services.Legacy
             ConvertInstallation(legacy, ret);
             ret.CsrPluginOptions = new RsaOptions();
             ret.LastFriendlyName = legacy.Binding?.Host;
-            ret.History = new List<RenewResult> {
+            ret.History = [
                 new("Imported") { }
-            };
+            ];
             return ret;
         }
 
@@ -129,12 +106,12 @@ namespace PKISharp.WACS.Services.Legacy
                     var options = new Target.IISOptions();
                     if (!string.IsNullOrEmpty(legacy.Binding.Host))
                     {
-                        options.IncludeHosts = new List<string>() { legacy.Binding.Host };
+                        options.IncludeHosts = [legacy.Binding.Host];
                     }
                     var siteId = legacy.Binding.TargetSiteId ?? legacy.Binding.SiteId ?? 0;
                     if (siteId > 0)
                     {
-                        options.IncludeSiteIds = new List<long>() { siteId };
+                        options.IncludeSiteIds = [siteId];
                     }
                     ret.TargetPluginOptions = options;
                     break;
@@ -147,7 +124,7 @@ namespace PKISharp.WACS.Services.Legacy
                     siteId = legacy.Binding.TargetSiteId ?? legacy.Binding.SiteId ?? 0;
                     if (siteId > 0)
                     {
-                        options.IncludeSiteIds = new List<long>() { siteId };
+                        options.IncludeSiteIds = [siteId];
                     }
                     options.ExcludeHosts = legacy.Binding.ExcludeBindings.ParseCsv();
                     ret.TargetPluginOptions = options;
@@ -245,7 +222,7 @@ namespace PKISharp.WACS.Services.Legacy
                     ret.ValidationPluginOptions = options;
                     break;
                 case "tls-sni-01.iis":
-                    _log.Warning("TLS-SNI-01 validation was removed from ACMEv2, changing to SelfHosting. Note that this requires port 80 to be public rather than port 443.");
+                    log.Warning("TLS-SNI-01 validation was removed from ACMEv2, changing to SelfHosting. Note that this requires port 80 to be public rather than port 443.");
                     ret.ValidationPluginOptions = new Http.SelfHostingOptions();
                     break;
                 case "http-01.iis":
@@ -288,11 +265,11 @@ namespace PKISharp.WACS.Services.Legacy
             }
             ret.StorePluginOptions.Add(new Store.PemFilesOptions()
             {
-                Path = _settings.Cache.Path
+                Path = settings.Cache.Path
             });
             ret.StorePluginOptions.Add(new Store.PfxFileOptions()
             {
-                Path = _settings.Cache.Path
+                Path = settings.Cache.Path
             });
         }
 
@@ -304,7 +281,7 @@ namespace PKISharp.WACS.Services.Legacy
             }
             if (legacy.InstallationPluginNames == null)
             {
-                legacy.InstallationPluginNames = new List<string>();
+                legacy.InstallationPluginNames = [];
                 // Based on chosen target
                 if (legacy.Binding.TargetPluginName == "IISSite" ||
                     legacy.Binding.TargetPluginName == "IISSites" ||

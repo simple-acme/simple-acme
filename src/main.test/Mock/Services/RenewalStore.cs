@@ -15,10 +15,10 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
 
         public MockRenewalStore()
         {
-            _renewalsCache = new List<Renewal>
-            {
+            _renewalsCache =
+            [
                 new() { Id = "1" }
-            };
+            ];
         }
 
         public IEnumerable<Renewal> Read()

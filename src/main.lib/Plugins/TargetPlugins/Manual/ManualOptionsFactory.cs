@@ -9,17 +9,15 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.TargetPlugins
 {
-    internal class ManualOptionsFactory : PluginOptionsFactory<ManualOptions>
+    internal class ManualOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<ManualOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-        public ManualOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
         public override int Order => 5;
 
-        private ArgumentResult<string?> Host => _arguments.
+        private ArgumentResult<string?> Host => arguments.
             GetString<ManualArguments>(x => x.Host).
             Required();
 
-        private ArgumentResult<string?> Common => _arguments.
+        private ArgumentResult<string?> Common => arguments.
             GetString<ManualArguments>(x => x.CommonName).
             Validate(x => Task.FromResult(x?.Length <= Constants.MaxCommonName), $"Common name too long (max {Constants.MaxCommonName} characters)");
 

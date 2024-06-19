@@ -14,33 +14,25 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         DnsValidationCapability, GodaddyJson>
         ("966c4c3d-1572-44c7-9134-5e2bc8fa021d", 
         "Godaddy", "Create verification records in Godaddy DNS")]
-    internal class GodaddyDnsValidation : DnsValidation<GodaddyDnsValidation>
+    internal class GodaddyDnsValidation(
+        LookupClientProvider dnsClient,
+        ILogService logService,
+        ISettingsService settings,
+        DomainParseService domainParser,
+        GodaddyOptions options,
+        SecretServiceManager ssm,
+        IProxyService proxyService) : DnsValidation<GodaddyDnsValidation>(dnsClient, logService, settings)
     {
-        private readonly DnsManagementClient _client;
-        private readonly DomainParseService _domainParser;
-
-        public GodaddyDnsValidation(
-            LookupClientProvider dnsClient,
-            ILogService logService,
-            ISettingsService settings,
-            DomainParseService domainParser,
-            GodaddyOptions options,
-            SecretServiceManager ssm,
-            IProxyService proxyService)
-            : base(dnsClient, logService, settings)
-        {
-            _client = new DnsManagementClient(
-                ssm.EvaluateSecret(options.ApiKey) ?? "", 
-                ssm.EvaluateSecret(options.ApiSecret) ?? "", 
+        private readonly DnsManagementClient _client = new(
+                ssm.EvaluateSecret(options.ApiKey) ?? "",
+                ssm.EvaluateSecret(options.ApiSecret) ?? "",
                 logService, proxyService);
-            _domainParser = domainParser;
-        }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             try
             {
-                var domain = _domainParser.GetRegisterableDomain(record.Authority.Domain);
+                var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
                 await _client.CreateRecord(domain, recordName, RecordType.TXT, record.Value);
                 return true;
@@ -56,7 +48,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             try
             {
-                var domain = _domainParser.GetRegisterableDomain(record.Authority.Domain);
+                var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
                 await _client.DeleteRecord(domain, recordName, RecordType.TXT);
             }

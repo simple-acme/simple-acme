@@ -7,21 +7,11 @@ using System;
 
 namespace PKISharp.WACS.Plugins.Azure.Common
 {
-    public class AzureHelpers
+    public class AzureHelpers(
+        IAzureOptionsCommon options,
+        IProxyService proxy,
+        SecretServiceManager ssm)
     {
-        private readonly IAzureOptionsCommon _options;
-        private readonly SecretServiceManager _ssm;
-        private readonly IProxyService _proxyService;
-
-        public AzureHelpers(
-            IAzureOptionsCommon options,
-            IProxyService proxy,
-            SecretServiceManager ssm)
-        {
-            _options = options;
-            _ssm = ssm;
-            _proxyService = proxy;
-        }
 
         /// <summary>
         /// Retrieve active directory settings based on the current Azure environment
@@ -30,11 +20,11 @@ namespace PKISharp.WACS.Plugins.Azure.Common
         private ArmEnvironment ArmEnvironment
         {
             get {
-                if (string.IsNullOrWhiteSpace(_options.AzureEnvironment))
+                if (string.IsNullOrWhiteSpace(options.AzureEnvironment))
                 {
                     return ArmEnvironment.AzurePublicCloud;
                 }
-                return _options.AzureEnvironment switch
+                return options.AzureEnvironment switch
                 {
                     AzureEnvironments.AzureChinaCloud => ArmEnvironment.AzureChina,
                     AzureEnvironments.AzureUSGovernment => ArmEnvironment.AzureGovernment,
@@ -42,7 +32,7 @@ namespace PKISharp.WACS.Plugins.Azure.Common
                     AzureEnvironments.AzureCloud => ArmEnvironment.AzurePublicCloud,
                     null => ArmEnvironment.AzurePublicCloud,
                     "" => ArmEnvironment.AzurePublicCloud,
-                    _ => new ArmEnvironment(new Uri(_options.AzureEnvironment), _options.AzureEnvironment)
+                    _ => new ArmEnvironment(new Uri(options.AzureEnvironment), options.AzureEnvironment)
                 };
             }
         }
@@ -51,12 +41,12 @@ namespace PKISharp.WACS.Plugins.Azure.Common
         {
             get
             {
-                return _options.UseMsi
+                return options.UseMsi
                       ? new ManagedIdentityCredential()
                       : new ClientSecretCredential(
-                          _options.TenantId,
-                          _options.ClientId,
-                          _ssm.EvaluateSecret(_options.Secret?.Value));
+                          options.TenantId,
+                          options.ClientId,
+                          ssm.EvaluateSecret(options.Secret?.Value));
             }
         }
 
@@ -66,7 +56,7 @@ namespace PKISharp.WACS.Plugins.Azure.Common
             {
                 return new ArmClientOptions() { 
                     Environment = ArmEnvironment,
-                    Transport = new HttpClientTransport(_proxyService.GetHttpClient())
+                    Transport = new HttpClientTransport(proxy.GetHttpClient())
                 };
             }
         }

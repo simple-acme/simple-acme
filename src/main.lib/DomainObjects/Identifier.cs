@@ -19,13 +19,8 @@ namespace PKISharp.WACS.DomainObjects
     }
 
     [DebuggerDisplay("{Type}: {Value}")]
-    public abstract class Identifier : IEquatable<Identifier>, IComparable, IComparable<Identifier>
+    public abstract class Identifier(string value, IdentifierType identifierType = IdentifierType.Unknown) : IEquatable<Identifier>, IComparable, IComparable<Identifier>
     {
-        public Identifier(string value, IdentifierType identifierType = IdentifierType.Unknown)
-        {
-            Value = value;
-            Type = identifierType;
-        }
         public static Identifier Parse(AcmeIdentifier identifier, bool? wildcard = null)
         {
             return identifier.Type switch
@@ -47,8 +42,8 @@ namespace PKISharp.WACS.DomainObjects
 
         public virtual Identifier Unicode(bool unicode) => this;
 
-        public IdentifierType Type { get; set; }
-        public string Value { get; set; }
+        public IdentifierType Type { get; set; } = identifierType;
+        public string Value { get; set; } = value;
         public override string ToString() => $"{Type}: {Value}";
         public override bool Equals(object? obj) => (obj as Identifier) == this;
         public override int GetHashCode() => ToString().GetHashCode();
@@ -59,13 +54,8 @@ namespace PKISharp.WACS.DomainObjects
         public static bool operator !=(Identifier? a, Identifier? b) => !(a == b);
     }
 
-    public class DnsIdentifier : Identifier
+    public class DnsIdentifier(string value) : Identifier(value, IdentifierType.DnsName)
     {
-        public DnsIdentifier(string value) : base(value, IdentifierType.DnsName)
-        {
-
-        }
-
         public override Identifier Unicode(bool unicode)
         {
             if (unicode)
@@ -91,7 +81,7 @@ namespace PKISharp.WACS.DomainObjects
                 Value = parsed.ToString();
                 return;
             }
-            if (value.StartsWith("#"))
+            if (value.StartsWith('#'))
             {
                 var hex = value.TrimStart('#');
                 try
@@ -121,20 +111,12 @@ namespace PKISharp.WACS.DomainObjects
         }
     }
 
-    public class UpnIdentifier : Identifier
+    public class UpnIdentifier(string value) : Identifier(value, IdentifierType.UpnName)
     {
-        public UpnIdentifier(string value) : base(value, IdentifierType.UpnName)
-        {
-
-        }
     }
 
-    public class UnknownIdentifier : Identifier
+    public class UnknownIdentifier(string value) : Identifier(value, IdentifierType.Unknown)
     {
-        public UnknownIdentifier(string value) : base(value, IdentifierType.Unknown)
-        {
-
-        }
     }
 
 }

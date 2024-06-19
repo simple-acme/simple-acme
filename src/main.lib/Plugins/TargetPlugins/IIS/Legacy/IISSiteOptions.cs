@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             {
                 if (IncludeSiteIds == null && value.HasValue)
                 {
-                    IncludeSiteIds = new List<long>() { value.Value };
+                    IncludeSiteIds = [value.Value];
                 }
             }
         }

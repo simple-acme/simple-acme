@@ -7,17 +7,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.NS1
 {
-    public class DnsManagementClient
+    public class DnsManagementClient(string apiKey, IProxyService proxyService)
     {
-        private readonly string _apiKey;
-        readonly IProxyService _proxyService;
         private readonly string _uri = "https://api.nsone.net/v1/";
-
-        public DnsManagementClient(string apiKey, IProxyService proxyService)
-        {
-            _apiKey = apiKey;
-            _proxyService = proxyService;
-        }
 
         public async Task<string[]?> GetZones()
         {
@@ -71,9 +63,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.NS1
 
         private HttpClient GetClient()
         {
-            var client = _proxyService.GetHttpClient();
+            var client = proxyService.GetHttpClient();
             client.BaseAddress = new Uri(_uri);
-            client.DefaultRequestHeaders.Add("X-NSONE-Key", _apiKey);
+            client.DefaultRequestHeaders.Add("X-NSONE-Key", apiKey);
             return client;
         }
     }

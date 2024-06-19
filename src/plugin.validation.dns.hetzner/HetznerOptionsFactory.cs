@@ -7,16 +7,13 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    public class HetznerOptionsFactory : PluginOptionsFactory<HetznerOptions>
+    public class HetznerOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<HetznerOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-        public HetznerOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments
+        private ArgumentResult<ProtectedString?> ApiKey => arguments
             .GetProtectedString<HetznerArguments>(a => a.HetznerApiToken)
             .Required();
 
-        private ArgumentResult<string?> ZoneId => _arguments
+        private ArgumentResult<string?> ZoneId => arguments
             .GetString<HetznerArguments>(a => a.HetznerZoneId)
             .DefaultAsNull();
 

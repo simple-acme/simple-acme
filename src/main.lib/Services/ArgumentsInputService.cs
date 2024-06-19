@@ -8,24 +8,12 @@ using System.Linq.Expressions;
 
 namespace PKISharp.WACS.Services
 {
-    public partial class ArgumentsInputService
+    public partial class ArgumentsInputService(
+        ILogService log,
+        ArgumentsParser arguments,
+        IInputService input,
+        SecretServiceManager secretService)
     {
-        private readonly ILogService _log;
-        private readonly ArgumentsParser _arguments;
-        private readonly IInputService _input;
-        private readonly SecretServiceManager _secretService;
-
-        public ArgumentsInputService(
-            ILogService log,
-            ArgumentsParser arguments,
-            IInputService input,
-            SecretServiceManager secretService)
-        {
-            _log = log;
-            _arguments = arguments;
-            _input = input;
-            _secretService = secretService;
-        }
 
         /// <summary>
         /// Slightly awkward construction here with the allowEmtpy parameter to 
@@ -42,40 +30,40 @@ namespace PKISharp.WACS.Services
             (Expression<Func<T, string?>> expression, bool allowEmtpy = false) where T : class, IArguments,
             new() => new(GetArgument(expression).Protect(allowEmtpy), GetMetaData(expression),
                 allowEmtpy
-                    ? async args => (await _secretService.GetSecret(args.Label, args.Default?.Value, "", args.Required, args.Multiline)).Protect(true)
-                    : async args => (await _secretService.GetSecret(args.Label, args.Default?.Value, null, args.Required, args.Multiline)).Protect(false),
-                _log, allowEmtpy);
+                    ? async args => (await secretService.GetSecret(args.Label, args.Default?.Value, "", args.Required, args.Multiline)).Protect(true)
+                    : async args => (await secretService.GetSecret(args.Label, args.Default?.Value, null, args.Required, args.Multiline)).Protect(false),
+                log, allowEmtpy);
 
         public ArgumentResult<string?> GetString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
             (Expression<Func<T, string?>> expression) where T : class, IArguments, new() =>
             new(GetArgument(expression), GetMetaData(expression),
-                async args => await _input.RequestString(args.Label), _log);
+                async args => await input.RequestString(args.Label), log);
 
         public ArgumentResult<bool?> GetBool<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
             (Expression<Func<T, bool?>> expression) where T : class, IArguments, new() =>
             new(GetArgument(expression), GetMetaData(expression),
-                async args => await _input.PromptYesNo(args.Label, args.Default == true), _log);
+                async args => await input.PromptYesNo(args.Label, args.Default == true), log);
 
         public ArgumentResult<long?> GetLong<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
             (Expression<Func<T, long?>> expression) where T : class, IArguments, new() => 
             new(GetArgument(expression), GetMetaData(expression),
                 async args => {
-                    var str = await _input.RequestString(args.Label);
+                    var str = await input.RequestString(args.Label);
                     if (long.TryParse(str, out var ret))
                     {
                         return ret;
                     }
                     else
                     {
-                        _log.Warning("Invalid number: {ret}", str);
+                        log.Warning("Invalid number: {ret}", str);
                         return null;
                     }
-                }, _log);
+                }, log);
 
         public ArgumentResult<int?> GetInt<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
             (Expression<Func<T, int?>> expression) where T : class, IArguments, new() =>
             new(GetArgument(expression), GetMetaData(expression),
-                args => _input.RequestInt(args.Label), _log);
+                args => input.RequestInt(args.Label), log);
 
         protected static CommandLineAttribute GetMetaData(LambdaExpression action)
         {
@@ -105,7 +93,7 @@ namespace PKISharp.WACS.Services
         protected P GetArgument<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T, P>(Expression<Func<T, P>> action) where T : class, IArguments, new()
         {
             var returnValue = default(P);
-            var args = _arguments.GetArguments<T>();
+            var args = arguments.GetArguments<T>();
             if (args != null)
             {
                 var func = action.Compile();
@@ -118,29 +106,29 @@ namespace PKISharp.WACS.Services
             var argumentName = GetMetaData(action).ArgumentName;
             if (returnValue == null)
             {
-                _log.Verbose("No value provided for {optionName}", $"--{argumentName}");
+                log.Verbose("No value provided for {optionName}", $"--{argumentName}");
             }
             else
             {
-                var censor = _arguments.SecretArguments.Contains(argumentName);
+                var censor = arguments.SecretArguments.Contains(argumentName);
                 if (returnValue is string returnString && string.IsNullOrWhiteSpace(returnString)) 
                 {
-                    _log.Verbose("Parsed emtpy value for {optionName}", $"--{argumentName}");
+                    log.Verbose("Parsed emtpy value for {optionName}", $"--{argumentName}");
                 } 
                 else if (returnValue is bool boolValue)
                 {
                     if (boolValue)
                     {
-                        _log.Verbose("Flag {optionName} is present", $"--{argumentName}");
+                        log.Verbose("Flag {optionName} is present", $"--{argumentName}");
                     } 
                     else
                     {
-                        _log.Verbose("Flag {optionName} not present", $"--{argumentName}");
+                        log.Verbose("Flag {optionName} not present", $"--{argumentName}");
                     }
                 }
                 else
                 {
-                    _log.Verbose("Parsed value for {optionName}: {providedValue}", $"--{argumentName}", censor ? "********" : returnValue);
+                    log.Verbose("Parsed value for {optionName}: {providedValue}", $"--{argumentName}", censor ? "********" : returnValue);
                 }
             }
             return returnValue;

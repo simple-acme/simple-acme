@@ -26,26 +26,18 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DnsValidationCapability, AzureJson>
         ("aa57b028-45fb-4aca-9cac-a63d94c76b4a",
         "Azure", "Create verification records in Azure DNS")]
-    internal class Azure : DnsValidation<Azure>
+    internal class Azure(AzureOptions options,
+        LookupClientProvider dnsClient,
+        SecretServiceManager ssm,
+        IProxyService proxyService,
+        ILogService log,
+        ISettingsService settings) : DnsValidation<Azure>(dnsClient, log, settings)
     {
         private ArmClient? _armClient;
         private SubscriptionResource? _subscriptionResource;
-
-        private readonly AzureOptions _options;
-        private readonly AzureHelpers _helpers;
-        private readonly Dictionary<DnsZoneResource, Dictionary<string, DnsTxtRecordData>> _recordSets = new();
+        private readonly AzureHelpers _helpers = new(options, proxyService, ssm);
+        private readonly Dictionary<DnsZoneResource, Dictionary<string, DnsTxtRecordData>> _recordSets = [];
         private IEnumerable<DnsZoneResource>? _hostedZones;
-        
-        public Azure(AzureOptions options,
-            LookupClientProvider dnsClient,
-            SecretServiceManager ssm,
-            IProxyService proxyService,
-            ILogService log, 
-            ISettingsService settings) : base(dnsClient, log, settings)
-        {
-            _options = options;
-            _helpers = new AzureHelpers(options, proxyService, ssm);
-        }
 
         /// <summary>
         /// Allow this plugin to process multiple validations at the same time.
@@ -70,7 +62,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             var relativeKey = RelativeRecordName(zone.Data.Name, record.Authority.Domain);
             if (!_recordSets.TryGetValue(zone, out var value))
             {
-                value = new();
+                value = [];
                 _recordSets.Add(zone, value);
             }
             if (!value.ContainsKey(relativeKey))
@@ -175,7 +167,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 _armClient ??= new ArmClient(
                         _helpers.TokenCredential,
-                        _options.SubscriptionId,
+                        options.SubscriptionId,
                         _helpers.ArmOptions);
                 return _armClient;
             }
@@ -190,7 +182,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             _subscriptionResource ??= await Client.GetDefaultSubscriptionAsync();
             if (_subscriptionResource == null)
             {
-                throw new Exception($"Unable to find subscription {_options.SubscriptionId ?? "default"}");
+                throw new Exception($"Unable to find subscription {options.SubscriptionId ?? "default"}");
             }
             return _subscriptionResource;
         }
@@ -217,12 +209,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
 
             // Option to bypass the best match finder
-            if (!string.IsNullOrEmpty(_options.HostedZone))
+            if (!string.IsNullOrEmpty(options.HostedZone))
             {
-                var match = _hostedZones.FirstOrDefault(h => string.Equals(h.Data.Name, _options.HostedZone, StringComparison.OrdinalIgnoreCase));
+                var match = _hostedZones.FirstOrDefault(h => string.Equals(h.Data.Name, options.HostedZone, StringComparison.OrdinalIgnoreCase));
                 if (match == null)
                 {
-                    _log.Error("Unable to find hosted zone {name}", _options.HostedZone);
+                    _log.Error("Unable to find hosted zone {name}", options.HostedZone);
                 }
                 return match;
             }
@@ -235,7 +227,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             _log.Error(
                 "Can't find hosted zone for {recordName} in subscription {subscription}",
                 recordName,
-                _options.SubscriptionId);
+                options.SubscriptionId);
             return null;
         }
 

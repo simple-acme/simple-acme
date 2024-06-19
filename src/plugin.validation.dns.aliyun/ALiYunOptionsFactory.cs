@@ -7,17 +7,13 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    public class ALiYunOptionsFactory : PluginOptionsFactory<ALiYunOptions>
+    public class ALiYunOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<ALiYunOptions>
     {
-        private ArgumentsInputService Arguments { get; }
+        private ArgumentResult<string?> ApiServer => arguments.GetString<ALiYunArguments>(a => a.ALiYunServer).Required();
 
-        public ALiYunOptionsFactory(ArgumentsInputService arguments) => Arguments = arguments;
+        private ArgumentResult<ProtectedString?> ApiID => arguments.GetProtectedString<ALiYunArguments>(a => a.ALiYunApiID).Required();
 
-        private ArgumentResult<string?> ApiServer => Arguments.GetString<ALiYunArguments>(a => a.ALiYunServer).Required();
-
-        private ArgumentResult<ProtectedString?> ApiID => Arguments.GetProtectedString<ALiYunArguments>(a => a.ALiYunApiID).Required();
-
-        private ArgumentResult<ProtectedString?> ApiSecret => Arguments.GetProtectedString<ALiYunArguments>(a => a.ALiYunApiSecret).Required();
+        private ArgumentResult<ProtectedString?> ApiSecret => arguments.GetProtectedString<ALiYunArguments>(a => a.ALiYunApiSecret).Required();
 
         public override async Task<ALiYunOptions?> Aquire(IInputService inputService, RunLevel runLevel)
         {

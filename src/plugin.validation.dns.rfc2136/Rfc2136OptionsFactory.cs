@@ -7,29 +7,26 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    internal sealed class Rfc2136OptionsFactory : PluginOptionsFactory<Rfc2136Options>
+    internal sealed class Rfc2136OptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<Rfc2136Options>
     {
-        private readonly ArgumentsInputService _arguments;
-        public Rfc2136OptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<string?> ServerHost => _arguments.
+        private ArgumentResult<string?> ServerHost => arguments.
             GetString<Rfc2136Arguments>(a => a.ServerHost).
             Required();
 
-        private ArgumentResult<int?> ServerPort => _arguments.
+        private ArgumentResult<int?> ServerPort => arguments.
             GetInt<Rfc2136Arguments>(a => a.ServerPort).
             WithDefault(53).
             DefaultAsNull();
 
-        private ArgumentResult<string?> TsigKeyName => _arguments.
+        private ArgumentResult<string?> TsigKeyName => arguments.
             GetString<Rfc2136Arguments>(a => a.TsigKeyName).
             Required();
 
-        private ArgumentResult<ProtectedString?> TsigKeySecret => _arguments.
+        private ArgumentResult<ProtectedString?> TsigKeySecret => arguments.
             GetProtectedString<Rfc2136Arguments>(a => a.TsigKeySecret).
             Required();
 
-        private ArgumentResult<string?> TsigKeyAlgorithm => _arguments.
+        private ArgumentResult<string?> TsigKeyAlgorithm => arguments.
             GetString<Rfc2136Arguments>(a => a.TsigKeyAlgorithm);
 
         public override async Task<Rfc2136Options?> Aquire(IInputService input, RunLevel runLevel)

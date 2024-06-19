@@ -4,10 +4,10 @@ using PKISharp.WACS.Plugins.Interfaces;
 
 namespace PKISharp.WACS.Plugins.OrderPlugins
 {
-    public class DomainCapability : DefaultCapability
+    public class DomainCapability(Target target) : DefaultCapability
     {
-        protected readonly Target Target;
-        public DomainCapability(Target target) => Target = target;
+        protected readonly Target Target = target;
+
         public override State State => 
             Target.UserCsrBytes == null ? 
             State.EnabledState() : 

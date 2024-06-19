@@ -9,24 +9,17 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
 {
-    internal class ScriptOptionsFactory : PluginOptionsFactory<ScriptOptions>
+    internal class ScriptOptionsFactory(ILogService log, ArgumentsInputService arguments) : PluginOptionsFactory<ScriptOptions>
     {
         public override int Order => 100;
-        private readonly ILogService _log;
-        private readonly ArgumentsInputService _arguments;
 
-        public ScriptOptionsFactory(ILogService log, ArgumentsInputService arguments)
-        {
-            _log = log;
-            _arguments = arguments;
-        }
-        private ArgumentResult<string?> Script => _arguments.
+        private ArgumentResult<string?> Script => arguments.
             GetString<ScriptArguments>(x => x.Script).
-            Validate(x => Task.FromResult(x.ValidFile(_log)), "invalid path").
+            Validate(x => Task.FromResult(x.ValidFile(log)), "invalid path").
             Validate(x => Task.FromResult(x!.EndsWith(".ps1") || x!.EndsWith(".exe") || x!.EndsWith(".bat") || x!.EndsWith(".cmd")), "invalid extension").
             Required();
 
-        private ArgumentResult<string?> Parameters => _arguments.
+        private ArgumentResult<string?> Parameters => arguments.
             GetString<ScriptArguments>(x => x.ScriptParameters);
 
         public override async Task<ScriptOptions?> Aquire(IInputService inputService, RunLevel runLevel)

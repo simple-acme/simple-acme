@@ -3,6 +3,7 @@ using PKISharp.WACS.Clients;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Interfaces;
+using Serilog;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;
@@ -104,6 +105,8 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
             }
         }
 
+        public Task SendCancel(Renewal renewal) => Task.CompletedTask;
+
         private static string RenderLog(IEnumerable<MemoryEntry> log) => @$"<p>Log output:<ul><li>{string.Join("</li><li>", log.Select(x => RenderLogEntry(x)))}</ul></p>";
 
         private static string RenderLogEntry(MemoryEntry log)
@@ -183,7 +186,7 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
             {
                 return "Error";
             }
-            if (!hosts.Any())
+            if (hosts.Count == 0)
             {
                 return "Unknown";
             }

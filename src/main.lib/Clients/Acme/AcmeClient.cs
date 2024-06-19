@@ -292,8 +292,8 @@ namespace PKISharp.WACS.Clients.Acme
             var serialBytes = certificate.Certificate.SerialNumber.ToByteArray();
             var keyAuth = AuthorityKeyIdentifier.GetInstance(certificate.Certificate.GetExtensionValue(X509Extensions.AuthorityKeyIdentifier).GetOctets());
             var keyAuthBytes = keyAuth.GetKeyIdentifier();
-            var serial = Base64Tool.UrlEncode(serialBytes.ToArray());
-            var keyauth = Base64Tool.UrlEncode(keyAuthBytes.ToArray());
+            var serial = Base64Tool.UrlEncode([.. serialBytes]);
+            var keyauth = Base64Tool.UrlEncode([.. keyAuthBytes]);
             return $"{keyauth}.{serial}";
         }
 

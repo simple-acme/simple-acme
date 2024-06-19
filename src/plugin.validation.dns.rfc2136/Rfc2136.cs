@@ -26,7 +26,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private readonly Rfc2136Options _options;
         private readonly LookupClientProvider _lookupClientProvider;
         private readonly DomainParseService _domainParser;
-        private readonly Dictionary<string, string> _zoneMap = new();
+        private readonly Dictionary<string, string> _zoneMap = [];
         private ArDnsClient? _client;
 
         public Rfc2136(
@@ -87,11 +87,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     // Cache succesful zone result after succesful
                     // update so that we don't have to retry again
                     // for subsequent adds and deletes.
-                    if (!_zoneMap.ContainsKey(domain))
-                    {
-                        _zoneMap.Add(domain, currentZone);
-                    }
-
+                    _zoneMap.TryAdd(domain, currentZone);
                     return true;
                 }
                 catch (Exception ex)
@@ -99,7 +95,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     _log.Debug("Error creating {domain} in zone {zone}: {ex}", domain, currentZone, ex.Message);
                 }
 
-                if (subDomains.Any())
+                if (subDomains.Count != 0)
                 {
                     currentZone = $"{subDomains.Last()}.{currentZone}";
                     subDomains.RemoveAt(subDomains.Count - 1);

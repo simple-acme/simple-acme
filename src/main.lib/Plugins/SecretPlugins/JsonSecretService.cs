@@ -42,7 +42,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
                 path = Path.Join(settings.Client.ConfigurationPath, "secrets.json");
             }
             _file = new FileInfo(path);
-            _secrets = new List<CredentialEntry>();
+            _secrets = [];
             if (_file.Exists)
             {
                 var options = new JsonSerializerOptions

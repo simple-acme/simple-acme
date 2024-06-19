@@ -7,30 +7,15 @@ using System.Collections.Generic;
 
 namespace PKISharp.WACS.Services
 {
-    public class MemoryEntry
+    public class MemoryEntry(LogEventLevel level, string message)
     {
-        public MemoryEntry(LogEventLevel level, string message)
-        {
-            Level = level;
-            Message = message;
-        }
-
-        public LogEventLevel Level { get; set; }
-        public string Message { get; set; }
+        public LogEventLevel Level { get; set; } = level;
+        public string Message { get; set; } = message;
     }
 
-    class MemorySink : ILogEventSink
+    class MemorySink(List<MemoryEntry> list, IFormatProvider? formatProvider = null) : ILogEventSink
     {
-        private readonly IFormatProvider? _formatProvider;
-        private readonly List<MemoryEntry> _list;
-
-        public MemorySink(List<MemoryEntry> list, IFormatProvider? formatProvider = null)
-        {
-            _formatProvider = formatProvider;
-            _list = list;
-        }
-
-        public void Emit(LogEvent logEvent) => _list.Add(new MemoryEntry(logEvent.Level, logEvent.RenderMessage(_formatProvider)));
+        public void Emit(LogEvent logEvent) => list.Add(new MemoryEntry(logEvent.Level, logEvent.RenderMessage(formatProvider)));
     }
 }
 

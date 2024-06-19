@@ -5,26 +5,18 @@ using Protocol = ACMESharp.Protocol;
 namespace PKISharp.WACS.DomainObjects
 {
     [DebuggerDisplay("{CacheKeyPart}")]
-    public class Order
+    public class Order(
+        Renewal renewal,
+        Target target,
+        string? cacheKeyPart = null,
+        string? friendlyNamePart = null)
     {
-        public string? CacheKeyPart { get; set; }
-        public string? FriendlyNamePart { get; set; }
+        public string? CacheKeyPart { get; set; } = cacheKeyPart;
+        public string? FriendlyNamePart { get; set; } = friendlyNamePart;
         public string? KeyPath { get; set; }
-        public Target Target { get; set; }
-        public Renewal Renewal { get; set; }
+        public Target Target { get; set; } = target;
+        public Renewal Renewal { get; set; } = renewal;
         public Protocol.AcmeOrderDetails? Details { get; set; } = null;
-
-        public Order(
-            Renewal renewal,
-            Target target,
-            string? cacheKeyPart = null,
-            string? friendlyNamePart = null)
-        {
-            Target = target;
-            Renewal = renewal;
-            CacheKeyPart = cacheKeyPart;
-            FriendlyNamePart = friendlyNamePart;
-        }
 
         public bool? Valid => Details == null ? 
             null : 

@@ -317,11 +317,11 @@ namespace PKISharp.WACS.Services
         private CertificateInfoCache FromCache(FileInfo pfxFileInfo, string? password)
         {
             var key = pfxFileInfo.FullName;
-            if (_infoCache.ContainsKey(key))
+            if (_infoCache.TryGetValue(key, out var value))
             {
-                if (_infoCache[key].CacheFile.LastWriteTime == pfxFileInfo.LastWriteTime)
+                if (value.CacheFile.LastWriteTime == pfxFileInfo.LastWriteTime)
                 {
-                    return _infoCache[key];
+                    return value;
                 }
                 else
                 {
@@ -334,7 +334,7 @@ namespace PKISharp.WACS.Services
             }
             return _infoCache[key];
         }
-        private readonly Dictionary<string, CertificateInfoCache> _infoCache = new();
+        private readonly Dictionary<string, CertificateInfoCache> _infoCache = [];
 
         /// <summary>
         /// Path where the private key may be stored
