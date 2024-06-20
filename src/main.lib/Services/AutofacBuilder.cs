@@ -149,11 +149,9 @@ namespace PKISharp.WACS.Services
         /// <param name="main"></param>
         /// <param name="target"></param>
         /// <returns></returns>
-        public ILifetimeScope Target(ILifetimeScope execution, Target target)
-        {
+        public ILifetimeScope Target(ILifetimeScope execution, Target target) =>
             //log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Target), execution.Tag);
-            return execution.BeginLifetimeScope($"target", builder => builder.RegisterInstance(target));
-        }
+            execution.BeginLifetimeScope($"target", builder => builder.RegisterInstance(target));
 
         /// <summary>
         /// Shortcut for backends using the IPluginCapability

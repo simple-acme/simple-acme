@@ -115,7 +115,7 @@ namespace PKISharp.WACS.Services
         }
 
 #if !PLUGGABLE
-        protected static List<TypeDescriptor> LoadFromDiskReal(IEnumerable<FileInfo> _) => new();
+        protected static List<TypeDescriptor> LoadFromDiskReal(IEnumerable<FileInfo> _) => [];
 #endif
 
 #if PLUGGABLE 

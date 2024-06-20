@@ -19,10 +19,14 @@ namespace PKISharp.WACS.Plugins
     /// Metadata for a specific plugin
     /// </summary>
     [DebuggerDisplay("{Backend.Name}")]
-    public class Plugin([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type source, IPluginMeta meta, Steps step) : BasePlugin(source)
+    public class Plugin(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] 
+        Type source,
+        IPluginMeta meta, 
+        Steps step) : BasePlugin(source)
     {
-        public Guid Id { get; set; } = meta.Id;
-        public Steps Step { get; set; } = step;
+        public Guid Id { get; } = meta.Id;
+        public Steps Step { get; } = step;
 
         public string Name => meta.Name;
         public string Description => meta.Description;

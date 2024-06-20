@@ -1,11 +1,9 @@
-﻿using Microsoft.Win32.SafeHandles;
-using PKISharp.WACS.Configuration;
+﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Extensions;
 using System;
 using System.IO;
-using System.Reflection.Emit;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -19,7 +17,6 @@ namespace PKISharp.WACS.Services
         private readonly ILogService _log;
         private readonly Settings _settings;
         private readonly MainArguments? _arguments;
-        private SafeFileHandle path;
 
         public bool Valid { get; private set; } = false;
 
