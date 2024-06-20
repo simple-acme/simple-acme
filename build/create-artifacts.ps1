@@ -47,7 +47,7 @@ function PlatformRelease
 	if ($ReleaseType -eq "ReleaseTrimmed") {
 		$Postfix = "trimmed"
 	}
-	$MainZip = "win-acme.v$Version.$Platform.$Postfix.zip"
+	$MainZip = "simple-acme.v$Version.$Platform.$Postfix.zip"
 	$MainZipPath = "$Out\$MainZip"
 	$MainBinDir = "$Root\src\main\bin\$ReleaseType\net8.0\$Platform"
 	if (!(Test-Path $MainBinDir))
@@ -69,7 +69,6 @@ function PlatformRelease
 		} else {
 			Copy-Item "$MainBinDir\settings.json" "$Temp\settings_default.json"
 		}
-		Copy-Item "$MainBinDir\settings.json" "$Temp\settings_default.json"
 		Copy-Item "$Root\dist\*" $Temp -Recurse
 		Set-Content -Path "$Temp\version.txt" -Value "v$Version ($Platform, $ReleaseType)"
 		[io.compression.zipfile]::CreateFromDirectory($Temp, $MainZipPath)

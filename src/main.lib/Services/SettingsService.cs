@@ -1,13 +1,16 @@
-﻿using PKISharp.WACS.Configuration;
+﻿using Microsoft.Win32.SafeHandles;
+using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Extensions;
 using System;
 using System.IO;
+using System.Reflection.Emit;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.Json;
+using static System.Environment;
 
 namespace PKISharp.WACS.Services
 {
@@ -16,6 +19,8 @@ namespace PKISharp.WACS.Services
         private readonly ILogService _log;
         private readonly Settings _settings;
         private readonly MainArguments? _arguments;
+        private SafeFileHandle path;
+
         public bool Valid { get; private set; } = false;
 
         public SettingsService(ILogService log, ArgumentsParser parser)
@@ -38,7 +43,7 @@ namespace PKISharp.WACS.Services
                 if (!settingsTemplate.Exists)
                 {
                     _log.Warning("Unable to locate {settings}", settingsFileName);
-                } 
+                }
                 else
                 {
                     _log.Verbose("Copying {settingsFileTemplateName} to {settingsFileName}", settingsFileTemplateName, settingsFileName);
@@ -114,8 +119,6 @@ namespace PKISharp.WACS.Services
             // Configure disk logger
             _log.SetDiskLoggingPath(Client.LogPath);
 
-
-
             Valid = true;
         }
 
@@ -153,14 +156,15 @@ namespace PKISharp.WACS.Services
                     configRoot = configRootWithClient;
                 }
             }
-            else if (OperatingSystem.IsWindows())
+            else if (OperatingSystem.IsWindows() || Environment.IsPrivilegedProcess)
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                var appData = Environment.GetFolderPath(SpecialFolder.CommonApplicationData, SpecialFolderOption.DoNotVerify);
                 configRoot = Path.Combine(appData, Client.ClientName);
             }
             else
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                // For non-elevated Linux we have to fall back to the user directory
+                var appData = Environment.GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify);
                 configRoot = Path.Combine(appData, Client.ClientName);
             }
             return configRoot;
@@ -221,11 +225,32 @@ namespace PKISharp.WACS.Services
             {
                 _log.Debug($"Use existing {label} folder {{path}}", path);
             }
-            if (checkAcl && OperatingSystem.IsWindows())
+            if (checkAcl)
             {
-                EnsureFolderAcl(di, label, created);
+                if (OperatingSystem.IsWindows())
+                {
+                    EnsureFolderAcl(di, label, created);
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    EnsureFolderAclLinux(di, label);
+                }
+              
             }
         }
+
+        [SupportedOSPlatform("linux")]
+        private void EnsureFolderAclLinux(DirectoryInfo di, string label) {
+            var currentMode = File.GetUnixFileMode(di.FullName);
+            if (currentMode.HasFlag(UnixFileMode.OtherRead) || 
+                currentMode.HasFlag(UnixFileMode.OtherExecute) ||
+                currentMode.HasFlag(UnixFileMode.OtherWrite))
+            {
+                var newMode = currentMode & ~(UnixFileMode.OtherRead | UnixFileMode.OtherExecute | UnixFileMode.OtherWrite);
+                _log.Warning("Change file mode in {label} to {newMode}", label, newMode);
+                File.SetUnixFileMode(di.FullName, newMode);
+            }
+        } 
 
         /// <summary>
         /// Ensure proper access rights to a folder

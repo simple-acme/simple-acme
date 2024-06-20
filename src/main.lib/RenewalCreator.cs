@@ -89,14 +89,6 @@ namespace PKISharp.WACS
         /// <returns></returns>
         internal async Task SetupRenewal(RunLevel runLevel, Steps steps = Steps.All, Renewal? tempRenewal = null)
         {
-            if (mainArgs.Test)
-            {
-                runLevel |= RunLevel.Test;
-            }
-            if (mainArgs.NoCache)
-            {
-                runLevel |= RunLevel.NoCache;
-            }
             log.Information(LogType.All, "Running in mode: {runLevel}", runLevel);
 
             tempRenewal ??= Renewal.Create(mainArgs.Id);

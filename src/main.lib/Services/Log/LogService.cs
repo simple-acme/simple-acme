@@ -110,7 +110,7 @@ namespace PKISharp.WACS.Services
         {
             try
             {
-                var defaultPath = path.TrimEnd('\\', '/') + "\\log-.txt";
+                var defaultPath = Path.Combine(path.TrimEnd('\\', '/'), "log-.txt");
                 var defaultRollingInterval = RollingInterval.Day;
                 var defaultRetainedFileCountLimit = 120;
                 var fileConfig = new ConfigurationBuilder()

@@ -121,6 +121,24 @@ namespace PKISharp.WACS.Host
                 }
             }
 
+            // Base runlevel flags on command line arguments
+            var unattendedRunLevel = RunLevel.Unattended;
+            var interactiveRunLevel = RunLevel.Interactive;
+            if (_args.Force)
+            {
+                unattendedRunLevel |= RunLevel.Force | RunLevel.NoCache;
+            }
+            if (_args.NoCache)
+            {
+                interactiveRunLevel |= RunLevel.Test;
+                unattendedRunLevel |= RunLevel.NoCache;
+            }
+            if (_args.Test)
+            {
+                interactiveRunLevel |= RunLevel.Test;
+                unattendedRunLevel |= RunLevel.Test;
+            }
+
             // Main loop
             do
             {
@@ -128,7 +146,7 @@ namespace PKISharp.WACS.Host
                 {
                     if (_args.Import)
                     {
-                        await _mainMenu.Import(RunLevel.Unattended);
+                        await _mainMenu.Import(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (_args.List)
@@ -153,45 +171,27 @@ namespace PKISharp.WACS.Host
                     }
                     else if (_args.Renew)
                     {
-                        var runLevel = RunLevel.Unattended;
-                        if (_args.Force)
-                        {
-                            runLevel |= RunLevel.Force;
-                        }
-                        if (_args.NoCache)
-                        {
-                            runLevel |= RunLevel.NoCache;
-                        }
-                        await _renewalManager.CheckRenewals(runLevel);
+                        await _renewalManager.CheckRenewals(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (!string.IsNullOrEmpty(_args.Target) || !string.IsNullOrEmpty(_args.Source))
                     {
-                        var runLevel = RunLevel.Unattended;
-                        if (_args.Force)
-                        {
-                            runLevel |= RunLevel.Force | RunLevel.NoCache;
-                        }
-                        if (_args.NoCache)
-                        {
-                            runLevel |= RunLevel.NoCache;
-                        }
-                        await _renewalCreator.SetupRenewal(runLevel);
+                        await _renewalCreator.SetupRenewal(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (_args.Encrypt)
                     {
-                        await _mainMenu.Encrypt(RunLevel.Unattended);
+                        await _mainMenu.Encrypt(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (_args.SetupTaskScheduler)
                     {
-                        await _taskScheduler.CreateTaskScheduler(RunLevel.Unattended);
+                        await _taskScheduler.CreateTaskScheduler(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else
                     {
-                        await _mainMenu.MainMenuEntry(_args.Test ? RunLevel.Test : RunLevel.None);
+                        await _mainMenu.MainMenuEntry(interactiveRunLevel);
                     }
                 }
                 catch (Exception ex)

@@ -1,6 +1,6 @@
 {
   "Client": {
-    "ClientName": "win-acme",
+    "ClientName": "simple-acme",
     "ConfigurationPath": null,
     "LogPath": null,
     "VersionCheck": false
@@ -53,6 +53,7 @@
     "ComputerName": null
   },
   "Security": {
+    "EncryptConfig": false,
     "FriendlyNameDateTimeStamp": true
   },
   "Script": {
