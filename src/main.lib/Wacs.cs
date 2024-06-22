@@ -24,7 +24,7 @@ namespace PKISharp.WACS.Host
         private readonly RenewalManager _renewalManager;
         private readonly Unattended _unattended;
         private readonly RenewalCreator _renewalCreator;
-        private readonly TaskSchedulerService _taskScheduler;
+        private readonly IAutoRenewService _taskScheduler;
         private readonly VersionService _versionService;
         private readonly MainMenu _mainMenu;
 
@@ -42,7 +42,7 @@ namespace PKISharp.WACS.Host
             NetworkCheckService networkCheck,
             RenewalManager renewalManager,
             Unattended unattended,
-            TaskSchedulerService taskSchedulerService,
+            IAutoRenewService taskSchedulerService,
             MainMenu mainMenu)
         {
             // Basic services
@@ -186,7 +186,7 @@ namespace PKISharp.WACS.Host
                     }
                     else if (_args.SetupTaskScheduler)
                     {
-                        await _taskScheduler.CreateTaskScheduler(unattendedRunLevel);
+                        await _taskScheduler.SetupAutoRenew(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else
@@ -275,7 +275,7 @@ namespace PKISharp.WACS.Host
             }
 
             // Task scheduler health check
-            _taskScheduler.ConfirmTaskScheduler();
+            _taskScheduler.ConfirmAutoRenew();
 
             // Further information and tests
             _log.Information("Please report bugs at {url}", "https://github.com/win-acme/win-acme");

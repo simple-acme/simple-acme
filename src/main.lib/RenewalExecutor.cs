@@ -27,7 +27,7 @@ namespace PKISharp.WACS
         ISettingsService settings,
         DueDateStaticService dueDateStatic,
         DueDateRuntimeService dueDateRuntime,
-        TaskSchedulerService taskScheduler,
+        IAutoRenewService taskScheduler,
         AcmeClientManager clientManager,
         ISharingLifetimeScope container)
     {
@@ -132,7 +132,7 @@ namespace PKISharp.WACS
                 {
                     taskLevel |= RunLevel.Force;
                 }
-                await taskScheduler.EnsureTaskScheduler(taskLevel);
+                await taskScheduler.EnsureAutoRenew(taskLevel);
             }
         }
 

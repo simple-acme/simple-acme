@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Services.Legacy
         ISettingsService settings, IRenewalStore currentRenewal,
         IInputService input, MainArguments arguments,
         LegacyTaskSchedulerService legacyTaskScheduler,
-        TaskSchedulerService currentTaskScheduler,
+        IAutoRenewService currentTaskScheduler,
         AcmeClientManager clientManager)
     {
         public async Task Import(RunLevel runLevel)
@@ -43,7 +43,7 @@ namespace PKISharp.WACS.Services.Legacy
             if (!arguments.NoTaskScheduler)
             {
                 log.Information("Step {x}/3: create new scheduled task", 2);
-                await currentTaskScheduler.EnsureTaskScheduler(runLevel | RunLevel.Import);
+                await currentTaskScheduler.EnsureAutoRenew(runLevel | RunLevel.Import);
                 legacyTaskScheduler.StopTaskScheduler();
             }
 

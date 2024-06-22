@@ -6,7 +6,7 @@ namespace PKISharp.WACS.Services
 {
     internal class UserRoleService(IIISClient iisClient, AdminService adminService) : IUserRoleService
     {
-        public bool AllowTaskScheduler => adminService.IsAdmin;
+        public bool AllowAutoRenew => adminService.IsAdmin;
 
         public bool AllowCertificateStore => adminService.IsAdmin;
 

@@ -8,6 +8,6 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
 
         public State IISState => State.EnabledState();
 
-        public bool AllowTaskScheduler => true;
+        public bool AllowAutoRenew => true;
     }
 }

@@ -49,7 +49,7 @@ namespace PKISharp.WACS.Services
 
                 builder.RegisterType<LegacyTaskSchedulerService>();
 
-                builder.RegisterType<TaskSchedulerService>().
+                builder.RegisterType<TaskSchedulerService>().As<IAutoRenewService>().
                     WithParameter(new TypedParameter(typeof(MainArguments), realArguments)).
                     WithParameter(new TypedParameter(typeof(ISettingsService), realSettings)).
                     SingleInstance();

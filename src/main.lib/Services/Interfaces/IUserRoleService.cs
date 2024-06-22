@@ -6,6 +6,6 @@ namespace PKISharp.WACS.Services
     {
         bool AllowCertificateStore { get; }
         State IISState { get; }
-        bool AllowTaskScheduler { get; }
+        bool AllowAutoRenew { get; }
     }
 }
