@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PKISharp.WACS.Configuration.Settings;
+using System;
 using System.Collections.Generic;
 
 namespace PKISharp.WACS.Services
@@ -29,6 +30,6 @@ namespace PKISharp.WACS.Services
         void Verbose(string message, params object?[] items);
         void Verbose(LogType logType, string message, params object?[] items);
         void Warning(string message, params object?[] items);
-        void SetDiskLoggingPath(string logPath);
+        void ApplyClientSettings(ClientSettings settings);
     }
 }

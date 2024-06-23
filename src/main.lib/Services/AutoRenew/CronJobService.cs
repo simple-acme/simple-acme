@@ -11,12 +11,12 @@ namespace PKISharp.WACS.Services.AutoRenew
     [SupportedOSPlatform("linux")]
     internal class CronJobService(ILogService log, ISettingsService settings) : IAutoRenewService
     {
-        private string CronFileName => $"{settings.Client.ClientName.CleanPath()}-({settings.BaseUri.CleanUri()})";
+        private string CronFileName => $"{settings.Client.ClientName.CleanPath()}-{settings.BaseUri.CleanUri()}";
         private FileInfo CronFile => new($"/etc/cron.daily/{CronFileName}");
         private string CronScriptTemplate => $@"
-            cd {Path.GetDirectoryName(VersionService.ExePath)}
-            ./wacs --{nameof(MainArguments.Renew).ToLowerInvariant()} --{nameof(MainArguments.BaseUri).ToLowerInvariant()} ""{settings.BaseUri}""
-        ";
+# Automatically created by simple-acme: https://github.com/simple-acme/simple-acme/
+cd {Path.GetDirectoryName(VersionService.ExePath)}
+./wacs --{nameof(MainArguments.Renew).ToLowerInvariant()} --{nameof(MainArguments.BaseUri).ToLowerInvariant()} ""{settings.BaseUri}""";
 
         /// <summary>
         /// Test current status of the cronjob
@@ -69,6 +69,7 @@ namespace PKISharp.WACS.Services.AutoRenew
                 UnixFileMode.OtherRead | UnixFileMode.OtherExecute |
                 UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
                 UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            log.Information("Created or updated {file}", CronFile.FullName);
         }
     }
 }

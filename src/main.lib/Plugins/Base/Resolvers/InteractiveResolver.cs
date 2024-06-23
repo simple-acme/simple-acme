@@ -175,14 +175,15 @@ namespace PKISharp.WACS.Plugins.Resolvers
         /// <returns></returns>
         public async Task<PluginFrontend<IPluginCapability, TargetPluginOptions>?> GetTargetPlugin()
         {
+            Type[] defaults = OperatingSystem.IsWindows() ? [typeof(IIS), typeof(Manual)] : [typeof(Manual)];
             return await GetPlugin<IPluginCapability, TargetPluginOptions>(
                 Steps.Source,
                 defaultParam1: settings.Source.DefaultSource,
-                defaultBackends: [typeof(IIS), typeof(Manual)],
+                defaultBackends: defaults,
                 shortDescription: "How shall we determine the domain(s) to include in the certificate?",
                 longDescription: "Please specify how the list of domain names that will be included in the certificate " +
                     "should be determined. If you choose for one of the \"all bindings\" options, the list will automatically be " +
-                    "updated for future renewals to reflect the bindings at that time.");;
+                    "updated for future renewals to reflect the bindings at that time.");
         }
 
         /// <summary>
@@ -257,7 +258,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
 
         public async Task<PluginFrontend<IPluginCapability, StorePluginOptions>?> GetStorePlugin(IEnumerable<Plugin> chosen)
         {
-            var defaultType = typeof(CertificateStore);
+            var defaultType = OperatingSystem.IsWindows() ? typeof(CertificateStore) : typeof(PemFiles);
             var shortDescription = "How would you like to store the certificate?";
             var longDescription = "When we have the certificate, you can store in one or more ways to make it accessible " +
                         "to your applications. The Windows Certificate Store is the default location for IIS (unless you are " +
@@ -266,7 +267,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             {
                 longDescription = "";
                 shortDescription = "Would you like to store it in another way too?";
-                defaultType = typeof(StorePlugins.Null);
+                defaultType = typeof(Null);
             }
             var defaultParam1 = settings.Store.DefaultStore;
             if (!string.IsNullOrWhiteSpace(arguments.Store))
@@ -294,7 +295,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         public async Task<PluginFrontend<IInstallationPluginCapability, InstallationPluginOptions>?> 
             GetInstallationPlugin(IEnumerable<Plugin> stores, IEnumerable<Plugin> installation)
         {
-            var defaultType = typeof(InstallationPlugins.IIS);
+            var defaultType = OperatingSystem.IsWindows() ? typeof(InstallationPlugins.IIS) : typeof(InstallationPlugins.Script);
             var shortDescription = "Which installation step should run first?";
             var longDescription = "With the certificate saved to the store(s) of your choice, " +
                 "you may choose one or more steps to update your applications, e.g. to configure " +

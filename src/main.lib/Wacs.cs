@@ -249,9 +249,9 @@ namespace PKISharp.WACS.Host
             }
 
             // IIS version test
-            if (_adminService.IsAdmin)
+            if (OperatingSystem.IsWindows())
             {
-                if (OperatingSystem.IsWindows())
+                if (_adminService.IsAdmin)
                 {
                     _log.Debug("Running as administrator");
                     var iis = _iis.Version;
@@ -266,12 +266,19 @@ namespace PKISharp.WACS.Host
                 }
                 else
                 {
-                    _log.Debug("Running as superuser/root");
+                    _log.Information("Running as limited user, some options disabled");
                 }
             }
             else
             {
-                _log.Information("Running as limited user, some options disabled");
+                if (_adminService.IsAdmin)
+                {
+                    _log.Debug("Running as superuser/root");
+                }
+                else
+                {
+                    _log.Warning("Running as limited user, some options *including autorenewal* disabled");
+                }
             }
 
             // Task scheduler health check
@@ -279,7 +286,7 @@ namespace PKISharp.WACS.Host
 
             // Further information and tests
             _log.Information("Please report bugs at {url}", "https://github.com/win-acme/win-acme");
-            _log.Verbose("Unicode display test: Chinese/{chinese} Russian/{russian} Arab/{arab}", "語言", "язык", "لغة");
+            _log.Verbose("Unicode display test: Mandarin/{chinese} Cyrillic/{russian} Arabic/{arab}", "語言", "язык", "لغة");
         }
 
         /// <summary>

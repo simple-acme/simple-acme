@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using PKISharp.WACS.Configuration.Settings;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -8,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services
 {
@@ -16,8 +17,9 @@ namespace PKISharp.WACS.Services
     {
         private readonly Logger? _screenLogger;
         private readonly Logger? _debugScreenLogger;
-        private readonly Logger? _eventLogger;
+        private Logger? _eventLogger;
         private Logger? _diskLogger;
+
         private readonly Logger? _notificationLogger;
         private readonly LoggingLevelSwitch _levelSwitch;
         private readonly List<MemoryEntry> _lines = [];
@@ -45,8 +47,7 @@ namespace PKISharp.WACS.Services
             try
             {
                 var theme = 
-                    RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
-                    Environment.OSVersion.Version.Major == 10 ? 
+                    OperatingSystem.IsWindowsVersionAtLeast(10) || !OperatingSystem.IsWindows() ?
                     (ConsoleTheme)AnsiConsoleTheme.Code : 
                     SystemConsoleTheme.Literate;
 
@@ -76,27 +77,6 @@ namespace PKISharp.WACS.Services
                 Environment.Exit(ex.HResult);
             }
 
-            if (OperatingSystem.IsWindows())
-            {
-                try
-                {
-                    var _eventConfig = new ConfigurationBuilder()
-                       .AddJsonFile(ConfigurationPath, true, true)
-                       .Build();
-
-                    _eventLogger = new LoggerConfiguration()
-                        .MinimumLevel.ControlledBy(_levelSwitch)
-                        .Enrich.FromLogContext()
-                        .WriteTo.EventLog("win-acme", manageEventSource: true)
-                        .ReadFrom.Configuration(_eventConfig, new ConfigurationReaderOptions(typeof(LogService).Assembly) { SectionName = "event" })
-                        .CreateLogger();
-                }
-                catch (Exception ex)
-                {
-                    Warning("Error creating event logger: {ex}", ex.Message);
-                }
-            }
-
             _notificationLogger = new LoggerConfiguration()
                 .MinimumLevel.ControlledBy(_levelSwitch)
                 .Enrich.FromLogContext()
@@ -106,11 +86,30 @@ namespace PKISharp.WACS.Services
             Debug("Logging at level {initialLevel}", initialLevel);
         }
 
-        public void SetDiskLoggingPath(string path)
+        /// <summary>
+        /// The disk and event loggers are created after construction 
+        /// of the LogService when the ClientSettings are loaded. 
+        /// Before that all happens we can only log to the screen.
+        /// </summary>
+        /// <param name="settings"></param>
+        public void ApplyClientSettings(ClientSettings settings)
+        {
+            CreateDiskLogger(settings.LogPath ?? settings.ConfigurationPath);
+            if (OperatingSystem.IsWindows())
+            {
+                CreateEventLogger(settings.ClientName ?? "simple-acme");
+            }
+        }
+
+        /// <summary>
+        /// Set up the disk logger
+        /// </summary>
+        /// <param name="logPath"></param>
+        private void CreateDiskLogger(string logPath)
         {
             try
             {
-                var defaultPath = Path.Combine(path.TrimEnd('\\', '/'), "log-.txt");
+                var defaultPath = Path.Combine(logPath.TrimEnd('\\', '/'), "log-.txt");
                 var defaultRollingInterval = RollingInterval.Day;
                 var defaultRetainedFileCountLimit = 120;
                 var fileConfig = new ConfigurationBuilder()
@@ -140,19 +139,45 @@ namespace PKISharp.WACS.Services
                 }
 
                 _diskLogger = new LoggerConfiguration()
-                    .MinimumLevel.Verbose()
-                    .Enrich.FromLogContext()
-                    .Enrich.WithProperty("ProcessId", Environment.ProcessId)
-                    .WriteTo.File(
-                        defaultPath, 
-                        rollingInterval: defaultRollingInterval,
-                        retainedFileCountLimit: defaultRetainedFileCountLimit)
-                    .ReadFrom.Configuration(fileConfig, new ConfigurationReaderOptions(typeof(LogService).Assembly) { SectionName = "disk" })
-                    .CreateLogger();
+                     .MinimumLevel.Verbose()
+                     .Enrich.FromLogContext()
+                     .Enrich.WithProperty("ProcessId", Environment.ProcessId)
+                     .WriteTo.File(
+                         defaultPath,
+                         rollingInterval: defaultRollingInterval,
+                         retainedFileCountLimit: defaultRetainedFileCountLimit)
+                     .ReadFrom.Configuration(fileConfig, new ConfigurationReaderOptions(typeof(LogService).Assembly) { SectionName = "disk" })
+                     .CreateLogger();
             }
             catch (Exception ex)
             {
                 Warning("Error creating disk logger: {ex}", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Set up the Windows Event Viewer logger
+        /// </summary>
+        /// <param name="source"></param>
+        [SupportedOSPlatform("windows")]
+        private void CreateEventLogger(string source)
+        {
+            try
+            {
+                var _eventConfig = new ConfigurationBuilder()
+                    .AddJsonFile(ConfigurationPath, true, true)
+                    .Build();
+
+                _eventLogger = new LoggerConfiguration()
+                    .MinimumLevel.ControlledBy(_levelSwitch)
+                    .Enrich.FromLogContext()
+                    .WriteTo.EventLog(source, manageEventSource: true)
+                    .ReadFrom.Configuration(_eventConfig, new ConfigurationReaderOptions(typeof(LogService).Assembly) { SectionName = "event" })
+                    .CreateLogger();
+            }
+            catch (Exception ex)
+            {
+                Warning("Error creating event logger: {ex}", ex.Message);
             }
         }
 

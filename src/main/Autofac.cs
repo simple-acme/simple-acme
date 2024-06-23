@@ -79,7 +79,7 @@ namespace PKISharp.WACS.Host
                 {
                     _ = builder.RegisterType<TaskSchedulerService>().As<IAutoRenewService>().SingleInstance();
                 }
-                else
+                else if (OperatingSystem.IsLinux())
                 {
                     _ = builder.RegisterType<CronJobService>().As<IAutoRenewService>().SingleInstance();
                 }

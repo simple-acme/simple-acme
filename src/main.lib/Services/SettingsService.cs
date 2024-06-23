@@ -114,8 +114,7 @@ namespace PKISharp.WACS.Services
             EnsureFolderExists(Cache.Path, "cache", !Client.LogPath.StartsWith(Client.ConfigurationPath));
 
             // Configure disk logger
-            _log.SetDiskLoggingPath(Client.LogPath);
-
+            _log.ApplyClientSettings(Client);
             Valid = true;
         }
 
@@ -161,6 +160,7 @@ namespace PKISharp.WACS.Services
             else
             {
                 // For non-elevated Linux we have to fall back to the user directory
+                // These user will not be able to auto-renew.
                 var appData = Environment.GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify);
                 configRoot = Path.Combine(appData, Client.ClientName);
             }
@@ -230,19 +230,24 @@ namespace PKISharp.WACS.Services
                 }
                 else if (OperatingSystem.IsLinux())
                 {
-                    EnsureFolderAclLinux(di, label);
+                    EnsureFolderAclLinux(di, label, created);
                 }
               
             }
         }
 
         [SupportedOSPlatform("linux")]
-        private void EnsureFolderAclLinux(DirectoryInfo di, string label) {
+        private void EnsureFolderAclLinux(DirectoryInfo di, string label, bool created) {
             var currentMode = File.GetUnixFileMode(di.FullName);
             if (currentMode.HasFlag(UnixFileMode.OtherRead) || 
                 currentMode.HasFlag(UnixFileMode.OtherExecute) ||
                 currentMode.HasFlag(UnixFileMode.OtherWrite))
             {
+                if (!created)
+                {
+                    _log.Warning("All users currently have access to {path}.", di.FullName);
+                    _log.Warning("We will now try to limit access to improve security...", label, di.FullName);
+                }
                 var newMode = currentMode & ~(UnixFileMode.OtherRead | UnixFileMode.OtherExecute | UnixFileMode.OtherWrite);
                 _log.Warning("Change file mode in {label} to {newMode}", label, newMode);
                 File.SetUnixFileMode(di.FullName, newMode);

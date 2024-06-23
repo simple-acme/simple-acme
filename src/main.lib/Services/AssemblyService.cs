@@ -5,8 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Loader;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services
 {
@@ -18,7 +17,12 @@ namespace PKISharp.WACS.Services
         public AssemblyService(ILogService logger)
         {
             _log = logger;
-            _allTypes = [.. BuiltInTypes(), .. LoadFromDisk()];
+            _allTypes = BuiltInTypes();
+            if (OperatingSystem.IsWindows())
+            {
+                _allTypes.AddRange(WindowsPlugins());
+            }
+            _allTypes.AddRange(LoadFromDisk());
         }
 
         internal static List<TypeDescriptor> BuiltInTypes()
@@ -32,7 +36,6 @@ namespace PKISharp.WACS.Services
   
                 // Target plugins
                 new(typeof(Plugins.TargetPlugins.Csr)), new(typeof(Plugins.TargetPlugins.CsrArguments)),
-                new(typeof(Plugins.TargetPlugins.IIS)), new(typeof(Plugins.TargetPlugins.IISArguments)),
                 new(typeof(Plugins.TargetPlugins.Manual)), new(typeof(Plugins.TargetPlugins.ManualArguments)),
 
                 // Validation plugins
@@ -47,7 +50,6 @@ namespace PKISharp.WACS.Services
                 new(typeof(Plugins.OrderPlugins.Domain)),
                 new(typeof(Plugins.OrderPlugins.Host)),
                 new(typeof(Plugins.OrderPlugins.Single)),
-                new(typeof(Plugins.OrderPlugins.Site)),
 
                 // CSR plugins
                 new(typeof(Plugins.CsrPlugins.CsrArguments)),
@@ -56,13 +58,11 @@ namespace PKISharp.WACS.Services
 
                 // Store plugins
                 new(typeof(Plugins.StorePlugins.CertificateStore)), new(typeof(Plugins.StorePlugins.CertificateStoreArguments)),
-                new(typeof(Plugins.StorePlugins.CentralSsl)), new(typeof(Plugins.StorePlugins.CentralSslArguments)),
                 new(typeof(Plugins.StorePlugins.PemFiles)), new(typeof(Plugins.StorePlugins.PemFilesArguments)),
                 new(typeof(Plugins.StorePlugins.PfxFile)), new(typeof(Plugins.StorePlugins.PfxFileArguments)),
                 new(typeof(Plugins.StorePlugins.Null)),
 
                 // Installation plugins
-                new(typeof(Plugins.InstallationPlugins.IIS)), new(typeof(Plugins.InstallationPlugins.IISArguments)),
                 new(typeof(Plugins.InstallationPlugins.Script)), new(typeof(Plugins.InstallationPlugins.ScriptArguments)),
                 new(typeof(Plugins.InstallationPlugins.Null)),
 
@@ -71,6 +71,18 @@ namespace PKISharp.WACS.Services
 
                 // Notification targets
                 new(typeof(Plugins.NotificationPlugins.NotificationTargetEmail))
+            ];
+        }
+
+        [SupportedOSPlatform("windows")]
+        internal static List<TypeDescriptor> WindowsPlugins()
+        {
+            return
+            [
+                new(typeof(Plugins.TargetPlugins.IIS)), new(typeof(Plugins.TargetPlugins.IISArguments)),
+                new(typeof(Plugins.OrderPlugins.Site)),
+                new(typeof(Plugins.StorePlugins.CentralSsl)), new(typeof(Plugins.StorePlugins.CentralSslArguments)),
+                new(typeof(Plugins.InstallationPlugins.IIS)), new(typeof(Plugins.InstallationPlugins.IISArguments)),
             ];
         }
 
