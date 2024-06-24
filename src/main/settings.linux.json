@@ -58,7 +58,7 @@
   },
   "Script": {
     "Timeout": 600,
-    "PowershellExecutablePath": "powershell.exe"
+    "PowershellExecutablePath": "pwsh"
   },
   "Source": {
     "DefaultSource": null

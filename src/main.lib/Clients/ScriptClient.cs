@@ -17,7 +17,17 @@ namespace PKISharp.WACS.Clients
                 if (actualScript.EndsWith(".ps1"))
                 {
                     actualScript = settings.Script.PowershellExecutablePath ?? "powershell.exe";
-                    actualParameters = $"-windowstyle hidden -noninteractive -executionpolicy bypass -command \"&{{&'{script.Replace("'", "''")}' {parameters.Replace("\"", "\"\"\"")}; exit $LastExitCode}}\"";
+                    var baseParameters = "-noninteractive -executionpolicy bypass";
+                    if (OperatingSystem.IsWindows())
+                    {
+                        baseParameters += " -windowstyle hidden";
+                    }
+                    actualParameters = $"{baseParameters} -command \"&{{&'{script.Replace("'", "''")}' {parameters.Replace("\"", "\"\"\"")}; exit $LastExitCode}}\"";
+                } 
+                else if (actualScript.EndsWith(".sh"))
+                {
+                    actualScript = "sh";
+                    actualParameters = $"{script} {parameters}";
                 }
                 var PSI = new ProcessStartInfo(actualScript)
                 {
