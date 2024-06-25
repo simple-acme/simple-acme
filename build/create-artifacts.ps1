@@ -229,6 +229,7 @@ if ($BuildPlugins) {
 		"Google.Apis.Auth.dll",
 		"Google.Apis.Core.dll",
 		"Google.Apis.Dns.v1.dll",
+		"Newtonsoft.Json.dll",
 		"PKISharp.WACS.Plugins.ValidationPlugins.GoogleDns.dll"
 	)
 	PluginRelease plugin.validation.dns.hetzner @(

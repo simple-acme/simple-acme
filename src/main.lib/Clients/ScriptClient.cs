@@ -16,7 +16,8 @@ namespace PKISharp.WACS.Clients
                 var actualParameters = parameters;
                 if (actualScript.EndsWith(".ps1"))
                 {
-                    actualScript = settings.Script.PowershellExecutablePath ?? "powershell.exe";
+                    actualScript = settings.Script.PowershellExecutablePath ?? 
+                        (OperatingSystem.IsWindows() ? "powershell.exe" : "pwsh");
                     var baseParameters = "-noninteractive -executionpolicy bypass";
                     if (OperatingSystem.IsWindows())
                     {
