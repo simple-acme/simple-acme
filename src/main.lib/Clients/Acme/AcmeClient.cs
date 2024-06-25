@@ -163,6 +163,14 @@ namespace PKISharp.WACS.Clients.Acme
         }
 
         /// <summary>
+        /// Get pre-existing orders (if any)
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        internal async Task<AcmeOrders?> GetOrders()
+            => await _client.Retry(() => _client.GetOrdersAsync(_client.Account?.Payload.Orders), _log);
+
+        /// <summary>
         /// Get order status
         /// </summary>
         /// <param name="url"></param>
