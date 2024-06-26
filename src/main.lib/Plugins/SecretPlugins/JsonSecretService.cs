@@ -42,7 +42,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
                 path = Path.Join(settings.Client.ConfigurationPath, "secrets.json");
             }
             _file = new FileInfo(path);
-            _secrets = new List<CredentialEntry>();
+            _secrets = [];
             if (_file.Exists)
             {
                 var options = new JsonSerializerOptions
@@ -129,10 +129,11 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
             }
         }
 
-        public IEnumerable<string> ListKeys()
-        {
-            return _secrets.Select(x => x.Key).Where(x => !string.IsNullOrEmpty(x)).OfType<string>();
-        }
+        public IEnumerable<string> ListKeys() => 
+            _secrets.
+                Select(x => x.Key).
+                Where(x => !string.IsNullOrEmpty(x)).
+                OfType<string>();
 
         public void DeleteSecret(string key)
         {

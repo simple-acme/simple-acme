@@ -10,18 +10,11 @@ namespace PKISharp.WACS.Services.Serialization
     /// Read flat PluginOptions objects from JSON and convert them into 
     /// the propery strongly typed object required by the plugin
     /// </summary>
-    internal class PluginOptionsConverter : JsonConverter<PluginOptionsBase>
+    internal class PluginOptionsConverter(ISharingLifetimeScope context) : JsonConverter<PluginOptionsBase>
     {
-        private readonly IPluginService _pluginService;
-        private readonly ILogService _log;
-        private readonly ISharingLifetimeScope _scope;
-
-        public PluginOptionsConverter(ISharingLifetimeScope context) 
-        {
-            _pluginService = context.Resolve<IPluginService>();
-            _log = context.Resolve<ILogService>();
-            _scope = context;
-        }
+        private readonly IPluginService _pluginService = context.Resolve<IPluginService>();
+        private readonly ILogService _log = context.Resolve<ILogService>();
+        private readonly ISharingLifetimeScope _scope = context;
 
         public override bool CanConvert(Type typeToConvert) => typeof(PluginOptionsBase).IsAssignableFrom(typeToConvert);
 

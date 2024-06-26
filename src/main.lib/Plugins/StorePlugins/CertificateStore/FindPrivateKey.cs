@@ -12,12 +12,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
     /// <summary>
     /// Based on Microsoft "FindPrivateKey" example
     /// </summary>
-    partial class FindPrivateKey
+    partial class FindPrivateKey(ILogService log)
     {
-        private readonly ILogService _log;
-
-        public FindPrivateKey(ILogService log) => _log = log;
-
         internal FileInfo? Find(X509Certificate2 cert)
         {
             string file;
@@ -28,7 +24,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                _log.Warning("Unable to find private key file name: {ex}", ex.Message);
+                log.Warning("Unable to find private key file name: {ex}", ex.Message);
                 return null;
             }
             try
@@ -37,7 +33,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                _log.Warning("Unable to find private key folder: {ex}", ex.Message);
+                log.Warning("Unable to find private key folder: {ex}", ex.Message);
                 return null;
             }
             return new FileInfo(Path.Combine(dir, file));

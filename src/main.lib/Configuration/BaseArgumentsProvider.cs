@@ -48,31 +48,19 @@ namespace PKISharp.WACS.Configuration
         {
             foreach (var (commandLineInfo, property, propertyType) in typeof(T).CommandLineProperties())
             {
-                var setupMethod = typeof(FluentCommandLineParser<T>).GetMethod(nameof(parser.Setup), new[] { typeof(PropertyInfo) });
-                if (setupMethod == null)
-                {
-                    throw new InvalidOperationException();
-                }
+                var setupMethod = typeof(FluentCommandLineParser<T>).GetMethod(nameof(parser.Setup), [typeof(PropertyInfo)]) ?? throw new InvalidOperationException();
                 var typedMethod = setupMethod.MakeGenericMethod(propertyType.Type);
                 var result = typedMethod.Invoke(parser, new[] { property });
 
                 var clob = typeof(ICommandLineOptionBuilderFluent<>).MakeGenericType(property.PropertyType);
-                var @as = clob.GetMethod(nameof(ICommandLineOptionBuilderFluent<object>.As), new[] { typeof(string) });
-                if (@as == null)
-                {
-                    throw new InvalidOperationException();
-                }
+                var @as = clob.GetMethod(nameof(ICommandLineOptionBuilderFluent<object>.As), [typeof(string)]) ?? throw new InvalidOperationException();
                 var asResult = @as.Invoke(result, new[] { (commandLineInfo.Name ?? property.Name).ToLower() });
 
                 // Add description when available
                 if (!string.IsNullOrWhiteSpace(commandLineInfo?.Description))
                 {
                     var clo = typeof(ICommandLineOptionFluent<>).MakeGenericType(property.PropertyType);
-                    var withDescription = clo.GetMethod(nameof(ICommandLineOptionFluent<object>.WithDescription), new[] { typeof(string) });
-                    if (withDescription == null)
-                    {
-                        throw new InvalidOperationException();
-                    }
+                    var withDescription = clo.GetMethod(nameof(ICommandLineOptionFluent<object>.WithDescription), [typeof(string)]) ?? throw new InvalidOperationException();
                     withDescription.Invoke(asResult, new[] { commandLineInfo?.Description });
                 }
 
@@ -80,11 +68,7 @@ namespace PKISharp.WACS.Configuration
                 if (!string.IsNullOrWhiteSpace(commandLineInfo?.Default))
                 {
                     var clo = typeof(ICommandLineOptionFluent<>).MakeGenericType(property.PropertyType);
-                    var setDefault = clo.GetMethod(nameof(ICommandLineOptionFluent<object>.SetDefault), new[] { property.PropertyType });
-                    if (setDefault == null)
-                    {
-                        throw new InvalidOperationException();
-                    }
+                    var setDefault = clo.GetMethod(nameof(ICommandLineOptionFluent<object>.SetDefault), [property.PropertyType]) ?? throw new InvalidOperationException();
                     setDefault.Invoke(asResult, new[] { commandLineInfo?.Default });
                 }
             }
@@ -159,11 +143,7 @@ namespace PKISharp.WACS.Configuration
                 if (_defaultInstance == null)
                 {
                     var type = typeof(T);
-                    var constructor = type.GetConstructor(Array.Empty<Type>());
-                    if (constructor == null)
-                    {
-                        throw new InvalidOperationException();
-                    }
+                    var constructor = type.GetConstructor([]) ?? throw new InvalidOperationException();
                     _defaultInstance = (T)constructor.Invoke(null);
                 }
                 return _defaultInstance;

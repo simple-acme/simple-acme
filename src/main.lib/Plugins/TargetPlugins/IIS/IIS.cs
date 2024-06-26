@@ -4,10 +4,12 @@ using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.TargetPlugins
 {
+    [SupportedOSPlatform("windows")]
     [IPlugin.Plugin<
         IISSitesOptions, IISSitesOptionsFactory, 
         IISCapability, WacsJsonPlugins>
@@ -28,32 +30,21 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         IISCapability, WacsJsonPlugins>
         ("54deb3ee-b5df-4381-8485-fe386054055b", 
         "IIS", "Read bindings from IIS")]
-    internal class IIS : ITargetPlugin
+    internal class IIS(ILogService logService, IISHelper helper, IISOptions options) : ITargetPlugin
     {
-        private readonly ILogService _log;
-        private readonly IISOptions _options;
-        private readonly IISHelper _helper;
-
-        public IIS(ILogService logService, IISHelper helper, IISOptions options)
-        {
-            _log = logService;
-            _options = options;
-            _helper = helper;
-        }
-
         public Task<Target?> Generate()
         {
             // Check if we have any bindings
-            var allBindings = _helper.GetBindings();
-            var filteredBindings = _helper.FilterBindings(allBindings, _options);
+            var allBindings = helper.GetBindings();
+            var filteredBindings = helper.FilterBindings(allBindings, options);
             if (filteredBindings.Count == 0)
             {
-                _log.Error("No bindings matched, unable to proceed");
+                logService.Error("No bindings matched, unable to proceed");
                 return Task.FromResult<Target?>(null);
             }
 
             // Handle common name
-            var cn = _options.CommonName ?? "";
+            var cn = options.CommonName ?? "";
             var cnDefined = !string.IsNullOrWhiteSpace(cn);
             var cnBinding = default(IISHelper.IISBindingOption); 
             if (cnDefined)
@@ -63,21 +54,21 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             var cnValid = cnDefined && cnBinding != null;
             if (cnDefined && !cnValid)
             {
-                _log.Warning("Specified common name {cn} not valid", cn);
+                logService.Warning("Specified common name {cn} not valid", cn);
             }
 
             // Generate friendly name suggestion
             var friendlyNameSuggestion = "[IIS]";
-            if (_options.IncludeSiteIds != null && _options.IncludeSiteIds.Any())
+            if (options.IncludeSiteIds != null && options.IncludeSiteIds.Count != 0)
             {
-                var sites = _helper.GetSites(false);
+                var sites = helper.GetSites(false);
                 var site = default(IISHelper.IISSiteOption);
                 if (cnBinding != null)
                 {
                     site = sites.FirstOrDefault(s => s.Id == cnBinding.SiteId);
                 } 
-                site ??= sites.FirstOrDefault(x => _options.IncludeSiteIds.Contains(x.Id));
-                var count = _options.IncludeSiteIds.Count;
+                site ??= sites.FirstOrDefault(x => options.IncludeSiteIds.Contains(x.Id));
+                var count = options.IncludeSiteIds.Count;
                 if (site != null)
                 {
                     friendlyNameSuggestion += $" {site.Name}";
@@ -93,28 +84,28 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                 friendlyNameSuggestion += $" (any site)";
             }
 
-            if (!string.IsNullOrEmpty(_options.IncludePattern))
+            if (!string.IsNullOrEmpty(options.IncludePattern))
             {
-                friendlyNameSuggestion += $" | {_options.IncludePattern}";
+                friendlyNameSuggestion += $" | {options.IncludePattern}";
             }
-            else if (_options.IncludeHosts != null && _options.IncludeHosts.Any())
+            else if (options.IncludeHosts != null && options.IncludeHosts.Count != 0)
             {
                 var host = default(string);
                 if (cnBinding != null)
                 {
                     host = cnBinding.HostUnicode;
                 }
-                host ??= _options.IncludeHosts.First();
+                host ??= options.IncludeHosts.First();
                 friendlyNameSuggestion += $", {host}";
-                var count = _options.IncludeHosts.Count;
+                var count = options.IncludeHosts.Count;
                 if (count > 1)
                 {
                     friendlyNameSuggestion += $" (+{count - 1} other{(count == 2 ? "" : "s")})";
                 }
             }
-            else if (_options.IncludeRegex != null)
+            else if (options.IncludeRegex != null)
             {
-                friendlyNameSuggestion += $", {_options.IncludeRegex}";
+                friendlyNameSuggestion += $", {options.IncludeRegex}";
             }
             else
             {

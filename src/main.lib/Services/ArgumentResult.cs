@@ -66,7 +66,7 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// Validator to run
         /// </summary>
-        private readonly List<Tuple<Func<TResult, Task<bool>>, string>> _validators = new();
+        private readonly List<Tuple<Func<TResult, Task<bool>>, string>> _validators = [];
 
         /// <summary>
         /// Do not emit default value

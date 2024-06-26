@@ -11,11 +11,11 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
 
         public SecretService()
         {
-            _secrets = new()
-            {
+            _secrets =
+            [
                 new Tuple<string, string>("key1", "secret1"),
                 new Tuple<string, string>("key2", "secret2")
-            };
+            ];
         }
 
         public string Prefix => "mock";

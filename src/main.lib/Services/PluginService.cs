@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Services
         {
             _log = logger;
             _assemblyService = assemblyService;
-            _plugins = new List<Plugin>();
+            _plugins = [];
             AddPluginType<ITargetPlugin>(Steps.Source);
             AddPluginType<IValidationPlugin>(Steps.Validation);
             AddPluginType<IOrderPlugin>(Steps.Order);
@@ -201,7 +201,14 @@ namespace PKISharp.WACS.Services
             _ = list.Where(x => x.Assembly != typeof(PluginService).Assembly).
                 All(x =>
                 {
-                    _log.Verbose("Loaded {type} plugin {name} from {location}", type, x.Name, x.Assembly.Location);
+                    if (!string.IsNullOrWhiteSpace(x.Assembly.Location))
+                    {
+                        _log.Verbose("Loaded {type} plugin {name} from {location}", type, x.Name, x.Assembly.Location);
+                    } 
+                    else
+                    {
+                        _log.Verbose("Loaded {type} plugin {name}", type, x.Name);
+                    }
                     return true;
                 });
         }

@@ -10,18 +10,14 @@ namespace PKISharp.WACS.Services.Serialization
     /// Read flat PluginOptions objects from JSON and convert them into 
     /// the propery strongly typed object required by the plugin
     /// </summary>
-    internal class PluginOptionsListConverter : JsonConverter<List<StorePluginOptions>>
+    internal class PluginOptionsListConverter(PluginOptionsConverter child) : JsonConverter<List<StorePluginOptions>>
     {
-        private readonly PluginOptionsConverter _child;
-
-        public PluginOptionsListConverter(PluginOptionsConverter child) => _child = child;
-
         public override List<StorePluginOptions>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) 
         {
             var ret = new List<StorePluginOptions>();
             if (reader.TokenType == JsonTokenType.StartObject)
             {
-                if (_child.Read(ref reader, typeof(StorePluginOptions), options) is StorePluginOptions read)
+                if (child.Read(ref reader, typeof(StorePluginOptions), options) is StorePluginOptions read)
                 {
                     ret.Add(read);
                 }
@@ -34,7 +30,7 @@ namespace PKISharp.WACS.Services.Serialization
                     {
                         break;
                     }
-                    if (_child.Read(ref reader, typeof(StorePluginOptions), options) is StorePluginOptions read)
+                    if (child.Read(ref reader, typeof(StorePluginOptions), options) is StorePluginOptions read)
                     {
                         ret.Add(read);
                     }
@@ -48,7 +44,7 @@ namespace PKISharp.WACS.Services.Serialization
             writer.WriteStartArray();
             foreach (var item in value)
             {
-                _child.Write(writer, item, options);
+                child.Write(writer, item, options);
             }
             writer.WriteEndArray();
         }

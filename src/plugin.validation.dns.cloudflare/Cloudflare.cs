@@ -10,10 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -22,28 +19,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DnsValidationCapability, CloudflareJson>
         ("73af2c2e-4cf1-4198-a4c8-1129003cfb75", 
         "Cloudflare", "Create verification records in Cloudflare DNS")]
-    public class Cloudflare : DnsValidation<Cloudflare>, IDisposable
+    public class Cloudflare(
+        CloudflareOptions options,
+        IProxyService proxyService,
+        LookupClientProvider dnsClient,
+        SecretServiceManager ssm,
+        ILogService log,
+        ISettingsService settings) : DnsValidation<Cloudflare>(dnsClient, log, settings), IDisposable
     {
-        private readonly CloudflareOptions _options;
-        private readonly SecretServiceManager _ssm;
-        private readonly HttpClient _hc;
-
-        public Cloudflare(
-            CloudflareOptions options,
-            IProxyService proxyService,
-            LookupClientProvider dnsClient,
-            SecretServiceManager ssm,
-            ILogService log,
-            ISettingsService settings) : base(dnsClient, log, settings)
-        {
-            _options = options;
-            _hc = proxyService.GetHttpClient();
-            _ssm = ssm;
-        }
+        private readonly HttpClient _hc = proxyService.GetHttpClient();
 
         private IAuthorizedSyntax GetContext() =>
             // avoid name collision with this class
-            FluentCloudflare.Cloudflare.WithToken(_ssm.EvaluateSecret(_options.ApiToken));
+            FluentCloudflare.Cloudflare.WithToken(ssm.EvaluateSecret(options.ApiToken));
 
         private async Task<Zone> GetHostedZone(IAuthorizedSyntax context, string recordName)
         {
@@ -137,6 +125,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             await DeleteRecord(record.Authority.Domain, record.Value, ctx, zone);
         }
 
-        public void Dispose() => _hc.Dispose();
+        public void Dispose()
+        {
+            _hc.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

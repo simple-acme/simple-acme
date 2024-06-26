@@ -9,39 +9,35 @@ namespace PKISharp.WACS.Plugins
     /// Metadata for a specific plugin
     /// </summary>
     [DebuggerDisplay("{Backend.Name}")]
-    public class BasePlugin
+    public class BasePlugin([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type source)
     {
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type Backend { get; set; }
-        public BasePlugin([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type source) => Backend = source;
+        public Type Backend { get; set; } = source;
     }
 
     /// <summary>
     /// Metadata for a specific plugin
     /// </summary>
     [DebuggerDisplay("{Backend.Name}")]
-    public class Plugin : BasePlugin
+    public class Plugin(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] 
+        Type source,
+        IPluginMeta meta, 
+        Steps step) : BasePlugin(source)
     {
-        public Guid Id { get; set; }
-        public Steps Step { get; set; }
-        private IPluginMeta Meta { get; set; }
-        public string Name => Meta.Name;
-        public string Description => Meta.Description;
-        public bool Hidden => Meta.Hidden;
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type Options => Meta.Options;
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type OptionsFactory => Meta.OptionsFactory;
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type OptionsJson => Meta.OptionsJson;
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type Capability => Meta.Capability;
+        public Guid Id { get; } = meta.Id;
+        public Steps Step { get; } = step;
 
-        public Plugin([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type source, IPluginMeta meta, Steps step) : base(source)
-        {
-            Id = meta.Id;
-            Meta = meta;
-            Step = step;
-        }
+        public string Name => meta.Name;
+        public string Description => meta.Description;
+        public bool Hidden => meta.Hidden;
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        public Type Options => meta.Options;
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        public Type OptionsFactory => meta.OptionsFactory;
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        public Type OptionsJson => meta.OptionsJson;
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        public Type Capability => meta.Capability;
     }
 }

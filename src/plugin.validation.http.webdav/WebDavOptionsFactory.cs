@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    internal class WebDavOptionsFactory : HttpValidationOptionsFactory<WebDavOptions>
+    internal class WebDavOptionsFactory(Target target, ArgumentsInputService arguments) : HttpValidationOptionsFactory<WebDavOptions>(arguments, target)
     {
-        public WebDavOptionsFactory(Target target, ArgumentsInputService arguments) : base(arguments, target) { }
-
         public override bool PathIsValid(string webRoot)
         {
             return
@@ -22,11 +20,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         public override string[] WebrootHint(bool allowEmtpy)
         {
-            return new[] {
+            return [
                 "WebDav path",
                 "Example, \\\\domain.com:80\\",
                 "Example, \\\\domain.com:443\\"
-            };
+            ];
         }
 
         public override async Task<WebDavOptions?> Default()

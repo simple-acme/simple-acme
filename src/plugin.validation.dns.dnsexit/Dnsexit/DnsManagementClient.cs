@@ -11,31 +11,21 @@ using System.Threading.Tasks;
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
 {
 
-    public class DnsManagementClient
+    public class DnsManagementClient(string apiKey, ILogService logService, IProxyService proxyService)
     {
-        private readonly string _apiKey;
-        private readonly ILogService _log;
-        readonly IProxyService _proxyService;
         private readonly string uri = "https://api.dnsexit.com/dns/";
-
-        public DnsManagementClient(string apiKey, ILogService logService, IProxyService proxyService)
-        {
-            _apiKey = apiKey;
-            _log = logService;
-            _proxyService = proxyService;
-        }
 
         public async Task CreateRecord(string domain, string identifier, RecordType type, string value)
         {
-            using (var client = _proxyService.GetHttpClient())
+            using (var client = proxyService.GetHttpClient())
             {
                 client.BaseAddress = new Uri(uri);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 var postData = new
                 {
-                    apikey = _apiKey,
-                    domain = domain,
+                    apikey = apiKey,
+                    domain,
                     add = new
                     {
                         type = type.ToString(),
@@ -68,15 +58,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
 
         public async Task DeleteRecord(string domain, string identifier, RecordType type)
         {
-            using (var client = _proxyService.GetHttpClient())
+            using (var client = proxyService.GetHttpClient())
             {
                 client.BaseAddress = new Uri(uri);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 var postData = new
                 {
-                    apikey = _apiKey,
-                    domain = domain,
+                    apikey = apiKey,
+                    domain,
                     delete = new
                     {
                         type = type.ToString(),
@@ -86,7 +76,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
 
                 var serializedObject = Newtonsoft.Json.JsonConvert.SerializeObject(postData);
 
-                _log.Information($"Deleting {type} record, {identifier} with Dnsexit API...");
+                logService.Information($"Deleting {type} record, {identifier} with Dnsexit API...");
 
                 var httpContent = new StringContent(serializedObject, Encoding.UTF8, "application/json");
                 var response = await client.PostAsync("", httpContent);

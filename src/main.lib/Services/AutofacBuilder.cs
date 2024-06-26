@@ -15,20 +15,12 @@ using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services.Legacy;
 using PKISharp.WACS.Services.Serialization;
 using System;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services
 {
-    internal class AutofacBuilder : IAutofacBuilder
+    internal class AutofacBuilder(IPluginService plugins) : IAutofacBuilder
     {
-        private readonly ILogService _log;
-        private readonly IPluginService _plugins;
-
-        public AutofacBuilder(ILogService log, IPluginService plugins)
-        {
-            _plugins = plugins;
-            _log = log;
-        }
-
         /// <summary>
         /// This is used to import renewals from 1.9.x
         /// </summary>
@@ -36,6 +28,7 @@ namespace PKISharp.WACS.Services
         /// <param name="fromUri"></param>
         /// <param name="toUri"></param>
         /// <returns></returns>
+        [SupportedOSPlatform("windows")]
         public ILifetimeScope Legacy(ILifetimeScope main, Uri fromUri, Uri toUri)
         {
             return main.BeginLifetimeScope(builder =>
@@ -56,7 +49,7 @@ namespace PKISharp.WACS.Services
 
                 builder.RegisterType<LegacyTaskSchedulerService>();
 
-                builder.RegisterType<TaskSchedulerService>().
+                builder.RegisterType<TaskSchedulerService>().As<IAutoRenewService>().
                     WithParameter(new TypedParameter(typeof(MainArguments), realArguments)).
                     WithParameter(new TypedParameter(typeof(ISettingsService), realSettings)).
                     SingleInstance();
@@ -104,7 +97,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public ILifetimeScope Execution(ILifetimeScope main, Renewal renewal, AcmeClient acmeClient, RunLevel runLevel)
         {
-            _log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Execution), main.Tag);
+            //log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Execution), main.Tag);
             var ret = main.BeginLifetimeScope(nameof(Execution), builder =>
             {
                 builder.Register(c => runLevel).As<RunLevel>();
@@ -128,7 +121,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public ILifetimeScope Split(ILifetimeScope execution, Target target)
         {
-            _log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Split), execution.Tag);
+            //log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Split), execution.Tag);
             var ret = execution.BeginLifetimeScope(nameof(Split), builder => builder.RegisterInstance(target));
             ret = PluginBackend<IOrderPlugin, OrderPluginOptions>(ret, execution.Resolve<Renewal>().OrderPluginOptions ?? new SingleOptions(), "order");
             return ret;
@@ -143,7 +136,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public ILifetimeScope Order(ILifetimeScope execution, Order order)
         {
-            _log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Order), execution.Tag);
+            //log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Order), execution.Tag);
             var ret = execution.BeginLifetimeScope($"order-{order.CacheKeyPart ?? "main"}", builder => 
                 builder.RegisterInstance(order.Target));
             ret = PluginBackend<ICsrPlugin, CsrPluginOptions>(ret, order.Renewal.CsrPluginOptions ?? new RsaOptions(), "csr");
@@ -156,11 +149,9 @@ namespace PKISharp.WACS.Services
         /// <param name="main"></param>
         /// <param name="target"></param>
         /// <returns></returns>
-        public ILifetimeScope Target(ILifetimeScope execution, Target target)
-        {
-            _log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Target), execution.Tag);
-            return execution.BeginLifetimeScope($"target", builder => builder.RegisterInstance(target));
-        }
+        public ILifetimeScope Target(ILifetimeScope execution, Target target) =>
+            //log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Target), execution.Tag);
+            execution.BeginLifetimeScope($"target", builder => builder.RegisterInstance(target));
 
         /// <summary>
         /// Shortcut for backends using the IPluginCapability
@@ -188,8 +179,8 @@ namespace PKISharp.WACS.Services
             where TCapability : IPluginCapability
             where TOptions : PluginOptions
         {
-            _log.Verbose("Autofac: creating {name}<{backend}> scope with parent {tag}", nameof(PluginBackend), typeof(TBackend).Name, execution.Tag);
-            if (!_plugins.TryGetPlugin(options, out var plugin)) 
+            //log.Verbose("Autofac: creating {name}<{backend}> scope with parent {tag}", nameof(PluginBackend), typeof(TBackend).Name, execution.Tag);
+            if (!plugins.TryGetPlugin(options, out var plugin)) 
             {
                 throw new Exception($"Unknown {typeof(TBackend).Name} plugin {options.Plugin}");
             }
@@ -226,7 +217,7 @@ namespace PKISharp.WACS.Services
             where TCapability : IPluginCapability
             where TOptions : PluginOptionsBase, new()
         {
-            _log.Verbose("Autofac: creating {name}<{backend}> scope with parent {tag}", nameof(PluginFrontend), typeof(TOptions).Name, execution.Tag);
+            //log.Verbose("Autofac: creating {name}<{backend}> scope with parent {tag}", nameof(PluginFrontend), typeof(TOptions).Name, execution.Tag);
             if (!plugin.Capability.IsAssignableTo(typeof(TCapability)))
             {
                 throw new Exception($"{plugin.Capability.Name} is not a {typeof(TCapability).Name}");
@@ -248,14 +239,13 @@ namespace PKISharp.WACS.Services
                 });
         }
 
-        public PluginFrontend<IValidationPluginCapability, ValidationPluginOptions> 
+        public PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>
             ValidationFrontend(ILifetimeScope execution, ValidationPluginOptions options, Identifier identifier)
         {
             var dummyTarget = new Target(identifier);
             var dummyScope = Target(execution, dummyTarget);
-            var plugin = _plugins.GetPlugin(options);
-            var pluginHelper = PluginFrontend<IValidationPluginCapability, ValidationPluginOptions>(dummyScope, plugin);
-            return pluginHelper.Resolve<PluginFrontend<IValidationPluginCapability, ValidationPluginOptions>>();
+            var pluginHelper = PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>(dummyScope, options, "dummy");
+            return pluginHelper.Resolve<PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>>();
         }
     }
 }

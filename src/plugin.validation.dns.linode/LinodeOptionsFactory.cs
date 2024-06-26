@@ -5,11 +5,9 @@ using PKISharp.WACS.Services.Serialization;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    internal class LinodeOptionsFactory : PluginOptionsFactory<LinodeOptions>
+    internal class LinodeOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<LinodeOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public LinodeOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
+        private readonly ArgumentsInputService _arguments = arguments;
 
         private ArgumentResult<ProtectedString?> ApiKey => _arguments.
             GetProtectedString<LinodeArguments>(a => a.ApiToken).

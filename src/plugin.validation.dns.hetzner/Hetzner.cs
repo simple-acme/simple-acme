@@ -5,10 +5,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Models;
 using PKISharp.WACS.Services;
 using System;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -17,30 +14,23 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DnsValidationCapability, HetznerJson>
         ("7176cc8f-ba08-4b07-aa39-2f5d012c1d5a",
         "Hetzner", "Create verification records in Hetzner DNS")]
-    public class Hetzner : DnsValidation<Hetzner>, IDisposable
+    public class Hetzner(
+        HetznerOptions options,
+        IProxyService proxyService,
+        LookupClientProvider dnsClient,
+        SecretServiceManager ssm,
+        ILogService logService,
+        ISettingsService settings) : DnsValidation<Hetzner>(dnsClient, logService, settings), IDisposable
     {
-        private readonly HetznerOptions _options;
-        private readonly HetznerClient _client;
-
-        public Hetzner(
-            HetznerOptions options,
-            IProxyService proxyService,
-            LookupClientProvider dnsClient,
-            SecretServiceManager ssm,
-            ILogService logService,
-            ISettingsService settings) : base(dnsClient, logService, settings)
-        {
-            _client = new HetznerClient(ssm.EvaluateSecret(options.ApiToken) ?? throw new InvalidOperationException("API Token cannot be null"), logService, proxyService);
-            _options = options;
-        }
+        private readonly HetznerClient _client = new(ssm.EvaluateSecret(options.ApiToken) ?? throw new InvalidOperationException("API Token cannot be null"), logService, proxyService);
 
         private async Task<Zone?> GetHostedZone(string recordName)
         {
-            if (String.IsNullOrWhiteSpace(_options.ZoneId) is false)
+            if (String.IsNullOrWhiteSpace(options.ZoneId) is false)
             {
                 _log.Debug("Using Zone Id specified by input arguments to get zone information.");
 
-                return await _client.GetZoneAsync(_options.ZoneId).ConfigureAwait(false);
+                return await _client.GetZoneAsync(options.ZoneId).ConfigureAwait(false);
             }
 
             _log.Debug($"Try getting best matching zone for record '{recordName}'.");
@@ -109,6 +99,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
         }
 
-        public void Dispose() => _client.Dispose();
+        public void Dispose()
+        {
+            _client.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

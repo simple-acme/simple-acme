@@ -8,35 +8,24 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
-    internal class PemFilesOptionsFactory : PluginOptionsFactory<PemFilesOptions>
+    internal class PemFilesOptionsFactory(
+        ILogService log,
+        ISettingsService settings,
+        ArgumentsInputService arguments) : PluginOptionsFactory<PemFilesOptions>
     {
-        private readonly ILogService _log;
-        private readonly ArgumentsInputService _arguments;
-        private readonly ISettingsService _settings;
-
-        public PemFilesOptionsFactory(
-            ILogService log, 
-            ISettingsService settings,
-            ArgumentsInputService arguments)
-        {
-            _log = log;
-            _arguments = arguments;
-            _settings = settings;
-        }
-
-        private ArgumentResult<ProtectedString?> Password => _arguments.
+        private ArgumentResult<ProtectedString?> Password => arguments.
             GetProtectedString<PemFilesArguments>(args => args.PemPassword, true).
-            WithDefault(_settings.Store.PemFiles.DefaultPassword.Protect(true)).
+            WithDefault(settings.Store.PemFiles.DefaultPassword.Protect(true)).
             DefaultAsNull();
 
-        private ArgumentResult<string?> Path => _arguments.
+        private ArgumentResult<string?> Path => arguments.
             GetString<PemFilesArguments>(args => args.PemFilesPath).
-            WithDefault(_settings.Store.PemFiles.DefaultPath).
+            WithDefault(settings.Store.PemFiles.DefaultPath).
             Required().
-            Validate(x => Task.FromResult(x.ValidPath(_log)), "invalid path").
+            Validate(x => Task.FromResult(x.ValidPath(log)), "invalid path").
             DefaultAsNull();
 
-        private ArgumentResult<string?> Name => _arguments.
+        private ArgumentResult<string?> Name => arguments.
             GetString<PemFilesArguments>(args => args.PemFilesName);
 
         public override async Task<PemFilesOptions?> Aquire(IInputService input, RunLevel runLevel)

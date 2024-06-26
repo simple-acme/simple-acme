@@ -7,19 +7,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.NS1
 {
-    public class DnsManagementClient
+    public class DnsManagementClient(string apiKey, IProxyService proxyService)
     {
-        private readonly string _apiKey;
-        private readonly ILogService _log;
-        readonly IProxyService _proxyService;
         private readonly string _uri = "https://api.nsone.net/v1/";
-
-        public DnsManagementClient(string apiKey, ILogService logService, IProxyService proxyService)
-        {
-            _apiKey = apiKey;
-            _log = logService;
-            _proxyService = proxyService;
-        }
 
         public async Task<string[]?> GetZones()
         {
@@ -32,12 +22,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.NS1
                     return null;
                 }
 
-#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
                 return JsonDocument.Parse(response.Content.ReadAsStream())
                     .RootElement.EnumerateArray()
                     .Select(x => x.GetProperty("zone").GetString())
+                    .OfType<string>()
                     .ToArray();
-#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
             }
             catch
             {
@@ -74,9 +63,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.NS1
 
         private HttpClient GetClient()
         {
-            var client = _proxyService.GetHttpClient();
+            var client = proxyService.GetHttpClient();
             client.BaseAddress = new Uri(_uri);
-            client.DefaultRequestHeaders.Add("X-NSONE-Key", _apiKey);
+            client.DefaultRequestHeaders.Add("X-NSONE-Key", apiKey);
             return client;
         }
     }

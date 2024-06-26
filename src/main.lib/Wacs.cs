@@ -1,5 +1,4 @@
 ﻿using PKISharp.WACS.Clients;
-using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
@@ -25,7 +24,7 @@ namespace PKISharp.WACS.Host
         private readonly RenewalManager _renewalManager;
         private readonly Unattended _unattended;
         private readonly RenewalCreator _renewalCreator;
-        private readonly TaskSchedulerService _taskScheduler;
+        private readonly IAutoRenewService _taskScheduler;
         private readonly VersionService _versionService;
         private readonly MainMenu _mainMenu;
 
@@ -43,7 +42,7 @@ namespace PKISharp.WACS.Host
             NetworkCheckService networkCheck,
             RenewalManager renewalManager,
             Unattended unattended,
-            TaskSchedulerService taskSchedulerService,
+            IAutoRenewService taskSchedulerService,
             MainMenu mainMenu)
         {
             // Basic services
@@ -122,6 +121,24 @@ namespace PKISharp.WACS.Host
                 }
             }
 
+            // Base runlevel flags on command line arguments
+            var unattendedRunLevel = RunLevel.Unattended;
+            var interactiveRunLevel = RunLevel.Interactive;
+            if (_args.Force)
+            {
+                unattendedRunLevel |= RunLevel.Force | RunLevel.NoCache;
+            }
+            if (_args.NoCache)
+            {
+                interactiveRunLevel |= RunLevel.Test;
+                unattendedRunLevel |= RunLevel.NoCache;
+            }
+            if (_args.Test)
+            {
+                interactiveRunLevel |= RunLevel.Test;
+                unattendedRunLevel |= RunLevel.Test;
+            }
+
             // Main loop
             do
             {
@@ -129,7 +146,7 @@ namespace PKISharp.WACS.Host
                 {
                     if (_args.Import)
                     {
-                        await _mainMenu.Import(RunLevel.Unattended);
+                        await _mainMenu.Import(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (_args.List)
@@ -154,45 +171,27 @@ namespace PKISharp.WACS.Host
                     }
                     else if (_args.Renew)
                     {
-                        var runLevel = RunLevel.Unattended;
-                        if (_args.Force)
-                        {
-                            runLevel |= RunLevel.Force;
-                        }
-                        if (_args.NoCache)
-                        {
-                            runLevel |= RunLevel.NoCache;
-                        }
-                        await _renewalManager.CheckRenewals(runLevel);
+                        await _renewalManager.CheckRenewals(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (!string.IsNullOrEmpty(_args.Target) || !string.IsNullOrEmpty(_args.Source))
                     {
-                        var runLevel = RunLevel.Unattended;
-                        if (_args.Force)
-                        {
-                            runLevel |= RunLevel.Force | RunLevel.NoCache;
-                        }
-                        if (_args.NoCache)
-                        {
-                            runLevel |= RunLevel.NoCache;
-                        }
-                        await _renewalCreator.SetupRenewal(runLevel);
+                        await _renewalCreator.SetupRenewal(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (_args.Encrypt)
                     {
-                        await _mainMenu.Encrypt(RunLevel.Unattended);
+                        await _mainMenu.Encrypt(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (_args.SetupTaskScheduler)
                     {
-                        await _taskScheduler.CreateTaskScheduler(RunLevel.Unattended);
+                        await _taskScheduler.SetupAutoRenew(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else
                     {
-                        await _mainMenu.MainMenuEntry(_args.Test ? RunLevel.Test : RunLevel.None);
+                        await _mainMenu.MainMenuEntry(interactiveRunLevel);
                     }
                 }
                 catch (Exception ex)
@@ -221,10 +220,10 @@ namespace PKISharp.WACS.Host
         {
             // Version information
             _input.CreateSpace();
-            _log.Information(LogType.Screen, "A simple Windows ACMEv2 client (WACS)");
+            _log.Information(LogType.Screen, "A simple cross platform ACME client (WACS)");
             _log.Information(LogType.Screen, "Software version {version} ({build}, {bitness})", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
             _log.Information(LogType.Disk | LogType.Event, "Software version {version} ({build}, {bitness}) started", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
-            _log.Debug("Running on Windows {version}", Environment.OSVersion.Version);
+            _log.Debug("Running on {platform} {version}", Environment.OSVersion.Platform, Environment.OSVersion.Version);
  
             // Connection test
             _log.Information("Connecting to {ACME}...", _settings.BaseUri);
@@ -250,30 +249,44 @@ namespace PKISharp.WACS.Host
             }
 
             // IIS version test
-            if (_adminService.IsAdmin)
+            if (OperatingSystem.IsWindows())
             {
-                _log.Debug("Running with administrator credentials");
-                var iis = _iis.Version;
-                if (iis.Major > 0)
+                if (_adminService.IsAdmin)
                 {
-                    _log.Debug("IIS version {version}", iis);
+                    _log.Debug("Running as administrator");
+                    var iis = _iis.Version;
+                    if (iis.Major > 0)
+                    {
+                        _log.Debug("IIS version {version}", iis);
+                    }
+                    else
+                    {
+                        _log.Debug("IIS not detected");
+                    }
                 }
                 else
                 {
-                    _log.Debug("IIS not detected");
+                    _log.Information("Running as limited user, some options disabled");
                 }
             }
             else
             {
-                _log.Information("Running without administrator credentials, some options disabled");
+                if (_adminService.IsAdmin)
+                {
+                    _log.Debug("Running as superuser/root");
+                }
+                else
+                {
+                    _log.Warning("Running as limited user, some options *including autorenewal* disabled");
+                }
             }
 
             // Task scheduler health check
-            _taskScheduler.ConfirmTaskScheduler();
+            _taskScheduler.ConfirmAutoRenew();
 
             // Further information and tests
             _log.Information("Please report bugs at {url}", "https://github.com/win-acme/win-acme");
-            _log.Verbose("Unicode display test: Chinese/{chinese} Russian/{russian} Arab/{arab}", "語言", "язык", "لغة");
+            _log.Verbose("Unicode display test: Mandarin/{chinese} Cyrillic/{russian} Arabic/{arab}", "語言", "язык", "لغة");
         }
 
         /// <summary>

@@ -28,14 +28,10 @@ namespace PKISharp.WACS.Configuration
             return argumentGroups.Select(x =>
                 {
                     var type = typeof(BaseArgumentsProvider<>).MakeGenericType(x.Type);
-                    var constr = type.GetConstructor(Array.Empty<Type>());
-                    if (constr == null)
-                    {
-                        throw new Exception("IArgumentsProvider should have parameterless constructor");
-                    }
+                    var constr = type.GetConstructor([]) ?? throw new Exception("IArgumentsProvider should have parameterless constructor");
                     try
                     {
-                        var ret = (IArgumentsProvider)constr.Invoke(Array.Empty<object>());
+                        var ret = (IArgumentsProvider)constr.Invoke([]);
                         ret.Log = _log;
                         return ret;
                     }
@@ -158,7 +154,9 @@ namespace PKISharp.WACS.Configuration
                             value = $"\"{value}\"";
                         }
                         censoredArgs.Add(value);
-                        censor = SecretArguments.Any(c => _args[i].ToLower() == $"--{c}" || _args[i].ToLower() == $"/{c}");
+                        censor = SecretArguments.Any(c => 
+                            _args[i].Equals($"--{c}", StringComparison.CurrentCultureIgnoreCase) || 
+                            _args[i].Equals($"/{c}", StringComparison.CurrentCultureIgnoreCase));
                     }
                     else
                     {
@@ -166,7 +164,7 @@ namespace PKISharp.WACS.Configuration
                         censor = false;
                     }
                 }
-                var argsFormat = censoredArgs.Any() ? $"Arguments: {string.Join(" ", censoredArgs)}" : "No command line arguments provided";
+                var argsFormat = censoredArgs.Count != 0 ? $"Arguments: {string.Join(" ", censoredArgs)}" : "No command line arguments provided";
                 _log.Verbose(LogType.Screen | LogType.Event, argsFormat);
                 _log.Information(LogType.Disk, argsFormat);
             }
@@ -216,7 +214,7 @@ namespace PKISharp.WACS.Configuration
                         Console.ResetColor();
                         var step = 60;
                         var pos = 0;
-                        var words = x.Description?.Split(' ') ?? Array.Empty<string>();
+                        var words = x.Description?.Split(' ') ?? [];
                         while (pos < words.Length)
                         {
                             var line = "";

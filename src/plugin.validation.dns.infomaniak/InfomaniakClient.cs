@@ -44,8 +44,8 @@ internal class InfomaniakClient
 
     public async Task<int> CreateRecord(int domainId, string identifier, string value, int ttl = 300)
     {
-        if (domainId <= 0) throw new ArgumentOutOfRangeException(nameof(domainId));
-        if (ttl <= 0) throw new ArgumentOutOfRangeException(nameof(ttl));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(domainId);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(ttl);
 
         var apiUrl = $"/1/domain/{domainId}/dns/record";
         var postData = new DomainRecordCreateRequest
@@ -66,7 +66,7 @@ internal class InfomaniakClient
         //Get new Record ID - used for deleting
         var jsonResponse = await response.Content.ReadAsStringAsync();
         var createResponse = JsonConvert.DeserializeObject<DomainRecordCreateResponse>(jsonResponse);
-        var id = (createResponse?.Data ?? 0);
+        var id = createResponse?.Data ?? 0;
         if (id == 0)
         {
             _log.Error($"Infomaniak did not create record: {jsonResponse}");
@@ -79,8 +79,8 @@ internal class InfomaniakClient
 
     public async Task DeleteRecord(int domainId, int recordId)
     {
-        if (domainId <= 0) throw new ArgumentOutOfRangeException(nameof(domainId));
-        if (recordId <= 0) throw new ArgumentOutOfRangeException(nameof(recordId));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(domainId);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(recordId);
 
         var apiUrl = $"/1/domain/{domainId}/dns/record/{recordId}";
         var response = await _httpClient.DeleteAsync(apiUrl);

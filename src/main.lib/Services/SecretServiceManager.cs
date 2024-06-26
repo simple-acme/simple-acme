@@ -7,27 +7,18 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    public class SecretServiceManager
+    public class SecretServiceManager(
+        ILifetimeScope scope,
+        IInputService input,
+        IPluginService pluginService,
+        ILogService logService)
     {
-        private readonly List<ISecretService> _backends;
-        private readonly IInputService _inputService;
-        private readonly ILogService _logService;
-        public const string VaultPrefix = "vault://";
-
-        public SecretServiceManager(
-            ILifetimeScope scope,
-            IInputService input, 
-            IPluginService pluginService,
-            ILogService logService) 
-        {
-            _backends = pluginService.
+        private readonly List<ISecretService> _backends = pluginService.
                 GetSecretServices().
                 Select(b => scope.Resolve(b.Backend)).
                 OfType<ISecretService>().
                 ToList();
-            _inputService = input;
-            _logService = logService;
-        }
+        public const string VaultPrefix = "vault://";
 
         /// <summary>
         /// Get a secret from interactive mode setup
@@ -59,11 +50,11 @@ namespace PKISharp.WACS.Services
                         stop = true;
                         if (multiline)
                         {
-                            return await _inputService.RequestString(purpose, true);
+                            return await input.RequestString(purpose, true);
                         }
                         else
                         {
-                            return await _inputService.ReadPassword(purpose);
+                            return await input.ReadPassword(purpose);
                         }
                     },
                     description: "Type/paste in console"));
@@ -89,7 +80,7 @@ namespace PKISharp.WACS.Services
                 // Handle undefined input as direct password
                 Choice<Func<Task<string?>>> processUnkown(string? unknown) => Choice.Create<Func<Task<string?>>>(() => Task.FromResult(unknown));
 
-                var chosen = await _inputService.ChooseFromMenu("Choose from the menu", options, (x) => processUnkown(x));
+                var chosen = await input.ChooseFromMenu("Choose from the menu", options, (x) => processUnkown(x));
                 ret = await chosen.Invoke();
             }
 
@@ -105,7 +96,7 @@ namespace PKISharp.WACS.Services
             // Offer to save in list
             if (!ret.StartsWith(VaultPrefix))
             {
-                var save = await _inputService.PromptYesNo($"Save to vault for future reuse?", false);
+                var save = await input.PromptYesNo($"Save to vault for future reuse?", false);
                 if (save)
                 {
                     return await ChooseKeyAndStoreSecret(ret);
@@ -130,7 +121,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public async Task<string?> AddSecret()
         {
-            var secret = await _inputService.ReadPassword("Secret");
+            var secret = await input.ReadPassword("Secret");
             if (!string.IsNullOrWhiteSpace(secret))
             {
                 return await ChooseKeyAndStoreSecret(secret);
@@ -152,7 +143,7 @@ namespace PKISharp.WACS.Services
             {
                 return _backends[0];
             }
-            return await _inputService. 
+            return await input. 
                 ChooseRequired("Choose secret store", 
                 _backends, x => Choice.Create(x, description: x.GetType().ToString()));
         }
@@ -168,11 +159,11 @@ namespace PKISharp.WACS.Services
             var key = "";
             while (string.IsNullOrEmpty(key))
             {
-                key = await _inputService.RequestString("Please provide a unique name to reference this secret", false);
+                key = await input.RequestString("Please provide a unique name to reference this secret", false);
                 key = key.Trim().ToLower().Replace(" ", "-");
                 if (backend.ListKeys().Contains(key))
                 {
-                    var overwrite = await _inputService.PromptYesNo($"Key {key} already exists in vault, overwrite?", true);
+                    var overwrite = await input.PromptYesNo($"Key {key} already exists in vault, overwrite?", true);
                     if (!overwrite)
                     {
                         key = null;
@@ -196,7 +187,7 @@ namespace PKISharp.WACS.Services
         private async Task<string?> FindSecret()
         {
             var backend = await ChooseBackend();
-            var chosenKey = await _inputService.ChooseOptional(
+            var chosenKey = await input.ChooseOptional(
                 "Which vault secret do you want to use?",
                 backend.ListKeys(),
                 (key) => Choice.Create<string?>(key, description: FormatKey(backend, key)),
@@ -271,7 +262,7 @@ namespace PKISharp.WACS.Services
                     exit = true; 
                     return Task.CompletedTask; 
                 }, "Back to main menu", command: "Q", @default: true));
-                var chosen = await _inputService.ChooseFromMenu("Choose an existing secret to manage, add a new one", choices);
+                var chosen = await input.ChooseFromMenu("Choose an existing secret to manage, add a new one", choices);
                 await chosen.Invoke();
             }
 
@@ -287,9 +278,9 @@ namespace PKISharp.WACS.Services
             while (!exit)
             {
                 var secret = backend.GetSecret(key);
-                _inputService.CreateSpace();
-                _inputService.Show("Reference", key);
-                _inputService.Show("Secret", "********");
+                input.CreateSpace();
+                input.Show("Reference", key);
+                input.Show("Secret", "********");
                 var choices = new List<Choice<Func<Task>>>
                 {
                     Choice.Create<Func<Task>>(() => ShowSecret(backend, key), "Show secret", command: "S"),
@@ -305,7 +296,7 @@ namespace PKISharp.WACS.Services
                         return Task.CompletedTask;
                     }, "Back to list", command: "Q", @default: true)
                 };
-                var chosen = await _inputService.ChooseFromMenu("Choose an option", choices);
+                var chosen = await input.ChooseFromMenu("Choose an option", choices);
                 await chosen.Invoke();
             }
         }
@@ -318,7 +309,7 @@ namespace PKISharp.WACS.Services
         private Task DeleteSecret(ISecretService backend, string key)
         {
             backend.DeleteSecret(key);
-            _logService.Warning($"Secret {key} deleted from {backend.Prefix} store");
+            logService.Warning($"Secret {key} deleted from {backend.Prefix} store");
             return Task.CompletedTask;
         }
 
@@ -329,14 +320,14 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         private async Task UpdateSecret(ISecretService backend, string key)
         {
-            var secret = await _inputService.ReadPassword("Secret");
+            var secret = await input.ReadPassword("Secret");
             if (!string.IsNullOrWhiteSpace(secret))
             {
                 backend.PutSecret(key, secret);
             }
             else
             {
-                _logService.Warning("No input provided, update cancelled");
+                logService.Warning("No input provided, update cancelled");
             }
         }
 
@@ -347,7 +338,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         private Task ShowSecret(ISecretService backend, string key) {
             var secret = backend.GetSecret(key);
-            _inputService.Show("Secret", secret);
+            input.Show("Secret", secret);
             return Task.CompletedTask;
         }
     }

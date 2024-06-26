@@ -100,17 +100,17 @@ namespace PKISharp.WACS.DomainObjects
         /// <summary>
         /// Store information about StorePlugin
         /// </summary>
-        public List<StorePluginOptions> StorePluginOptions { get; set; } = new List<StorePluginOptions>();
+        public List<StorePluginOptions> StorePluginOptions { get; set; } = [];
 
         /// <summary>
         /// Store information about InstallationPlugins
         /// </summary>
-        public List<InstallationPluginOptions> InstallationPluginOptions { get; set; } = new List<InstallationPluginOptions>();
+        public List<InstallationPluginOptions> InstallationPluginOptions { get; set; } = [];
 
         /// <summary>
         /// History for this renewal
         /// </summary>
-        public List<RenewResult> History { get; set; } = new List<RenewResult>();
+        public List<RenewResult> History { get; set; } = [];
 
         /// <summary>
         /// Which ACME account is associated with the renewal (null = default)
@@ -137,7 +137,7 @@ namespace PKISharp.WACS.DomainObjects
             {
                 ret += $", {orders} orders";
             }
-            var format = (DateTime date) =>
+            string format(DateTime date)
             {
                 if (inputService != null)
                 {
@@ -147,7 +147,7 @@ namespace PKISharp.WACS.DomainObjects
                 {
                     return date.ToShortDateString();
                 }
-            };
+            }
 
             if (dueDateService != null)
             {

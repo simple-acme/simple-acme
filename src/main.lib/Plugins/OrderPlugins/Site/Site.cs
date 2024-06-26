@@ -27,7 +27,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
                 var newTarget = new Target(
                     target.FriendlyName,
                     commonName,
-                    new List<TargetPart> { part });
+                    [part]);
                 var newOrder = new Order(
                     renewal, 
                     newTarget, 

@@ -38,7 +38,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                     Bindings = bindingList
                 });
             }
-            iis.MockSites = siteList.ToArray();
+            iis.MockSites = [.. siteList];
             var settings = new MockSettingsService();
             var proxy = new Mock.Services.ProxyService();
             var domainParse = new DomainParseService(log, proxy, settings);

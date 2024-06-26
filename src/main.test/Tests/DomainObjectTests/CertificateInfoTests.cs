@@ -151,7 +151,7 @@ btUK9CQkVXXUE5FDNjWBh/WxofE=
         /// <param name="friendlyName"></param>
         /// <param name="pk"></param>
         /// <returns></returns>
-        private PfxWrapper ParseData(string text)
+        private static PfxWrapper ParseData(string text)
         {
             var pfxBuilder = PfxService.GetPfx(PfxProtectionMode.Default);
             var pfx = pfxBuilder.Store;

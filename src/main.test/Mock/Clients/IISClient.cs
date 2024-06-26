@@ -15,14 +15,14 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         {
             _log = log;
             Version = new Version(version, 0);
-            MockSites = new[] {
+            MockSites = [
                 new MockSite()
                 {
                     Id = 1,
                     Name = "example.com",
                     Path = "C:\\wwwroot\\example",
-                    Bindings = new[]
-                    {
+                    Bindings =
+                    [
                         new MockBinding()
                         {
                             Host = "test.example.com",
@@ -47,15 +47,15 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
                             Protocol = "http",
                             Port = 80
                         },
-                    }.ToList()
+                    ]
                 },
                 new MockSite()
                 {
                     Id = 2,
                     Name = "contoso.com",
                     Path = "C:\\wwwroot\\contoso",
-                    Bindings = new[]
-                    {
+                    Bindings =
+                    [
                         new MockBinding()
                         {
                             Host = "test.contoso.com",
@@ -80,9 +80,9 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
                             Protocol = "http",
                             Port = 80
                         },
-                    }.ToList()
+                    ]
                 }
-            };
+            ];
         }
 
         public Version Version { get; set; }
@@ -140,7 +140,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
     internal class MockSite : IIISSite<MockBinding>
     {
         IEnumerable<IIISBinding> IIISSite.Bindings => Bindings;
-        public List<MockBinding> Bindings { get; set; } = new List<MockBinding>();
+        public List<MockBinding> Bindings { get; set; } = [];
         public long Id { get; set; }
         public string Name { get; set; } = "";
         public string Path { get; set; } = "";
@@ -156,7 +156,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
             Host = options.Host;
             Protocol = "https";
             Port = options.Port;
-            CertificateHash = options.Thumbprint?.ToArray();
+            CertificateHash = options.Thumbprint;
             CertificateStoreName = options.Store ?? "";
             IP = options.IP;
             SSLFlags = options.Flags;
@@ -166,7 +166,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         public string Protocol { get; set; } = "";
         public int Port { get; set; }
         public string IP { get; set; } = "";
-        public byte[]? CertificateHash { get; set; }
+        public IEnumerable<byte>? CertificateHash { get; set; }
         public string CertificateStoreName { get; set; } = "";
         public string BindingInformation
         {

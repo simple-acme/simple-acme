@@ -7,26 +7,16 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    internal class NetworkCheckService
+    internal class NetworkCheckService(IProxyService proxy, ISettingsService settings, ILogService log)
     {
-        private readonly IProxyService _proxyService;
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-
-        public NetworkCheckService(IProxyService proxy, ISettingsService settings, ILogService log)
-        {
-            _proxyService = proxy;
-            _settings = settings;
-            _log = log;
-        }
 
         /// <summary>
         /// Test the network connection
         /// </summary>
         internal async Task CheckNetwork()
         {
-            using var httpClient = _proxyService.GetHttpClient();
-            httpClient.BaseAddress = _settings.BaseUri;
+            using var httpClient = proxy.GetHttpClient();
+            httpClient.BaseAddress = settings.BaseUri;
             httpClient.Timeout = new TimeSpan(0, 0, 10);
             var success = await CheckNetworkUrl(httpClient, "directory");
             if (!success)
@@ -35,8 +25,8 @@ namespace PKISharp.WACS.Services
             }
             if (!success)
             {
-                _log.Debug("Initial connection failed, retrying with TLS 1.2 forced");
-                _proxyService.SslProtocols = SslProtocols.Tls12;
+                log.Debug("Initial connection failed, retrying with TLS 1.2 forced");
+                proxy.SslProtocols = SslProtocols.Tls12;
                 success = await CheckNetworkUrl(httpClient, "directory");
                 if (!success)
                 {
@@ -45,11 +35,11 @@ namespace PKISharp.WACS.Services
             }
             if (success)
             {
-                _log.Information("Connection OK!");
+                log.Information("Connection OK!");
             }
             else
             {
-                _log.Warning("Initial connection failed");
+                log.Warning("Initial connection failed");
             }
         }
 
@@ -66,7 +56,7 @@ namespace PKISharp.WACS.Services
             }
             catch (Exception ex)
             {
-                _log.Debug($"Connection failed: {ex.Message}");
+                log.Debug($"Connection failed: {ex.Message}");
                 return false;
             }
         }

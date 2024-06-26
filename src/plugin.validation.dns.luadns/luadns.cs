@@ -7,13 +7,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.Versioning;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -23,7 +20,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ("3b0c3cca-db98-40b7-b678-b34791070d42", 
         "LuaDns", 
         "Create verification records in LuaDns")]
-    internal sealed class LuaDns : DnsValidation<LuaDns>
+    internal sealed class LuaDns(
+        LookupClientProvider dnsClient,
+        IProxyService proxy,
+        ILogService log,
+        ISettingsService settings,
+        SecretServiceManager ssm,
+        LuaDnsOptions options) : DnsValidation<LuaDns>(dnsClient, log, settings)
     {
         private class ZoneData
         {
@@ -56,25 +59,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         }
 
         private static readonly Uri _LuaDnsApiEndpoint = new("https://api.luadns.com/v1/", UriKind.Absolute);
-        private static readonly Dictionary<string, RecordData> _recordsMap = new();
-
-        private readonly IProxyService _proxyService;
-
-        private readonly string? _userName;
-        private readonly string? _apiKey;
-
-        public LuaDns(
-            LookupClientProvider dnsClient,
-            IProxyService proxy,
-            ILogService log,
-            ISettingsService settings,
-            SecretServiceManager ssm,
-            LuaDnsOptions options): base(dnsClient, log, settings)
-        {
-            _proxyService = proxy;
-            _userName = options.Username;
-            _apiKey = ssm.EvaluateSecret(options.APIKey);
-        }
+        private static readonly Dictionary<string, RecordData> _recordsMap = [];
+        private readonly string? _userName = options.Username;
+        private readonly string? _apiKey = ssm.EvaluateSecret(options.APIKey);
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
@@ -125,7 +112,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
-            if (!_recordsMap.ContainsKey(record.Authority.Domain))
+            if (!_recordsMap.TryGetValue(record.Authority.Domain, out RecordData? value))
             {
                 _log.Warning($"No record with name {record.Authority.Domain} was created");
                 return;
@@ -134,7 +121,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             _log.Information("Deleting LuaDNS verification record");
 
             using var client = GetClient();
-            var created = _recordsMap[record.Authority.Domain];
+            var created = value;
             var response = await client.DeleteAsync(new Uri(_LuaDnsApiEndpoint, $"zones/{created.ZoneId}/records/{created.Id}"));
             if (!response.IsSuccessStatusCode)
             {
@@ -147,7 +134,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         private HttpClient GetClient()
         {
-            var client = _proxyService.GetHttpClient();
+            var client = proxy.GetHttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_userName}:{_apiKey}")));
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             return client;

@@ -102,7 +102,7 @@ namespace PKISharp.WACS.Clients.DNS
             if (followCnames)
             {
                 string? cname;
-                if (!_cnames.ContainsKey(domainName))
+                if (!_cnames.TryGetValue(domainName, out var value))
                 {
                     var pickNs = result.Nameservers.First();
                     _log.Verbose("Query CNAME for {domainName} at {pickNs}", domainName, pickNs.IpAddress);
@@ -111,7 +111,7 @@ namespace PKISharp.WACS.Clients.DNS
                 }
                 else
                 {
-                    cname = _cnames[domainName];
+                    cname = value;
                 }
                 if (cname != null)
                 {
@@ -156,15 +156,9 @@ namespace PKISharp.WACS.Clients.DNS
                     // get the name servers for b.c.d
                     var levelUp = string.Join('.', domainName.Split('.').Skip(1));
                     backup = await GetNameServers(levelUp);
-                    LookupClientWrapper specifiedClient;
-                    if (!backup.Any())
-                    {
-                        specifiedClient = _systemClient;
-                    }
-                    else
-                    {
-                        specifiedClient = Produce(backup.First());
-                    }
+                    var specifiedClient = !backup.Any() ? 
+                        _systemClient : 
+                        Produce(backup.First());
                     unverified = await specifiedClient.GetNameServers(domainName);
                 }
 
@@ -178,7 +172,7 @@ namespace PKISharp.WACS.Clients.DNS
                         verified.Add(candidate);
                     }
                 }     
-                if (!verified.Any())
+                if (verified.Count == 0)
                 {
                     if (unverified.Any())
                     {
@@ -188,7 +182,7 @@ namespace PKISharp.WACS.Clients.DNS
                     {
                         _log.Verbose("No specific name servers identified for {domainName}", domainName);
                     }
-                    verified = backup?.ToList() ?? new List<IPAddress>();
+                    verified = backup?.ToList() ?? [];
                 }
                 _authoritativeNs.TryAdd(domainName, verified);
             }
@@ -196,7 +190,7 @@ namespace PKISharp.WACS.Clients.DNS
             {
                 _log.Warning("Unexpected DNS error while checking {domainName}: {message}", domainName, ex.Message);
                 _log.Verbose(ex.StackTrace ?? "No stacktrace");
-                _authoritativeNs.TryAdd(domainName, new List<IPAddress>());
+                _authoritativeNs.TryAdd(domainName, []);
             }
             return _authoritativeNs[domainName];
         }

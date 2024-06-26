@@ -12,21 +12,12 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
 {
-    public class DnsManagementClient
+    public class DnsManagementClient(string apiKey, string apiSecret, IProxyService proxyService)
     {
-        private readonly string _apiKey;
-        private readonly string _apiSecret;
-        private readonly ILogService _log;
-        readonly IProxyService _proxyService;
+        private readonly string _apiKey = apiKey;
+        private readonly string _apiSecret = apiSecret;
+        readonly IProxyService _proxyService = proxyService;
         private readonly string _uri = "https://api.dnsmadeeasy.com/";
-
-        public DnsManagementClient(string apiKey, string apiSecret, ILogService logService, IProxyService proxyService)
-        {
-            _apiKey = apiKey;
-            _apiSecret = apiSecret;
-            _log = logService;
-            _proxyService = proxyService;
-        }
 
         #region Lookup Domain Id
         public async Task<string> LookupDomainId(string domain)
@@ -40,13 +31,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
                 string json = await response.Content.ReadAsStringAsync();
                 var request = JsonConvert.DeserializeObject<DomainResponse>(json);
 
-                if (request == null || request.id == null)
+                if (request == null || request.Id == null)
                     throw new ArgumentNullException($"Unexpected null response for {domain}");
 
-                if (!string.Equals(request.name, domain, StringComparison.InvariantCultureIgnoreCase))
-                    throw new InvalidDataException($"Domain returned an unexpected result requested: {domain} != {request.name}");
+                if (!string.Equals(request.Name, domain, StringComparison.InvariantCultureIgnoreCase))
+                    throw new InvalidDataException($"Domain returned an unexpected result requested: {domain} != {request.Name}");
 
-                return request.id;
+                return request.Id;
             }
             else
             {
@@ -56,9 +47,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
         }
         class DomainResponse
         {
-            public string? id { get; set; }
-            public string? name { get; set; }
-            public string? type { get; set; }
+            public string? Id { get; set; }
+            public string? Name { get; set; }
+            public string? Type { get; set; }
         }
         #endregion
 
@@ -75,21 +66,21 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
                 string json = await response.Content.ReadAsStringAsync();
                 var request = JsonConvert.DeserializeObject<DomainResponseCollection>(json);
 
-                if (request == null || request.data == null || request.data.Length == 0)
-                    return Array.Empty<string>();
+                if (request == null || request.Data == null || request.Data.Length == 0)
+                    return [];
 
-                List<string> recordId = new();
-                foreach (var result in request.data)
+                List<string> recordId = [];
+                foreach (var result in request.Data)
                 {
-                    if (string.Equals(result.name, recordName, StringComparison.InvariantCultureIgnoreCase) &&
-                        string.Equals(result.type, recordType, StringComparison.InvariantCultureIgnoreCase) &&
-                        result.id != null)
+                    if (string.Equals(result.Name, recordName, StringComparison.InvariantCultureIgnoreCase) &&
+                        string.Equals(result.Type, recordType, StringComparison.InvariantCultureIgnoreCase) &&
+                        result.Id != null)
                     {
-                        recordId.Add(result.id);
+                        recordId.Add(result.Id);
                     }
                 }
 
-                return recordId.ToArray();
+                return [.. recordId];
             }
             else
             {
@@ -99,7 +90,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
         }
         class DomainResponseCollection
         {
-            public DomainRequest[]? data { get; set; }
+            public DomainRequest[]? Data { get; set; }
         }
         class DomainRequest : DomainResponse {}
         #endregion
@@ -116,7 +107,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
             client.DefaultRequestHeaders.Add("x-dnsme-hmac", HMACSHA1(currentDate, _apiSecret));
             return client;
         }
-        private string HMACSHA1(string text, string key)
+        private static string HMACSHA1(string text, string key)
         {
             using var hmacsha256 = new HMACSHA1(Encoding.UTF8.GetBytes(key));
             var hash = hmacsha256.ComputeHash(Encoding.UTF8.GetBytes(text));

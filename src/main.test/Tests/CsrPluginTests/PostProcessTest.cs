@@ -17,21 +17,18 @@ namespace PKISharp.WACS.UnitTests.Tests.CsrPluginTests
         {
             var log = new Mock.Services.LogService(false);
             var settings = new Mock.Services.MockSettingsService();
-            var x = new Rsa(log, settings, new RsaOptions());
+            _ = new Rsa(log, settings, new RsaOptions());
             var data = Assembly.
                 GetAssembly(typeof(PostProcessTest))!.
-                GetManifestResourceStream($"PKISharp.WACS.UnitTests.Tests.CsrPluginTests.{name}.pfx");
-            if (data == null)
-            {
+                GetManifestResourceStream($"PKISharp.WACS.UnitTests.Tests.CsrPluginTests.{name}.pfx") ?? 
                 throw new Exception();
-            }
             var ms = new MemoryStream();
             data.CopyTo(ms);
             var bytes = ms.ToArray();
             var tempFile = Path.GetTempFileName();
             File.WriteAllBytes(tempFile, bytes);
             var fi = new FileInfo(tempFile);
-            var certInfo = new CertificateInfoCache(fi, "A8<TEpyPweWMO1m(");
+            _ = new CertificateInfoCache(fi, "A8<TEpyPweWMO1m(");
             //_ = x.PostProcess(certInfo.Certificate).Result;
             Assert.IsTrue(true);
         }

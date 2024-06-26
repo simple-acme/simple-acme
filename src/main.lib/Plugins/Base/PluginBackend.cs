@@ -3,22 +3,14 @@ using PKISharp.WACS.Services.Serialization;
 
 namespace PKISharp.WACS.Plugins.Base
 {
-    internal class PluginBackend<TBackend, TCapability, TOptions>
+    internal class PluginBackend<TBackend, TCapability, TOptions>(Plugin meta, TBackend backend, TCapability capability, TOptions options)
         where TCapability : IPluginCapability
         where TBackend : IPlugin
         where TOptions : PluginOptions
     {
-        public TBackend Backend { get; }
-        public TCapability Capability { get; }
-        public Plugin Meta { get; }
-        public TOptions Options { get; }
-
-        public PluginBackend(Plugin meta, TBackend backend, TCapability capability, TOptions options)
-        {
-            Meta = meta;
-            Backend = backend;
-            Capability = capability;
-            Options = options;
-        }
+        public TBackend Backend { get; } = backend;
+        public TCapability Capability { get; } = capability;
+        public Plugin Meta { get; } = meta;
+        public TOptions Options { get; } = options;
     }
 }

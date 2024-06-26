@@ -10,24 +10,16 @@ namespace PKISharp.WACS.Clients.IIS
     /// <summary>
     /// Modifies IIS bindings
     /// </summary>
-    internal class IISHttpBindingUpdater<TSite, TBinding>
+    /// <remarks>
+    /// Constructore
+    /// </remarks>
+    /// <param name="client"></param>
+    internal class IISHttpBindingUpdater<TSite, TBinding>(
+        IIISClient<TSite, TBinding> client,
+        ILogService log)
         where TSite : IIISSite<TBinding>
         where TBinding : IIISBinding
     {
-        private readonly IIISClient<TSite, TBinding> _client;
-        private readonly ILogService _log;
-
-        /// <summary>
-        /// Constructore
-        /// </summary>
-        /// <param name="client"></param>
-        public IISHttpBindingUpdater(
-            IIISClient<TSite, TBinding> client,
-            ILogService log)
-        {
-            _client = client;
-            _log = log;
-        }
 
         /// <summary>
         /// Update/create bindings for all host names in the certificate
@@ -43,7 +35,7 @@ namespace PKISharp.WACS.Clients.IIS
             byte[]? oldCertificate)
         {
             // Helper function to get updated sites
-            IEnumerable<(TSite site, TBinding binding)> GetAllSites() => _client.Sites.
+            IEnumerable<(TSite site, TBinding binding)> GetAllSites() => client.Sites.
                 SelectMany(site => site.Bindings, (site, binding) => (site, binding)).
                 ToList();
 
@@ -90,7 +82,7 @@ namespace PKISharp.WACS.Clients.IIS
                             } 
                             else
                             {
-                                _log.Warning(
+                                log.Warning(
                                     "Existing https binding {host}:{port}{ip} not updated because it doesn't seem to match the new certificate!",
                                     binding.Host,
                                     binding.Port,
@@ -99,7 +91,7 @@ namespace PKISharp.WACS.Clients.IIS
                         }
                         catch (Exception ex)
                         {
-                            _log.Error(ex, "Error updating binding {host}", binding.BindingInformation);
+                            log.Error(ex, "Error updating binding {host}", binding.BindingInformation);
                             throw;
                         }
                     }
@@ -113,7 +105,7 @@ namespace PKISharp.WACS.Clients.IIS
                 // Find all hostnames which are not covered by any of the already updated
                 // bindings yet, because we will want to make sure that those are accessable
                 // in the target site
-                var targetSite = _client.GetSite(bindingOptions.SiteId.Value, IISSiteType.Web);
+                var targetSite = client.GetSite(bindingOptions.SiteId.Value, IISSiteType.Web);
                 var todo = identifiers;
                 while (todo.Any())
                 {
@@ -151,7 +143,7 @@ namespace PKISharp.WACS.Clients.IIS
                     }
                     catch (Exception ex)
                     {
-                        _log.Error(ex, "Error creating binding {host}: {ex}", current, ex.Message);
+                        log.Error(ex, "Error creating binding {host}: {ex}", current, ex.Message);
 
                         // Prevent infinite retry loop, we just skip the domain when
                         // an error happens creating a new binding for it. User can
@@ -164,7 +156,7 @@ namespace PKISharp.WACS.Clients.IIS
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Error installing");
+                log.Error(ex, "Error installing");
                 throw;
             }
         }
@@ -198,7 +190,7 @@ namespace PKISharp.WACS.Clients.IIS
                 ToList();
 
             // If there are any bindings
-            if (matchingBindings.Any())
+            if (matchingBindings.Count != 0)
             {
                 var bestMatch = matchingBindings.First();
                 var bestMatches = matchingBindings.Where(x => x.binding.Host == bestMatch.binding.Host);
@@ -279,11 +271,11 @@ namespace PKISharp.WACS.Clients.IIS
 
             // On Windows 2008, which does not support SNI, only one 
             // https binding can exist for each IP/port combination
-            if (_client.Version.Major < 8)
+            if (client.Version.Major < 8)
             {
                 if (allBindings.Any(x => x.BindingInformation.StartsWith(bindingInfoShort)))
                 {
-                    _log.Warning($"Prevent adding duplicate binding for {bindingInfoShort}");
+                    log.Warning($"Prevent adding duplicate binding for {bindingInfoShort}");
                     return false;
                 }
             }
@@ -293,14 +285,14 @@ namespace PKISharp.WACS.Clients.IIS
             // same time.
             if (allBindings.Any(x => string.Equals(x.BindingInformation, bindingInfoFull, StringComparison.InvariantCultureIgnoreCase)))
             {
-                _log.Warning($"Prevent adding duplicate binding for {bindingInfoFull}");
+                log.Warning($"Prevent adding duplicate binding for {bindingInfoFull}");
                 return false;
             }
 
             // Wildcard bindings are only supported in Windows 2016+
-            if (options.Host.StartsWith("*.") && _client.Version.Major < 10)
+            if (options.Host.StartsWith("*.") && client.Version.Major < 10)
             {
-                _log.Warning($"Unable to create wildcard binding on this version of IIS");
+                log.Warning($"Unable to create wildcard binding on this version of IIS");
                 return false;
             }
             return true;
@@ -316,10 +308,10 @@ namespace PKISharp.WACS.Clients.IIS
         private bool UpdateExistingBindingFlags(SSLFlags start, TBinding match, TBinding[] allBindings, out SSLFlags modified)
         {
             modified = start;
-            if (_client.Version.Major >= 8 && !match.SSLFlags.HasFlag(SSLFlags.SNI))
+            if (client.Version.Major >= 8 && !match.SSLFlags.HasFlag(SSLFlags.SNI))
             {
                 if (allBindings
-                    .Except(new[] { match })
+                    .Except([match])
                     .Where(x => x.Port == match.Port)
                     .Where(x => StructuralComparisons.StructuralEqualityComparer.Equals(match.CertificateHash, x.CertificateHash))
                     .Where(x => !x.SSLFlags.HasFlag(SSLFlags.SNI))
@@ -327,12 +319,12 @@ namespace PKISharp.WACS.Clients.IIS
                 {
                     if (!string.IsNullOrEmpty(match.Host))
                     {
-                        _log.Warning("Turning on SNI for existing binding to avoid conflict");
+                        log.Warning("Turning on SNI for existing binding to avoid conflict");
                         modified = start | SSLFlags.SNI;
                     }
                     else
                     {
-                        _log.Warning("Our best match was the default binding and it seems there are other non-SNI enabled " +
+                        log.Warning("Our best match was the default binding and it seems there are other non-SNI enabled " +
                             "bindings listening to the same endpoint, which means we cannot update it without potentially " +
                             "causing problems. Instead, a new binding will be created. You may manually update the bindings " +
                             "if you want IIS to be configured in a different way.");
@@ -353,7 +345,7 @@ namespace PKISharp.WACS.Clients.IIS
         private SSLFlags CheckFlags(bool newBinding, string host, SSLFlags flags)
         {
             // SSL flags are not supported at all by Windows 2008
-            if (_client.Version.Major < 8)
+            if (client.Version.Major < 8)
             {
                 return SSLFlags.None;
             }
@@ -361,7 +353,7 @@ namespace PKISharp.WACS.Clients.IIS
             // Add SNI on Windows Server 2012+ for new bindings
             if (newBinding &&
                 !string.IsNullOrEmpty(host) && 
-                _client.Version.Major >= 8)
+                client.Version.Major >= 8)
             {
                 flags |= SSLFlags.SNI;
             }
@@ -371,7 +363,7 @@ namespace PKISharp.WACS.Clients.IIS
             // but so far we don't know how to check for these features 
             // availability (IIS reports its version as 10.0.0 even on 
             // Server 2019).
-            if (_client.Version.Major < 10)
+            if (client.Version.Major < 10)
             {
                 flags &= ~SSLFlags.IIS10_Flags;
             }
@@ -409,8 +401,8 @@ namespace PKISharp.WACS.Clients.IIS
         private IIISBinding AddBinding(TSite site, BindingOptions options)
         {
             options = options.WithFlags(CheckFlags(true, options.Host, options.Flags));
-            _log.Information(LogType.All, "Adding new https binding {binding}", options.Binding);
-            return _client.AddBinding(site, options);
+            log.Information(LogType.All, "Adding new https binding {binding}", options.Binding);
+            return client.AddBinding(site, options);
         }
 
         private bool UpdateBinding(TSite site, TBinding existingBinding, BindingOptions options)
@@ -424,7 +416,7 @@ namespace PKISharp.WACS.Clients.IIS
                 (StructuralComparisons.StructuralEqualityComparer.Equals(existingBinding.CertificateHash, options.Thumbprint) &&
                 string.Equals(existingBinding.CertificateStoreName, options.Store, StringComparison.InvariantCultureIgnoreCase))))
             {
-                _log.Verbose("No binding update needed");
+                log.Verbose("No binding update needed");
                 return false;
             }
             else
@@ -445,13 +437,13 @@ namespace PKISharp.WACS.Clients.IIS
                     preserveFlags &= ~SSLFlags.NotWithCentralSsl;
                 }
                 options = options.WithFlags(options.Flags | preserveFlags);
-                _log.Information(LogType.All, "Updating existing https binding on site {site}: {host}:{port}{ip} (flags: {flags})",
+                log.Information(LogType.All, "Updating existing https binding on site {site}: {host}:{port}{ip} (flags: {flags})",
                     site.Id,
                     existingBinding.Host,
                     existingBinding.Port,
                     string.IsNullOrEmpty(existingBinding.IP) ? "" : $":{existingBinding.IP}",
                     (int)options.Flags);
-                _client.UpdateBinding(site, existingBinding, options);
+                client.UpdateBinding(site, existingBinding, options);
                 return true;
             }
         }
@@ -467,7 +459,7 @@ namespace PKISharp.WACS.Clients.IIS
         /// <param name=""></param>
         /// <param name=""></param>
         /// <returns></returns>
-        private int Fits(IIISBinding iis, Identifier certificate, SSLFlags flags)
+        private static int Fits(IIISBinding iis, Identifier certificate, SSLFlags flags)
         {
             // The default (emtpy) binding matches with all hostnames.
             // But it's not supported with Central SSL
@@ -543,7 +535,7 @@ namespace PKISharp.WACS.Clients.IIS
             public bool Secure => throw new NotImplementedException();
             string IIISBinding.Host => _host;
             string IIISBinding.Protocol => throw new NotImplementedException();
-            byte[]? IIISBinding.CertificateHash => throw new NotImplementedException();
+            IEnumerable<byte>? IIISBinding.CertificateHash => throw new NotImplementedException();
             string IIISBinding.CertificateStoreName => throw new NotImplementedException();
             string IIISBinding.BindingInformation => throw new NotImplementedException();
             string? IIISBinding.IP => _ip;

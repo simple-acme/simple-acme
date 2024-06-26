@@ -12,7 +12,7 @@ namespace PKISharp.WACS.DomainObjects
     /// </summary>
     public class CertificateInfoCache : ICertificateInfo
     {
-        private readonly ICertificateInfo _inner;
+        private readonly CertificateInfo _inner;
 
         /// <param name="file"></param>
         /// <param name="password"></param>

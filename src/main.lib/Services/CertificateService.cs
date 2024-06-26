@@ -17,30 +17,14 @@ using Bc = Org.BouncyCastle;
 
 namespace PKISharp.WACS.Services
 {
-    internal class CertificateService : ICertificateService
+    internal class CertificateService(
+        ILogService log,
+        ISettingsService settings,
+        AcmeClient client,
+        IInputService inputService,
+        ICacheService cacheService,
+        CertificatePicker picker) : ICertificateService
     {
-        private readonly IInputService _inputService;
-        private readonly ILogService _log;
-        private readonly ICacheService _cacheService;
-        private readonly AcmeClient _client;
-        private readonly CertificatePicker _picker;
-        private readonly ISettingsService _settings;
-
-        public CertificateService(
-            ILogService log,
-            ISettingsService settings,
-            AcmeClient client,
-            IInputService inputService,
-            ICacheService cacheService,
-            CertificatePicker picker)
-        {
-            _log = log;
-            _client = client;
-            _settings = settings;
-            _cacheService = cacheService;
-            _inputService = inputService;
-            _picker = picker;
-        }
 
         /// <summary>
         /// Request certificate from the ACME server
@@ -60,9 +44,9 @@ namespace PKISharp.WACS.Services
 
             // What are we going to get?
             var friendlyName = order.FriendlyNameIntermediate;
-            if (_settings.Security.FriendlyNameDateTimeStamp != false)
+            if (settings.Security.FriendlyNameDateTimeStamp != false)
             {
-                friendlyName = $"{friendlyName} @ {_inputService.FormatDate(DateTime.Now)}";
+                friendlyName = $"{friendlyName} @ {inputService.FormatDate(DateTime.Now)}";
             }
 
             // Generate the CSR here, because we want to save it 
@@ -86,7 +70,7 @@ namespace PKISharp.WACS.Services
             {
                 throw new InvalidOperationException("No CsrBytes found");
             }
-            await _cacheService.StoreCsr(order, PemService.GetPem("CERTIFICATE REQUEST", order.Target.CsrBytes.ToArray()));
+            await cacheService.StoreCsr(order, PemService.GetPem("CERTIFICATE REQUEST", order.Target.CsrBytes.ToArray()));
 
             // Check order status
             if (order.Details.Payload.Status != AcmeClient.OrderValid)
@@ -94,17 +78,17 @@ namespace PKISharp.WACS.Services
                 // Finish the order by sending the CSR to 
                 // the server, which can then generate the
                 // certificate.
-                _log.Verbose("Submitting CSR");
-                order.Details = await _client.SubmitCsr(order.Details, order.Target.CsrBytes.ToArray());
+                log.Verbose("Submitting CSR");
+                order.Details = await client.SubmitCsr(order.Details, order.Target.CsrBytes.ToArray());
                 if (order.Details.Payload.Status != AcmeClient.OrderValid)
                 {
-                    _log.Error("Unexpected order status {status}", order.Details.Payload.Status);
+                    log.Error("Unexpected order status {status}", order.Details.Payload.Status);
                     throw new Exception($"Unable to complete order");
                 }
             }
 
             // Download the certificate from the server
-            _log.Information("Downloading certificate {friendlyName}", order.FriendlyNameIntermediate);
+            log.Information("Downloading certificate {friendlyName}", order.FriendlyNameIntermediate);
             var selected = await DownloadCertificate(order.Details, friendlyName, order.Target.PrivateKey);
 
             // Update LastFriendlyName so that the user sees
@@ -117,7 +101,7 @@ namespace PKISharp.WACS.Services
             // in-memory certificate or a new cached instance with
             // pointer to a disk file (which may be used by some
             // installation scripts)
-            var info = await _cacheService.StorePfx(order, selected);
+            var info = await cacheService.StorePfx(order, selected);
             return info;
         }
 
@@ -134,7 +118,7 @@ namespace PKISharp.WACS.Services
             AcmeCertificate? certInfo;
             try
             {
-                certInfo = await _client.GetCertificate(order);
+                certInfo = await client.GetCertificate(order);
             }
             catch (Exception ex)
             {
@@ -156,17 +140,17 @@ namespace PKISharp.WACS.Services
                 {
                     try
                     {
-                        _log.Verbose("Process alternative certificate {n}", alts.IndexOf(alt) + 1);
-                        var altCertRaw = await _client.GetCertificate(alt);
+                        log.Verbose("Process alternative certificate {n}", alts.IndexOf(alt) + 1);
+                        var altCertRaw = await client.GetCertificate(alt);
                         alternatives.Add(CreateAlternative(altCertRaw, friendlyName, pk));
                     }
                     catch (Exception ex)
                     {
-                        _log.Warning("Unable to get alternate certificate: {ex}", ex.Message);
+                        log.Warning("Unable to get alternate certificate: {ex}", ex.Message);
                     }
                 }
             }
-            return _picker.Select(alternatives);
+            return picker.Select(alternatives);
         }
   
         /// <summary>
@@ -215,7 +199,7 @@ namespace PKISharp.WACS.Services
             // the cache file is exposed to users in installation
             // scripts and therefore people might depend on the older
             // legacy format.
-            if (!Enum.TryParse<PfxProtectionMode>(_settings.Cache.ProtectionMode, true, out var protectionMode))
+            if (!Enum.TryParse<PfxProtectionMode>(settings.Cache.ProtectionMode, true, out var protectionMode))
             {
                 protectionMode = PfxProtectionMode.Default;
             }
@@ -239,13 +223,13 @@ namespace PKISharp.WACS.Services
                 }
                 endIndex += endString.Length;
                 var pem = text[startIndex..endIndex];
-                _log.Verbose("Parsing PEM data at range {startIndex}..{endIndex}", startIndex, endIndex);
+                log.Verbose("Parsing PEM data at range {startIndex}..{endIndex}", startIndex, endIndex);
                 var bcCertificate = PemService.ParsePem<Bc.X509.X509Certificate>(pem);
                 if (bcCertificate != null)
                 {
                     var bcCertificateEntry = new X509CertificateEntry(bcCertificate);
                     var bcCertAlias = bcCertificateEntry.Certificate.SubjectDN.CommonName(true);
-                    _log.Verbose("Certificate {name} parsed", bcCertAlias);
+                    log.Verbose("Certificate {name} parsed", bcCertAlias);
 
                     var bcCertificateAlias = startIndex == 0 ?
                         friendlyName :
@@ -257,21 +241,21 @@ namespace PKISharp.WACS.Services
                     // are intermediates
                     if (pfx.Count == 1 && pk != null)
                     {
-                        _log.Verbose($"Associating private key");
+                        log.Verbose($"Associating private key");
                         var bcPrivateKeyEntry = new AsymmetricKeyEntry(pk);
-                        pfx.SetKeyEntry(bcCertificateAlias, bcPrivateKeyEntry, new[] { bcCertificateEntry });
+                        pfx.SetKeyEntry(bcCertificateAlias, bcPrivateKeyEntry, [bcCertificateEntry]);
                     }
                 }
                 else
                 {
-                    _log.Warning("PEM data could not be parsed as X509Certificate", startIndex, endIndex);
+                    log.Warning("PEM data could not be parsed as X509Certificate", startIndex, endIndex);
                 }
 
                 // This should never happen, but is a sanity check
                 // not to get stuck in an infinite loop
                 if (endIndex <= startIndex)
                 {
-                    _log.Error("Infinite loop detected, aborting");
+                    log.Error("Infinite loop detected, aborting");
                     break;
                 }
                 startIndex = endIndex;

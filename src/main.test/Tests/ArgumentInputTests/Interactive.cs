@@ -3,10 +3,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
 {
+    [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments", Justification = "Not supported by decorators")]
     [TestClass]
     public class Interactive
     {
@@ -20,8 +21,8 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             string[] userInput, 
             string output)
         {
-            var container = new MockContainer().TestScope(
-                userInput.ToList(), 
+            var container = MockContainer.TestScope(
+                [.. userInput], 
                 commandLine: argument);
             var mock = container.Resolve<ArgumentsInputService>();
             var input = container.Resolve<IInputService>();
@@ -41,7 +42,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("--centralsslstore command", new[] { "" }, null, "command", DisplayName = "CommandBecomesDefault")]
         public void DefaultValue(string? commandLine, string[] userInput, string @default, string output)
         {
-            var container = new MockContainer().TestScope(userInput.ToList(), commandLine ?? "");
+            var container = MockContainer.TestScope([.. userInput], commandLine ?? "");
             var mock = container.Resolve<ArgumentsInputService>();
             var input = container.Resolve<IInputService>(); 
             var result = mock.GetString<CentralSslArguments>(x => x.CentralSslStore).

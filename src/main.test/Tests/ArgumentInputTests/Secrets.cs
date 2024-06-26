@@ -4,10 +4,12 @@ using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
 {
+    [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments", Justification = "Not supported by decorators")]
     [TestClass]
     public class Secrets
     {
@@ -23,7 +25,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             DisplayName = "Normal")]
         public void BasicSecret(string commandLine, string[] userInput, string? output)
         {
-            var container = new MockContainer().TestScope(userInput.ToList(), commandLine);
+            var container = MockContainer.TestScope([.. userInput], commandLine);
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
@@ -53,7 +55,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             DisplayName = "ChooseNoneWithDefaultPresent")]
         public void DefaultValue(string commandLine, string[] userInput, string? defaultValue, string? output)
         {
-            var container = new MockContainer().TestScope(userInput.ToList(), commandLine);
+            var container = MockContainer.TestScope([.. userInput], commandLine);
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
@@ -85,7 +87,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         )]
         public void AllowEmtpy(string commandLine, string[] userInput, string? output)
         {
-            var container = new MockContainer().TestScope(userInput.ToList(), commandLine);
+            var container = MockContainer.TestScope([.. userInput], commandLine);
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
@@ -138,7 +140,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         )]
         public void StoreInVault(string commandLine, string[] userInput, string? output, string secret)
         {
-            var container = new MockContainer().TestScope(userInput.ToList(), commandLine);
+            var container = MockContainer.TestScope([.. userInput], commandLine);
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<SecretServiceManager>();
@@ -165,7 +167,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         )]
         public void UseFromVault(string commandLine, string[] userInput, string? output, string secret)
         {
-            var container = new MockContainer().TestScope(userInput.ToList(), commandLine);
+            var container = MockContainer.TestScope([.. userInput], commandLine);
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<SecretServiceManager>();

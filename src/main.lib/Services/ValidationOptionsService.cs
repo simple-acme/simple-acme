@@ -18,37 +18,24 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    internal class ValidationOptionsService : IValidationOptionsService
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="input"></param>
+    internal class ValidationOptionsService(
+        IInputService input,
+        ILogService log,
+        ISettingsService settings,
+        IAutofacBuilder autofac,
+        WacsJson wacsJson) : IValidationOptionsService
     {
-        private readonly IInputService _input;
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-        private readonly IAutofacBuilder _autofac;
-        private readonly WacsJson _wacsJson;
+        private readonly IInputService _input = input;
         private List<GlobalValidationPluginOptions>? _options;
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="input"></param>
-        public ValidationOptionsService(
-            IInputService input, 
-            ILogService log,
-            ISettingsService settings, 
-            IAutofacBuilder autofac,
-            WacsJson wacsJson)
-        {
-            _autofac = autofac;
-            _input = input;
-            _log = log;
-            _settings = settings;
-            _wacsJson = wacsJson;
-        }
 
         /// <summary>
         /// File where the validation information is stored
         /// </summary>
-        private FileInfo Store => new(Path.Join(_settings.Client.ConfigurationPath, "validation.json"));
+        private FileInfo Store => new(Path.Join(settings.Client.ConfigurationPath, "validation.json"));
 
         /// <summary>
         /// Current data
@@ -59,7 +46,7 @@ namespace PKISharp.WACS.Services
             {
                 await Load();
             }
-            return _options?.OrderBy(o => o.Priority).ToList() ?? new List<GlobalValidationPluginOptions>();
+            return _options?.OrderBy(o => o.Priority).ToList() ?? [];
         }
 
         /// <summary>
@@ -86,7 +73,7 @@ namespace PKISharp.WACS.Services
                 }
                 return;
             }
-            var rawJson = JsonSerializer.Serialize(_options, _wacsJson.ListGlobalValidationPluginOptions);
+            var rawJson = JsonSerializer.Serialize(_options, wacsJson.ListGlobalValidationPluginOptions);
             await File.WriteAllTextAsync(Store.FullName, rawJson);
         }
 
@@ -101,7 +88,7 @@ namespace PKISharp.WACS.Services
                 try
                 {
                     var rawJson = await File.ReadAllTextAsync(Store.FullName);
-                    _options = JsonSerializer.Deserialize(rawJson, _wacsJson.ListGlobalValidationPluginOptions);
+                    _options = JsonSerializer.Deserialize(rawJson, wacsJson.ListGlobalValidationPluginOptions);
                     if (_options == null)
                     {
                         throw new Exception();
@@ -109,7 +96,7 @@ namespace PKISharp.WACS.Services
                 }
                 catch
                 {
-                    _log.Error("Unable to read global validation options from {path}", Store.FullName);
+                    log.Error("Unable to read global validation options from {path}", Store.FullName);
                 }
             }
         }
@@ -219,7 +206,7 @@ namespace PKISharp.WACS.Services
             {
                 pattern = await _input.RequestString("Pattern");
             }
-            while (!IISOptionsFactory.ParsePattern(pattern, _log));
+            while (!IISOptionsFactory.ParsePattern(pattern, log));
             input.Pattern = pattern;
         }
 
@@ -232,7 +219,7 @@ namespace PKISharp.WACS.Services
         private async Task UpdateOptions(ILifetimeScope scope, GlobalValidationPluginOptions input)
         {
             var dummy = new Target(new DnsIdentifier("www.example.com"));
-            var target = _autofac.Target(scope, dummy);
+            var target = autofac.Target(scope, dummy);
             var resolver = scope.Resolve<InteractiveResolver>(
                 new TypedParameter(typeof(ILifetimeScope), target),
                 new TypedParameter(typeof(RunLevel), RunLevel.Advanced));
@@ -266,7 +253,7 @@ namespace PKISharp.WACS.Services
             await UpdatePattern(global);
             await UpdateOptions(scope, global);
             await UpdatePriority(global);
-            _options ??= new List<GlobalValidationPluginOptions>();
+            _options ??= [];
             _options.Add(global);
             await Save();
         }

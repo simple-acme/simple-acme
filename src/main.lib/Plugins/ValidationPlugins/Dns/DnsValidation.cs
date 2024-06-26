@@ -12,22 +12,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     /// <summary>
     /// Base implementation for DNS-01 validation plugins
     /// </summary>reee
-    public abstract class DnsValidation<TPlugin> : Validation<Dns01ChallengeValidationDetails>
+    public abstract class DnsValidation<TPlugin>(
+        LookupClientProvider dnsClient,
+        ILogService log,
+        ISettingsService settings) : Validation<Dns01ChallengeValidationDetails>
     {
-        protected readonly LookupClientProvider _dnsClient;
-        protected readonly ILogService _log;
-        protected readonly ISettingsService _settings;
-        private readonly List<DnsValidationRecord> _recordsCreated = new();
-
-        protected DnsValidation(
-            LookupClientProvider dnsClient,
-            ILogService log,
-            ISettingsService settings)
-        {
-            _dnsClient = dnsClient;
-            _log = log;
-            _settings = settings;
-        }
+        protected readonly LookupClientProvider _dnsClient = dnsClient;
+        protected readonly ILogService _log = log;
+        protected readonly ISettingsService _settings = settings;
+        private readonly List<DnsValidationRecord> _recordsCreated = [];
 
         /// <summary>
         /// Prepare to add a new DNS record
@@ -287,18 +280,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <summary>
         /// Keep track of which records are created, so that they can be deleted later
         /// </summary>
-        public class DnsValidationRecord
+        public class DnsValidationRecord(ValidationContext context, DnsLookupResult authority, string value)
         {
-            public ValidationContext Context { get; }
-            public DnsLookupResult Authority { get; }
-            public string Value { get; }
-
-            public DnsValidationRecord(ValidationContext context, DnsLookupResult authority, string value)
-            {
-                Context = context;
-                Authority = authority;
-                Value = value;
-            }
+            public ValidationContext Context { get; } = context;
+            public DnsLookupResult Authority { get; } = authority;
+            public string Value { get; } = value;
         }
     }
 }

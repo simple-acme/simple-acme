@@ -6,8 +6,6 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit;
 using PKISharp.WACS.Services;
 using System.Runtime.Versioning;
 
-[assembly: SupportedOSPlatform("windows")]
-
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
     [IPlugin.Plugin<
@@ -15,32 +13,24 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         DnsValidationCapability, DnsexitJson>
         ("C9017182-1000-4257-A8DA-0553CD1490EC", 
         "Dnsexit", "Create verification records in Dnsexit DNS")]
-    internal class DnsExitDnsValidation : DnsValidation<DnsExitDnsValidation>
+    internal class DnsExitDnsValidation(
+        LookupClientProvider dnsClient,
+        ILogService logService,
+        ISettingsService settings,
+        DomainParseService domainParser,
+        DnsexitOptions options,
+        SecretServiceManager ssm,
+        IProxyService proxyService) : DnsValidation<DnsExitDnsValidation>(dnsClient, logService, settings)
     {
-        private readonly DnsManagementClient _client;
-        private readonly DomainParseService _domainParser;
-
-        public DnsExitDnsValidation(
-            LookupClientProvider dnsClient,
-            ILogService logService,
-            ISettingsService settings,
-            DomainParseService domainParser,
-            DnsexitOptions options,
-            SecretServiceManager ssm,
-            IProxyService proxyService)
-            : base(dnsClient, logService, settings)
-        {
-            _client = new DnsManagementClient(
-                ssm.EvaluateSecret(options.ApiKey) ?? "", 
+        private readonly DnsManagementClient _client = new(
+                ssm.EvaluateSecret(options.ApiKey) ?? "",
                 logService, proxyService);
-            _domainParser = domainParser;
-        }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             try
             {
-                var domain = _domainParser.GetRegisterableDomain(record.Authority.Domain);
+                var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
                 await _client.CreateRecord(domain, recordName, RecordType.TXT, record.Value);
                 return true;
@@ -56,7 +46,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             try
             {
-                var domain = _domainParser.GetRegisterableDomain(record.Authority.Domain);
+                var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
                 await _client.DeleteRecord(domain, recordName, RecordType.TXT);
             }

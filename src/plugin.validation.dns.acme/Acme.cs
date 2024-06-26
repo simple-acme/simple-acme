@@ -1,13 +1,9 @@
-﻿using PKISharp.WACS.Clients;
-using PKISharp.WACS.Clients.DNS;
+﻿using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using System;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -16,25 +12,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DnsValidationCapability, AcmeJson>
         ("c13acc1b-7571-432b-9652-7a68a5f506c5", 
         "acme-dns", "Create verification records with acme-dns (https://github.com/joohoi/acme-dns)")]
-    public class Acme : DnsValidation<Acme>
+    public class Acme(
+        LookupClientProvider dnsClient,
+        ILogService log,
+        ISettingsService settings,
+        IInputService input,
+        IProxyService proxy,
+        AcmeOptions options) : DnsValidation<Acme>(dnsClient, log, settings)
     {
-        private readonly IInputService _input;
-        private readonly IProxyService _proxy;
-        private readonly AcmeOptions _options;
-
-        public Acme(
-            LookupClientProvider dnsClient,
-            ILogService log,
-            ISettingsService settings,
-            IInputService input,
-            IProxyService proxy,
-            AcmeOptions options) :
-            base(dnsClient, log, settings)
-        {
-            _options = options;
-            _input = input;
-            _proxy = proxy;
-        }
 
         /// <summary>
         /// Send API call to the acme-dns server
@@ -43,7 +28,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <param name="token"></param>
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
-            var client = new AcmeDnsClient(_dnsClient, _proxy, _log, _settings, _input, new Uri(_options.BaseUri!));
+            var client = new AcmeDnsClient(_dnsClient, proxy, _log, _settings, input, new Uri(options.BaseUri!));
             return await client.Update(record.Context.Identifier, record.Value);
         }
 

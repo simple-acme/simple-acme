@@ -9,27 +9,18 @@ using System.Linq;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
 {
-    internal class IISCapability : InstallationCapability
+    internal class IISCapability(IUserRoleService userRole, IIISClient iisClient) : InstallationCapability
     {
-        private readonly IUserRoleService _userRole;
-        private readonly IIISClient _iisClient;
-
-        public IISCapability(IUserRoleService userRole, IIISClient iisClient) 
-        {
-            _userRole = userRole;
-            _iisClient = iisClient;
-        }
-
         public override State State
         {
             get
             {
-                var state = _userRole.IISState;
+                var state = userRole.IISState;
                 if (state.Disabled)
                 {
                     return state;
                 }
-                if (!_iisClient.Sites.Any())
+                if (!iisClient.Sites.Any())
                 {
                     return State.DisabledState("No IIS sites detected.");
                 }

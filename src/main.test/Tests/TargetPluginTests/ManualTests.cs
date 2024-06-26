@@ -28,14 +28,14 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         private ManualOptions? Options(string commandLine)
         {
             var optionsParser = new ArgumentsParser(log, new MockAssemblyService(log), commandLine.Split(' '));
-            var input = new Mock.Services.InputService(new());
-            var secretService = new SecretServiceManager(new MockContainer().TestScope(), input, plugins, log);
+            var input = new Mock.Services.InputService([]);
+            var secretService = new SecretServiceManager(MockContainer.TestScope(), input, plugins, log);
             var argsInput = new ArgumentsInputService(log, optionsParser, input, secretService);
             var x = new ManualOptionsFactory(argsInput);
             return x.Default().Result;
         }
 
-        private Target? Target(ManualOptions options)
+        private static Target? Target(ManualOptions options)
         {
             var plugin = new Manual(options);
             return plugin.Generate().Result;

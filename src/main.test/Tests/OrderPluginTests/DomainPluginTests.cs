@@ -13,10 +13,10 @@ namespace PKISharp.WACS.UnitTests.Tests.OrderPluginTests
         [TestMethod]
         public void DomainSplit()
         {
-            var parts = new TargetPart[] { new TargetPart(new[] { new DnsIdentifier("x.com") }) };
+            var parts = new TargetPart[] { new(new[] { new DnsIdentifier("x.com") }) };
             var target = new Target("x.com", "x.com", parts);
             var renewal = new Renewal();
-            var container = new MockContainer().TestScope().BeginLifetimeScope(x => x.RegisterType<Domain>());
+            var container = MockContainer.TestScope().BeginLifetimeScope(x => x.RegisterType<Domain>());
             var domain = container.Resolve<Domain>();
             var split = domain.Split(renewal, target);
             Assert.IsNotNull(split);
@@ -34,13 +34,13 @@ namespace PKISharp.WACS.UnitTests.Tests.OrderPluginTests
             var ftp_y_com = new DnsIdentifier("ftp.y.com");
 
             var parts = new TargetPart[] {
-                new TargetPart(new[] { x_com,www_x_com }) { SiteId = 1, SiteType = Clients.IIS.IISSiteType.Web },
-                new TargetPart(new[] { y_com,www_y_com }) { SiteId = 2, SiteType = Clients.IIS.IISSiteType.Web },
-                new TargetPart(new[] { ftp_x_com, ftp_y_com }) { SiteId = 3, SiteType = Clients.IIS.IISSiteType.Ftp }
+                new(new[] { x_com,www_x_com }) { SiteId = 1, SiteType = Clients.IIS.IISSiteType.Web },
+                new(new[] { y_com,www_y_com }) { SiteId = 2, SiteType = Clients.IIS.IISSiteType.Web },
+                new(new[] { ftp_x_com, ftp_y_com }) { SiteId = 3, SiteType = Clients.IIS.IISSiteType.Ftp }
             };
             var target = new Target("x.com", www_y_com, parts);
             var renewal = new Renewal();
-            var container = new MockContainer().TestScope().BeginLifetimeScope(x => x.RegisterType<Domain>());
+            var container = MockContainer.TestScope().BeginLifetimeScope(x => x.RegisterType<Domain>());
             var domain = container.Resolve<Domain>();
             var split = domain.Split(renewal, target);
             Assert.IsNotNull(split);
@@ -71,7 +71,7 @@ namespace PKISharp.WACS.UnitTests.Tests.OrderPluginTests
 
             // Second order for X.com, two parts for sites 2 and 3
             Assert.AreEqual(y_com, list[1].Target.CommonName);
-            prts = list[1].Target.Parts.ToList();
+            prts = [.. list[1].Target.Parts];
             Assert.AreEqual(2, prts.Count);
 
             prt = prts[0];

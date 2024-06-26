@@ -8,22 +8,13 @@ using static ACMESharp.Crypto.JOSE.JwsHelper;
 
 namespace PKISharp.WACS.Clients.Acme
 {
-    class ExternalAccountBinding
+    class ExternalAccountBinding(string algorithm, string accountKey, string keyIdentifier, string key, string url)
     {
-        public string AccountKey { get; set; }
-        public string Algorithm { get; set; }
-        public string Key { get; set; }
-        public string KeyIdentifier { get; set; }
-        public string Url { get; set; }
-
-        public ExternalAccountBinding(string algorithm, string accountKey, string keyIdentifier, string key, string url)
-        {
-            Algorithm = algorithm;
-            AccountKey = accountKey;
-            KeyIdentifier = keyIdentifier;
-            Url = url;
-            Key = key;
-        }
+        public string AccountKey { get; set; } = accountKey;
+        public string Algorithm { get; set; } = algorithm;
+        public string Key { get; set; } = key;
+        public string KeyIdentifier { get; set; } = keyIdentifier;
+        public string Url { get; set; } = url;
 
         public JwsSignedPayload Payload()
         {

@@ -10,24 +10,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// Azure Key Vault
     /// </summary>
-    internal class KeyVaultOptionsFactory : PluginOptionsFactory<KeyVaultOptions>
+    internal class KeyVaultOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<KeyVaultOptions>()
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public KeyVaultOptionsFactory(ArgumentsInputService arguments) : base() => _arguments = arguments;
-
-        private ArgumentResult<string?> VaultName => _arguments.
+        private ArgumentResult<string?> VaultName => arguments.
             GetString<KeyVaultArguments>(a => a.VaultName).
             Required();
 
-        private ArgumentResult<string?> CertificateName => _arguments.
+        private ArgumentResult<string?> CertificateName => arguments.
             GetString<KeyVaultArguments>(a => a.CertificateName).
             Required();
 
         public override async Task<KeyVaultOptions?> Aquire(IInputService input, RunLevel runLevel)
         {
             var options = new KeyVaultOptions();
-            var common = new AzureOptionsFactoryCommon<KeyVaultArguments>(_arguments);
+            var common = new AzureOptionsFactoryCommon<KeyVaultArguments>(arguments);
             await common.Aquire(options, input);
             options.VaultName = await VaultName.Interactive(input).GetValue();
             options.CertificateName = await CertificateName.Interactive(input).GetValue();
@@ -37,7 +33,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override async Task<KeyVaultOptions?> Default()
         {
             var options = new KeyVaultOptions();
-            var common = new AzureOptionsFactoryCommon<KeyVaultArguments>(_arguments);
+            var common = new AzureOptionsFactoryCommon<KeyVaultArguments>(arguments);
             await common.Default(options);
             options.VaultName = await VaultName.GetValue();
             options.CertificateName = await CertificateName.GetValue();
@@ -46,7 +42,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(KeyVaultOptions options)
         {
-            var common = new AzureOptionsFactoryCommon<KeyVaultArguments>(_arguments);
+            var common = new AzureOptionsFactoryCommon<KeyVaultArguments>(arguments);
             foreach (var x in common.Describe(options))
             {
                 yield return x;

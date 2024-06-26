@@ -8,10 +8,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
@@ -20,27 +17,17 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         HttpValidationCapability, RestJson>
         ("11ba2994-ea59-4f2f-b9eb-0eaa2fa3cbfa", 
         "Rest", "Send verification files to the server by issuing HTTP REST-style request")]
-    internal sealed class Rest : Validation<Http01ChallengeValidationDetails>
+    internal sealed class Rest(
+        IProxyService proxyService,
+        ILogService log,
+        SecretServiceManager ssm,
+        RestOptions options) : Validation<Http01ChallengeValidationDetails>
     {
-        private readonly ConcurrentBag<(string url, string challengeValue)> _urlsChallenges = new();
-        private readonly IProxyService _proxyService;
-        private readonly ILogService _log;
-        private readonly string? _securityToken;
-        private readonly bool _useHttps;
+        private readonly ConcurrentBag<(string url, string challengeValue)> _urlsChallenges = [];
+        private readonly string? _securityToken = ssm.EvaluateSecret(options.SecurityToken);
+        private readonly bool _useHttps = options.UseHttps == true;
 
         public override ParallelOperations Parallelism => ParallelOperations.Prepare | ParallelOperations.Answer;
-
-        public Rest(
-            IProxyService proxyService,
-            ILogService log,
-            SecretServiceManager ssm,
-            RestOptions options)
-        {
-            _proxyService = proxyService;
-            _log = log;
-            _securityToken = ssm.EvaluateSecret(options.SecurityToken);
-            _useHttps = options.UseHttps == true;
-        }
 
         public override Task PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
@@ -55,7 +42,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         public override async Task Commit()
         {
-            _log.Information("Sending verification files to the server(s)");
+            log.Information("Sending verification files to the server(s)");
 
             using var client = GetClient();
 
@@ -66,7 +53,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             foreach (var resp in responses.Where(r => !r.IsSuccessStatusCode))
             {
                 isError = true;
-                _log.Error("Error {ErrorCode} sending verification file to server {Server}", resp.StatusCode, resp.RequestMessage?.RequestUri?.Host);
+                log.Error("Error {ErrorCode} sending verification file to server {Server}", resp.StatusCode, resp.RequestMessage?.RequestUri?.Host);
             }
             if (isError)
             {
@@ -76,7 +63,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         public override async Task CleanUp()
         {
-            _log.Information("Removing verification files from the server(s)");
+            log.Information("Removing verification files from the server(s)");
 
             using var client = GetClient();
 
@@ -85,13 +72,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             
             foreach (var resp in responses.Where(r => !r.IsSuccessStatusCode))
             {
-                _log.Warning("Error {ErrorCode} removing verification file from server {Server}", resp.StatusCode, resp.RequestMessage?.RequestUri?.Host);
+                log.Warning("Error {ErrorCode} removing verification file from server {Server}", resp.StatusCode, resp.RequestMessage?.RequestUri?.Host);
             }
         }
 
         private HttpClient GetClient()
         {
-            var client = _proxyService.GetHttpClient(false);
+            var client = proxyService.GetHttpClient(false);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _securityToken);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             return client;

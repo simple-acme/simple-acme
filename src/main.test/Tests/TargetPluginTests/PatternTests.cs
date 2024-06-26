@@ -11,7 +11,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         {
         }
 
-        public void RegexPattern(string input, string match, bool shouldSucceed)
+        public static void RegexPattern(string input, string match, bool shouldSucceed)
         {
             var pattern = input.PatternToRegex();
             var regex = new Regex(pattern);

@@ -10,9 +10,11 @@ using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
 {
+    [SupportedOSPlatform("windows")]
     [TestClass]
     public class IISSitesTests
     {
@@ -20,7 +22,6 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         private readonly IIISClient iis;
         private readonly IISHelper helper;
         private readonly PluginService plugins;
-        private readonly IUserRoleService userRoleService;
         private readonly DomainParseService domainParse;
 
         public IISSitesTests()
@@ -32,14 +33,13 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             domainParse = new DomainParseService(log, proxy, settings);
             helper = new IISHelper(log, iis, domainParse);
             plugins = new PluginService(log, new MockAssemblyService(log));
-            userRoleService = new Services.UserRoleService(iis, new AdminService());
         }
 
         private IISOptions? Options(string commandLine)
         {
             var optionsParser = new ArgumentsParser(log, new MockAssemblyService(log), commandLine.Split(' '));
-            var input = new Mock.Services.InputService(new());
-            var secretService = new SecretServiceManager(new MockContainer().TestScope(), input, plugins, log);
+            var input = new Mock.Services.InputService([]);
+            var secretService = new SecretServiceManager(MockContainer.TestScope(), input, plugins, log);
             var argsInput = new ArgumentsInputService(log, optionsParser, input, secretService);
             var args = new MainArguments();
             var x = new IISOptionsFactory(log, helper, args, argsInput);
@@ -167,7 +167,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         {
             var siteId = 1;
             var site = iis.GetSite(siteId);
-            var options = new IISSitesOptions() { SiteIds = new List<long>() { 1, 2 }, CommonName = "missing.example.com" };
+            var options = new IISSitesOptions() { SiteIds = [1, 2], CommonName = "missing.example.com" };
             var target = Target(options);
             Assert.IsNotNull(target);
             Assert.AreEqual(true, target.IsValid(log));
@@ -186,7 +186,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         {
             var options = new IISSitesOptions()
             {
-                SiteIds = new List<long>() { 1, 999 }
+                SiteIds = [1, 999]
             };
             var target = Target(options);
             Assert.IsNotNull(target);

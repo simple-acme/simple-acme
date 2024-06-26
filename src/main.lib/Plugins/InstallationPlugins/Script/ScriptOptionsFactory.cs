@@ -3,30 +3,32 @@ using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
 {
-    internal class ScriptOptionsFactory : PluginOptionsFactory<ScriptOptions>
+    internal class ScriptOptionsFactory(ILogService log, ArgumentsInputService arguments) : PluginOptionsFactory<ScriptOptions>
     {
         public override int Order => 100;
-        private readonly ILogService _log;
-        private readonly ArgumentsInputService _arguments;
 
-        public ScriptOptionsFactory(ILogService log, ArgumentsInputService arguments)
-        {
-            _log = log;
-            _arguments = arguments;
+        private ArgumentResult<string?> Script {
+            get
+            {
+                List<string> validExtensions = OperatingSystem.IsWindows() ? 
+                    [".ps1", ".exe", ".bat", ".cmd"] : 
+                    [".ps1", ".sh"];
+                return arguments.
+                    GetString<ScriptArguments>(x => x.Script).
+                    Validate(x => Task.FromResult(x.ValidFile(log)), "invalid path").
+                    Validate(x => Task.FromResult(validExtensions.Any(e => x!.EndsWith(e))), "invalid extension").
+                    Required();
+            }
         }
-        private ArgumentResult<string?> Script => _arguments.
-            GetString<ScriptArguments>(x => x.Script).
-            Validate(x => Task.FromResult(x.ValidFile(_log)), "invalid path").
-            Validate(x => Task.FromResult(x!.EndsWith(".ps1") || x!.EndsWith(".exe") || x!.EndsWith(".bat") || x!.EndsWith(".cmd")), "invalid extension").
-            Required();
 
-        private ArgumentResult<string?> Parameters => _arguments.
+        private ArgumentResult<string?> Parameters => arguments.
             GetString<ScriptArguments>(x => x.ScriptParameters);
 
         public override async Task<ScriptOptions?> Aquire(IInputService inputService, RunLevel runLevel)
@@ -41,7 +43,14 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             inputService.Show("{CacheFile}", ".pfx full path");
             inputService.Show("{CertFriendlyName}", "Certificate friendly name");
             inputService.Show("{CertThumbprint}", "Certificate thumbprint");
-            inputService.Show("{StoreType}", $"Type of store (e.g. {CentralSsl.Name}, {CertificateStore.Name}, {PemFiles.Name}, ...)");
+            if (OperatingSystem.IsWindows())
+            {
+                inputService.Show("{StoreType}", $"Type of store (e.g. {CertificateStore.Name}, {PfxFile.Name}, ...)");
+            }
+            else
+            {
+                inputService.Show("{StoreType}", $"Type of store (e.g. {PemFiles.Name}, {PfxFile.Name}, ...)");
+            }
             inputService.Show("{StorePath}", "Path to the store");
             inputService.Show("{RenewalId}", "Renewal identifier");
             inputService.Show("{OldCertCommonName}", "Common name (primary domain name) of the previously issued certificate");

@@ -6,13 +6,14 @@ using System.Text.Json.Serialization;
 namespace PKISharp.WACS.DomainObjects
 {
     [DebuggerDisplay("{Name}")]
-    public class OrderResult
+    [method: JsonConstructor]
+    public class OrderResult(string name)
     {
         public DateTime? ExpireDate { get; set; }
 
         public DueDate? DueDate { get; set; }
 
-        public string Name { get; private set; }
+        public string Name { get; private set; } = name;
 
         public bool? Success { get; set; }
 
@@ -27,7 +28,7 @@ namespace PKISharp.WACS.DomainObjects
 
             if (value != null)
             {
-                ErrorMessages ??= new List<string>();
+                ErrorMessages ??= [];
                 if (!ErrorMessages.Contains(value))
                 {
                     ErrorMessages.Add(value);
@@ -41,8 +42,5 @@ namespace PKISharp.WACS.DomainObjects
         }
 
         public List<string>? ErrorMessages { get; set; }
-
-        [JsonConstructor]
-        public OrderResult(string name) => Name = name;
     }
 }

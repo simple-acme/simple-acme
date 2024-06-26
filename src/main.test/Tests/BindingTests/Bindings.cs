@@ -1,19 +1,20 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.DomainObjects;
-using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock.Clients;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 {
     [TestClass]
+    [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments", Justification = "Not supported by decorators")]
     public class BindingTests
     {
-        private readonly ILogService log;
+        private readonly Mock.Services.LogService log;
 
         private const string DefaultIP = IISClient.DefaultBindingIp;
         private const string AltIP = "1.1.1.1";
@@ -24,9 +25,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         private const int DefaultPort = IISClient.DefaultBindingPort;
         private const int AltPort = 1234;
 
-        private readonly byte[] newCert = new byte[] { 0x2 };
-        private readonly byte[] oldCert1 = new byte[] { 0x1 };
-        private readonly byte[] scopeCert = new byte[] { 0x0 };
+        private readonly byte[] newCert = [0x2];
+        private readonly byte[] oldCert1 = [0x1];
+        private readonly byte[] scopeCert = [0x0];
 
         private const string httpOnlyHost = "httponly.example.com";
         private const long httpOnlyId = 1;
@@ -67,19 +68,19 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log, iisVersion)
             {
-                MockSites = new[] {
+                MockSites = [
                     new MockSite() {
                         Id = httpOnlyId,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = "*",
                                 Port = 80,
                                 Host = httpOnlyHost,
                                 Protocol = "http"
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             };
             var testHost = httpOnlyHost;
             var bindingOptions = new BindingOptions().
@@ -133,31 +134,31 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log, iisVersion)
             {
-                MockSites = new[] {
-                    new MockSite() {
+                MockSites = [
+                    new() {
                         Id = httpOnlyId,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = "1.1.1.1",
                                 Port = 80,
                                 Host = existingHost,
                                 Protocol = "http"
                             },
-                            new MockBinding() {
+                            new() {
                                 IP = "1.1.1.1",
                                 Port = 81,
                                 Host = existingHost,
                                 Protocol = "http"
                             },
-                            new MockBinding() {
+                            new() {
                                 IP = "1234:1235:1235",
                                 Port = 80,
                                 Host = existingHost,
                                 Protocol = "http"
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             };
             var bindingOptions = new BindingOptions().
                 WithSiteId(httpOnlyId).
@@ -219,13 +220,13 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         public void AddNewMultiple(string storeName, string bindingIp, int bindingPort, SSLFlags inputFlags, SSLFlags expectedFlags)
         {
             var originalBindings = new List<MockBinding> {
-                new MockBinding() {
+                new() {
                     IP = "*",
                     Port = 80,
                     Host = "site1.example.com",
                     Protocol = "http"
                 },
-                new MockBinding() {
+                new() {
                     IP = "*",
                     Port = 80,
                     Host = "site2.example.com",
@@ -235,11 +236,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var site = new MockSite()
             {
                 Id = httpOnlyId,
-                Bindings = originalBindings.ToList()
+                Bindings = [.. originalBindings]
             };
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] { site }
+                MockSites = [site]
             };
             var bindingOptions = new BindingOptions().
                 WithSiteId(httpOnlyId).
@@ -279,7 +280,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         public void AddMultipleWildcard(string storeName, string bindingIp, int bindingPort, SSLFlags inputFlags, SSLFlags expectedFlags)
         {
             var originalBindings = new List<MockBinding> {
-                new MockBinding() {
+                new() {
                     IP = "*",
                     Port = 80,
                     Host = "*.example.com",
@@ -289,11 +290,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var site = new MockSite()
             {
                 Id = httpOnlyId,
-                Bindings = originalBindings.ToList()
+                Bindings = [.. originalBindings]
             };
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] { site }
+                MockSites = [site]
             };
             var bindingOptions = new BindingOptions().
                 WithSiteId(httpOnlyId).
@@ -335,7 +336,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         public void UpdateWildcardFuzzy(string storeName, string bindingIp, int bindingPort, SSLFlags inputFlags, SSLFlags expectedFlags)
         {
             var originalBindings = new List<MockBinding> {
-                new MockBinding() {
+                new() {
                     IP = DefaultIP,
                     Port = DefaultPort,
                     Host = "site1.example.com",
@@ -346,11 +347,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var site = new MockSite()
             {
                 Id = httpOnlyId,
-                Bindings = originalBindings.ToList()
+                Bindings = [.. originalBindings]
             };
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] { site }
+                MockSites = [site]
             };
             var bindingOptions = new BindingOptions().
                 WithSiteId(httpOnlyId).
@@ -389,7 +390,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         public void AddMultipleWildcard2(string storeName, string bindingIp, int bindingPort, SSLFlags inputFlags, SSLFlags expectedFlags)
         {
             var originalBindings = new List<MockBinding> {
-                new MockBinding() {
+                new() {
                     IP = "*",
                     Port = 80,
                     Host = "a.example.com",
@@ -399,11 +400,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var site = new MockSite()
             {
                 Id = httpOnlyId,
-                Bindings = originalBindings.ToList()
+                Bindings = [.. originalBindings]
             };
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] { site }
+                MockSites = [site]
             };
             var bindingOptions = new BindingOptions().
                 WithSiteId(httpOnlyId).
@@ -443,17 +444,17 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] {
+                MockSites = [
                 new MockSite() {
                     Id = regularId,
-                    Bindings = new List<MockBinding> {
-                        new MockBinding() {
+                    Bindings = [
+                        new() {
                             IP = "*",
                             Port = 80,
                             Host = regularHost,
                             Protocol = "http"
                         },
-                        new MockBinding() {
+                        new() {
                             IP = AltIP,
                             Port = AltPort,
                             Host = regularHost,
@@ -462,9 +463,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             CertificateStoreName = AltStore,
                             SSLFlags = SSLFlags.None
                         }
-                    }
+                    ]
                 }
-            }
+            ]
             };
 
             var bindingOptions = new BindingOptions().
@@ -521,11 +522,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] {
+                MockSites = [
                 new MockSite() {
                     Id = regularId,
-                    Bindings = new List<MockBinding> {
-                        new MockBinding() {
+                    Bindings = [
+                        new() {
                             IP = AltIP,
                             Port = AltPort,
                             Host = "host.nl",
@@ -534,9 +535,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             CertificateStoreName = AltStore,
                             SSLFlags = initialFlags
                         }
-                    }
+                    ]
                 }
-            }
+            ]
             };
 
             var bindingOptions = new BindingOptions().
@@ -560,11 +561,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] {
+                MockSites = [
                     new MockSite() {
                         Id = inscopeId,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = inscopeHost,
@@ -573,12 +574,12 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.SNI
                             }
-                        }
+                        ]
                     },
                     new MockSite() {
                         Id = outofscopeId,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = "",
@@ -587,9 +588,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.SNI
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             };
 
             var bindingOptions = new BindingOptions().
@@ -613,11 +614,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] {
+                MockSites = [
                     new MockSite() {
                         Id = inscopeId,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = inscopeHost,
@@ -626,12 +627,12 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.SNI
                             }
-                        }
+                        ]
                     },
                     new MockSite() {
                         Id = outofscopeId,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = outofscopeHost,
@@ -640,9 +641,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.SNI
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             };
 
             var bindingOptions = new BindingOptions().
@@ -684,49 +685,49 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] {
+                MockSites = [
                     new MockSite() {
                     Id = piramidId,
-                    Bindings = new List<MockBinding> {
-                        new MockBinding() {
+                    Bindings = [
+                        new() {
                             IP = DefaultIP,
                             Port = 80,
                             Host = "a.b.c.com",
                             Protocol = "http"
                         },
-                        new MockBinding() {
+                        new() {
                             IP = DefaultIP,
                             Port = 80,
                             Host = "*.b.c.com",
                             Protocol = "http"
                         },
-                        new MockBinding() {
+                        new() {
                             IP = DefaultIP,
                             Port = 80,
                             Host = "*.x.y.z.com",
                             Protocol = "http"
                         },
-                        new MockBinding() {
+                        new() {
                             IP = DefaultIP,
                             Port = 80,
                             Host = "*.c.com",
                             Protocol = "http"
                         },
-                        new MockBinding() {
+                        new() {
                             IP = DefaultIP,
                             Port = 80,
                             Host = "*.com",
                             Protocol = "http"
                         },
-                        new MockBinding() {
+                        new() {
                             IP = DefaultIP,
                             Port = 80,
                             Host = "",
                             Protocol = "http"
                         }
-                    }
+                    ]
                 }
-            }
+            ]
             };
 
             var bindingOptions = new BindingOptions().
@@ -739,7 +740,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             var piramidSite = iis.GetSite(piramidId);
             var originalSet = piramidSite.Bindings.Where(x => !ignoreBindings.Contains(x.Host)).ToList();
-            piramidSite.Bindings = originalSet.ToList().OrderBy(x => Guid.NewGuid()).ToList();
+            piramidSite.Bindings = [.. originalSet.ToList().OrderBy(x => Guid.NewGuid())];
             iis.UpdateHttpSite(new[] { new DnsIdentifier(certificateHost) }, bindingOptions, scopeCert);
 
             var newBindings = piramidSite.Bindings.Except(originalSet);
@@ -758,18 +759,18 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var site = new MockSite()
             {
                 Id = piramidId,
-                Bindings = new List<MockBinding> {
-                        new MockBinding() {
+                Bindings = [
+                        new() {
                             IP = DefaultIP,
                             Port = 80,
                             Host = "*.b.c.com",
                             Protocol = "http"
                         }
-                    }
+                    ]
             };
             var iis = new MockIISClient(log, iisVersion)
             {
-                MockSites = new[] { site }
+                MockSites = [site]
             };
 
             var bindingOptions = new BindingOptions().
@@ -794,11 +795,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] {
+                MockSites = [
                     new MockSite() {
                         Id = sniTrap1,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = sniTrapHost,
@@ -807,12 +808,12 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.None
                             }
-                        }
+                        ]
                     },
                     new MockSite() {
                         Id = sniTrap2,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = "",
@@ -821,9 +822,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.None
                             }
-                        }
+                        ]
                     },
-                }
+                ]
             };
 
             var bindingOptions = new BindingOptions().
@@ -850,11 +851,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] {
+                MockSites = [
                     new MockSite() {
                         Id = sniTrap1,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = sniTrapHost,
@@ -863,12 +864,12 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.None
                             }
-                        }
+                        ]
                     },
                     new MockSite() {
                         Id = sniTrap2,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = "",
@@ -877,9 +878,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.None
                             }
-                        }
+                        ]
                     },
-                }
+                ]
             };
 
             var bindingOptions = new BindingOptions().
@@ -907,11 +908,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] {
-                    new MockSite() {
+                MockSites = [
+                    new() {
                         Id = sniTrap1,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = sniTrapHost,
@@ -920,12 +921,12 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.None
                             }
-                        }
+                        ]
                     },
-                    new MockSite() {
+                    new() {
                         Id = sniTrap2,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = "",
@@ -934,9 +935,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.None
                             }
-                        }
+                        ]
                     },
-                }
+                ]
             };
 
             var bindingOptions = new BindingOptions().
@@ -968,19 +969,19 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         {
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] {
-                    new MockSite() {
+                MockSites = [
+                    new() {
                         Id = 1,
-                        Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                        Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = "",
                                 Protocol = "http"
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             };
 
             var bindingOptions = new BindingOptions().
@@ -1000,8 +1001,8 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var dup1 = new MockSite()
             {
                 Id = 1,
-                Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = "exists.example.com",
@@ -1010,25 +1011,25 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateStoreName = DefaultStore,
                                 SSLFlags = SSLFlags.None
                             }
-                        }
+                        ]
             };
 
             var dup2 = new MockSite()
             {
                 Id = 2,
-                Bindings = new List<MockBinding> {
-                    new MockBinding() {
+                Bindings = [
+                    new() {
                         IP = DefaultIP,
                         Port = 80,
                         Host = "exists.example.com",
                         Protocol = "http"
                     }
-                }
+                ]
             };
 
             var iis = new MockIISClient(log)
             {
-                MockSites = new[] { dup1, dup2 }
+                MockSites = [dup1, dup2]
             };
 
             var bindingOptions = new BindingOptions().
@@ -1051,8 +1052,8 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var dup1 = new MockSite()
             {
                 Id = 1,
-                Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = "exists.example.com",
@@ -1060,25 +1061,25 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore
                             }
-                        }
+                        ]
             };
 
             var dup2 = new MockSite()
             {
                 Id = 2,
-                Bindings = new List<MockBinding> {
-                    new MockBinding() {
+                Bindings = [
+                    new() {
                         IP = DefaultIP,
                         Port = 80,
                         Host = "new.example.com",
                         Protocol = "http"
                     }
-                }
+                ]
             };
 
             var iis = new MockIISClient(log, iisVersion)
             {
-                MockSites = new[] { dup1, dup2 }
+                MockSites = [dup1, dup2]
             };
 
             var bindingOptions = new BindingOptions().
@@ -1097,8 +1098,8 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var dup1 = new MockSite()
             {
                 Id = 1,
-                Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                Bindings = [
+                            new() {
                                 IP = "*",
                                 Port = 8080,
                                 Host = "wacs1.test.net",
@@ -1107,14 +1108,14 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore
                             }
-                        }
+                        ]
             };
 
             var dup2 = new MockSite()
             {
                 Id = 2,
-                Bindings = new List<MockBinding> {
-                    new MockBinding() {
+                Bindings = [
+                    new() {
                         IP = "*",
                         Port = 444,
                         Host = "wacs1.test.net",
@@ -1123,12 +1124,12 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                         CertificateHash = oldCert1,
                         CertificateStoreName = DefaultStore
                     }
-                }
+                ]
             };
 
             var iis = new MockIISClient(log, 10)
             {
-                MockSites = new[] { dup1, dup2 }
+                MockSites = [dup1, dup2]
             };
 
             var bindingOptions = new BindingOptions().
@@ -1160,14 +1161,14 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var dup1 = new MockSite()
             {
                 Id = 1,
-                Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                Bindings = [
+                            new() {
                                 IP = "*",
                                 Port = 80,
                                 Host = "wacs1.test.net",
                                 Protocol = "http"
                             },
-                            new MockBinding() {
+                            new() {
                                 IP = "*",
                                 Port = 443,
                                 Host = "wacs1.test.net",
@@ -1176,20 +1177,20 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore
                             }
-                        }
+                        ]
             };
 
             var dup2 = new MockSite()
             {
                 Id = 2,
-                Bindings = new List<MockBinding> {
-                    new MockBinding() {
+                Bindings = [
+                    new() {
                         IP = "*",
                         Port = 80,
                         Host = "wacs2.test.net",
                         Protocol = "http"
                     },
-                    new MockBinding() {
+                    new() {
                         IP = "*",
                         Port = 443,
                         Host = "wacs2.test.net",
@@ -1198,7 +1199,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                         CertificateHash = oldCert1,
                         CertificateStoreName = DefaultStore
                     },
-                    new MockBinding() {
+                    new() {
                         IP = "*",
                         Port = 443,
                         Host = "wacs2alt.test.net",
@@ -1207,12 +1208,12 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                         CertificateHash = oldCert1,
                         CertificateStoreName = DefaultStore
                     }
-                }
+                ]
             };
 
             var iis = new MockIISClient(log, 10)
             {
-                MockSites = new[] { dup1, dup2 }
+                MockSites = [dup1, dup2]
             };
 
             var bindingOptions = new BindingOptions().
@@ -1249,8 +1250,8 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var dup1 = new MockSite()
             {
                 Id = 1,
-                Bindings = new List<MockBinding> {
-                            new MockBinding() {
+                Bindings = [
+                            new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
                                 Host = host,
@@ -1258,7 +1259,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore
                             },
-                            new MockBinding() {
+                            new() {
                                 IP = "FE80:CD00:0000:0CDE:1257:0000:211E:729C",
                                 Port = DefaultPort,
                                 Host = host,
@@ -1266,12 +1267,12 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore
                             }
-                        }
+                        ]
             };
 
             var iis = new MockIISClient(log, iisVersion)
             {
-                MockSites = new[] { dup1 }
+                MockSites = [dup1]
             };
 
             var bindingOptions = new BindingOptions().
@@ -1297,35 +1298,35 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         [DataRow("uppercase.example.com", "uppercase.example.com", "uppercase.example.com")]
         public void UppercaseBinding(string host, string bindingInfo, string newHost)
         {
-            var mockBinding = new MockBinding()
+            var mockBinding = new MockBinding
             {
                 IP = "*",
                 Port = 443,
                 Host = host,
                 Protocol = "https",
                 CertificateHash = oldCert1,
-                CertificateStoreName = DefaultStore
+                CertificateStoreName = DefaultStore,
+                BindingInformation = $"*:443:{bindingInfo}"
             };
-            mockBinding.BindingInformation = $"*:443:{bindingInfo}";
 
             var dup1 = new MockSite()
             {
                 Id = 1,
-                Bindings = new List<MockBinding> { 
+                Bindings = [ 
                     mockBinding, 
-                    new MockBinding()
+                    new()
                     {
                         IP = "*",
                         Port = 80,
                         Host = host,
                         Protocol = "http"
                     }
-                }
+                ]
             };
 
             var iis = new MockIISClient(log, 10)
             {
-                MockSites = new[] { dup1 }
+                MockSites = [dup1]
             };
 
             var bindingOptions = new BindingOptions().

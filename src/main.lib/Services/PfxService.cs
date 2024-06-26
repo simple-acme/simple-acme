@@ -10,16 +10,10 @@ namespace PKISharp.WACS.Services
     /// <summary>
     /// Wrapper class to keep track of configured protection mode
     /// </summary>
-    public class PfxWrapper
+    public class PfxWrapper(Pkcs12Store store, PfxProtectionMode protectionMode)
     {
-        public Pkcs12Store Store { get; private set; }
-        public PfxProtectionMode ProtectionMode { get; private set; }
-
-        public PfxWrapper(Pkcs12Store store, PfxProtectionMode protectionMode)
-        {
-            Store = store;
-            ProtectionMode = protectionMode;
-        }
+        public Pkcs12Store Store { get; private set; } = store;
+        public PfxProtectionMode ProtectionMode { get; private set; } = protectionMode;
     }
 
     /// <summary>

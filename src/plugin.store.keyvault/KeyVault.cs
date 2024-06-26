@@ -9,8 +9,6 @@ using System;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
-[assembly: SupportedOSPlatform("windows")]
-
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     /// <summary>
@@ -21,43 +19,34 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DefaultCapability, KeyVaultJson>
         ("dbfa91e2-28c0-4b37-857c-df6575dbb388", 
         "KeyVault", "Store certificate in Azure Key Vault")]
-    internal class KeyVault : IStorePlugin
+    internal class KeyVault(KeyVaultOptions options, SecretServiceManager ssm, IProxyService proxyService, ILogService log) : IStorePlugin
     {
-        private readonly KeyVaultOptions _options;
-        private readonly ILogService _log;
-        private readonly AzureHelpers _helpers;
-
-        public KeyVault(KeyVaultOptions options, SecretServiceManager ssm, IProxyService proxyService, ILogService log)
-        {
-            _options = options;
-            _log = log;
-            _helpers = new AzureHelpers(options, proxyService, ssm);
-        }
+        private readonly AzureHelpers _helpers = new(options, proxyService, ssm);
 
         public Task Delete(ICertificateInfo certificateInfo) => Task.CompletedTask;
 
         public async Task<StoreInfo?> Save(ICertificateInfo certificateInfo)
         {
             var client = new CertificateClient(
-                new Uri($"https://{_options.VaultName}.vault.azure.net/"),
+                new Uri($"https://{options.VaultName}.vault.azure.net/"),
                 _helpers.TokenCredential,
                 new CertificateClientOptions() {
                     Transport = _helpers.ArmOptions.Transport
                 });
             var importOptions = new ImportCertificateOptions(
-                _options.CertificateName,
+                options.CertificateName,
                 certificateInfo.PfxBytes());
             try
             {
                 _ = await client.ImportCertificateAsync(importOptions);
                 return new StoreInfo() {
-                    Path = _options.VaultName,
-                    Name = _options.CertificateName
+                    Path = options.VaultName,
+                    Name = options.CertificateName
                 };
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Error importing certificate to KeyVault");
+                log.Error(ex, "Error importing certificate to KeyVault");
             }
             return null;
         }

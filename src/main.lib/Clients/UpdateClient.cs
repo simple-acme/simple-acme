@@ -6,24 +6,13 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Clients
 {
-    class UpdateClient
+    class UpdateClient(ILogService log, IProxyService proxy)
     {
-        private readonly ILogService _log;
-        private readonly IProxyService _proxy;
-        private readonly WacsJson _wacsJson;
-
-        public UpdateClient(ILogService log, IProxyService proxy, WacsJson wacsJson)
-        {
-            _log = log;
-            _proxy = proxy;
-            _wacsJson = wacsJson;   
-        }
-
         public async Task CheckNewVersion()
         {
             try
             {
-                var httpClient = _proxy.GetHttpClient();
+                var httpClient = proxy.GetHttpClient();
                 var json = await httpClient.GetStringAsync("https://www.win-acme.com/version.json");
                 if (string.IsNullOrEmpty(json))
                 {
@@ -40,16 +29,16 @@ namespace PKISharp.WACS.Clients
                     var updateInstruction = VersionService.DotNetTool ?
                         "Use \"dotnet tool update win-acme\" to update." : 
                         "Download from https://www.win-acme.com/";
-                    _log.Warning($"New version {{latestVersion}} available! {updateInstruction}", latestVersion);
+                    log.Warning($"New version {{latestVersion}} available! {updateInstruction}", latestVersion);
                 }
                 else
                 {
-                    _log.Information($"You are running the latest version of the program");
+                    log.Information($"You are running the latest version of the program");
                 }
             } 
             catch (Exception ex)
             {
-                _log.Error(ex, "Version check failed");
+                log.Error(ex, "Version check failed");
             }
         }
 

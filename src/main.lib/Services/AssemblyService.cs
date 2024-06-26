@@ -5,8 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Loader;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services
 {
@@ -18,15 +17,18 @@ namespace PKISharp.WACS.Services
         public AssemblyService(ILogService logger)
         {
             _log = logger;
-            _allTypes = new List<TypeDescriptor>();
-            _allTypes.AddRange(BuiltInTypes());
+            _allTypes = BuiltInTypes();
+            if (OperatingSystem.IsWindows())
+            {
+                _allTypes.AddRange(WindowsPlugins());
+            }
             _allTypes.AddRange(LoadFromDisk());
         }
 
         internal static List<TypeDescriptor> BuiltInTypes()
         {
-            return new()
-            {
+            return
+            [
                 // Arguments
                 new(typeof(Configuration.Arguments.MainArguments)),
                 new(typeof(Configuration.Arguments.AccountArguments)),
@@ -34,7 +36,6 @@ namespace PKISharp.WACS.Services
   
                 // Target plugins
                 new(typeof(Plugins.TargetPlugins.Csr)), new(typeof(Plugins.TargetPlugins.CsrArguments)),
-                new(typeof(Plugins.TargetPlugins.IIS)), new(typeof(Plugins.TargetPlugins.IISArguments)),
                 new(typeof(Plugins.TargetPlugins.Manual)), new(typeof(Plugins.TargetPlugins.ManualArguments)),
 
                 // Validation plugins
@@ -49,7 +50,6 @@ namespace PKISharp.WACS.Services
                 new(typeof(Plugins.OrderPlugins.Domain)),
                 new(typeof(Plugins.OrderPlugins.Host)),
                 new(typeof(Plugins.OrderPlugins.Single)),
-                new(typeof(Plugins.OrderPlugins.Site)),
 
                 // CSR plugins
                 new(typeof(Plugins.CsrPlugins.CsrArguments)),
@@ -58,13 +58,11 @@ namespace PKISharp.WACS.Services
 
                 // Store plugins
                 new(typeof(Plugins.StorePlugins.CertificateStore)), new(typeof(Plugins.StorePlugins.CertificateStoreArguments)),
-                new(typeof(Plugins.StorePlugins.CentralSsl)), new(typeof(Plugins.StorePlugins.CentralSslArguments)),
                 new(typeof(Plugins.StorePlugins.PemFiles)), new(typeof(Plugins.StorePlugins.PemFilesArguments)),
                 new(typeof(Plugins.StorePlugins.PfxFile)), new(typeof(Plugins.StorePlugins.PfxFileArguments)),
                 new(typeof(Plugins.StorePlugins.Null)),
 
                 // Installation plugins
-                new(typeof(Plugins.InstallationPlugins.IIS)), new(typeof(Plugins.InstallationPlugins.IISArguments)),
                 new(typeof(Plugins.InstallationPlugins.Script)), new(typeof(Plugins.InstallationPlugins.ScriptArguments)),
                 new(typeof(Plugins.InstallationPlugins.Null)),
 
@@ -73,10 +71,22 @@ namespace PKISharp.WACS.Services
 
                 // Notification targets
                 new(typeof(Plugins.NotificationPlugins.NotificationTargetEmail))
-            };
+            ];
         }
 
-        private static readonly List<string> IgnoreLibraries = new() {
+        [SupportedOSPlatform("windows")]
+        internal static List<TypeDescriptor> WindowsPlugins()
+        {
+            return
+            [
+                new(typeof(Plugins.TargetPlugins.IIS)), new(typeof(Plugins.TargetPlugins.IISArguments)),
+                new(typeof(Plugins.OrderPlugins.Site)),
+                new(typeof(Plugins.StorePlugins.CentralSsl)), new(typeof(Plugins.StorePlugins.CentralSslArguments)),
+                new(typeof(Plugins.InstallationPlugins.IIS)), new(typeof(Plugins.InstallationPlugins.IISArguments)),
+            ];
+        }
+
+        private static readonly List<string> IgnoreLibraries = [
             "clrcompression.dll",
             "clrjit.dll",
             "coreclr.dll",
@@ -85,18 +95,18 @@ namespace PKISharp.WACS.Services
             "mscordbi.dll",
             "mscordaccore.dll",
             "Microsoft.Testing.Platform.MSBuild.dll"
-        };
+        ];
 
         protected List<TypeDescriptor> LoadFromDisk()
         {
             if (string.IsNullOrEmpty(VersionService.PluginPath))
             {
-                return new List<TypeDescriptor>();
+                return [];
             }
             var pluginDirectory = new DirectoryInfo(VersionService.PluginPath);
             if (!pluginDirectory.Exists)
             {
-                return new List<TypeDescriptor>();
+                return [];
             }
             var dllFiles = pluginDirectory.
                 EnumerateFiles("*.dll", SearchOption.AllDirectories).
@@ -107,7 +117,7 @@ namespace PKISharp.WACS.Services
                 {
                     _log.Warning("This version of the program does not support external plugins, please download the pluggable version.");
                 }
-                return new List<TypeDescriptor>();
+                return [];
             } 
             else
             {
@@ -117,7 +127,7 @@ namespace PKISharp.WACS.Services
         }
 
 #if !PLUGGABLE
-        protected static List<TypeDescriptor> LoadFromDiskReal(IEnumerable<FileInfo> _) => new();
+        protected static List<TypeDescriptor> LoadFromDiskReal(IEnumerable<FileInfo> _) => [];
 #endif
 
 #if PLUGGABLE 
@@ -143,7 +153,7 @@ namespace PKISharp.WACS.Services
             var ret = new List<Type>();
             foreach (var assembly in allAssemblies)
             {
-                IEnumerable<Type> types = new List<Type>();
+                IEnumerable<Type> types = [];
                 try
                 {
                     types = GetTypesFromAssembly(assembly).ToList();
@@ -170,7 +180,7 @@ namespace PKISharp.WACS.Services
         {
             if (assembly.DefinedTypes == null)
             {
-                return new List<Type>();
+                return [];
             }
             return assembly.DefinedTypes.
                 Where(x =>
@@ -223,11 +233,10 @@ namespace PKISharp.WACS.Services
         /// properties are preserved during the build.
         /// </summary>
         [DebuggerDisplay("{Type.Name}")]
-        public readonly struct TypeDescriptor
+        public readonly struct TypeDescriptor([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] Type type)
         {
-            public TypeDescriptor([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] Type type) => Type = type;
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-            public Type Type { get; init; }
+            public Type Type { get; init; } = type;
         }
     }
 }

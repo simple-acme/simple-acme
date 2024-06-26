@@ -12,10 +12,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
-[assembly: SupportedOSPlatform("windows")]
 [assembly: InternalsVisibleTo("wacs.test")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
@@ -28,26 +26,18 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DnsValidationCapability, AzureJson>
         ("aa57b028-45fb-4aca-9cac-a63d94c76b4a",
         "Azure", "Create verification records in Azure DNS")]
-    internal class Azure : DnsValidation<Azure>
+    internal class Azure(AzureOptions options,
+        LookupClientProvider dnsClient,
+        SecretServiceManager ssm,
+        IProxyService proxyService,
+        ILogService log,
+        ISettingsService settings) : DnsValidation<Azure>(dnsClient, log, settings)
     {
         private ArmClient? _armClient;
         private SubscriptionResource? _subscriptionResource;
-
-        private readonly AzureOptions _options;
-        private readonly AzureHelpers _helpers;
-        private readonly Dictionary<DnsZoneResource, Dictionary<string, DnsTxtRecordData>> _recordSets = new();
+        private readonly AzureHelpers _helpers = new(options, proxyService, ssm);
+        private readonly Dictionary<DnsZoneResource, Dictionary<string, DnsTxtRecordData>> _recordSets = [];
         private IEnumerable<DnsZoneResource>? _hostedZones;
-        
-        public Azure(AzureOptions options,
-            LookupClientProvider dnsClient,
-            SecretServiceManager ssm,
-            IProxyService proxyService,
-            ILogService log, 
-            ISettingsService settings) : base(dnsClient, log, settings)
-        {
-            _options = options;
-            _helpers = new AzureHelpers(options, proxyService, ssm);
-        }
 
         /// <summary>
         /// Allow this plugin to process multiple validations at the same time.
@@ -70,27 +60,28 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 return false;
             }
             var relativeKey = RelativeRecordName(zone.Data.Name, record.Authority.Domain);
-            if (!_recordSets.ContainsKey(zone))
+            if (!_recordSets.TryGetValue(zone, out var value))
             {
-                _recordSets.Add(zone, new());
+                value = [];
+                _recordSets.Add(zone, value);
             }
-            if (!_recordSets[zone].ContainsKey(relativeKey))
+            if (!value.ContainsKey(relativeKey))
             {
                 try
                 {
                     var existing = await zone.GetDnsTxtRecords().GetAsync(relativeKey);
-                    _recordSets[zone].Add(relativeKey, existing.Value.Data);
+                    value.Add(relativeKey, existing.Value.Data);
                 } 
                 catch
                 {
-                    _recordSets[zone].Add(relativeKey, new DnsTxtRecordData() { TtlInSeconds = 60 });
+                    value.Add(relativeKey, new DnsTxtRecordData() { TtlInSeconds = 60 });
                 }
             }
-            if (!_recordSets[zone][relativeKey].DnsTxtRecords.Any(x => x.Values.Contains(record.Value)))
+            if (!value[relativeKey].DnsTxtRecords.Any(x => x.Values.Contains(record.Value)))
             {
                 var txtRecord = new DnsTxtRecordInfo();
                 txtRecord.Values.Add(record.Value);
-                _recordSets[zone][relativeKey].DnsTxtRecords.Add(txtRecord);
+                value[relativeKey].DnsTxtRecords.Add(txtRecord);
             }
             return true;
         }
@@ -108,15 +99,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 return;
             }
             var relativeKey = RelativeRecordName(zone.Data.Name, record.Authority.Domain);
-            if (!_recordSets.ContainsKey(zone))
+            if (!_recordSets.TryGetValue(zone, out var recordSet))
             {
                 return;
             }
-            if (!_recordSets[zone].ContainsKey(relativeKey))
+            if (!recordSet.TryGetValue(relativeKey, out var txtResource))
             {
                 return;
             }
-            var txtResource = _recordSets[zone][relativeKey];
             var removeList = txtResource.DnsTxtRecords.Where(x => x.Values.Contains(record.Value)).ToList();
             foreach (var remove in removeList)
             {
@@ -177,7 +167,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 _armClient ??= new ArmClient(
                         _helpers.TokenCredential,
-                        _options.SubscriptionId,
+                        options.SubscriptionId,
                         _helpers.ArmOptions);
                 return _armClient;
             }
@@ -189,13 +179,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <returns></returns>
         private async Task<SubscriptionResource> Subscription()
         {
+            _subscriptionResource ??= await Client.GetDefaultSubscriptionAsync();
             if (_subscriptionResource == null)
             {
-                _subscriptionResource = await Client.GetDefaultSubscriptionAsync();
-            }
-            if (_subscriptionResource == null)
-            {
-                throw new Exception($"Unable to find subscription {_options.SubscriptionId ?? "default"}");
+                throw new Exception($"Unable to find subscription {options.SubscriptionId ?? "default"}");
             }
             return _subscriptionResource;
         }
@@ -222,12 +209,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
 
             // Option to bypass the best match finder
-            if (!string.IsNullOrEmpty(_options.HostedZone))
+            if (!string.IsNullOrEmpty(options.HostedZone))
             {
-                var match = _hostedZones.FirstOrDefault(h => string.Equals(h.Data.Name, _options.HostedZone, StringComparison.OrdinalIgnoreCase));
+                var match = _hostedZones.FirstOrDefault(h => string.Equals(h.Data.Name, options.HostedZone, StringComparison.OrdinalIgnoreCase));
                 if (match == null)
                 {
-                    _log.Error("Unable to find hosted zone {name}", _options.HostedZone);
+                    _log.Error("Unable to find hosted zone {name}", options.HostedZone);
                 }
                 return match;
             }
@@ -240,7 +227,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             _log.Error(
                 "Can't find hosted zone for {recordName} in subscription {subscription}",
                 recordName,
-                _options.SubscriptionId);
+                options.SubscriptionId);
             return null;
         }
 

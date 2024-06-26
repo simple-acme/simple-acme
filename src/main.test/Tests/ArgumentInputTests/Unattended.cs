@@ -19,7 +19,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("'I:\\'", "'I:\\'", DisplayName = "WithSingleQuotes")]
         public void BasicString(string input, string output)
         {
-            var container = new MockContainer().TestScope(commandLine: $"--centralsslstore {input}");
+            var container = MockContainer.TestScope(commandLine: $"--centralsslstore {input}");
             var mock = container.Resolve<ArgumentsInputService>();
             var basic = mock.
                 GetString<CentralSslArguments>(x => x.CentralSslStore).
@@ -32,7 +32,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("4", 4)]
         public void BasicLong(string input, long output)
         {
-            var container = new MockContainer().TestScope(commandLine: $"--installationsiteid {input}");
+            var container = MockContainer.TestScope(commandLine: $"--installationsiteid {input}");
             var mock = container.Resolve<ArgumentsInputService>();
             var basic = mock.
                 GetLong<IISArguments>(x => x.InstallationSiteId).
@@ -49,7 +49,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("--pfxpassword \"\"", true, "", DisplayName = "AllowEmptyEmpty")]
         public void BasicSecret(string commandLine, bool allowEmpty, string? output)
         {
-            var container = new MockContainer().TestScope(commandLine: commandLine);
+            var container = MockContainer.TestScope(commandLine: commandLine);
             var mock = container.Resolve<ArgumentsInputService>();
             var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword, allowEmpty).
                 GetValue().
@@ -67,7 +67,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("--pfxpassword \"\"", false, "default", "default", DisplayName = "AllowEmptyEmpty")]
         public void SecretWithDefault(string commandLine, bool allowEmpty, string defaultValue, string? output)
         {
-            var container = new MockContainer().TestScope(commandLine: commandLine);
+            var container = MockContainer.TestScope(commandLine: commandLine);
             var mock = container.Resolve<ArgumentsInputService>();
             var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword, allowEmpty).
                 WithDefault(defaultValue.Protect(allowEmpty)).
@@ -83,7 +83,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("--centralsslstore a", "", "a", DisplayName = "CommandLineBeatsEmptyDefault")]
         public void DefaultValue(string? commandLine, string @default, string output)
         {
-            var container = new MockContainer().TestScope(commandLine: commandLine ?? "");
+            var container = MockContainer.TestScope(commandLine: commandLine ?? "");
             var mock = container.Resolve<ArgumentsInputService>();
             var result = mock.GetString<CentralSslArguments>(x => x.CentralSslStore).
                 WithDefault(@default).
@@ -97,7 +97,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow(null, null, DisplayName = "Nothing")]
         public void DefaultAsNullWithoutDefault(string? commandLine, string output)
         {
-            var container = new MockContainer().TestScope(commandLine: commandLine ?? "");
+            var container = MockContainer.TestScope(commandLine: commandLine ?? "");
             var mock = container.Resolve<ArgumentsInputService>();
             var result = mock.
                 GetString<CentralSslArguments>(x => x.CentralSslStore).
@@ -115,7 +115,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("--centralsslstore b", "b", null, DisplayName = "BaseDefaultNull")]
         public void DefaultAsNull(string? commandLine, string @default, string output)
         {
-            var container = new MockContainer().TestScope(commandLine: commandLine ?? "");
+            var container = MockContainer.TestScope(commandLine: commandLine ?? "");
             var mock = container.Resolve<ArgumentsInputService>();
             var result = mock.
                 GetString<CentralSslArguments>(x => x.CentralSslStore).
@@ -131,7 +131,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("--centralsslstore a", false, DisplayName = "Provided")]
         public void Required(string? commandLine, bool shouldThrow)
         {
-            var container = new MockContainer().TestScope(commandLine: commandLine ?? "");
+            var container = MockContainer.TestScope(commandLine: commandLine ?? "");
             var mock = container.Resolve<ArgumentsInputService>();
             try
             {
@@ -157,7 +157,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("--centralsslstore a", "", false, "a", DisplayName = "EmtpyDefault")]
         public void RequiredWithDefault(string? commandLine, string @default, bool shouldThrow, string expectedValue)
         {
-            var container = new MockContainer().TestScope(commandLine: commandLine ?? "");
+            var container = MockContainer   .TestScope(commandLine: commandLine ?? "");
             var mock = container.Resolve<ArgumentsInputService>();
             try
             {
@@ -183,7 +183,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("", false, DisplayName = "Null")]
         public void Validate(string input, bool shouldThrow)
         {
-            var container = new MockContainer().TestScope(commandLine: input);
+            var container = MockContainer.TestScope(commandLine: input);
             var mock = container.Resolve<ArgumentsInputService>();
             try
             {
@@ -209,14 +209,14 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("", false, DisplayName = "Null")]
         public void ValidateMultiple(string input, bool shouldThrow)
         {
-            var container = new MockContainer().TestScope(commandLine: input);
+            var container = MockContainer.TestScope(commandLine: input);
             var mock = container.Resolve<ArgumentsInputService>();
             try
             {
                 var result = mock.
                     GetString<CentralSslArguments>(x => x.CentralSslStore).
-                    Validate(x => Task.FromResult(x?.Contains("a") ?? false), "No A").
-                    Validate(x => Task.FromResult(x?.Contains("b") ?? false), "No B").
+                    Validate(x => Task.FromResult(x?.Contains('a') ?? false), "No A").
+                    Validate(x => Task.FromResult(x?.Contains('b') ?? false), "No B").
                     GetValue().
                     Result;
                 Assert.AreEqual(shouldThrow, false, "No exception thrown though it should have been");

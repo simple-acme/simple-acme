@@ -36,7 +36,7 @@ namespace PKISharp.WACS.Client
             });
         }
 
-        private string NormalizePath(string path)
+        private static string NormalizePath(string path)
         {
             return path.
                 Replace("webdav:", "https:").
@@ -71,7 +71,7 @@ namespace PKISharp.WACS.Client
                     }
                 }
                 // Upload file
-                currentPath += $"/{directories[directories.Length - 1]}";
+                currentPath += $"/{directories[^1]}";
                 var fileUploaded = _client.PutFile(currentPath, stream).Result;
                 if (!fileUploaded.IsSuccessful)
                 {
@@ -89,15 +89,14 @@ namespace PKISharp.WACS.Client
         {
             var exists = _client.Propfind(path).Result;
             return exists.IsSuccessful &&
-                exists.Resources.Any() &&
+                exists.Resources.Count != 0 &&
                 exists.Resources.First().IsCollection;
         }
 
         internal bool IsEmpty(string path)
         {
             var exists = _client.Propfind(path).Result;
-            return exists.IsSuccessful &&
-                !exists.Resources.Any();
+            return exists.IsSuccessful && exists.Resources.Count == 0;
         }
 
         public void Delete(string path)
@@ -129,7 +128,7 @@ namespace PKISharp.WACS.Client
             {
                 _log.Verbose("WebDav error {@ex}", ex);
             }
-            return new string[] { };
+            return [];
         }
 
         #region IDisposable
@@ -142,10 +141,7 @@ namespace PKISharp.WACS.Client
             {
                 if (disposing)
                 {
-                    if (_client != null)
-                    {
-                        _client.Dispose();
-                    }
+                    _client?.Dispose();
                 }
                 disposedValue = true;
             }

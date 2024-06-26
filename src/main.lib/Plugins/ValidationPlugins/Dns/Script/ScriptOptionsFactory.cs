@@ -10,44 +10,33 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    internal class ScriptOptionsFactory : PluginOptionsFactory<ScriptOptions>
+    internal class ScriptOptionsFactory(
+        ILogService log,
+        ISettingsService settings,
+        ArgumentsInputService arguments) : PluginOptionsFactory<ScriptOptions>
     {
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-        private readonly ArgumentsInputService _arguments;
-
-        public ScriptOptionsFactory(
-            ILogService log, 
-            ISettingsService settings,
-            ArgumentsInputService arguments)
-        {
-            _log = log;
-            _settings = settings;   
-            _arguments = arguments;
-        }
-
-        private ArgumentResult<string?> CommonScript => _arguments.
+        private ArgumentResult<string?> CommonScript => arguments.
             GetString<ScriptArguments>(x => x.DnsScript);
 
-        private ArgumentResult<string?> CreateScript => _arguments.
+        private ArgumentResult<string?> CreateScript => arguments.
             GetString<ScriptArguments>(x => x.DnsCreateScript).
-            Validate(x => Task.FromResult(x.ValidFile(_log)), "invalid file");
+            Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
-        private ArgumentResult<string?> CreateScriptArguments => _arguments.
+        private ArgumentResult<string?> CreateScriptArguments => arguments.
             GetString<ScriptArguments>(x => x.DnsCreateScriptArguments).
             WithDefault(Script.DefaultCreateArguments).
             DefaultAsNull();
 
-        private ArgumentResult<string?> DeleteScript => _arguments.
+        private ArgumentResult<string?> DeleteScript => arguments.
             GetString<ScriptArguments>(x => x.DnsDeleteScript).
-            Validate(x => Task.FromResult(x.ValidFile(_log)), "invalid file");
+            Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
-        private ArgumentResult<string?> DeleteScriptArguments => _arguments.
+        private ArgumentResult<string?> DeleteScriptArguments => arguments.
             GetString<ScriptArguments>(x => x.DnsDeleteScriptArguments).            
             WithDefault(Script.DefaultDeleteArguments).
             DefaultAsNull();
 
-        private ArgumentResult<int?> Parallelism => _arguments.
+        private ArgumentResult<int?> Parallelism => arguments.
             GetInt<ScriptArguments>(x => x.DnsScriptParallelism).
             WithDefault(0).
             Validate(x => Task.FromResult(x!.Value is >= 0 and <= 3), "invalid value").
@@ -89,7 +78,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 ret.DeleteScriptArguments = await DeleteScriptArguments.Interactive(input).GetValue();
             }
 
-            if (_settings.Validation.DisableMultiThreading != false)
+            if (settings.Validation.DisableMultiThreading != false)
             {
                 ret.Parallelism = await input.ChooseFromMenu(
                     "Enable parallel execution?",
@@ -134,11 +123,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 if (!string.IsNullOrWhiteSpace(createInput))
                 {
-                    _log.Warning($"Ignoring --dnscreatescript because --dnsscript was provided");
+                    log.Warning($"Ignoring --dnscreatescript because --dnsscript was provided");
                 }
                 if (!string.IsNullOrWhiteSpace(deleteInput))
                 {
-                    _log.Warning("Ignoring --dnsdeletescript because --dnsscript was provided");
+                    log.Warning("Ignoring --dnsdeletescript because --dnsscript was provided");
                 }
             }
             if (string.IsNullOrWhiteSpace(commonInput) &&
@@ -157,7 +146,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
             if (options.CreateScript == null && options.Script == null)
             {
-                _log.Error("Missing --dnsscript or --dnscreatescript");
+                log.Error("Missing --dnsscript or --dnscreatescript");
                 return false;
             }
             return true;

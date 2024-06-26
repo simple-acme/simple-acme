@@ -9,11 +9,12 @@ using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
-using Mock = PKISharp.WACS.UnitTests.Mock.Services;
 
 namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
 {
+    [SupportedOSPlatform("windows")]
     [TestClass]
     public class IISTests
     {
@@ -21,7 +22,6 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         private readonly IIISClient iis;
         private readonly IISHelper helper;
         private readonly PluginService plugins;
-        private readonly IUserRoleService userRoleService;
 
         public IISTests()
         {
@@ -32,14 +32,13 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             var domainParseService = new DomainParseService(log, proxy, settings);
             helper = new IISHelper(log, iis, domainParseService);
             plugins = new PluginService(log, new MockAssemblyService(log));
-            userRoleService = new Mock.Services.UserRoleService();
         }
 
         private IISOptions? Options(string commandLine)
         {
             var optionsParser = new ArgumentsParser(log, new MockAssemblyService(log), commandLine.Split(' '));
-            var input = new Mock.Services.InputService(new());
-            var secretService = new SecretServiceManager(new MockContainer().TestScope(), input, plugins, log);
+            var input = new Mock.Services.InputService([]);
+            var secretService = new SecretServiceManager(MockContainer.TestScope(), input, plugins, log);
             var argsInput = new ArgumentsInputService(log, optionsParser, input, secretService);
             var args = new MainArguments();
             var x = new IISOptionsFactory(log, helper, args, argsInput);

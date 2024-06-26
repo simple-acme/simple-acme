@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -17,6 +18,7 @@ using static System.IO.FileSystemAclExtensions;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
+    [SupportedOSPlatform("windows")]
     [IPlugin.Plugin<
         CertificateStoreOptions, CertificateStoreOptionsFactory, 
         CertificateStoreCapability, WacsJsonPlugins>
@@ -29,7 +31,6 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         private readonly ILogService _log;
         private readonly string _storeName;
         private readonly IIISClient _iisClient;
-        private readonly ISettingsService _settings;
         private readonly CertificateStoreOptions _options;
         private readonly FindPrivateKey _keyFinder;
         private readonly CertificateStoreClient _storeClient;
@@ -43,7 +44,6 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             _log = log;
             _iisClient = iisClient;
             _options = options;
-            _settings = settings;
             _keyFinder = keyFinder;
             _storeName = options.StoreName ?? DefaultStore(settings, iisClient);
             if (string.Equals(_storeName, "Personal", StringComparison.InvariantCultureIgnoreCase) ||
@@ -94,7 +94,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             if (exportable)
             {
-                _options.AclRead ??= new List<string>();
+                _options.AclRead ??= [];
                 if (!_options.AclRead.Contains("administrators")) {
                     _log.Information("Add local administators to Private Key ACL to allow export");
                     _options.AclRead.Add("administrators");

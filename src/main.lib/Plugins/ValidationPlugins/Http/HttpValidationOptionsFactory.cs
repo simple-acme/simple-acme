@@ -7,18 +7,12 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
-    public abstract class HttpValidationOptionsFactory<TOptions> : 
+    public abstract class HttpValidationOptionsFactory<TOptions>(ArgumentsInputService arguments, Target target) : 
         PluginOptionsFactory<TOptions>
         where TOptions : HttpValidationOptions, new()
     {
-        protected readonly ArgumentsInputService _arguments;
-        protected readonly Target _target;
-
-        public HttpValidationOptionsFactory(ArgumentsInputService arguments, Target target) 
-        {
-            _arguments = arguments;
-            _target = target;
-        }
+        protected readonly ArgumentsInputService _arguments = arguments;
+        protected readonly Target _target = target;
 
         private ArgumentResult<string?> Path(bool allowEmpty)
         {
@@ -94,7 +88,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 ret.Add("Leave empty to automatically read the path from IIS");
             }
-            return ret.ToArray();
+            return [.. ret];
         }
 
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(TOptions options)

@@ -5,10 +5,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns.NS1;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -17,24 +14,18 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DnsValidationCapability, NS1Json>
         ("C66CC8BE-3046-46C2-A0BA-EC4EC3E7FE96", 
         "NS1", "Create verification records in NS1 DNS")]
-    internal class NS1DnsValidation : DnsValidation<NS1DnsValidation>
+    internal class NS1DnsValidation(
+        LookupClientProvider dnsClient,
+        ILogService logService,
+        ISettingsService settings,
+        NS1Options options,
+        SecretServiceManager ssm,
+        IProxyService proxyService) : DnsValidation<NS1DnsValidation>(dnsClient, logService, settings)
     {
-        private readonly DnsManagementClient _client;
-        private static readonly Dictionary<string, string> _zonesMap = new();
-
-        public NS1DnsValidation(
-            LookupClientProvider dnsClient,
-            ILogService logService,
-            ISettingsService settings,
-            NS1Options options,
-            SecretServiceManager ssm,
-            IProxyService proxyService)
-            : base(dnsClient, logService, settings)
-        {
-            _client = new DnsManagementClient(
+        private readonly DnsManagementClient _client = new(
                 ssm.EvaluateSecret(options.ApiKey) ?? "",
-                logService, proxyService);
-        }
+                proxyService);
+        private static readonly Dictionary<string, string> _zonesMap = [];
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {

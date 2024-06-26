@@ -10,17 +10,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// Godaddy DNS validation
     /// </summary>
-    internal class GodaddyOptionsFactory : PluginOptionsFactory<GodaddyOptions>
+    internal class GodaddyOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<GodaddyOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public GodaddyOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<GodaddyArguments>(a => a.ApiKey).
             Required();
 
-        private ArgumentResult<ProtectedString?> ApiSecret => _arguments.
+        private ArgumentResult<ProtectedString?> ApiSecret => arguments.
             GetProtectedString<GodaddyArguments>(a => a.ApiSecret).
             Required();
 

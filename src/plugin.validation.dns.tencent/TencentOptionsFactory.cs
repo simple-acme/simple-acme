@@ -7,17 +7,13 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    public class TencentOptionsFactory : PluginOptionsFactory<TencentOptions>
+    public class TencentOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<TencentOptions>
     {
-        private ArgumentsInputService _arguments { get; }
-
-        public TencentOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiID => _arguments.
+        private ArgumentResult<ProtectedString?> ApiID => arguments.
             GetProtectedString<TencentArguments>(a => a.TencentApiID).
             Required();
 
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<TencentArguments>(a => a.TencentApiKey).
             Required();
 

@@ -131,20 +131,11 @@ namespace PKISharp.WACS.Services
         /// Custom implementation so that we can use the proxy 
         /// that the user has configured and 
         /// </summary>
-        private class WebTldRuleProvider : IRuleProvider
+        private class WebTldRuleProvider(IProxyService proxy, ILogService log, ISettingsService settings) : IRuleProvider
         {
-            private readonly string _fileUrl;
-            private readonly IProxyService _proxy;
-            private readonly ICacheProvider _cache;
-            private readonly DomainDataStructure _data;
-
-            public WebTldRuleProvider(IProxyService proxy, ILogService log, ISettingsService settings)
-            {
-                _fileUrl = "https://publicsuffix.org/list/public_suffix_list.dat";
-                _cache = new FileCacheProvider(log, settings);
-                _proxy = proxy;
-                _data = new DomainDataStructure("*", new TldRule("*"));
-            }
+            private readonly string _fileUrl = "https://publicsuffix.org/list/public_suffix_list.dat";
+            private readonly FileCacheProvider _cache = new(log, settings);
+            private readonly DomainDataStructure _data = new("*", new TldRule("*"));
 
             public async Task<bool> BuildAsync(bool ignoreCache = false, CancellationToken cancel = default)
             {
@@ -172,7 +163,7 @@ namespace PKISharp.WACS.Services
 
             public async Task<string> LoadFromUrl(string url)
             {
-                using var httpClient = _proxy.GetHttpClient();
+                using var httpClient = proxy.GetHttpClient();
                 using var response = await httpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode)
                 {

@@ -7,6 +7,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text.Json;
 using ManualOptions = PKISharp.WACS.Plugins.TargetPlugins.ManualOptions;
@@ -35,6 +36,7 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             WacsJson.Configure(builder);
             _container = builder.Build();
             _plugin = _container.Resolve<IPluginService>();
+            log.Debug(context.TestName ?? "");
         }
 
         private static string Serialize(Renewal renewal)

@@ -12,8 +12,6 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
-[assembly: SupportedOSPlatform("windows")]
-
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     [IPlugin.Plugin<
@@ -23,8 +21,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         "Route53", "Create verification records in AWS Route 53")]
     internal sealed class Route53 : DnsValidation<Route53>
     {
-        private readonly IAmazonRoute53 _route53Client;
-        private readonly Dictionary<string, List<ResourceRecordSet>> _pendingZoneUpdates = new();
+        private readonly AmazonRoute53Client _route53Client;
+        private readonly Dictionary<string, List<ResourceRecordSet>> _pendingZoneUpdates = [];
 
         public override ParallelOperations Parallelism => ParallelOperations.Answer; 
         public Route53(
@@ -45,15 +43,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     : new AmazonRoute53Client(config);
         }
 
-        private void CreateOrUpdateResourceRecordSet(string hostedZone, string name, string value)
+        private void CreateOrUpdateResourceRecordSet(string hostedZone, string name, string record)
         {
             lock (_pendingZoneUpdates)
             {
-                if (!_pendingZoneUpdates.ContainsKey(hostedZone))
+                if (!_pendingZoneUpdates.TryGetValue(hostedZone, out List<ResourceRecordSet>? value))
                 {
-                    _pendingZoneUpdates.Add(hostedZone, new List<ResourceRecordSet>());
+                    value = [];
+                    _pendingZoneUpdates.Add(hostedZone, value);
                 }
-                var pendingRecordSets = _pendingZoneUpdates[hostedZone];
+                var pendingRecordSets = value;
                 var existing = pendingRecordSets.FirstOrDefault(x => x.Name == name);
                 if (existing == null)
                 {
@@ -61,12 +60,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     {
                         Name = name,
                         Type = RRType.TXT,
-                        ResourceRecords = new(),
+                        ResourceRecords = [],
                         TTL = 1L
                     };
                     pendingRecordSets.Add(existing);
                 }
-                var formattedValue = $"\"{value}\"";
+                var formattedValue = $"\"{record}\"";
                 if (!existing.ResourceRecords.Any(x => x.Value == formattedValue))
                 {
                     existing.ResourceRecords.Add(new ResourceRecord(formattedValue));

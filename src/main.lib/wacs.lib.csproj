@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<RootNamespace>PKISharp.WACS</RootNamespace>
-		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed</Configurations>
+		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;</Configurations>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='Debug' OR '$(Configuration)'=='DebugTrimmed'">

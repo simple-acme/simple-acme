@@ -31,7 +31,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
                             target.FriendlyName,
                             host.Value.Length <= Constants.MaxCommonName ? host : null,
                             parts.Select(p => 
-                                new TargetPart(new List<Identifier> { host }) { 
+                                new TargetPart([host]) { 
                                     SiteId = p.SiteId,
                                     SiteType = p.SiteType 
                                 }).ToList());

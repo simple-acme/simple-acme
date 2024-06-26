@@ -11,19 +11,13 @@ namespace PKISharp.WACS.DomainObjects
     {
         public TargetPart(Identifier identifier)
         {
-            if (identifier == null)
-            {
-                throw new ArgumentNullException(nameof(identifier));
-            }
-            Identifiers = new List<Identifier>() { identifier };
+            ArgumentNullException.ThrowIfNull(identifier);
+            Identifiers = [identifier];
         }
 
         public TargetPart(IEnumerable<Identifier>? identifiers)
         {
-            if (identifiers == null)
-            {
-                throw new ArgumentNullException(nameof(identifiers));
-            }
+            ArgumentNullException.ThrowIfNull(identifiers);
             Identifiers = identifiers.ToList();
         }
 

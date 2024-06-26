@@ -11,34 +11,14 @@ namespace PKISharp.WACS.Services
         private Lazy<bool> IsAdminLazy => new(DetermineAdmin);
         private Lazy<bool> IsSystemLazy => new(DetermineSystem);
 
-        private bool DetermineAdmin()
-        {
-            bool isAdmin;
-            WindowsIdentity? user = null;
-            try
-            {
-                //get the currently logged in user
-                user = WindowsIdentity.GetCurrent();
-                var principal = new WindowsPrincipal(user);
-                isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                isAdmin = false;
-            }
-            catch (Exception)
-            {
-                isAdmin = false;
-            }
-            finally
-            {
-                user?.Dispose();
-            }
-            return isAdmin;
-        }
+        private bool DetermineAdmin() => Environment.IsPrivilegedProcess;
 
         private bool DetermineSystem()
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                return false;
+            }
             try
             {
                 return WindowsIdentity.GetCurrent().IsSystem;

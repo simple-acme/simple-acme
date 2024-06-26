@@ -6,13 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-
-[assembly: SupportedOSPlatform("windows")]
-[assembly: InternalsVisibleTo("wacs.test")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 
@@ -24,33 +18,24 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns;
     DnsValidationCapability, InfomaniakJson>
     ("d1401d1e-b925-407d-a38b-924d67b2d1b5",
     "Infomaniak", "Create verification records in Infomaniak DNS")]
-internal class InfomaniakDnsValidation : DnsValidation<InfomaniakDnsValidation>
+internal class InfomaniakDnsValidation(
+    LookupClientProvider dnsClient,
+    ILogService logService,
+    ISettingsService settings,
+    DomainParseService domainParser,
+    InfomaniakOptions options,
+    SecretServiceManager ssm,
+    IProxyService proxyService) : DnsValidation<InfomaniakDnsValidation>(dnsClient, logService, settings)
 {
-    private readonly InfomaniakClient _client;
-    private readonly DomainParseService _domainParser;
-    private readonly Dictionary<string, int> _domainIds = new();
+    private readonly InfomaniakClient _client = new(ssm.EvaluateSecret(options.ApiToken) ?? "", logService, proxyService);
+    private readonly Dictionary<string, int> _domainIds = [];
     private readonly ConcurrentDictionary<int, List<int>> _recordIds = new();
-    private new readonly ILogService _log;
-
-    public InfomaniakDnsValidation(
-        LookupClientProvider dnsClient,
-        ILogService logService,
-        ISettingsService settings,
-        DomainParseService domainParser,
-        InfomaniakOptions options,
-        SecretServiceManager ssm,
-        IProxyService proxyService) : base(dnsClient, logService, settings)
-    {
-        _client = new InfomaniakClient(ssm.EvaluateSecret(options.ApiToken) ?? "", logService, proxyService);
-        _domainParser = domainParser;
-        _log = logService;
-    }
 
     public override async Task<bool> CreateRecord(DnsValidationRecord record)
     {
         try
         {
-            var domain = _domainParser.GetRegisterableDomain(record.Authority.Domain);
+            var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
             var domainId = await _client.GetDomainId(domain);
             if (domainId == 0)
             {
@@ -66,8 +51,8 @@ internal class InfomaniakDnsValidation : DnsValidation<InfomaniakDnsValidation>
             }
             _ = _recordIds.AddOrUpdate(
                 domainId,
-                new List<int> { recordId },
-                (b, s) => s.Append(recordId).ToList());
+                [recordId],
+                (b, s) => [.. s, recordId]);
             return true;
         }
         catch (Exception ex)

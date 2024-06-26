@@ -8,17 +8,13 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    internal sealed class Route53OptionsFactory : PluginOptionsFactory<Route53Options>
+    internal sealed partial class Route53OptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<Route53Options>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public Route53OptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> AccessKey => _arguments.
+        private ArgumentResult<ProtectedString?> AccessKey => arguments.
             GetProtectedString<Route53Arguments>(a => a.Route53SecretAccessKey).
             Required();
 
-        private ArgumentResult<string?> AccessKeyId => _arguments.
+        private ArgumentResult<string?> AccessKeyId => arguments.
             GetString<Route53Arguments>(a => a.Route53AccessKeyId).
             Required();
 
@@ -26,10 +22,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html
         /// IAM name requirements
         /// </summary>
-        private ArgumentResult<string?> IamRole => _arguments.
+        private ArgumentResult<string?> IamRole => arguments.
             GetString<Route53Arguments>(a => a.Route53IAMRole).
             Validate(x => Task.FromResult(!x?.Contains(':') ?? true), "ARN instead of IAM name").
-            Validate(x => Task.FromResult(Regex.Match(x ?? "", "^[A-Za-z0-9+=,.@_-]+$").Success), "invalid IAM name");
+            Validate(x => Task.FromResult(AimRegex().Match(x ?? "").Success), "invalid IAM name");
 
         public override async Task<Route53Options?> Aquire(IInputService input, RunLevel runLevel)
         {
@@ -67,5 +63,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             yield return (AccessKeyId.Meta, options.AccessKeyId);
             yield return (AccessKey.Meta, options.SecretAccessKey);
         }
+
+        [GeneratedRegex("^[A-Za-z0-9+=,.@_-]+$")]
+        private static partial Regex AimRegex();
     }
 }

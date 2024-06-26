@@ -3,14 +3,11 @@ using System.IO;
 
 namespace PKISharp.WACS.Services.Legacy
 {
-    internal class FileLegacyRenewalService : BaseLegacyRenewalService
+    internal class FileLegacyRenewalService(
+        ILogService log,
+        LegacySettingsService settings) : BaseLegacyRenewalService(settings, log)
     {
         private const string _renewalsKey = "Renewals";
-
-        public FileLegacyRenewalService(
-            ILogService log,
-            LegacySettingsService settings) : base(settings, log)
-        { }
 
         private string FileName => Path.Combine(_configPath!, _renewalsKey);
 

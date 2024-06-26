@@ -12,16 +12,9 @@ namespace PKISharp.WACS.Clients.Acme
     /// <summary>
     /// Helper class to support the https://zerossl.com/ API
     /// </summary>
-    class ZeroSsl
+    class ZeroSsl(IProxyService proxy, ILogService log)
     {
-        private readonly HttpClient _httpClient;
-        private readonly ILogService _log;
-
-        public ZeroSsl(IProxyService proxy, ILogService log)
-        {
-            _httpClient = proxy.GetHttpClient();
-            _log = log;
-        }
+        private readonly HttpClient _httpClient = proxy.GetHttpClient();
 
         /// <summary>
         /// Register new account using email address
@@ -30,10 +23,10 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         public async Task<ZeroSslEabCredential?> Register(string email)
         {
-            var formContent = new FormUrlEncodedContent(new[]
-            {
+            var formContent = new FormUrlEncodedContent(
+            [
                 new KeyValuePair<string?, string?>("email", email)
-            });
+            ]);
             try
             {
                 var response = await _httpClient.PostAsync("https://api.zerossl.com/acme/eab-credentials-email", formContent);
@@ -43,7 +36,7 @@ namespace PKISharp.WACS.Clients.Acme
                     var result = JsonSerializer.Deserialize(content, WacsJson.Insensitive.ZeroSslEabCredential);
                     if (result == null)
                     {
-                        _log.Error("Unexpected response while attemting to register at ZeroSsl");
+                        log.Error("Unexpected response while attemting to register at ZeroSsl");
                     }
                     else if (result.Success == true)
                     {
@@ -51,21 +44,21 @@ namespace PKISharp.WACS.Clients.Acme
                     }
                     else if (result.Error != null)
                     {
-                        _log.Error("Error attemting to register at ZeroSsl: {type} ({code})", result.Error.Type, result.Error.Code);
+                        log.Error("Error attemting to register at ZeroSsl: {type} ({code})", result.Error.Type, result.Error.Code);
                     }
                     else 
                     {
-                        _log.Error("Invalid response while attemting to register at ZeroSsl");
+                        log.Error("Invalid response while attemting to register at ZeroSsl");
                     }
                 }
                 else
                 {
-                    _log.Error("Unexpected response while attemting to register at ZeroSsl");
+                    log.Error("Unexpected response while attemting to register at ZeroSsl");
                 }
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Unexpected error while attemting to register at ZeroSsl");
+                log.Error(ex, "Unexpected error while attemting to register at ZeroSsl");
             }
             return null;
         }
@@ -86,7 +79,7 @@ namespace PKISharp.WACS.Clients.Acme
                     var result = JsonSerializer.Deserialize(content, WacsJson.Insensitive.ZeroSslEabCredential);
                     if (result == null)
                     {
-                        _log.Error("Invalid response while attemting to obtain credential from ZeroSsl");
+                        log.Error("Invalid response while attemting to obtain credential from ZeroSsl");
                     }
                     else if (result.Success == true)
                     {
@@ -94,21 +87,21 @@ namespace PKISharp.WACS.Clients.Acme
                     }
                     else if (result.Error != null)
                     {
-                        _log.Error("Error attemting to obtain credential from ZeroSsl: {type} ({code})", result.Error.Type, result.Error.Code);
+                        log.Error("Error attemting to obtain credential from ZeroSsl: {type} ({code})", result.Error.Type, result.Error.Code);
                     }
                     else
                     {
-                        _log.Error("Invalid response while attemting to obtain credential from ZeroSsl");
+                        log.Error("Invalid response while attemting to obtain credential from ZeroSsl");
                     }
                 }
                 else
                 {
-                    _log.Error("Unexpected response while attemting to obtain credential from ZeroSsl");
+                    log.Error("Unexpected response while attemting to obtain credential from ZeroSsl");
                 }
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Unexpected error while attemting to obtain credential from ZeroSsl");
+                log.Error(ex, "Unexpected error while attemting to obtain credential from ZeroSsl");
             }
 
             return null;

@@ -11,32 +11,15 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    internal class AcmeOptionsFactory : PluginOptionsFactory<AcmeOptions>
+    internal class AcmeOptionsFactory(
+        Target target,
+        LookupClientProvider dnsClient,
+        ILogService log,
+        ISettingsService settings,
+        IProxyService proxy,
+        ArgumentsInputService arguments) : PluginOptionsFactory<AcmeOptions>
     {
-        private readonly IProxyService _proxy;
-        private readonly ISettingsService _settings;
-        private readonly LookupClientProvider _dnsClient;
-        private readonly ILogService _log;
-        private readonly ArgumentsInputService _arguments;
-        private readonly Target _target;
-
-        public AcmeOptionsFactory(
-            Target target,
-            LookupClientProvider dnsClient,
-            ILogService log,
-            ISettingsService settings,
-            IProxyService proxy,
-            ArgumentsInputService arguments) 
-        {
-            _log = log;
-            _target = target;
-            _arguments = arguments;
-            _settings = settings;
-            _proxy = proxy;
-            _dnsClient = dnsClient;
-        }
-
-        private ArgumentResult<string?> Endpoint => _arguments.
+        private ArgumentResult<string?> Endpoint => arguments.
             GetString<AcmeArguments>(x => x.AcmeDnsServer).
             Validate(x => Task.FromResult(new Uri(x!).ToString() != ""), "invalid uri").
             Required();
@@ -47,8 +30,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 BaseUri = await Endpoint.Interactive(input).GetValue()
             };
-            var acmeDnsClient = new AcmeDnsClient(_dnsClient, _proxy, _log, _settings, input, new Uri(ret.BaseUri!));
-            var identifiers = _target.Parts.SelectMany(x => x.Identifiers).Distinct();
+            var acmeDnsClient = new AcmeDnsClient(dnsClient, proxy, log, settings, input, new Uri(ret.BaseUri!));
+            var identifiers = target.Parts.SelectMany(x => x.Identifiers).Distinct();
             foreach (var identifier in identifiers)
             {
                 var registrationResult = await acmeDnsClient.EnsureRegistration(identifier.Value.Replace("*.", ""), true);
@@ -66,20 +49,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 BaseUri = await Endpoint.GetValue()
             };
-            var acmeDnsClient = new AcmeDnsClient(_dnsClient, _proxy, _log, _settings, null, new Uri(ret.BaseUri!));
-            var identifiers = _target.Parts.SelectMany(x => x.Identifiers).Distinct();
+            var acmeDnsClient = new AcmeDnsClient(dnsClient, proxy, log, settings, null, new Uri(ret.BaseUri!));
+            var identifiers = target.Parts.SelectMany(x => x.Identifiers).Distinct();
             var valid = true;
             foreach (var identifier in identifiers)
             {
                 if (!await acmeDnsClient.EnsureRegistration(identifier.Value.Replace("*.", ""), false))
                 {
-                    _log.Warning("No (valid) acme-dns registration could be found for {identifier}.", identifier);
+                    log.Warning("No (valid) acme-dns registration could be found for {identifier}.", identifier);
                     valid = false;
                 }
             }
             if (!valid)
             {
-                _log.Warning($"Creating this renewal might fail because the acme-dns configuration for one or more identifiers looks unhealthy.");
+                log.Warning($"Creating this renewal might fail because the acme-dns configuration for one or more identifiers looks unhealthy.");
             }
             return ret;
         }

@@ -7,12 +7,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    public class CloudflareOptionsFactory : PluginOptionsFactory<CloudflareOptions>
+    public class CloudflareOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<CloudflareOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-        public CloudflareOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<CloudflareArguments>(a => a.CloudflareApiToken).
             Required();
 

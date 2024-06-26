@@ -27,7 +27,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Linode
             var json = await response.Content.ReadAsStringAsync();
             var domainList = Newtonsoft.Json.JsonConvert.DeserializeObject<DomainListResponse>(json);
 
-            var domainId = domainList?.data?.FirstOrDefault(x => x.domain == domain)?.id ?? 0;
+            var domainId = domainList?.Data?.FirstOrDefault(x => x.Domain == domain)?.Id ?? 0;
             if (domainId == 0)
             {
                 _log.Error($"Linode did not return record on first page for domain: {domain}");
@@ -39,10 +39,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Linode
 
         public async Task<int> CreateRecord(int domainId, string identifier, string value)
         {
-            if (domainId <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(domainId));
-            }
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(domainId);
             var apiUrl = $"v4/domains/{domainId}/records";
             var postData = new
             {
@@ -62,26 +59,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Linode
             //Get new Record ID - used for deleting
             var jsonResponse = await response.Content.ReadAsStringAsync();
             var createResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<DomainRecordCreateResponse>(jsonResponse);
-            if ((createResponse?.id ?? 0) == 0)
+            if ((createResponse?.Id ?? 0) == 0)
             {
                 _log.Error($"Linode did not create record: {jsonResponse}");
                 return 0;
             }
-            _log.Information($"Linode created TXT Record with ID: {createResponse?.id}");
-            return createResponse?.id ?? 0;
+            _log.Information($"Linode created TXT Record with ID: {createResponse?.Id}");
+            return createResponse?.Id ?? 0;
         }
 
         public async Task<bool> DeleteRecord(int domainId, int recordId)
         {
-            if (domainId <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(domainId));
-            }
-
-            if (recordId <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(recordId));
-            }
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(domainId);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(recordId);
             var apiUrl = $"v4/domains/{domainId}/records/{recordId}";
             var response = await _httpClient.DeleteAsync(apiUrl);
             if (!response.IsSuccessStatusCode)

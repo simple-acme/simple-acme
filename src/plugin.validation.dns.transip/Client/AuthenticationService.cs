@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace TransIp.Library
 {
-    public class AuthenticationService : BaseService
+    public partial class AuthenticationService : BaseService
     {
         private readonly string _login;
         private readonly ICipherParameters? _key;
@@ -102,7 +102,7 @@ namespace TransIp.Library
             }
             if (!key.Contains('\n'))
             {
-                var innerKey = Regex.Match(key, "(-----.+-----)(.+)?(-----.+-----)", RegexOptions.Multiline);
+                var innerKey = PemSection().Match(key);
                 if (innerKey.Success)
                 {
                     key = innerKey.Groups[1].Value + innerKey.Groups[2].Value.Replace(" ", "\n") + innerKey.Groups[3].Value;
@@ -154,5 +154,8 @@ namespace TransIp.Library
             [JsonProperty("global_key")]
             public bool GlobalKey { get; set; }
         }
+
+        [GeneratedRegex("(-----.+-----)(.+)?(-----.+-----)", RegexOptions.Multiline)]
+        private static partial Regex PemSection();
     }
 }

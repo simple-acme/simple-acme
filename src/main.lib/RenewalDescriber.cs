@@ -1,5 +1,4 @@
 ﻿using Autofac.Core;
-using Fclp.Internals.Extensions;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Services;
@@ -10,33 +9,16 @@ using System.Linq;
 
 namespace PKISharp.WACS
 {
-    internal class RenewalDescriber
+    internal class RenewalDescriber(
+        ISharingLifetimeScope container,
+        IPluginService plugin,
+        ISettingsService settings,
+        IInputService input,
+        ILogService log,
+        DueDateStaticService dueDate,
+        IAutofacBuilder autofacBuilder)
     {
-        private readonly IPluginService _plugin;
-        private readonly ISharingLifetimeScope _container;
-        private readonly IAutofacBuilder _scopeBuilder;
-        private readonly ISettingsService _settings;
-        private readonly IInputService _input;
-        private readonly ILogService _log;
-        private readonly DueDateStaticService _dueDate;
-
-        public RenewalDescriber(
-            ISharingLifetimeScope container,
-            IPluginService plugin,
-            ISettingsService settings,
-            IInputService input,
-            ILogService log,
-            DueDateStaticService dueDate,
-            IAutofacBuilder autofacBuilder)
-        {
-            _settings = settings;
-            _container = container;
-            _scopeBuilder = autofacBuilder;
-            _log = log;
-            _plugin = plugin;
-            _input = input;
-            _dueDate = dueDate;
-        }
+        private readonly DueDateStaticService _dueDate = dueDate;
 
         /// <summary>
         /// Write the command line that can be used to create 
@@ -46,9 +28,9 @@ namespace PKISharp.WACS
         {
             // List the command line that may be used to (re)create this renewal
             var args = new Dictionary<string, string?>();
-            var addArgs = (PluginOptions p) =>
+            void addArgs(PluginOptions p)
             {
-                var arguments = p.Describe(_container, _scopeBuilder, _plugin);
+                var arguments = p.Describe(container, autofacBuilder, plugin);
                 foreach (var arg in arguments)
                 {
                     var meta = arg.Key;
@@ -89,21 +71,21 @@ namespace PKISharp.WACS
                         }
                     }
                 }
-            };
+            }
 
-            args.Add("source", _plugin.GetPlugin(renewal.TargetPluginOptions).Name.ToLower());
+            args.Add("source", plugin.GetPlugin(renewal.TargetPluginOptions).Name.ToLower());
             addArgs(renewal.TargetPluginOptions);
-            var validationPlugin = _plugin.GetPlugin(renewal.ValidationPluginOptions);
+            var validationPlugin = plugin.GetPlugin(renewal.ValidationPluginOptions);
             var validationName = validationPlugin.Name.ToLower();
-            if (!string.Equals(validationName, _settings.Validation.DefaultValidation ?? "selfhosting", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(validationName, settings.Validation.DefaultValidation ?? "selfhosting", StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("validation", validationName);
             }
             addArgs(renewal.ValidationPluginOptions);
             if (renewal.OrderPluginOptions != null)
             {
-                var orderName = _plugin.GetPlugin(renewal.OrderPluginOptions).Name.ToLower();
-                if (!string.Equals(orderName, _settings.Order.DefaultPlugin ?? "single", StringComparison.OrdinalIgnoreCase))
+                var orderName = plugin.GetPlugin(renewal.OrderPluginOptions).Name.ToLower();
+                if (!string.Equals(orderName, settings.Order.DefaultPlugin ?? "single", StringComparison.OrdinalIgnoreCase))
                 {
                     args.Add("order", orderName);
                 }
@@ -111,15 +93,15 @@ namespace PKISharp.WACS
             }
             if (renewal.CsrPluginOptions != null)
             {
-                var csrName = _plugin.GetPlugin(renewal.CsrPluginOptions).Name.ToLower();
-                if (!string.Equals(csrName, _settings.Csr.DefaultCsr ?? "rsa", StringComparison.OrdinalIgnoreCase))
+                var csrName = plugin.GetPlugin(renewal.CsrPluginOptions).Name.ToLower();
+                if (!string.Equals(csrName, settings.Csr.DefaultCsr ?? "rsa", StringComparison.OrdinalIgnoreCase))
                 {
                     args.Add("csr", csrName);
                 }
                 addArgs(renewal.CsrPluginOptions);
             }
-            var storeNames = string.Join(",", renewal.StorePluginOptions.Select(_plugin.GetPlugin).Select(x => x.Name.ToLower()));
-            if (!string.Equals(storeNames, _settings.Store.DefaultStore ?? "certificatestore", StringComparison.OrdinalIgnoreCase))
+            var storeNames = string.Join(",", renewal.StorePluginOptions.Select(plugin.GetPlugin).Select(x => x.Name.ToLower()));
+            if (!string.Equals(storeNames, settings.Store.DefaultStore ?? "certificatestore", StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("store", storeNames);
             }
@@ -127,8 +109,8 @@ namespace PKISharp.WACS
             {
                 addArgs(so);
             }
-            var installationNames = string.Join(",", renewal.InstallationPluginOptions.Select(_plugin.GetPlugin).Select(x => x.Name.ToLower()));
-            if (!string.Equals(installationNames, _settings.Installation.DefaultInstallation ?? "none", StringComparison.OrdinalIgnoreCase))
+            var installationNames = string.Join(",", renewal.InstallationPluginOptions.Select(plugin.GetPlugin).Select(x => x.Name.ToLower()));
+            if (!string.Equals(installationNames, settings.Installation.DefaultInstallation ?? "none", StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("installation", installationNames);
             }
@@ -169,139 +151,139 @@ namespace PKISharp.WACS
         {
             try
             {
-                _input.CreateSpace();
-                _input.Show("Id", renewal.Id);
-                _input.Show("File", $"{renewal.Id}.renewal.json");
+                input.CreateSpace();
+                input.Show("Id", renewal.Id);
+                input.Show("File", $"{renewal.Id}.renewal.json");
                 if (string.IsNullOrWhiteSpace(renewal.Account))
                 {
-                    _input.Show("Account", "Default account");
+                    input.Show("Account", "Default account");
                 }
                 else
                 {
-                    _input.Show("Account", $"Named account: {renewal.Account}");
+                    input.Show("Account", $"Named account: {renewal.Account}");
                 }
                 if (string.IsNullOrWhiteSpace(renewal.FriendlyName))
                 {
-                    _input.Show("Auto-FriendlyName", renewal.LastFriendlyName);
+                    input.Show("Auto-FriendlyName", renewal.LastFriendlyName);
                 }
                 else
                 {
-                    _input.Show("FriendlyName", renewal.FriendlyName);
+                    input.Show("FriendlyName", renewal.FriendlyName);
                 }
-                _input.Show(".pfx password", renewal.PfxPassword?.Value);
+                input.Show(".pfx password", renewal.PfxPassword?.Value);
                 var expires = renewal.History.Where(x => x.Success == true).LastOrDefault()?.ExpireDate;
                 if (expires == null)
                 {
-                    _input.Show("Expires", "Unknown");
+                    input.Show("Expires", "Unknown");
                 }
                 else
                 {
-                    _input.Show("Expires", _input.FormatDate(expires.Value));
+                    input.Show("Expires", input.FormatDate(expires.Value));
                 }
                 var dueDate = _dueDate.DueDate(renewal);
                 if (dueDate == null)
                 {
-                    _input.Show("Renewal due", "Now");
+                    input.Show("Renewal due", "Now");
                 }
                 else
                 {
                     if (dueDate.Start != dueDate.End)
                     {
-                        _input.Show("Renewal due start", _input.FormatDate(dueDate.Start));
-                        _input.Show("Renewal due end", _input.FormatDate(dueDate.End));
+                        input.Show("Renewal due start", input.FormatDate(dueDate.Start));
+                        input.Show("Renewal due end", input.FormatDate(dueDate.End));
                     }
                     else
                     {
-                        _input.Show("Renewal due", _input.FormatDate(dueDate.End));
+                        input.Show("Renewal due", input.FormatDate(dueDate.End));
                     }
                 }
-                _input.Show("Renewed", $"{renewal.History.Where(x => x.Success == true).Count()} times");
-                _input.Show("Command", Describe(renewal));
+                input.Show("Renewed", $"{renewal.History.Where(x => x.Success == true).Count()} times");
+                input.Show("Command", Describe(renewal));
 
-                _input.CreateSpace();
-                _input.Show($"Plugins");
-                _input.CreateSpace();
+                input.CreateSpace();
+                input.Show($"Plugins");
+                input.CreateSpace();
 
-                renewal.TargetPluginOptions.Show(_input, _plugin);
-                renewal.ValidationPluginOptions.Show(_input, _plugin);
-                renewal.OrderPluginOptions?.Show(_input, _plugin);
-                renewal.CsrPluginOptions?.Show(_input, _plugin);
+                renewal.TargetPluginOptions.Show(input, plugin);
+                renewal.ValidationPluginOptions.Show(input, plugin);
+                renewal.OrderPluginOptions?.Show(input, plugin);
+                renewal.CsrPluginOptions?.Show(input, plugin);
                 foreach (var ipo in renewal.StorePluginOptions)
                 {
-                    ipo.Show(_input, _plugin);
+                    ipo.Show(input, plugin);
                 }
                 foreach (var ipo in renewal.InstallationPluginOptions)
                 {
-                    ipo.Show(_input, _plugin);
+                    ipo.Show(input, plugin);
                 }
-                _input.CreateSpace();
-                _input.Show($"Orders");
-                _input.CreateSpace();
+                input.CreateSpace();
+                input.Show($"Orders");
+                input.CreateSpace();
                 var orders = _dueDate.CurrentOrders(renewal);
                 var i = 0;
                 foreach (var order in orders)
                 {
-                    _input.Show($"Order {++i}/{orders.Count}", order.Key);
-                    _input.Show($"Renewed", $"{order.RenewCount} times", 1);
-                    _input.Show($"Last thumbprint", order.LastThumbprint, 1);
+                    input.Show($"Order {++i}/{orders.Count}", order.Key);
+                    input.Show($"Renewed", $"{order.RenewCount} times", 1);
+                    input.Show($"Last thumbprint", order.LastThumbprint, 1);
                     if (order.LastRenewal != null)
                     {
-                        _input.Show($"Last date", _input.FormatDate(order.LastRenewal.Value), 1);
+                        input.Show($"Last date", input.FormatDate(order.LastRenewal.Value), 1);
                     }
                     var orderDue = order.DueDate;
                     if (orderDue.Start != orderDue.End)
                     {
-                        _input.Show("Next start", _input.FormatDate(orderDue.Start), 1);
-                        _input.Show("Next end", _input.FormatDate(orderDue.End), 1);
+                        input.Show("Next start", input.FormatDate(orderDue.Start), 1);
+                        input.Show("Next end", input.FormatDate(orderDue.End), 1);
                     }
                     else
                     {
-                        _input.Show("Next due", _input.FormatDate(orderDue.End), 1);
+                        input.Show("Next due", input.FormatDate(orderDue.End), 1);
                     }
                     if (order.Revoked)
                     {
-                        _input.Show($"Revoked", "true", 1);
+                        input.Show($"Revoked", "true", 1);
                     }
-                    _input.CreateSpace();
+                    input.CreateSpace();
                 }
 
-                _input.Show($"History");
-                _input.CreateSpace();
+                input.Show($"History");
+                input.CreateSpace();
 
                 var historyLimit = 10;
                 var h = renewal.History.Count;
                 foreach (var history in renewal.History.AsEnumerable().Reverse().Take(historyLimit))
                 {
-                    _input.Show($"History {h--}/{renewal.History.Count}");
-                    _input.Show($"Date", _input.FormatDate(history.Date), 1);
+                    input.Show($"History {h--}/{renewal.History.Count}");
+                    input.Show($"Date", input.FormatDate(history.Date), 1);
                     foreach (var order in history.OrderResults)
                     {
-                        _input.Show($"Order", order.Name, 1);
+                        input.Show($"Order", order.Name, 1);
                         if (order.Success == true)
                         {
-                            _input.Show($"Success", "true", 2);
-                            _input.Show($"Thumbprint", order.Thumbprint, 2);
+                            input.Show($"Success", "true", 2);
+                            input.Show($"Thumbprint", order.Thumbprint, 2);
                         }
                         if (order.Missing == true)
                         {
-                            _input.Show($"Missing", "true", 2);
+                            input.Show($"Missing", "true", 2);
                         }
                         if (order.Revoked == true)
                         {
-                            _input.Show($"Revoked", "true", 2);
+                            input.Show($"Revoked", "true", 2);
                         }
-                        if (order.ErrorMessages != null && order.ErrorMessages.Any())
+                        if (order.ErrorMessages != null && order.ErrorMessages.Count != 0)
                         {
-                            _input.Show($"Errors", string.Join(", ", order.ErrorMessages.Select(x => x.ReplaceNewLines())), 2);
+                            input.Show($"Errors", string.Join(", ", order.ErrorMessages.Select(x => x.ReplaceNewLines())), 2);
                         }
                     }
-                    _input.CreateSpace();
+                    input.CreateSpace();
                 }
 
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Unable to list details for target");
+                log.Error(ex, "Unable to list details for target");
             }
         }
     }

@@ -11,27 +11,18 @@ using System;
 
 namespace PKISharp.WACS.Context
 {
-    public class ValidationContextParameters
+    public class ValidationContextParameters(
+        AuthorizationContext authorization,
+        TargetPart targetPart,
+        ValidationPluginOptions options,
+        Plugin plugin)
     {
-        public ValidationContextParameters(
-            AuthorizationContext authorization,
-            TargetPart targetPart,
-            ValidationPluginOptions options,
-            Plugin plugin)
-        {
-            TargetPart = targetPart;
-            OrderContext = authorization.Order;
-            Authorization = authorization.Authorization;
-            Label = authorization.Label;
-            Options = options;
-            Name = plugin.Name;
-        }
-        public OrderContext OrderContext { get; }
-        public ValidationPluginOptions Options { get; }
-        public TargetPart TargetPart { get; }
-        public AcmeAuthorization Authorization { get; }
-        public string Label { get; }
-        public string Name { get; }
+        public OrderContext OrderContext { get; } = authorization.Order;
+        public ValidationPluginOptions Options { get; } = options;
+        public TargetPart TargetPart { get; } = targetPart;
+        public AcmeAuthorization Authorization { get; } = authorization.Authorization;
+        public string Label { get; } = authorization.Label;
+        public string Name { get; } = plugin.Name;
     }
 
     public class ValidationContext

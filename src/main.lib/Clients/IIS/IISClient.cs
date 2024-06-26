@@ -103,9 +103,9 @@ namespace PKISharp.WACS.Clients.IIS
             {
                 if (ServerManager == null)
                 {
-                    return new List<IISSiteWrapper>();
+                    return [];
                 }
-                _sites ??= ServerManager.Sites.AsEnumerable().
+                _sites ??= [.. ServerManager.Sites.AsEnumerable().
                        Select(x => new IISSiteWrapper(x)).
                        Where(s =>
                        {
@@ -129,19 +129,18 @@ namespace PKISharp.WACS.Clients.IIS
                                    return false;
                            }
                        }).
-                       OrderBy(s => s.Name).
-                       ToList();
+                       OrderBy(s => s.Name)];
                 return _sites;
             }
         }
 
         public IISSiteWrapper GetSite(long id, IISSiteType? type)
         {
-            var ret = Sites.Where(s => s.Site.Id == id).FirstOrDefault();
-            if (ret == null)
-            {
+            var ret = Sites.
+                Where(s => s.Site.Id == id).
+                FirstOrDefault() ?? 
                 throw new Exception($"Unable to find IIS SiteId #{id}");
-            }
+
             if (type != null && ret.Type != type)
             {
                 throw new Exception($"IIS SiteId #{id} is not of the expected type {type}");
@@ -335,6 +334,12 @@ namespace PKISharp.WACS.Clients.IIS
         /// <returns></returns>
         private Version GetIISVersion(AdminService adminService)
         {
+            // Obviously...
+            if (!OperatingSystem.IsWindows())
+            {
+                return new Version(0, 0);
+            }
+
             // Get the W3SVC service
             try
             {

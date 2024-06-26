@@ -10,17 +10,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// Domeneshop DNS validation
     /// </summary>
-    internal class DomeneshopOptionsFactory : PluginOptionsFactory<DomeneshopOptions>
+    internal class DomeneshopOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<DomeneshopOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public DomeneshopOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ClientId => _arguments.
+        private ArgumentResult<ProtectedString?> ClientId => arguments.
             GetProtectedString<DomeneshopArguments>(a => a.ClientId).
             Required();
 
-        private ArgumentResult<ProtectedString?> ClientSecret => _arguments.
+        private ArgumentResult<ProtectedString?> ClientSecret => arguments.
             GetProtectedString<DomeneshopArguments>(a => a.ClientSecret);
 
         public override async Task<DomeneshopOptions?> Aquire(IInputService input, RunLevel runLevel)

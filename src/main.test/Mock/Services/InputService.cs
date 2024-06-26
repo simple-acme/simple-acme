@@ -6,11 +6,10 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
-    class InputService : IInputService
+    class InputService(List<string> inputs) : IInputService
     {
-        private readonly Queue<string> _inputs;
+        private readonly Queue<string> _inputs = new(inputs);
         private string GetNextInput() => _inputs.Dequeue();
-        public InputService(List<string> inputs) => _inputs = new Queue<string>(inputs);
 
         public Task<TResult?> ChooseOptional<TSource, TResult>(
             string what,

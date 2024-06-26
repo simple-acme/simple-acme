@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Utilities.IO.Pem;
-using openssl = Org.BouncyCastle.OpenSsl;
+using OpenSsl = Org.BouncyCastle.OpenSsl;
 
 namespace PKISharp.WACS.Services
 {
@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Services
             string pem;
             using (var tw = new StringWriter())
             {
-                var pw = new openssl.PemWriter(tw);
+                var pw = new OpenSsl.PemWriter(tw);
                 if (string.IsNullOrEmpty(password))
                 {
                     pw.WriteObject(obj);
@@ -49,7 +49,7 @@ namespace PKISharp.WACS.Services
         public static T? ParsePem<T>(string pem) where T: class
         {
             using var tr = new StringReader(pem);
-            var pr = new openssl.PemReader(tr);
+            var pr = new OpenSsl.PemReader(tr);
             return pr.ReadObject() as T;
         }
     }

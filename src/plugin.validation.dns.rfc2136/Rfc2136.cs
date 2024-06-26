@@ -9,13 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Reflection;
-using System.Runtime.Versioning;
-using System.Security.Policy;
 using System.Threading.Tasks;
 using ArDnsClient = ARSoft.Tools.Net.Dns.DnsClient;
-
-[assembly: SupportedOSPlatform("windows")]
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -31,7 +26,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private readonly Rfc2136Options _options;
         private readonly LookupClientProvider _lookupClientProvider;
         private readonly DomainParseService _domainParser;
-        private readonly Dictionary<string, string> _zoneMap = new();
+        private readonly Dictionary<string, string> _zoneMap = [];
         private ArDnsClient? _client;
 
         public Rfc2136(
@@ -67,8 +62,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             var domain = record.Authority.Domain;
-            var topZone = _zoneMap.ContainsKey(domain) ? 
-                _zoneMap[domain] : 
+            var topZone = _zoneMap.TryGetValue(domain, out string? value) ? value : 
                 _domainParser.GetRegisterableDomain(domain);
             var subDomains = domain.
                 Split(".").
@@ -93,11 +87,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     // Cache succesful zone result after succesful
                     // update so that we don't have to retry again
                     // for subsequent adds and deletes.
-                    if (!_zoneMap.ContainsKey(domain))
-                    {
-                        _zoneMap.Add(domain, currentZone);
-                    }
-
+                    _zoneMap.TryAdd(domain, currentZone);
                     return true;
                 }
                 catch (Exception ex)
@@ -105,7 +95,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     _log.Debug("Error creating {domain} in zone {zone}: {ex}", domain, currentZone, ex.Message);
                 }
 
-                if (subDomains.Any())
+                if (subDomains.Count != 0)
                 {
                     currentZone = $"{subDomains.Last()}.{currentZone}";
                     subDomains.RemoveAt(subDomains.Count - 1);
@@ -125,8 +115,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
             var domain = record.Authority.Domain;
-            var topZone = _zoneMap.ContainsKey(domain) ?
-                _zoneMap[domain] :
+            var topZone = _zoneMap.TryGetValue(domain, out string? value) ? value :
                 _domainParser.GetRegisterableDomain(domain);
             var msg = new DnsUpdateMessage { ZoneName = DomainName.Parse(topZone) };
             var txtRecord = new TxtRecord(DomainName.Parse(domain), 0, record.Value);

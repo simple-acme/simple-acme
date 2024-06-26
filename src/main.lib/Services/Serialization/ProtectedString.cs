@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -54,7 +55,14 @@ namespace PKISharp.WACS.Services.Serialization
             }
             if (encrypt) 
             {
-                return EncryptedPrefix + Protect(Value);
+                if (OperatingSystem.IsWindows())
+                {
+                    return EncryptedPrefix + Protect(Value);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Configuration encryption is only supported on Windows. Disable the setting in settings.json.");
+                }
             } 
             else
             {
@@ -101,7 +109,9 @@ namespace PKISharp.WACS.Services.Serialization
                     // Sure to be encrypted
                     try
                     {
-                        Value = Unprotect(rawValue.Substring(EncryptedPrefix.Length));
+                        Value = OperatingSystem.IsWindows() ? 
+                            Unprotect(rawValue[EncryptedPrefix.Length..]) : 
+                            throw new InvalidOperationException();
                     }
                     catch
                     {
@@ -137,31 +147,6 @@ namespace PKISharp.WACS.Services.Serialization
         }
 
         /// <summary>
-        /// Encrypted value should be used when the "EncryptConfig" setting is true
-        /// </summary>
-        internal string? ProtectedValue
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(Value) || Error)
-                {
-                    return Value;
-                }
-                else if (Value.StartsWith(SecretServiceManager.VaultPrefix))
-                {
-                    // Values referring to a SecretService entry 
-                    // are stored in plain text to make them easier 
-                    // to find and manipulate
-                    return Value;
-                } 
-                else
-                {
-                    return EncryptedPrefix + Protect(Value);
-                }
-            }
-        }
-
-        /// <summary>
         /// Base64 encode a string
         /// </summary>
         /// <param name="clearText"></param>
@@ -179,6 +164,7 @@ namespace PKISharp.WACS.Services.Serialization
         /// <param name="optionalEntropy"></param>
         /// <param name="scope"></param>
         /// <returns></returns>
+        [SupportedOSPlatform("windows")]
         private static string Protect(string clearText, string? optionalEntropy = null, DataProtectionScope scope = DataProtectionScope.LocalMachine)
         {
             var clearBytes = Encoding.UTF8.GetBytes(clearText);
@@ -196,6 +182,7 @@ namespace PKISharp.WACS.Services.Serialization
         /// <param name="optionalEntropy"></param>
         /// <param name="scope"></param>
         /// <returns></returns>
+        [SupportedOSPlatform("windows")]
         private static string? Unprotect(string encryptedText, string? optionalEntropy = null, DataProtectionScope scope = DataProtectionScope.LocalMachine)
         {
             if (encryptedText == null)

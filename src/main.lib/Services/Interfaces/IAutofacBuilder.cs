@@ -94,7 +94,7 @@ namespace PKISharp.WACS.Services
         /// <param name="execution"></param>
         /// <param name="identifier"></param>
         /// <returns></returns>
-        PluginFrontend<IValidationPluginCapability, ValidationPluginOptions>
+        PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>
             ValidationFrontend(ILifetimeScope execution, ValidationPluginOptions options, Identifier identifier);
     }
 }

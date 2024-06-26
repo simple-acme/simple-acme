@@ -8,19 +8,16 @@ namespace PKISharp.WACS.Services
     /// <summary>
     /// Handles exception logging and process exit code
     /// </summary>
-    internal class ExceptionHandler
+    /// <param name="log">
+    /// Logging
+    /// </param>
+    internal class ExceptionHandler(ILogService log)
     {
-        /// <summary>
-        /// Logging
-        /// </summary>
-        private readonly ILogService _log;
 
         /// <summary>
         /// Code that we are going to exit the process with
         /// </summary>
         public int ExitCode { get; private set; } = 0;
-
-        public ExceptionHandler(ILogService log) => _log = log;
 
         /// <summary>
         /// Handle exceptions by logging them and setting negative exit code
@@ -48,13 +45,13 @@ namespace PKISharp.WACS.Services
                         // InnerMost exception is logged with Error priority
                         if (!string.IsNullOrEmpty(message))
                         {
-                            _log.Error($"({{type}}) {message}: {{message}}", currentException.GetType().Name, currentException.Message);
+                            log.Error($"({{type}}) {message}: {{message}}", currentException.GetType().Name, currentException.Message);
                         }
                         else
                         {
-                            _log.Error("({type}): {message}", currentException.GetType().Name, currentException.Message);
+                            log.Error("({type}): {message}", currentException.GetType().Name, currentException.Message);
                         }
-                        _log.Debug("Exception details: {@ex}", currentException);
+                        log.Debug("Exception details: {@ex}", currentException);
                         ExitCode = currentException.HResult;
                     }
                     else if (
@@ -62,18 +59,18 @@ namespace PKISharp.WACS.Services
                         currentException is not AggregateException)
                     {
                         // Outer exceptions up to the point of Autofac logged with error priority
-                        _log.Error("Wrapped in {type}: {message}", currentException.GetType().Name, currentException.Message);
+                        log.Error("Wrapped in {type}: {message}", currentException.GetType().Name, currentException.Message);
                     }
                     else
                     {
                         // Autofac and Async exceptions only logged in debug/verbose mode
-                        _log.Debug("Wrapped in {type}: {message}", currentException.GetType().Name, currentException.Message);
+                        log.Debug("Wrapped in {type}: {message}", currentException.GetType().Name, currentException.Message);
                     }
                 }
             }
             else if (!string.IsNullOrEmpty(message))
             {
-                _log.Error(message);
+                log.Error(message);
             }
             ExitCode = -1;
             return outMessage;

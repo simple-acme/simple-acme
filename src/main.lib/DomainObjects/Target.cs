@@ -14,7 +14,7 @@ namespace PKISharp.WACS.DomainObjects
             this(friendlyName, string.IsNullOrWhiteSpace(commonName) ? null : new DnsIdentifier(commonName), parts) { }
 
         public Target(Identifier identifier) : 
-            this(new List<Identifier> { identifier }) { }
+            this([identifier]) { }
 
         public Target(IEnumerable<Identifier> identifiers)
         {
@@ -24,7 +24,7 @@ namespace PKISharp.WACS.DomainObjects
             }
             CommonName = identifiers.Where(x => x.Value.Length <= Constants.MaxCommonName).FirstOrDefault();
             FriendlyName = (CommonName ?? identifiers.First()).Value;
-            Parts = new[] { new TargetPart(identifiers) };
+            Parts = [new TargetPart(identifiers)];
         }
 
         public Target(string? friendlyName, Identifier? commonName, IList<TargetPart> parts)

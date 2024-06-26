@@ -15,12 +15,11 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         DefaultCapability, WacsJsonPlugins>
         ("b9060d4b-c2d3-49ac-b37f-962e7c3cbe9d", 
         "RSA", "RSA key")]
-    internal class Rsa : CsrPlugin<RsaOptions>
+    internal class Rsa(
+        ILogService log,
+        ISettingsService settings,
+        RsaOptions options) : CsrPlugin<RsaOptions>(log, settings, options)
     {
-        public Rsa(
-            ILogService log,
-            ISettingsService settings,
-            RsaOptions options) : base(log, settings, options) { }
 
         /// <summary>
         /// Generate new RSA key pair

@@ -9,8 +9,9 @@ using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Plugins.Resolvers;
 using PKISharp.WACS.Plugins.ValidationPlugins;
 using PKISharp.WACS.Services;
-using PKISharp.WACS.Services.Interfaces;
+using PKISharp.WACS.Services.AutoRenew;
 using PKISharp.WACS.Services.Serialization;
+using System;
 
 namespace PKISharp.WACS.Host
 {
@@ -74,7 +75,14 @@ namespace PKISharp.WACS.Host
                 _ = builder.RegisterType<DueDateStaticService>().SingleInstance();
                 _ = builder.RegisterType<DueDateRuntimeService>().SingleInstance();
                 _ = builder.RegisterType<SecretServiceManager>().SingleInstance();
-                _ = builder.RegisterType<TaskSchedulerService>().SingleInstance();
+                if (OperatingSystem.IsWindows())
+                {
+                    _ = builder.RegisterType<TaskSchedulerService>().As<IAutoRenewService>().SingleInstance();
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    _ = builder.RegisterType<CronJobService>().As<IAutoRenewService>().SingleInstance();
+                }
                 _ = builder.RegisterType<NotificationService>().SingleInstance();
                 _ = builder.RegisterType<RenewalExecutor>().SingleInstance();
                 _ = builder.RegisterType<RenewalManager>().SingleInstance();

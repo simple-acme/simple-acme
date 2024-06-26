@@ -1,15 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Runtime.Versioning;
-using System.Threading.Tasks;
-using DigitalOcean.API;
+﻿using DigitalOcean.API;
 using DigitalOcean.API.Models.Requests;
 using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
-
-[assembly: SupportedOSPlatform("windows")]
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -18,18 +15,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DnsValidationCapability, DigitalOceanJson>
         ("1a87d670-3fa3-4a2a-bb10-491d48feb5db",
         "DigitalOcean", "Create verification records on DigitalOcean")]
-    internal class DigitalOcean : DnsValidation<DigitalOcean>
+    internal class DigitalOcean(
+        DigitalOceanOptions options, LookupClientProvider dnsClient,
+        SecretServiceManager ssm, ILogService log,
+        ISettingsService settings) : DnsValidation<DigitalOcean>(dnsClient, log, settings)
     {
-        private readonly IDigitalOceanClient _doClient;
+        private readonly IDigitalOceanClient _doClient = new DigitalOceanClient(ssm.EvaluateSecret(options.ApiToken));
         private long? _recordId;
         private string? _zone;
-
-        public DigitalOcean(
-            DigitalOceanOptions options, LookupClientProvider dnsClient,
-            SecretServiceManager ssm, ILogService log, 
-            ISettingsService settings) : 
-            base(dnsClient, log, settings) 
-            => _doClient = new DigitalOceanClient(ssm.EvaluateSecret(options.ApiToken));
 
         public override async Task DeleteRecord(DnsValidationRecord record)
         {

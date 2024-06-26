@@ -11,16 +11,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
     /// <summary>
     /// HTTP validation through REST endpoints on the server
     /// </summary>
-    internal sealed class RestOptionsFactory : PluginOptionsFactory<RestOptions>
+    internal sealed class RestOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<RestOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public RestOptionsFactory(ArgumentsInputService arguments) => _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> SecurityToken => _arguments
+        private ArgumentResult<ProtectedString?> SecurityToken => arguments
             .GetProtectedString<RestArguments>(a => a.SecurityToken)
             .Required();
-        private ArgumentResult<bool?> UseHttps => _arguments
+
+        private ArgumentResult<bool?> UseHttps => arguments
             .GetBool<RestArguments>(a => a.UseHttps)
             .WithDefault(false)
             .Required();

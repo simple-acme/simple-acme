@@ -10,18 +10,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// DnsMadeEasy DNS validation
     /// </summary>
-    internal class DnsMadeEasyOptionsFactory : PluginOptionsFactory<DnsMadeEasyOptions>
+    internal class DnsMadeEasyOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<DnsMadeEasyOptions>
     {
-        private readonly ArgumentsInputService _arguments;
-
-        public DnsMadeEasyOptionsFactory(ArgumentsInputService arguments) => 
-            _arguments = arguments;
-
-        private ArgumentResult<ProtectedString?> ApiKey => _arguments.
+        private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<DnsMadeEasyArguments>(a => a.ApiKey).
             Required();
 
-        private ArgumentResult<ProtectedString?> ApiSecret => _arguments.
+        private ArgumentResult<ProtectedString?> ApiSecret => arguments.
             GetProtectedString<DnsMadeEasyArguments>(a => a.ApiSecret);
 
         public override async Task<DnsMadeEasyOptions?> Aquire(IInputService input, RunLevel runLevel)

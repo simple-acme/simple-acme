@@ -19,61 +19,31 @@ using Single = PKISharp.WACS.Plugins.OrderPlugins.Single;
 
 namespace PKISharp.WACS.Plugins.Resolvers
 {
-    internal class InteractiveResolver : IResolver
+    internal class InteractiveResolver(
+        ILogService log,
+        IInputService inputService,
+        ISettingsService settings,
+        MainArguments arguments,
+        IPluginService pluginService,
+        ILifetimeScope scope,
+        IAutofacBuilder autofacBuilder,
+        RunLevel runLevel) : IResolver
     {
-        private readonly IPluginService _plugins;
-        private readonly MainArguments _arguments;
-        private readonly ISettingsService _settings;
-        private readonly ILogService _log;
-        private readonly IAutofacBuilder _autofacBuilder;
-        private readonly IInputService _input;
-        private readonly RunLevel _runLevel;
-        private readonly ILifetimeScope _scope;
-
-        public InteractiveResolver(
-            ILogService log,
-            IInputService inputService,
-            ISettingsService settings,
-            MainArguments arguments,
-            IPluginService pluginService,
-            ILifetimeScope scope,
-            IAutofacBuilder autofacBuilder,
-            RunLevel runLevel)
-        {
-            _log = log;
-            _settings = settings;
-            _arguments = arguments;
-            _input = inputService;
-            _scope = scope;
-            _runLevel = runLevel;
-            _autofacBuilder = autofacBuilder;
-            _plugins = pluginService;
-        }
-
         [DebuggerDisplay("{Meta.Name}")]
-        private class PluginChoice<TCapability, TOptions> 
+        private class PluginChoice<TCapability, TOptions>(
+            Plugin meta,
+            PluginFrontend<TCapability, TOptions> frontend,
+            State state,
+            string description,
+            bool @default)
             where TCapability : IPluginCapability
             where TOptions : PluginOptions, new()
         {
-            public Plugin Meta { get; }
-            public PluginFrontend<TCapability, TOptions> Frontend { get; }
-            public State State { get; }
-            public string Description { get; }
-            public bool Default { get; set; }
-
-            public PluginChoice(
-                Plugin meta, 
-                PluginFrontend<TCapability, TOptions> frontend,
-                State state,
-                string description,
-                bool @default)
-            {
-                Meta = meta;
-                Frontend = frontend;
-                State = state;
-                Description = description;
-                Default = @default;
-            }
+            public Plugin Meta { get; } = meta;
+            public PluginFrontend<TCapability, TOptions> Frontend { get; } = frontend;
+            public State State { get; } = state;
+            public string Description { get; } = description;
+            public bool Default { get; set; } = @default;
         }
 
         private async Task<PluginFrontend<TCapability, TOptions>?> 
@@ -110,10 +80,10 @@ namespace PKISharp.WACS.Plugins.Resolvers
             };
 
             // Apply default sorting when no sorting has been provided yet
-            var options = _plugins.
+            var options = pluginService.
                 GetPlugins(step).
                 Where(x => !x.Hidden).
-                Select(x => _autofacBuilder.PluginFrontend<TCapability, TOptions>(_scope, x)).
+                Select(x => autofacBuilder.PluginFrontend<TCapability, TOptions>(scope, x)).
                 Select(x => x.Resolve<PluginFrontend<TCapability, TOptions>>()).
                 OrderBy(sort ??= x => 1).
                 ThenBy(x => x.OptionsFactory.Order).
@@ -127,7 +97,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 ToList();
            
             // Default out when there are no reasonable plugins to pick
-            if (!options.Any() || options.All(x => x.State.Disabled))
+            if (options.Count == 0 || options.All(x => x.State.Disabled))
             {
                 return null;
             }
@@ -135,17 +105,17 @@ namespace PKISharp.WACS.Plugins.Resolvers
             // Always show the menu in advanced mode, only when no default
             // selection can be made in simple mode
             var className = step.ToString().ToLower();
-            var showMenu = _runLevel.HasFlag(RunLevel.Advanced);
+            var showMenu = runLevel.HasFlag(RunLevel.Advanced);
             if (!string.IsNullOrEmpty(defaultParam1))
             {
-                var defaultPlugin = _plugins.GetPlugin(step, defaultParam1, defaultParam2);
+                var defaultPlugin = pluginService.GetPlugin(step, defaultParam1, defaultParam2);
                 if (defaultPlugin != null)
                 {
                     defaultBackends = defaultBackends.Prepend(defaultPlugin.Backend);
                 } 
                 else
                 {
-                    _log.Error("Unable to find {n} plugin {p}", className, defaultParam1);
+                    log.Error("Unable to find {n} plugin {p}", className, defaultParam1);
                     showMenu = true;
                 }
             }
@@ -161,7 +131,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 }
                 if (defaultOption.State.Disabled)
                 {
-                    _log.Warning("{n} plugin {x} not available: {m}",
+                    log.Warning("{n} plugin {x} not available: {m}",
                         char.ToUpper(className[0]) + className[1..],
                         defaultOption.Frontend.Meta.Name ?? backend.Name,
                         defaultOption.State.Reason);
@@ -182,8 +152,8 @@ namespace PKISharp.WACS.Plugins.Resolvers
             // List plugins for generating new certificates
             if (!string.IsNullOrEmpty(longDescription))
             {
-                _input.CreateSpace();
-                _input.Show(null, longDescription);
+                inputService.CreateSpace();
+                inputService.Show(null, longDescription);
             }
 
             Choice<PluginFrontend<TCapability, TOptions>?> creator(PluginChoice<TCapability, TOptions> choice) {
@@ -195,8 +165,8 @@ namespace PKISharp.WACS.Plugins.Resolvers
             }
 
             return allowAbort
-                ? await _input.ChooseOptional(shortDescription, options, creator, "Abort")
-                : await _input.ChooseRequired(shortDescription, options, creator);
+                ? await inputService.ChooseOptional(shortDescription, options, creator, "Abort")
+                : await inputService.ChooseRequired(shortDescription, options, creator);
         }
 
         /// <summary>
@@ -205,14 +175,15 @@ namespace PKISharp.WACS.Plugins.Resolvers
         /// <returns></returns>
         public async Task<PluginFrontend<IPluginCapability, TargetPluginOptions>?> GetTargetPlugin()
         {
+            Type[] defaults = OperatingSystem.IsWindows() ? [typeof(IIS), typeof(Manual)] : [typeof(Manual)];
             return await GetPlugin<IPluginCapability, TargetPluginOptions>(
                 Steps.Source,
-                defaultParam1: _settings.Source.DefaultSource,
-                defaultBackends: new List<Type>() { typeof(IIS), typeof(Manual) },
+                defaultParam1: settings.Source.DefaultSource,
+                defaultBackends: defaults,
                 shortDescription: "How shall we determine the domain(s) to include in the certificate?",
                 longDescription: "Please specify how the list of domain names that will be included in the certificate " +
                     "should be determined. If you choose for one of the \"all bindings\" options, the list will automatically be " +
-                    "updated for future renewals to reflect the bindings at that time.");;
+                    "updated for future renewals to reflect the bindings at that time.");
         }
 
         /// <summary>
@@ -221,19 +192,19 @@ namespace PKISharp.WACS.Plugins.Resolvers
         /// <returns></returns>
         public async Task<PluginFrontend<IValidationPluginCapability, ValidationPluginOptions>?> GetValidationPlugin()
         {
-            var defaultParam1 = _settings.Validation.DefaultValidation;
-            var defaultParam2 = _settings.Validation.DefaultValidationMode;
+            var defaultParam1 = settings.Validation.DefaultValidation;
+            var defaultParam2 = settings.Validation.DefaultValidationMode;
             if (string.IsNullOrEmpty(defaultParam2))
             {
                 defaultParam2 = Constants.Http01ChallengeType;
             }
-            if (!string.IsNullOrWhiteSpace(_arguments.Validation))
+            if (!string.IsNullOrWhiteSpace(arguments.Validation))
             {
-                defaultParam1 = _arguments.Validation;
+                defaultParam1 = arguments.Validation;
             }
-            if (!string.IsNullOrWhiteSpace(_arguments.ValidationMode))
+            if (!string.IsNullOrWhiteSpace(arguments.ValidationMode))
             {
-                defaultParam2 = _arguments.ValidationMode;
+                defaultParam2 = arguments.ValidationMode;
             }
             return await GetPlugin<IValidationPluginCapability, ValidationPluginOptions>(
                 Steps.Validation,
@@ -250,7 +221,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 description: x => $"[{x.Capability.ChallengeType.Replace("-01", "")}] {x.Meta.Description}",
                 defaultParam1: defaultParam1,
                 defaultParam2: defaultParam2,
-                defaultBackends: new List<Type>() { typeof(SelfHosting), typeof(FileSystem) },
+                defaultBackends: [typeof(SelfHosting), typeof(FileSystem)],
                 shortDescription: "How would you like prove ownership for the domain(s)?",
                 longDescription: "The ACME server will need to verify that you are the owner of the domain names that you are requesting" +
                     " the certificate for. This happens both during initial setup *and* for every future renewal. There are two main methods of doing so: " +
@@ -262,8 +233,8 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IPluginCapability, OrderPluginOptions>(
                    Steps.Order,
-                   defaultParam1: _settings.Order.DefaultPlugin,
-                   defaultBackends: new List<Type>() { typeof(Single) },
+                   defaultParam1: settings.Order.DefaultPlugin,
+                   defaultBackends: [typeof(Single)],
                    shortDescription: "Would you like to split this source into multiple certificates?",
                    longDescription: $"By default your source identifiers are covered by a single certificate. " +
                         $"But if you want to avoid the {Constants.MaxNames} domain limit, want to prevent " +
@@ -276,8 +247,8 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IPluginCapability, CsrPluginOptions>(
                Steps.Csr,
-               defaultParam1: _settings.Csr.DefaultCsr,
-               defaultBackends: new List<Type>() { typeof(Rsa), typeof(Ec) },
+               defaultParam1: settings.Csr.DefaultCsr,
+               defaultBackends: [typeof(Rsa), typeof(Ec)],
                shortDescription: "What kind of private key should be used for the certificate?",
                longDescription: "After ownership of the domain(s) has been proven, we will create a " +
                 "Certificate Signing Request (CSR) to obtain the actual certificate. The CSR " +
@@ -287,7 +258,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
 
         public async Task<PluginFrontend<IPluginCapability, StorePluginOptions>?> GetStorePlugin(IEnumerable<Plugin> chosen)
         {
-            var defaultType = typeof(CertificateStore);
+            var defaultType = OperatingSystem.IsWindows() ? typeof(CertificateStore) : typeof(PemFiles);
             var shortDescription = "How would you like to store the certificate?";
             var longDescription = "When we have the certificate, you can store in one or more ways to make it accessible " +
                         "to your applications. The Windows Certificate Store is the default location for IIS (unless you are " +
@@ -296,19 +267,19 @@ namespace PKISharp.WACS.Plugins.Resolvers
             {
                 longDescription = "";
                 shortDescription = "Would you like to store it in another way too?";
-                defaultType = typeof(StorePlugins.Null);
+                defaultType = typeof(Null);
             }
-            var defaultParam1 = _settings.Store.DefaultStore;
-            if (!string.IsNullOrWhiteSpace(_arguments.Store))
+            var defaultParam1 = settings.Store.DefaultStore;
+            if (!string.IsNullOrWhiteSpace(arguments.Store))
             {
-                defaultParam1 = _arguments.Store;
+                defaultParam1 = arguments.Store;
             }
             var csv = defaultParam1.ParseCsv();
             defaultParam1 = csv?.Count > chosen.Count() ? csv[chosen.Count()] : "";
             return await GetPlugin<IPluginCapability, StorePluginOptions>(
                 Steps.Store,
                 defaultParam1: defaultParam1,
-                defaultBackends: new List<Type>() { defaultType, typeof(PfxFile) },
+                defaultBackends: [defaultType, typeof(PfxFile)],
                 shortDescription: shortDescription,
                 longDescription: longDescription,
                 allowAbort: false);
@@ -324,7 +295,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         public async Task<PluginFrontend<IInstallationPluginCapability, InstallationPluginOptions>?> 
             GetInstallationPlugin(IEnumerable<Plugin> stores, IEnumerable<Plugin> installation)
         {
-            var defaultType = typeof(InstallationPlugins.IIS);
+            var defaultType = OperatingSystem.IsWindows() ? typeof(InstallationPlugins.IIS) : typeof(InstallationPlugins.Script);
             var shortDescription = "Which installation step should run first?";
             var longDescription = "With the certificate saved to the store(s) of your choice, " +
                 "you may choose one or more steps to update your applications, e.g. to configure " +
@@ -335,10 +306,10 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 shortDescription = "Add another installation step?";
                 defaultType = typeof(InstallationPlugins.Null);
             }
-            var defaultParam1 = _settings.Installation.DefaultInstallation;
-            if (!string.IsNullOrWhiteSpace(_arguments.Installation))
+            var defaultParam1 = settings.Installation.DefaultInstallation;
+            if (!string.IsNullOrWhiteSpace(arguments.Installation))
             {
-                defaultParam1 = _arguments.Installation;
+                defaultParam1 = arguments.Installation;
             }
             var csv = defaultParam1.ParseCsv();
             defaultParam1 = csv?.Count > installation.Count() ? csv[installation.Count()] : "";
@@ -346,7 +317,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 Steps.Installation,
                 state: x => x.CanInstall(stores.Select(x => x.Backend), installation.Select(x => x.Backend)),
                 defaultParam1: defaultParam1,
-                defaultBackends: new List<Type>() { defaultType, typeof(InstallationPlugins.Null) },
+                defaultBackends: [defaultType, typeof(InstallationPlugins.Null)],
                 shortDescription: shortDescription,
                 longDescription: longDescription,
                 allowAbort: false);

@@ -163,6 +163,14 @@ namespace PKISharp.WACS.Clients.Acme
         }
 
         /// <summary>
+        /// Get pre-existing orders (if any)
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        internal async Task<AcmeOrders?> GetOrders()
+            => await _client.Retry(() => _client.GetOrdersAsync(_client.Account?.Payload.Orders), _log);
+
+        /// <summary>
         /// Get order status
         /// </summary>
         /// <param name="url"></param>
@@ -292,8 +300,8 @@ namespace PKISharp.WACS.Clients.Acme
             var serialBytes = certificate.Certificate.SerialNumber.ToByteArray();
             var keyAuth = AuthorityKeyIdentifier.GetInstance(certificate.Certificate.GetExtensionValue(X509Extensions.AuthorityKeyIdentifier).GetOctets());
             var keyAuthBytes = keyAuth.GetKeyIdentifier();
-            var serial = Base64Tool.UrlEncode(serialBytes.ToArray());
-            var keyauth = Base64Tool.UrlEncode(keyAuthBytes.ToArray());
+            var serial = Base64Tool.UrlEncode([.. serialBytes]);
+            var keyauth = Base64Tool.UrlEncode([.. keyAuthBytes]);
             return $"{keyauth}.{serial}";
         }
 

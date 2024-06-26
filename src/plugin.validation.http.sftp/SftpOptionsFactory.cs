@@ -9,18 +9,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
     /// <summary>
     /// Sftp validation
     /// </summary>
-    internal class SftpOptionsFactory : HttpValidationOptionsFactory<SftpOptions>
+    internal class SftpOptionsFactory(Target target, ArgumentsInputService arguments) : HttpValidationOptionsFactory<SftpOptions>(arguments, target)
     {
-        public SftpOptionsFactory(Target target, ArgumentsInputService arguments) : base(arguments, target) { }
-
         public override bool PathIsValid(string path) => path.StartsWith("sftp://");
 
         public override string[] WebrootHint(bool allowEmpty)
         {
-            return new[] {
+            return [
                 "SFTP path",
                 "Example, sftp://domain.com:22/site/wwwroot/",
-            };
+            ];
         }
 
         public override async Task<SftpOptions?> Default()

@@ -7,10 +7,13 @@ using System.Collections.Generic;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
-    internal class LogService : ILogService
+    internal class LogService(bool throwErrors) : ILogService
     {
-        private readonly Logger _logger;
-        private readonly bool _throwErrors;
+        private readonly Logger _logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.Console(outputTemplate: " [{Level:u4}] {Message:l}{NewLine}{Exception}")
+                .CreateLogger();
+
         public ConcurrentQueue<string> DebugMessages { get; } = new ConcurrentQueue<string>();
         public ConcurrentQueue<string> WarningMessages { get; } = new ConcurrentQueue<string>();
         public ConcurrentQueue<string> InfoMessages { get; } = new ConcurrentQueue<string>();
@@ -19,18 +22,9 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
 
         public LogService() : this(false) {}
 
-        public LogService(bool throwErrors)
-        {
-            _throwErrors = throwErrors;
-            _logger = new LoggerConfiguration()
-                .MinimumLevel.Verbose()
-                .WriteTo.Console(outputTemplate: " [{Level:u4}] {Message:l}{NewLine}{Exception}")
-                .CreateLogger();
-        }
-
         public bool Dirty { get; set; }
 
-        public IEnumerable<MemoryEntry> Lines => new List<MemoryEntry>();
+        public IEnumerable<MemoryEntry> Lines => [];
 
         public void Debug(string message, params object?[] items)
         {
@@ -41,7 +35,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
         {
             ErrorMessages.Enqueue(message);
             _logger.Error(ex, message, items);
-            if (_throwErrors)
+            if (throwErrors)
             {
                 throw ex;
             }
@@ -50,7 +44,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
         {
             ErrorMessages.Enqueue(message);
             _logger.Error(message, items);
-            if (_throwErrors)
+            if (throwErrors)
             {
                 throw new Exception(message);
             }
@@ -63,8 +57,6 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
         }
 
         public void Information(string message, params object?[] items) => Information(LogType.All, message, items);
-
-        public void SetVerbose() { }
 
         public void Verbose(string message, params object?[] items)
         {
