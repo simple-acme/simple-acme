@@ -26,6 +26,8 @@
 Add-Type -Assembly "system.io.compression.filesystem"
 $Temp = "$Root\build\temp\"
 $Out = "$Root\build\artifacts\"
+$NetVersion = "net8.0"
+
 if (Test-Path $Temp)
 {
     Remove-Item $Temp -Recurse
@@ -49,10 +51,10 @@ function PlatformRelease
 	}
 	$MainZip = "simple-acme.v$Version.$Platform.$Postfix.zip"
 	$MainZipPath = "$Out\$MainZip"
-	$MainBinDir = "$Root\src\main\bin\$ReleaseType\net8.0\$Platform"
+	$MainBinDir = "$Root\src\main\bin\$ReleaseType\$NetVersion\$Platform"
 	if (!(Test-Path $MainBinDir))
 	{
-		$MainBinDir = "$Root\src\main\bin\Any CPU\$ReleaseType\net8.0\$Platform"
+		$MainBinDir = "$Root\src\main\bin\Any CPU\$ReleaseType\$NetVersion\$Platform"
 	}
 	$MainBinFile = "wacs.exe"
 	if ($Platform -like "linux*") {
@@ -101,10 +103,10 @@ function PluginRelease
 	Remove-Item $Temp\* -recurse
 	$PlugZip = "$Dir.v$Version.zip"
 	$PlugZipPath = "$Out\$PlugZip"
-	$PlugBin = "$Root\src\$Dir\bin\Release\net8.0\publish"
+	$PlugBin = "$Root\src\$Dir\bin\Release\$NetVersion\publish"
 	if (!(Test-Path $PlugBin))
 	{
-		$PlugBin = "$Root\src\$Dir\bin\Any CPU\Release\net8.0\publish"
+		$PlugBin = "$Root\src\$Dir\bin\Any CPU\Release\$NetVersion\publish"
 	}
 	CreateArtifact $PlugBin $Files $PlugZipPath
 

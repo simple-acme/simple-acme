@@ -17,6 +17,9 @@
 
 	[switch]
 	$Clean = $true
+
+	[switch]
+	$CreateArtifacts = $true
 )
 
 cls
@@ -45,52 +48,67 @@ if ($BuildNuget) {
 }
 
 # Build regular releases
-foreach ($release in $releases) {
-	foreach ($arch in $archs) {
+foreach ($release in $releases) 
+{
+	foreach ($arch in $archs) 
+	{
 		Write-Host "Publish $arch $release..."
 		$extra = ""
 		if ($release.EndsWith("Trimmed")) {
 			$extra = "/p:warninglevel=0"
 		}
 		& dotnet publish $RepoRoot\src\main\wacs.csproj -c $release -r $arch --self-contained $extra
+		if (-not $?)
+		{
+			Pop-Location
+			throw "The dotnet publish process returned an error code."
+		}
 	}
 }
 
 # Build plugins
 if ($BuildPlugins) {
-	& dotnet publish $RepoRoot\src\plugin.store.keyvault\wacs.store.keyvault.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.store.userstore\wacs.store.userstore.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.acme\wacs.validation.dns.acme.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.aliyun\wacs.validation.dns.aliyun.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.azure\wacs.validation.dns.azure.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.cloudflare\wacs.validation.dns.cloudflare.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.digitalocean\wacs.validation.dns.digitalocean.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.dnsexit\wacs.validation.dns.dnsexit.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.dnsmadeeasy\wacs.validation.dns.dnsmadeeasy.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.domeneshop\wacs.validation.dns.domeneshop.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.dreamhost\wacs.validation.dns.dreamhost.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.godaddy\wacs.validation.dns.godaddy.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.googledns\wacs.validation.dns.googledns.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.hetzner\wacs.validation.dns.hetzner.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.infomaniak\wacs.validation.dns.infomaniak.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.linode\wacs.validation.dns.linode.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.luadns\wacs.validation.dns.luadns.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.ns1\wacs.validation.dns.ns1.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.rfc2136\wacs.validation.dns.rfc2136.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.route53\wacs.validation.dns.route53.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.simply\wacs.validation.dns.simply.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.transip\wacs.validation.dns.transip.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.dns.tencent\wacs.validation.dns.tencent.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.http.ftp\wacs.validation.http.ftp.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.http.rest\wacs.validation.http.rest.csproj -c "Release"
-	& dotnet publish $RepoRoot\src\plugin.validation.http.sftp\wacs.validation.http.sftp.csproj -c "Release"
+	$plugins = @(
+		"store.keyvault"
+		"store.userstore"
+		"validation.dns.acme"
+		"validation.dns.aliyun"
+		"validation.dns.azure"
+		"validation.dns.cloudflare"
+		"validation.dns.digitalocean"
+		"validation.dns.dnsexit"
+		"validation.dns.dnsmadeeasy"
+		"validation.dns.domeneshop"
+		"validation.dns.dreamhost"
+		"validation.dns.godaddy"
+		"validation.dns.googledns"
+		"validation.dns.hetzner"
+		"validation.dns.infomaniak"
+		"validation.dns.linode"
+		"validation.dns.luadns"
+		"validation.dns.ns1"
+		"validation.dns.rfc2136"
+		"validation.dns.route53"
+		"validation.dns.simply"
+		"validation.dns.transip"
+		"validation.dns.tencent"
+		"validation.http.ftp"
+		"validation.http.rest"
+		"validation.http.sftp"
+	)
+	foreach ($plugin in $plugins) 
+	{
+		Write-Host "Publish $plugin..."
+		& dotnet publish $RepoRoot\src\plugin.$plugin\wacs.$plugin.csproj -c "Release"
+		if (-not $?)
+		{
+			Pop-Location
+			throw "The dotnet publish process returned an error code."
+		}
+	}
 }
-
-if (-not $?)
+if ($CreateArtifacts) 
 {
-	Pop-Location
-	throw "The dotnet publish process returned an error code."
+	./create-artifacts.ps1 $RepoRoot $ReleaseVersionNumber -Releases $Releases -Archs $Archs -BuildPlugins:$BuildPlugins -BuildNuget:$BuildNuget
 }
-
-./create-artifacts.ps1 $RepoRoot $ReleaseVersionNumber -Releases $Releases -Archs $Archs -BuildPlugins:$BuildPlugins -BuildNuget:$BuildNuget
 Pop-Location
