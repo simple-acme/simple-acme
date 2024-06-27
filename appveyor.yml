@@ -10,6 +10,16 @@ dotnet_csproj:
   assembly_version: '{version}'
   file_version: '{version}'
 environment:
+  Configs: 
+    Release
+    ReleseTrimmed
+  Platforms:
+    win-x64
+    win-x86
+    win-arm64
+    linux-x64
+  NuGet: true
+  Plugins: true
   PfxPassword:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
 clone_script:
@@ -22,10 +32,14 @@ before_build:
   - cmd: dotnet --version
 build_script:
 - ps: >-
-      $env:ARCHS = @("win-x64","win-x86","win-arm64","linux-x64")
-      $env:CONFIGS = @("Release,ReleaseTrimmed")
-      cd $env:APPVEYOR_BUILD_FOLDER\build\
-      .\build.ps1 -ReleaseVersionNumber $env:APPVEYOR_BUILD_VERSION -Releases $env:CONFIGS -Archs $env:ARCHS -CreateArtifacts $false
+    cd $env:APPVEYOR_BUILD_FOLDER\build\
+    .\build.ps1 `
+        -Version $env:APPVEYOR_BUILD_VERSION `
+        -Configs $env:CONFIGS `
+        -Platforms $env:ARCHS `
+        -CreateArtifacts:$false `
+        -BuildNuget:$env:NuGet `
+        -BuildPlugins:$env:Plugins
 test_script:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%/src/main.test/
   - cmd: nuget install Appveyor.TestLogger -Version 2.0.0
@@ -34,7 +48,14 @@ test_script:
 after_build:
 - ps: >-
     cd $env:APPVEYOR_BUILD_FOLDER\build\
-    .\create-artifacts.ps1 -Root $env:APPVEYOR_BUILD_FOLDER -Version $env:APPVEYOR_BUILD_VERSION -Password $env:PfxPassword -Releases $env:CONFIGS -Archs $env:ARCHS
+    .\create-artifacts.ps1 `
+        -Root $env:APPVEYOR_BUILD_FOLDER `
+        -Version $env:APPVEYOR_BUILD_VERSION `
+        -Password $env:PfxPassword `
+        -Configs $env:Configs `
+        -Platforms $env:Platforms `
+        -BuildNuget:$env:NuGet `
+        -BuildPlugins:$env:Plugins
     Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\build\artifacts\ | Foreach-Object {
         Push-AppveyorArtifact $_.FullName -FileName $_.Name
     }

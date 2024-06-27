@@ -10,17 +10,21 @@
 	[string]
 	$Password,
 
+	[Parameter(Mandatory=$true)]
 	[string[]]
-	$Releases = @("Release,ReleaseTrimmed"),
+	$Configs,
 
+	[Parameter(Mandatory=$true)]
 	[string[]]
-	$Archs = @("win-x64", "win-x86", "win-arm64"),
+	$Platforms,
 
+	[Parameter(Mandatory=$true)]
 	[switch]
-	$BuildPlugins = $true,
+	$BuildPlugins,
 
+	[Parameter(Mandatory=$true)]
 	[switch]
-	$BuildNuget = $true
+	$BuildNuget
 )
 
 Add-Type -Assembly "system.io.compression.filesystem"
@@ -42,19 +46,19 @@ New-Item $Out -Type Directory
 
 function PlatformRelease
 {
-	param($ReleaseType, $Platform)
+	param($Config, $Platform)
 
 	Remove-Item $Temp\* -recurse
 	$Postfix = "pluggable"
-	if ($ReleaseType -eq "ReleaseTrimmed") {
+	if ($Config -eq "ReleaseTrimmed") {
 		$Postfix = "trimmed"
 	}
 	$MainZip = "simple-acme.v$Version.$Platform.$Postfix.zip"
 	$MainZipPath = "$Out\$MainZip"
-	$MainBinDir = "$Root\src\main\bin\$ReleaseType\$NetVersion\$Platform"
+	$MainBinDir = "$Root\src\main\bin\$Config\$NetVersion\$Platform"
 	if (!(Test-Path $MainBinDir))
 	{
-		$MainBinDir = "$Root\src\main\bin\Any CPU\$ReleaseType\$NetVersion\$Platform"
+		$MainBinDir = "$Root\src\main\bin\Any CPU\$Config\$NetVersion\$Platform"
 	}
 	$MainBinFile = "wacs.exe"
 	if ($Platform -like "linux*") {
@@ -72,7 +76,7 @@ function PlatformRelease
 			Copy-Item "$MainBinDir\settings.json" "$Temp\settings_default.json"
 		}
 		Copy-Item "$Root\dist\*" $Temp -Recurse
-		Set-Content -Path "$Temp\version.txt" -Value "v$Version ($Platform, $ReleaseType)"
+		Set-Content -Path "$Temp\version.txt" -Value "v$Version ($Platform, $Config)"
 		[io.compression.zipfile]::CreateFromDirectory($Temp, $MainZipPath)
 	}
 
@@ -140,9 +144,9 @@ if ($BuildNuget) {
 	NugetRelease
 }
 
-foreach ($release in $releases) {
-	foreach ($arch in $archs) {
-		PlatformRelease $release $arch 
+foreach ($config in $configs) {
+	foreach ($platform in $platforms) {
+		PlatformRelease $config $platform 
 	}
 }
 

@@ -1,22 +1,22 @@
 ﻿param (
 	[ValidatePattern("^\d+\.\d+.\d+.\d+")]
 	[string]
-	$ReleaseVersionNumber = "2.0.0.0",
+	$Version = "2.0.0.0",
 
 	[string[]]
-	$Releases = @("Release,ReleaseTrimmed"),
+	$Configs = @("ReleaseTrimmed"),
 
 	[string[]]
-	$Archs = @("win-x64", "win-x86", "win-arm64"),
+	$Platforms = @("win-x64"),
 
 	[switch]
-	$BuildPlugins = $true,
+	$BuildPlugins = $false,
 
 	[switch]
-	$BuildNuget = $true,
+	$BuildNuget = $false,
 
 	[switch]
-	$Clean = $true
+	$Clean = $true,
 
 	[switch]
 	$CreateArtifacts = $true
@@ -33,8 +33,10 @@ $BuildFolder = Join-Path -Path $RepoRoot "build"
 
 # Clean solution
 if ($Clean) {
-	foreach ($release in $releases) {
-		foreach ($arch in $archs) {
+	foreach ($platform in $platforms) 
+	{
+		foreach ($config in $configs) 
+		{
 			Write-Host "Clean $arch $release..."
 			& dotnet clean $RepoRoot\src\main\wacs.csproj -c $release -r $arch /p:SelfContained=true
 		}
@@ -48,16 +50,16 @@ if ($BuildNuget) {
 }
 
 # Build regular releases
-foreach ($release in $releases) 
+foreach ($platform in $platforms) 
 {
-	foreach ($arch in $archs) 
+	foreach ($config in $configs) 
 	{
 		Write-Host "Publish $arch $release..."
 		$extra = ""
-		if ($release.EndsWith("Trimmed")) {
+		if ($config.EndsWith("Trimmed")) {
 			$extra = "/p:warninglevel=0"
 		}
-		& dotnet publish $RepoRoot\src\main\wacs.csproj -c $release -r $arch --self-contained $extra
+		& dotnet publish $RepoRoot\src\main\wacs.csproj -c $config -r $platform --self-contained $extra
 		if (-not $?)
 		{
 			Pop-Location
@@ -109,6 +111,6 @@ if ($BuildPlugins) {
 }
 if ($CreateArtifacts) 
 {
-	./create-artifacts.ps1 $RepoRoot $ReleaseVersionNumber -Releases $Releases -Archs $Archs -BuildPlugins:$BuildPlugins -BuildNuget:$BuildNuget
+	./create-artifacts.ps1 -Root $RepoRoot -Version $Version -Configs $Configs -Platforms $Platforms -BuildPlugins:$BuildPlugins -BuildNuget:$BuildNuget
 }
 Pop-Location
