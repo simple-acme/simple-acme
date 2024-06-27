@@ -38,8 +38,8 @@ build_script:
         -Configs $env:Configs `
         -Platforms $env:Platforms `
         -CreateArtifacts:$false `
-        -BuildNuget:$env:NuGet `
-        -BuildPlugins:$env:Plugins
+        -BuildNuget:($env:NuGet -eq "1") `
+        -BuildPlugins:($env:Plugins -eq "1")
 test_script:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%/src/main.test/
   - cmd: nuget install Appveyor.TestLogger -Version 2.0.0
@@ -54,8 +54,8 @@ after_build:
         -Password $env:PfxPassword `
         -Configs $env:Configs `
         -Platforms $env:Platforms `
-        -BuildNuget:$env:NuGet `
-        -BuildPlugins:$env:Plugins
+        -BuildNuget:($env:NuGet -eq "1") `
+        -BuildPlugins:($env:Plugins -eq "1")
   - ps: >-
      Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\build\artifacts\ | Foreach-Object {
         Push-AppveyorArtifact $_.FullName -FileName $_.Name
