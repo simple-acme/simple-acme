@@ -18,8 +18,8 @@ environment:
     win-x86
     win-arm64
     linux-x64
-  NuGet: true
-  Plugins: true
+  NuGet: 1
+  Plugins: 1
   PfxPassword:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
 clone_script:
@@ -31,13 +31,12 @@ clone_script:
 before_build:
   - cmd: dotnet --version
 build_script:
-- ps: >-
-    cd $env:APPVEYOR_BUILD_FOLDER\build\
-    
-    .\build.ps1 `
+  - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
+  - ps: >- 
+     .\build.ps1 `
         -Version $env:APPVEYOR_BUILD_VERSION `
-        -Configs $env:CONFIGS `
-        -Platforms $env:ARCHS `
+        -Configs $env:Configs `
+        -Platforms $env:Platforms `
         -CreateArtifacts:$false `
         -BuildNuget:$env:NuGet `
         -BuildPlugins:$env:Plugins
@@ -47,10 +46,9 @@ test_script:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%
   - cmd: dotnet test ./src/main.test/wacs.test.csproj -c Release --test-adapter-path:. --logger:Appveyor 
 after_build:
-- ps: >-
-    cd $env:APPVEYOR_BUILD_FOLDER\build\
-    
-    .\create-artifacts.ps1 `
+  - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
+  - ps: >-
+     .\create-artifacts.ps1 `
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
         -Password $env:PfxPassword `
@@ -58,8 +56,8 @@ after_build:
         -Platforms $env:Platforms `
         -BuildNuget:$env:NuGet `
         -BuildPlugins:$env:Plugins
-    
-    Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\build\artifacts\ | Foreach-Object {
+  - ps: >-
+     Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\build\artifacts\ | Foreach-Object {
         Push-AppveyorArtifact $_.FullName -FileName $_.Name
-    }
+     }
 deploy: "off"
