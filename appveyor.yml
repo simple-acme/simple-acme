@@ -12,7 +12,7 @@ dotnet_csproj:
 environment:
   Configs: 
     Release
-    ReleseTrimmed
+    ReleaseTrimmed
   Platforms:
     win-x64
     win-x86
