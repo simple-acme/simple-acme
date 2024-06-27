@@ -33,7 +33,8 @@ before_build:
 build_script:
 - ps: >-
     cd $env:APPVEYOR_BUILD_FOLDER\build\
-    && .\build.ps1 `
+    
+    .\build.ps1 `
         -Version $env:APPVEYOR_BUILD_VERSION `
         -Configs $env:CONFIGS `
         -Platforms $env:ARCHS `
@@ -48,7 +49,8 @@ test_script:
 after_build:
 - ps: >-
     cd $env:APPVEYOR_BUILD_FOLDER\build\
-    && .\create-artifacts.ps1 `
+    
+    .\create-artifacts.ps1 `
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
         -Password $env:PfxPassword `
@@ -56,7 +58,8 @@ after_build:
         -Platforms $env:Platforms `
         -BuildNuget:$env:NuGet `
         -BuildPlugins:$env:Plugins
-    && Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\build\artifacts\ | Foreach-Object {
+    
+    Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\build\artifacts\ | Foreach-Object {
         Push-AppveyorArtifact $_.FullName -FileName $_.Name
     }
 deploy: "off"
