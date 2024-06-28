@@ -22,7 +22,12 @@
 	$CreateArtifacts = $true
 )
 
-cls
+try {
+	cls
+} catch {
+	# Ignore
+}
+
 $PSScriptFilePath = Get-Item $MyInvocation.MyCommand.Path
 Push-Location $PSScriptFilePath.Directory
 $RepoRoot = $PSScriptFilePath.Directory.Parent.FullName
@@ -97,6 +102,7 @@ if ($BuildPlugins) {
 		"validation.http.ftp"
 		"validation.http.rest"
 		"validation.http.sftp"
+		"validation.http.webdav"
 	)
 	foreach ($plugin in $plugins) 
 	{

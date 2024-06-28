@@ -1,4 +1,5 @@
-﻿using PKISharp.WACS.Services;
+﻿using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Services;
 using Serilog;
 using Serilog.Core;
 using System;
@@ -76,6 +77,6 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
 
         public void Reset() { }
 
-        public void SetDiskLoggingPath(string logPath) {}
+        public void ApplyClientSettings(ClientSettings logPath) {}
     }
 }
