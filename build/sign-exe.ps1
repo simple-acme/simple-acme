@@ -17,7 +17,7 @@ param (
 	[string]
 	$Pfx,
 	
-	[Parameter()]
+	[Parameter(Mandatory=$true)]
 	[string]
 	$Password
 )
@@ -36,14 +36,7 @@ foreach ($possiblePath in $paths)
 }
 if ($null -ne $SignTool) 
 {
-	if ($Password -eq "" -or $Password -eq $null) 
-	{
-		$Password = Read-Host -Prompt "Input password for $Pfx or press enter to skip code signing"
-	}	
-	if ($Password -ne "") 
-	{
-		& $SignTool sign /debug /fd SHA256 /f "$Pfx" /p "$Password" "$Path"
-	}
+	& $SignTool sign /debug /fd SHA256 /f "$Pfx" /p "$Password" "$Path"
 } 
 else 
 {

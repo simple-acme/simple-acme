@@ -11,6 +11,7 @@ using PKISharp.WACS.Plugins.NotificationPlugins;
 using PKISharp.WACS.Plugins.Resolvers;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
+using System;
 using System.Collections.Generic;
 using Real = PKISharp.WACS.Services;
 
@@ -66,7 +67,10 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<LookupClientProvider>().SingleInstance();
             _ = builder.RegisterType<CacheService>().As<Real.ICacheService>().SingleInstance();
             _ = builder.RegisterType<CertificateService>().As<Real.ICertificateService>().SingleInstance();
-            _ = builder.RegisterType<Real.TaskSchedulerService>().SingleInstance();
+            if (OperatingSystem.IsWindows())
+            {
+                _ = builder.RegisterType<Real.TaskSchedulerService>().As<Real.IAutoRenewService>().SingleInstance();
+            }
             _ = builder.RegisterType<Real.NotificationService>().SingleInstance();
             _ = builder.RegisterType<NotificationTargetEmail>().SingleInstance();
             _ = builder.RegisterType<RenewalValidator>().SingleInstance();

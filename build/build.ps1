@@ -20,6 +20,9 @@
 
 	[switch]
 	$CreateArtifacts = $true
+
+	[string]
+	$Password
 )
 
 try {
@@ -117,6 +120,6 @@ if ($BuildPlugins) {
 }
 if ($CreateArtifacts) 
 {
-	./create-artifacts.ps1 -Root $RepoRoot -Version $Version -Configs $Configs -Platforms $Platforms -BuildPlugins:$BuildPlugins -BuildNuget:$BuildNuget
+	./create-artifacts.ps1 -Root $RepoRoot -Version $Version -Configs $Configs -Platforms $Platforms -BuildPlugins:$BuildPlugins -BuildNuget:$BuildNuget -Password $Password
 }
 Pop-Location
