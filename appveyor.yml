@@ -54,7 +54,7 @@ after_build:
      .\create-artifacts.ps1 `
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
-        -Password $env:PfxPassword `
+        -SigningPassword $env:PfxPassword `
         -Configs $env:Configs.Split() `
         -Platforms $env:Platforms.Split() `
         -BuildNuget:($env:NuGet -eq "1") `
