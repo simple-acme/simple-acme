@@ -8,7 +8,7 @@
 	$Version,
 
 	[string]
-	$Password,
+	$SigningPassword,
 
 	[Parameter(Mandatory=$true)]
 	[string[]]
@@ -66,8 +66,8 @@ function PlatformRelease
 	}
 	if (Test-Path $MainBinDir)
 	{
-		if (($Platform -like "win*") && (-not [string]::IsNullOrEmpty($password)) {
-			./sign-exe.ps1 "$MainBinDir\publish\$MainBinFile" "$Root\build\codesigning.pfx" $Password
+		if (($Platform -like "win*") -and (-not [string]::IsNullOrEmpty($SigningPassword)) {
+			./sign-exe.ps1 "$MainBinDir\publish\$MainBinFile" "$Root\build\codesigning.pfx" $SigningPassword
 		}
 		Copy-Item "$MainBinDir\publish\$MainBinFile" $Temp
 		if ($Platform -like "linux*") {
