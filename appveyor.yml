@@ -35,9 +35,10 @@ build_script:
   - ps: >- 
      .\build.ps1 `
         -Version $env:APPVEYOR_BUILD_VERSION `
-        -Configs $env:Configs `
-        -Platforms $env:Platforms `
+        -Configs $env:Configs.Split() `
+        -Platforms $env:Platforms.Split() `
         -CreateArtifacts:$false `
+        -Clean:$false `
         -BuildNuget:($env:NuGet -eq "1") `
         -BuildPlugins:($env:Plugins -eq "1")
 test_script:
@@ -52,8 +53,8 @@ after_build:
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
         -Password $env:PfxPassword `
-        -Configs $env:Configs `
-        -Platforms $env:Platforms `
+        -Configs $env:Configs.Split() `
+        -Platforms $env:Platforms.Split() `
         -BuildNuget:($env:NuGet -eq "1") `
         -BuildPlugins:($env:Plugins -eq "1")
   - ps: >-
