@@ -293,7 +293,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         /// </summary>
         /// <returns></returns>
         public async Task<PluginFrontend<IInstallationPluginCapability, InstallationPluginOptions>?> 
-            GetInstallationPlugin(IEnumerable<Plugin> stores, IEnumerable<Plugin> installation)
+            GetInstallationPlugin(Plugin source, IEnumerable<Plugin> stores, IEnumerable<Plugin> installation)
         {
             var defaultType = OperatingSystem.IsWindows() ? typeof(InstallationPlugins.IIS) : typeof(InstallationPlugins.Script);
             var shortDescription = "Which installation step should run first?";

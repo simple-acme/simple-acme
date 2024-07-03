@@ -370,6 +370,7 @@ namespace PKISharp.WACS
         private async Task<List<InstallationPluginOptions>?> SetupInstallation(IResolver resolver, RunLevel runLevel, Renewal renewal)
         {
             var stores = renewal.StorePluginOptions.Select(plugin.GetPlugin);
+            var source = plugin.GetPlugin(renewal.TargetPluginOptions);
             return await SetupPlugins(Steps.Installation, runLevel, factories => resolver.GetInstallationPlugin(stores, factories), typeof(Plugins.InstallationPlugins.Null));
         }
 

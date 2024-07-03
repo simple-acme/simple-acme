@@ -7,9 +7,9 @@
 		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;</Configurations>
 		<ApplicationIcon>icon.ico</ApplicationIcon>
 		<StartupObject />
-		<Version>2.1.0.0</Version>
-		<AssemblyVersion>2.1.0.0</AssemblyVersion>
-		<FileVersion>2.1.0.0</FileVersion>
+		<Version>2.3.0.0</Version>
+		<AssemblyVersion>2.3.0.0</AssemblyVersion>
+		<FileVersion>2.3.0.0</FileVersion>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 
 		<PackAsTool>true</PackAsTool>

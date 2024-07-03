@@ -190,13 +190,19 @@ namespace PKISharp.WACS.Plugins.Resolvers
         /// </summary>
         /// <returns></returns>
         public async Task<PluginFrontend<IInstallationPluginCapability, InstallationPluginOptions>?> 
-            GetInstallationPlugin(IEnumerable<Plugin> stores, IEnumerable<Plugin> installation)
+            GetInstallationPlugin(Plugin source, IEnumerable<Plugin> stores, IEnumerable<Plugin> installation)
         {
             var defaultInstallation = arguments.Installation ?? settings.Installation.DefaultInstallation;
             var parts = defaultInstallation.ParseCsv();
             if (parts == null)
             {
-                defaultInstallation = InstallationPlugins.Null.Name;
+                // If source is IIS, and install is not specified,
+                // assume that user intends to install with IIS as 
+                // well. Users who don't want this (are there any?)
+                // can work around this with --installation none
+                defaultInstallation = source.Id.ToString() == InstallationPlugins.IIS.ID ?
+                    InstallationPlugins.IIS.Name : 
+                    InstallationPlugins.Null.Name;
             } 
             else
             {

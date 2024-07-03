@@ -17,6 +17,6 @@ namespace PKISharp.WACS.Plugins.Interfaces
 
         Task<PluginFrontend<IPluginCapability, StorePluginOptions>?> GetStorePlugin(IEnumerable<Plugin> chosen);
 
-        Task<PluginFrontend<IInstallationPluginCapability, InstallationPluginOptions>?> GetInstallationPlugin(IEnumerable<Plugin> storeType, IEnumerable<Plugin> chosen);
+        Task<PluginFrontend<IInstallationPluginCapability, InstallationPluginOptions>?> GetInstallationPlugin(Plugin sourceType, IEnumerable<Plugin> storeType, IEnumerable<Plugin> chosen);
     }
 }

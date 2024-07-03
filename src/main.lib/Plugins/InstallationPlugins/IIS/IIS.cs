@@ -14,8 +14,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
     [IPlugin.Plugin<
         IISOptions, IISOptionsFactory, 
         IISCapability, WacsJsonPlugins>
-        ("ea6a5be3-f8de-4d27-a6bd-750b619b2ee2", 
-        "IIS", "Create or update bindings in IIS")]
+        (ID, Name, "Create or update bindings in IIS")]
     [IPlugin.Plugin<
         IISFtpOptions, IISFTPOptionsFactory,
         IISCapability, WacsJsonPlugins>
@@ -23,6 +22,9 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
         "IISFTP", "Create or update FTP bindings in IIS", Hidden = true)]
     internal class IIS(IISOptions options, IIISClient iisClient, ILogService log, Target target) : IInstallationPlugin
     {
+        internal const string Name = "IIS";
+        internal const string ID = "ea6a5be3-f8de-4d27-a6bd-750b619b2ee2";
+
         Task<bool> IInstallationPlugin.Install(
             Dictionary<Type, StoreInfo> storeInfo,
             ICertificateInfo newCertificate,

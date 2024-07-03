@@ -285,7 +285,7 @@ namespace PKISharp.WACS.Host
             _taskScheduler.ConfirmAutoRenew();
 
             // Further information and tests
-            _log.Information("Please report bugs at {url}", "https://github.com/win-acme/win-acme");
+            _log.Information("Please leave a {star} at {url}", "★", "https://github.com/simple-acme/simple-acme");
             _log.Verbose("Unicode display test: Mandarin/{chinese} Cyrillic/{russian} Arabic/{arab}", "語言", "язык", "لغة");
         }
 
