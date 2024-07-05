@@ -179,23 +179,29 @@ namespace PKISharp.WACS.Configuration
         /// </summary>
         internal void ShowArguments()
         {
+            var markdown = false;
+#if DEBUG
+            markdown = true;
+#endif
             Console.WriteLine();
             foreach (var providerGroup in _providers.GroupBy(p => p.Group).OrderBy(g => g.Key))
             {
                 if (!string.IsNullOrEmpty(providerGroup.Key))
                 {
-                    Console.WriteLine($"# {providerGroup.Key}");
+                    Console.WriteLine($"{(markdown ? "" : " ---------------------")}");
+                    Console.WriteLine($"{(markdown ? "#" : "")} {providerGroup.Key}");
+                    Console.WriteLine($"{(markdown ? "" : " ---------------------")}");
                     Console.WriteLine();
                 }
 
                 foreach (var provider in providerGroup)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine($"## {provider.Name}");
+                    Console.WriteLine($"{(markdown ? "##" : "   ")} {provider.Name}");
                     Console.ResetColor();
                     if (!string.IsNullOrEmpty(provider.Condition))
                     {
-                        Console.Write($"``` [{provider.Condition}] ```");
+                        Console.Write($"{(markdown ? "```" : "   ")} [{provider.Condition}]{(markdown ? "```" : "")}");
                         if (provider.Default)
                         {
                             Console.WriteLine(" (default)");
@@ -205,11 +211,11 @@ namespace PKISharp.WACS.Configuration
                             Console.WriteLine();
                         }
                     }
-                    Console.WriteLine("```");
+                    Console.WriteLine(markdown ? "```" : "");
                     foreach (var x in provider.Configuration.Where(x => !x.Obsolete))
                     {
                         Console.ForegroundColor = ConsoleColor.White;
-                        Console.Write($"   --{x.ArgumentName}");
+                        Console.Write($"      --{x.ArgumentName}");
                         Console.WriteLine();
                         Console.ResetColor();
                         var step = 60;
@@ -230,7 +236,7 @@ namespace PKISharp.WACS.Configuration
                         }
                         Console.WriteLine();
                     }
-                    Console.WriteLine("```");
+                    Console.WriteLine(markdown ? "```" : "");
                 }
             }
         }
