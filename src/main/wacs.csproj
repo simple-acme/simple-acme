@@ -17,11 +17,11 @@
 		<PackageOutputPath>./nupkg</PackageOutputPath>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<PackageTags>acme,cli,letsencrypt,zerossl</PackageTags>
-		<RepositoryUrl>https://github.com/win-acme/win-acme</RepositoryUrl>
+		<RepositoryUrl>https://github.com/simple-acme/simple-acme</RepositoryUrl>
 		<RepositoryType>Github</RepositoryType>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageIcon>icon.png</PackageIcon>
-		<PackageProjectUrl>https://www.win-acme.com/</PackageProjectUrl>
+		<PackageProjectUrl>https://www.simple-acme.com/</PackageProjectUrl>
 		<Authors>Wouter Tinus and many others</Authors>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<PackageId>simple-acme</PackageId>

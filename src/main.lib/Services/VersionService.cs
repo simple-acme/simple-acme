@@ -34,7 +34,7 @@ namespace PKISharp.WACS.Services
                 PluginPath = processInfo.DirectoryName!;
                 processInfo = new FileInfo(Process.GetCurrentProcess().MainModule?.FileName!);
                 ExePath = processInfo.FullName;
-                SettingsPath = Path.Combine(processInfo.Directory!.FullName, ".store", "win-acme");
+                SettingsPath = Path.Combine(processInfo.Directory!.FullName, ".store", "simple-acme");
 #endif
             }
             log.Verbose("ExePath: {ex}", ExePath);

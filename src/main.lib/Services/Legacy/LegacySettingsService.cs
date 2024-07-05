@@ -55,6 +55,7 @@ namespace PKISharp.WACS.Host.Services.Legacy
 
             ClientNames = [ 
                 settings.Client.ClientName,
+                "simple-acme",
                 "win-acme", 
                 "letsencrypt-win-simple"
             ];

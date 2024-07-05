@@ -127,7 +127,7 @@ namespace PKISharp.WACS.Clients
                     message.From.Add(sender);
                     message.To.Add(receiver);
                     var bodyBuilder = new BodyBuilder();
-                    bodyBuilder.HtmlBody = content + $"<p>Sent by win-acme version {_version} from {_computerName}</p>";
+                    bodyBuilder.HtmlBody = content + $"<p>Sent by simple-acme version {_version} from {_computerName}</p>";
                     message.Body = bodyBuilder.ToMessageBody();
                     await client.SendAsync(message);
                 }                       

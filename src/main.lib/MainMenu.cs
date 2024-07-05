@@ -150,7 +150,7 @@ namespace PKISharp.WACS.Host
             var encryptConfig = settings.Security.EncryptConfig;
             if (!userApproved)
             {
-                input.Show(null, "To move your installation of win-acme to another machine, you will want " +
+                input.Show(null, "To move your installation of simple-acme to another machine, you will want " +
                 "to copy the data directory's files to the new machine. However, if you use the Encrypted Configuration option, your renewal " +
                 "files contain protected data that is dependent on your local machine. You can " +
                 "use this tools to temporarily unprotect your data before moving from the old machine. " +

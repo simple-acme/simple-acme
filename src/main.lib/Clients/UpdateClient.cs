@@ -13,7 +13,7 @@ namespace PKISharp.WACS.Clients
             try
             {
                 var httpClient = proxy.GetHttpClient();
-                var json = await httpClient.GetStringAsync("https://www.win-acme.com/version.json");
+                var json = await httpClient.GetStringAsync("https://www.simple-acme.com/version.json");
                 if (string.IsNullOrEmpty(json))
                 {
                     throw new Exception("Empty result");
@@ -27,8 +27,8 @@ namespace PKISharp.WACS.Clients
                 if (latestVersion > VersionService.SoftwareVersion)
                 {
                     var updateInstruction = VersionService.DotNetTool ?
-                        "Use \"dotnet tool update win-acme\" to update." : 
-                        "Download from https://www.win-acme.com/";
+                        "Use \"dotnet tool update simple-acme\" to update." : 
+                        "Download from https://www.simple-acme.com/";
                     log.Warning($"New version {{latestVersion}} available! {updateInstruction}", latestVersion);
                 }
                 else

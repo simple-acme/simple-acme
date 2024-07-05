@@ -195,7 +195,7 @@ namespace PKISharp.WACS.Services
 
             // This selects the protection mode that will be used
             // for the internal cache. Only meant to be read back 
-            // by win-acme itself, but we don't force AES256 because
+            // by simple-acme itself, but we don't force AES256 because
             // the cache file is exposed to users in installation
             // scripts and therefore people might depend on the older
             // legacy format.

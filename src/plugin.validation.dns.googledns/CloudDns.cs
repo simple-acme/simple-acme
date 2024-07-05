@@ -63,7 +63,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 HttpClientInitializer = credential,
                 HttpClientFactory = new ProxyFactory(_proxy),
-                ApplicationName = $"win-acme {VersionService.SoftwareVersion}",
+                ApplicationName = $"simple-acme {VersionService.SoftwareVersion}",
             });
 
             return new CloudDnsService(dnsService);
