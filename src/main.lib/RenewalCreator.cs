@@ -371,7 +371,7 @@ namespace PKISharp.WACS
         {
             var stores = renewal.StorePluginOptions.Select(plugin.GetPlugin);
             var source = plugin.GetPlugin(renewal.TargetPluginOptions);
-            return await SetupPlugins(Steps.Installation, runLevel, factories => resolver.GetInstallationPlugin(stores, factories), typeof(Plugins.InstallationPlugins.Null));
+            return await SetupPlugins(Steps.Installation, runLevel, factories => resolver.GetInstallationPlugin(source, stores, factories), typeof(Plugins.InstallationPlugins.Null));
         }
 
         private async Task<string?> SetupAccount(RunLevel runLevel)
