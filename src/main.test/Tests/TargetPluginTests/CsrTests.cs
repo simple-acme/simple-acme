@@ -52,8 +52,8 @@ ZkoLUgEWU5OcCkq5AIpmloeaCTC/vKrlS5M3BvjEmQ==
                 Assert.IsTrue(target.Parts.First().Identifiers.OfType<DnsIdentifier>().Count() == 2);
                 Assert.IsTrue(target.Parts.First().Identifiers.OfType<EmailIdentifier>().Count() == 1);
                 Assert.IsTrue(target.Parts.First().Identifiers.OfType<IpIdentifier>().Any(x => x.Value == "1.1.1.1"));
-                Assert.IsTrue(target.Parts.First().Identifiers.OfType<DnsIdentifier>().Any(x => x.Value == "www.simple-acme.com"));
-                Assert.IsTrue(target.Parts.First().Identifiers.OfType<EmailIdentifier>().Any(x => x.Value == "test@simple-acme.com"));
+                Assert.IsTrue(target.Parts.First().Identifiers.OfType<DnsIdentifier>().Any(x => x.Value == "www.win-acme.com"));
+                Assert.IsTrue(target.Parts.First().Identifiers.OfType<EmailIdentifier>().Any(x => x.Value == "win.acme.simple@gmail.com"));
 
             } 
             finally
