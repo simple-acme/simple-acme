@@ -35,7 +35,7 @@ namespace PKISharp.WACS.Services
             }
             if (success)
             {
-                log.Information("Connection OK!");
+                log.Verbose("Connection OK!");
             }
             else
             {

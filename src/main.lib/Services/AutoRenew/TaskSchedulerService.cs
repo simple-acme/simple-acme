@@ -118,7 +118,7 @@ namespace PKISharp.WACS.Services
             // Report final result
             if (healthy)
             {
-                log.Information("Scheduled task looks healthy");
+                log.Debug("Scheduled task looks healthy");
                 return true;
             }
             else

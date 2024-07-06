@@ -9,76 +9,41 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Host
 {
-    internal class Wacs
+    internal class Wacs(
+        ExceptionHandler exceptionHandler,
+        IIISClient iis,
+        UpdateClient updateClient,
+        ILogService logService,
+        IInputService inputService,
+        ISettingsService settingsService,
+        VersionService versionService,
+        ArgumentsParser argumentsParser,
+        AdminService adminService,
+        RenewalCreator renewalCreator,
+        NetworkCheckService networkCheck,
+        RenewalManager renewalManager,
+        Unattended unattended,
+        IAutoRenewService taskSchedulerService,
+        MainMenu mainMenu)
     {
-        private readonly IInputService _input;
-        private readonly IIISClient _iis;
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-        private readonly AdminService _adminService;
-        private readonly NetworkCheckService _networkCheck;
-        private readonly UpdateClient _updateClient;
-        private readonly ArgumentsParser _arguments;
-        private readonly ExceptionHandler _exceptionHandler;
-        private readonly MainArguments _args;
-        private readonly RenewalManager _renewalManager;
-        private readonly Unattended _unattended;
-        private readonly RenewalCreator _renewalCreator;
-        private readonly IAutoRenewService _taskScheduler;
-        private readonly VersionService _versionService;
-        private readonly MainMenu _mainMenu;
+        private MainArguments _args = new();
 
-        public Wacs(
-            ExceptionHandler exceptionHandler,
-            IIISClient iis,
-            UpdateClient updateClient,
-            ILogService logService,
-            IInputService inputService,
-            ISettingsService settingsService,
-            VersionService versionService,
-            ArgumentsParser argumentsParser,
-            AdminService adminService,
-            RenewalCreator renewalCreator,
-            NetworkCheckService networkCheck,
-            RenewalManager renewalManager,
-            Unattended unattended,
-            IAutoRenewService taskSchedulerService,
-            MainMenu mainMenu)
+        public void SetEncoding()
         {
-            // Basic services
-            _exceptionHandler = exceptionHandler;
-            _log = logService;
-            _settings = settingsService;
-            _updateClient = updateClient;
-            _networkCheck = networkCheck;
-            _adminService = adminService;
-            _taskScheduler = taskSchedulerService;
-            _renewalCreator = renewalCreator; 
-            _renewalManager = renewalManager;
-            _arguments = argumentsParser;
-            _input = inputService;
-            _versionService = versionService;
-            _unattended = unattended;
-            _mainMenu = mainMenu;
-            _iis = iis;
-
-            if (!string.IsNullOrWhiteSpace(_settings.UI.TextEncoding))
+            if (!string.IsNullOrWhiteSpace(settingsService.UI.TextEncoding))
             {
                 try
                 {
-                    var encoding = System.Text.Encoding.GetEncoding(_settings.UI.TextEncoding);
+                    var encoding = System.Text.Encoding.GetEncoding(settingsService.UI.TextEncoding);
                     Console.OutputEncoding = encoding;
                     Console.InputEncoding = encoding;
                     Console.Title = $"simple-acme {VersionService.SoftwareVersion}";
                 }
                 catch
                 {
-                    _log.Warning("Error setting text encoding to {name}", _settings.UI.TextEncoding);
+                    logService.Warning("Error setting text encoding to {name}", settingsService.UI.TextEncoding);
                 }
             }
-
-            _arguments.ShowCommandLine();
-            _args = _arguments.GetArguments<MainArguments>() ?? new MainArguments();
         }
 
         /// <summary>
@@ -88,16 +53,21 @@ namespace PKISharp.WACS.Host
         {
             // Exit when settings are not valid. The settings service
             // also checks the command line arguments
-            if (!_settings.Valid)
+            if (!settingsService.Valid)
             {
                 return -1;
             }
-            if (!_versionService.Init())
+            if (!versionService.Init())
             {
                 return -1;
             }
 
             // List informational message and start-up diagnostics
+            _args = argumentsParser.GetArguments<MainArguments>() ?? new();
+
+            // Set console window encoding
+            SetEncoding();
+
             await ShowBanner();
 
             // Version display
@@ -113,7 +83,7 @@ namespace PKISharp.WACS.Host
             // Help function
             if (_args.Help)
             {
-                _arguments.ShowArguments();
+                argumentsParser.ShowArguments();
                 await CloseDefault();
                 if (_args.CloseOnFinish)
                 {
@@ -146,71 +116,71 @@ namespace PKISharp.WACS.Host
                 {
                     if (_args.Import)
                     {
-                        await _mainMenu.Import(unattendedRunLevel);
+                        await mainMenu.Import(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (_args.List)
                     {
-                        await _unattended.List();
+                        await unattended.List();
                         await CloseDefault();
                     }
                     else if (_args.Cancel)
                     {
-                        await _unattended.Cancel();
+                        await unattended.Cancel();
                         await CloseDefault();
                     }
                     else if (_args.Revoke)
                     {
-                        await _unattended.Revoke();
+                        await unattended.Revoke();
                         await CloseDefault();
                     }
                     else if (_args.Register)
                     {
-                        await _unattended.Register();
+                        await unattended.Register();
                         await CloseDefault();
                     }
                     else if (_args.Renew)
                     {
-                        await _renewalManager.CheckRenewals(unattendedRunLevel);
+                        await renewalManager.CheckRenewals(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (!string.IsNullOrEmpty(_args.Target) || !string.IsNullOrEmpty(_args.Source))
                     {
-                        await _renewalCreator.SetupRenewal(unattendedRunLevel);
+                        await renewalCreator.SetupRenewal(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (_args.Encrypt)
                     {
-                        await _mainMenu.Encrypt(unattendedRunLevel);
+                        await mainMenu.Encrypt(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else if (_args.SetupTaskScheduler)
                     {
-                        await _taskScheduler.SetupAutoRenew(unattendedRunLevel);
+                        await taskSchedulerService.SetupAutoRenew(unattendedRunLevel);
                         await CloseDefault();
                     }
                     else
                     {
-                        await _mainMenu.MainMenuEntry(interactiveRunLevel);
+                        await mainMenu.MainMenuEntry(interactiveRunLevel);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _exceptionHandler.HandleException(ex);
+                    exceptionHandler.HandleException(ex);
                     await CloseDefault();
                 }
                 if (!_args.CloseOnFinish)
                 {
                     _args.Clear();
-                    _exceptionHandler.ClearError();
-                    _iis.Refresh();
+                    exceptionHandler.ClearError();
+                    iis.Refresh();
                 }
             }
             while (!_args.CloseOnFinish);
 
             // Return control to the caller
-            _log.Verbose("Exiting with status code {code}", _exceptionHandler.ExitCode);
-            return _exceptionHandler.ExitCode;
+            logService.Verbose("Exiting with status code {code}", exceptionHandler.ExitCode);
+            return exceptionHandler.ExitCode;
         }
 
         /// <summary>
@@ -219,74 +189,76 @@ namespace PKISharp.WACS.Host
         private async Task ShowBanner()
         {
             // Version information
-            _input.CreateSpace();
-            _log.Information(LogType.Screen, "A simple cross platform ACME client (WACS)");
-            _log.Information(LogType.Screen, "Software version {version} ({build}, {bitness})", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
-            _log.Information(LogType.Disk | LogType.Event, "Software version {version} ({build}, {bitness}) started", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
-            _log.Debug("Running on {platform} {version}", Environment.OSVersion.Platform, Environment.OSVersion.Version);
- 
+            logService.Dirty = true;
+            inputService.CreateSpace();
+            logService.Information(LogType.Screen, "A simple cross platform ACME client (WACS)");
+            logService.Information(LogType.Screen, "Software version {version} ({build}, {bitness})", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
+            logService.Information(LogType.Disk | LogType.Event, "Software version {version} ({build}, {bitness}) started", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
+            logService.Debug("Running on {platform} {version}", Environment.OSVersion.Platform, Environment.OSVersion.Version);
+            argumentsParser.ShowCommandLine();
+
             // Connection test
-            _log.Information("Connecting to {ACME}...", _settings.BaseUri);
-            var networkCheck = _networkCheck.CheckNetwork();
-            await networkCheck.WaitAsync(TimeSpan.FromSeconds(30));
-            if (!networkCheck.IsCompletedSuccessfully)
+            logService.Information("Connecting to {ACME}...", settingsService.BaseUri);
+            var result = networkCheck.CheckNetwork();
+            await result.WaitAsync(TimeSpan.FromSeconds(30));
+            if (!result.IsCompletedSuccessfully)
             {
-                _log.Warning("Network check failed or timed out, retry without proxy detection...");
-                _settings.Proxy.Url = null;
-                networkCheck = _networkCheck.CheckNetwork();
-                await networkCheck.WaitAsync(TimeSpan.FromSeconds(30));
+                logService.Warning("Network check failed or timed out, retry without proxy detection...");
+                settingsService.Proxy.Url = null;
+                result = networkCheck.CheckNetwork();
+                await result.WaitAsync(TimeSpan.FromSeconds(30));
             }
-            if (!networkCheck.IsCompletedSuccessfully)
+            if (!result.IsCompletedSuccessfully)
             {
-                _log.Warning("Network check failed or timed out. Functionality may be limited.");
+                logService.Warning("Network check failed or timed out. Functionality may be limited.");
             }
 
             // New version test
-            if (_settings.Client.VersionCheck)
+            if (settingsService.Client.VersionCheck)
             {
-                _input.CreateSpace();
-                await _updateClient.CheckNewVersion();
+                inputService.CreateSpace();
+                await updateClient.CheckNewVersion();
             }
 
             // IIS version test
             if (OperatingSystem.IsWindows())
             {
-                if (_adminService.IsAdmin)
+                if (adminService.IsAdmin)
                 {
-                    _log.Debug("Running as administrator");
-                    var iis = _iis.Version;
-                    if (iis.Major > 0)
+                    logService.Debug("Running as administrator");
+                    if (iis.Version.Major > 0)
                     {
-                        _log.Debug("IIS version {version}", iis);
+                        logService.Debug("IIS version {version}", iis.Version);
                     }
                     else
                     {
-                        _log.Debug("IIS not detected");
+                        logService.Debug("IIS not detected");
                     }
                 }
                 else
                 {
-                    _log.Information("Running as limited user, some options disabled");
+                    logService.Warning("Running as limited user, some options disabled");
                 }
             }
             else
             {
-                if (_adminService.IsAdmin)
+                if (adminService.IsAdmin)
                 {
-                    _log.Debug("Running as superuser/root");
+                    logService.Debug("Running as superuser/root");
                 }
                 else
                 {
-                    _log.Warning("Running as limited user, some options *including autorenewal* disabled");
+                    logService.Warning("Running as limited user, some options *including autorenewal* disabled");
                 }
             }
 
             // Task scheduler health check
-            _taskScheduler.ConfirmAutoRenew();
+            taskSchedulerService.ConfirmAutoRenew();
 
             // Further information and tests
-            _log.Information("Please leave a {star} at {url}", "★", "https://github.com/simple-acme/simple-acme");
-            _log.Verbose("Unicode display test: Mandarin/{chinese} Cyrillic/{russian} Arabic/{arab}", "語言", "язык", "لغة");
+            logService.Information(LogType.Screen, "Check the manual at {webiste}", "https://simple-acme.com");
+            logService.Information(LogType.Screen, "Please leave a {star} at {url}", "★", "https://github.com/simple-acme/simple-acme");
+            logService.Verbose("Unicode test: Mandarin/{chinese} Cyrillic/{russian} Arabic/{arab}", "語言", "язык", "لغة");
         }
 
         /// <summary>
@@ -299,7 +271,7 @@ namespace PKISharp.WACS.Host
             _args.CloseOnFinish =
                 !_args.Test ||
                 _args.CloseOnFinish || 
-                await _input.PromptYesNo("[--test] Quit?", true);
+                await inputService.PromptYesNo("[--test] Quit?", true);
         }
     }
 }
