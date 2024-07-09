@@ -16,6 +16,7 @@ environment:
     win-x64
   NuGet: 0
   Plugins: 1
+  NetVersion: net8.0
   PfxPassword:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
 clone_script:
@@ -31,6 +32,7 @@ build_script:
   - ps: >- 
      .\build.ps1 `
         -Version $env:APPVEYOR_BUILD_VERSION `
+        -NetVersion $env:NetVersion `
         -Configs $env:Configs.Split() `
         -Platforms $env:Platforms.Split() `
         -CreateArtifacts:$false `
@@ -48,6 +50,7 @@ after_build:
      .\create-artifacts.ps1 `
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
+        -NetVersion $env:NetVersion `
         -SigningPassword $env:PfxPassword `
         -Configs $env:Configs.Split() `
         -Platforms $env:Platforms.Split() `
