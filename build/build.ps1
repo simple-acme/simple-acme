@@ -9,6 +9,9 @@
 	[string[]]
 	$Platforms = @("win-x64"),
 
+	[string]
+	$NetVersion = "net8.0",
+
 	[switch]
 	$BuildPlugins = $false,
 
@@ -45,7 +48,11 @@ if ($Clean) {
 	{
 		foreach ($config in $configs) 
 		{
-			Write-Host "Clean $arch $release..."
+			Write-Host ""
+			Write-Host "------------------------------------" -ForegroundColor Green
+			Write-Host "Clean $platform $config...		    " -ForegroundColor Green
+			Write-Host "------------------------------------" -ForegroundColor Green
+			Write-Host ""
 			& dotnet clean $RepoRoot\src\main\wacs.csproj -c $release -r $arch /p:SelfContained=true
 		}
 	}
@@ -54,6 +61,13 @@ if ($Clean) {
 
 # Build Nuget package
 if ($BuildNuget) {
+			
+	Write-Host ""
+	Write-Host "------------------------------------" -ForegroundColor Green
+	Write-Host "Publish Nuget...				    " -ForegroundColor Green
+	Write-Host "------------------------------------" -ForegroundColor Green
+	Write-Host ""
+
 	& dotnet pack $RepoRoot\src\main\wacs.csproj -c "Release" /p:PublishSingleFile=false /p:PublishReadyToRun=false
 }
 
@@ -62,7 +76,12 @@ foreach ($platform in $platforms)
 {
 	foreach ($config in $configs) 
 	{
-		Write-Host "Publish $arch $release..."
+		Write-Host ""
+		Write-Host "------------------------------------" -ForegroundColor Green
+		Write-Host "Publish $platform $config...		    " -ForegroundColor Green
+		Write-Host "------------------------------------" -ForegroundColor Green
+		Write-Host ""
+
 		$extra = ""
 		if ($config.EndsWith("Trimmed")) {
 			$extra = "/p:warninglevel=0"
@@ -78,48 +97,60 @@ foreach ($platform in $platforms)
 
 # Build plugins
 if ($BuildPlugins) {
-	$plugins = @(
-		"store.keyvault"
-		"store.userstore"
-		"validation.dns.acme"
-		"validation.dns.aliyun"
-		"validation.dns.azure"
-		"validation.dns.cloudflare"
-		"validation.dns.digitalocean"
-		"validation.dns.dnsexit"
-		"validation.dns.dnsmadeeasy"
-		"validation.dns.domeneshop"
-		"validation.dns.dreamhost"
-		"validation.dns.godaddy"
-		"validation.dns.googledns"
-		"validation.dns.hetzner"
-		"validation.dns.infomaniak"
-		"validation.dns.linode"
-		"validation.dns.luadns"
-		"validation.dns.ns1"
-		"validation.dns.rfc2136"
-		"validation.dns.route53"
-		"validation.dns.simply"
-		"validation.dns.transip"
-		"validation.dns.tencent"
-		"validation.http.ftp"
-		"validation.http.rest"
-		"validation.http.sftp"
-		"validation.http.webdav"
-	)
+
+	Write-Host ""
+	Write-Host "------------------------------------" -ForegroundColor Green
+	Write-Host "Build reference project..."			  -ForegroundColor Green
+	Write-Host "------------------------------------" -ForegroundColor Green
+	Write-Host ""
+
+	& dotnet publish $RepoRoot\src\main.lib\wacs.lib.csproj -c Release -r "win-x64"
+	$mainFiles = (Get-ChildItem $RepoRoot\src\main.lib\bin\Release\$NetVersion\win-x64\Publish).Name
+	if (-not $?)
+	{
+		Pop-Location
+		throw "The dotnet publish process returned an error code."
+	}
+
+	# Detect all plugins
+	$pluginFolders = (Get-ChildItem $RepoRoot\src\ plugin.*).Name
+	$plugins = $pluginFolders | ForEach-Object { @{ Name = $_; Files = @() } }
 	foreach ($plugin in $plugins) 
 	{
-		Write-Host "Publish $plugin..."
-		& dotnet publish $RepoRoot\src\plugin.$plugin\wacs.$plugin.csproj -c "Release"
+		if ($plugin.Name -like ".common.") {
+			continue;
+		}
+
+		Write-Host ""
+		Write-Host "------------------------------------" -ForegroundColor Green
+		Write-Host "Publish $($plugin.Name)..."			  -ForegroundColor Green
+		Write-Host "------------------------------------" -ForegroundColor Green
+		Write-Host ""
+
+		$project = $plugin.Name.Replace("plugin.", "")
+		& dotnet publish $RepoRoot\src\$($plugin.Name)\wacs.$project.csproj -c "Release"
 		if (-not $?)
 		{
 			Pop-Location
 			throw "The dotnet publish process returned an error code."
 		}
+		$pluginFiles = (Get-ChildItem $RepoRoot\src\$($plugin.Name)\bin\Release\$NetVersion\publish *.dll).Name
+		$plugin.Files = $pluginFiles | Where-Object { -not ($mainFiles -contains $_) }
+		Write-Host "Detected files: " $plugin.Files -ForegroundColor Green
 	}
+
+	# Save plugin metadata for create-artifacts script
+	Export-CliXml -InputObject $plugins -Path $RepoRoot\build\plugins.xml
 }
+
+Write-Host ""
+Write-Host "------------------------------------" -ForegroundColor Green
+Write-Host "Build complete!"					  -ForegroundColor Green
+Write-Host "------------------------------------" -ForegroundColor Green
+Write-Host ""
+
 if ($CreateArtifacts) 
 {
-	./create-artifacts.ps1 -Root $RepoRoot -Version $Version -Configs $Configs -Platforms $Platforms -BuildPlugins:$BuildPlugins -BuildNuget:$BuildNuget -SigningPassword $SigningPassword
+	./create-artifacts.ps1 -Root $RepoRoot -Version $Version -NetVersion $NetVersion -Configs $Configs -Platforms $Platforms -BuildNuget:$BuildNuget -BuildPlugins:$BuildPlugins -SigningPassword $SigningPassword
 }
 Pop-Location

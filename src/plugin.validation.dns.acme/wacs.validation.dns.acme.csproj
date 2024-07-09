@@ -14,15 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentCloudflare" Version="0.3.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\main.lib\wacs.lib.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
 </Project>
