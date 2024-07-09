@@ -13,14 +13,9 @@ dotnet_csproj:
   file_version: '{version}'
 environment:
   Configs: 
-    Release
     ReleaseTrimmed
   Platforms:
     win-x64
-    win-x86
-    win-arm64
-    linux-x64
-    linux-arm64
   NuGet: 1
   Plugins: 1
   PfxPassword:

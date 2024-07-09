@@ -105,7 +105,13 @@ if ($BuildPlugins) {
 	Write-Host ""
 
 	& dotnet publish $RepoRoot\src\main.lib\wacs.lib.csproj -c Release -r "win-x64"
-	$mainFiles = (Get-ChildItem $RepoRoot\src\main.lib\bin\Release\$NetVersion\win-x64\Publish).Name
+	$referenceDir = "$RepoRoot\src\main.lib\bin\Release\$NetVersion\win-x64\Publish"
+	if (!(Test-Path $referenceDir))
+	{
+		# For some reason AppVeyor generates paths like this instead of the above on local systems
+		$referenceDir = "$RepoRoot\src\main.lib\bin\Any CPU\Release\$NetVersion\win-x64\Publish"
+	}
+	$referenceFiles = (Get-ChildItem $ReferenceDir).Name
 	if (-not $?)
 	{
 		Pop-Location
@@ -114,10 +120,10 @@ if ($BuildPlugins) {
 
 	# Detect all plugins
 	$pluginFolders = (Get-ChildItem $RepoRoot\src\ plugin.*).Name
-	$plugins = $pluginFolders | ForEach-Object { @{ Name = $_; Files = @() } }
+	$plugins = $pluginFolders | ForEach-Object { @{ Name = $_; Files = @(); Folder = "" } }
 	foreach ($plugin in $plugins) 
 	{
-		if ($plugin.Name -like ".common.") {
+		if ($plugin.Name -like "*.common.*") {
 			continue;
 		}
 
@@ -134,8 +140,15 @@ if ($BuildPlugins) {
 			Pop-Location
 			throw "The dotnet publish process returned an error code."
 		}
+		$pluginDir = "$RepoRoot\src\$($plugin.Name)\bin\Release\$NetVersion\publish"
+		if (!(Test-Path $pluginDir))
+		{
+			# For some reason AppVeyor generates paths like this instead of the above on local systems
+			$pluginDir = "$RepoRoot\src\$($plugin.Name)\bin\Any CPU\Release\$NetVersion\publish"
+		}
 		$pluginFiles = (Get-ChildItem $RepoRoot\src\$($plugin.Name)\bin\Release\$NetVersion\publish *.dll).Name
-		$plugin.Files = $pluginFiles | Where-Object { -not ($mainFiles -contains $_) }
+		$plugin.Files = $pluginFiles | Where-Object { -not ($referenceFiles -contains $_) }
+		$plugin.Folder = $pluginDir
 		Write-Host "Detected files: " $plugin.Files -ForegroundColor Green
 	}
 

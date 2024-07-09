@@ -61,6 +61,7 @@ function PlatformRelease
 	$MainBinDir = "$Root\src\main\bin\$Config\$NetVersion\$Platform"
 	if (!(Test-Path $MainBinDir))
 	{
+		# For some reason AppVeyor generates paths like this instead of the above on local systems
 		$MainBinDir = "$Root\src\main\bin\Any CPU\$Config\$NetVersion\$Platform"
 	}
 	$MainBinFile = "wacs.exe"
@@ -105,16 +106,12 @@ function CreateArtifact {
 
 function PluginRelease
 {
-	param($Dir, $Files)
+	param($Dir, $Files, $Folder)
 
 	Remove-Item $Temp\* -recurse
 	$PlugZip = "$Dir.v$Version.zip"
 	$PlugZipPath = "$Out\$PlugZip"
-	$PlugBin = "$Root\src\$Dir\bin\Release\$NetVersion\publish"
-	if (!(Test-Path $PlugBin))
-	{
-		$PlugBin = "$Root\src\$Dir\bin\Any CPU\Release\$NetVersion\publish"
-	}
+	$PlugBin = $Folder
 	CreateArtifact $PlugBin $Files $PlugZipPath
 
 	# Special for the FTP plugin
@@ -156,7 +153,7 @@ foreach ($config in $configs) {
 if ($BuildPlugins) {
 	$plugins = Import-CliXml -Path $Root\build\plugins.xml
 	foreach ($plugin in $plugins) {
-		PluginRelease $plugin.name $plugin.files
+		PluginRelease $plugin.name $plugin.files $plugin.folder
 	}
 }
 
