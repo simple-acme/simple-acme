@@ -146,7 +146,7 @@ if ($BuildPlugins) {
 			# For some reason AppVeyor generates paths like this instead of the above on local systems
 			$pluginDir = "$RepoRoot\src\$($plugin.Name)\bin\Any CPU\Release\$NetVersion\publish"
 		}
-		$pluginFiles = (Get-ChildItem $RepoRoot\src\$($plugin.Name)\bin\Release\$NetVersion\publish *.dll).Name
+		$pluginFiles = (Get-ChildItem $pluginDir *.dll).Name
 		$plugin.Files = $pluginFiles | Where-Object { -not ($referenceFiles -contains $_) }
 		$plugin.Folder = $pluginDir
 		Write-Host "Detected files: " $plugin.Files -ForegroundColor Green

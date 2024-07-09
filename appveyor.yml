@@ -3,8 +3,6 @@ image: Visual Studio 2022
 platform: Any CPU
 shallow_clone: true
 clone_depth: 1
-cache:
-  - C:\Users\appveyor\.nuget\packages\
 dotnet_csproj:
   patch: true
   file: '**\*.csproj'
@@ -13,10 +11,10 @@ dotnet_csproj:
   file_version: '{version}'
 environment:
   Configs: 
-    ReleaseTrimmed
+    Release
   Platforms:
     win-x64
-  NuGet: 1
+  NuGet: 0
   Plugins: 1
   PfxPassword:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
