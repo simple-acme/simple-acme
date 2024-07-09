@@ -120,12 +120,9 @@ if ($BuildPlugins) {
 
 	# Detect all plugins
 	$pluginFolders = (Get-ChildItem $RepoRoot\src\ plugin.*).Name
-	$plugins = $pluginFolders | ForEach-Object { @{ Name = $_; Files = @(); Folder = "" } }
+	$plugins = $pluginFolders | Where-Object { -not ($_ -like "*.common.*") } | ForEach-Object { @{ Name = $_; Files = @(); Folder = "" } }
 	foreach ($plugin in $plugins) 
 	{
-		if ($plugin.Name -like "*.common.*") {
-			continue;
-		}
 
 		Write-Host ""
 		Write-Host "------------------------------------" -ForegroundColor Green
