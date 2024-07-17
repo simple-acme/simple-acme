@@ -23,12 +23,12 @@ namespace PKISharp.WACS.Services
         IEnumerable<MemoryEntry> Lines { get; }
         void Reset();
         void Debug(string message, params object?[] items);
-        void Error(Exception ex, string message, params object?[] items);
+        void Error(Exception? ex, string message, params object?[] items);
         void Error(string message, params object?[] items);
         void Information(string message, params object?[] items);
         void Information(LogType logType, string message, params object?[] items);
         void Verbose(string message, params object?[] items);
-        void Verbose(LogType logType, string message, params object?[] items);
+        void Warning(Exception? ex, string message, params object?[] items);
         void Warning(string message, params object?[] items);
         void ApplyClientSettings(ClientSettings settings);
     }

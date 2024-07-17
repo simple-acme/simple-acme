@@ -39,9 +39,9 @@ namespace PKISharp.WACS.Host
                     Console.InputEncoding = encoding;
                     Console.Title = $"simple-acme {VersionService.SoftwareVersion}";
                 }
-                catch
+                catch (Exception ex)
                 {
-                    logService.Warning("Error setting text encoding to {name}", settingsService.UI.TextEncoding);
+                    logService.Warning(ex, "Error setting text encoding to {name}", settingsService.UI.TextEncoding);
                 }
             }
         }
@@ -196,7 +196,7 @@ namespace PKISharp.WACS.Host
             logService.Information(LogType.Disk | LogType.Event, "Software version {version} ({build}, {bitness}) started", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
             logService.Debug("Running on {platform} {version}", Environment.OSVersion.Platform, Environment.OSVersion.Version);
             argumentsParser.ShowCommandLine();
-
+                      
             // Connection test
             logService.Information("Connecting to {ACME}...", settingsService.BaseUri);
             var result = networkCheck.CheckNetwork();

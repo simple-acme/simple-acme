@@ -67,7 +67,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning("Unable to get EC name, error: {@ex}", ex);
+                _log.Warning(ex, "Unable to get EC name");
             }
             _log.Debug("ECCurve: {ECCurve}", ret);
             return ret;

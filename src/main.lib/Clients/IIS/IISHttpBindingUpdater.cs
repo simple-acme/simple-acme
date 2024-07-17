@@ -143,7 +143,7 @@ namespace PKISharp.WACS.Clients.IIS
                     }
                     catch (Exception ex)
                     {
-                        log.Error(ex, "Error creating binding {host}: {ex}", current, ex.Message);
+                        log.Error(ex, "Error creating binding {host}", current);
 
                         // Prevent infinite retry loop, we just skip the domain when
                         // an error happens creating a new binding for it. User can

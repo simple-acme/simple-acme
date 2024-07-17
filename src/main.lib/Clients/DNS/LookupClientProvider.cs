@@ -188,8 +188,7 @@ namespace PKISharp.WACS.Clients.DNS
             }
             catch (Exception ex)
             {
-                _log.Warning("Unexpected DNS error while checking {domainName}: {message}", domainName, ex.Message);
-                _log.Verbose(ex.StackTrace ?? "No stacktrace");
+                _log.Warning(ex, "Unexpected DNS error while checking {domainName}", domainName);
                 _authoritativeNs.TryAdd(domainName, []);
             }
             return _authoritativeNs[domainName];

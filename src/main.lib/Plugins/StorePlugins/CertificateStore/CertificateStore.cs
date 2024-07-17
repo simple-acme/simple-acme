@@ -147,8 +147,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                         }
                         catch (Exception ex)
                         {
-                            _log.Warning("Unable to set {rights} rights for {account}: {ex}", rights, account, ex.Message);
-                            _log.Verbose("{ex}", ex.StackTrace);
+                            _log.Warning(ex, "Unable to set {rights} rights for {account}", rights, account);
                         }
                     }
                     file.SetAccessControl(fs);

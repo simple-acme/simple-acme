@@ -148,7 +148,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 }
                 catch (Exception ex)
                 {
-                    _log.Warning("[{identifier}] Error deleting record {value}: {message}", record.Context.Label, record.Value, ex.Message);
+                    _log.Warning(ex, "[{identifier}] Error deleting record {value}", record.Context.Label, record.Value);
                 }
             }
             try
@@ -159,7 +159,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning("Error finalizing cleanup: {Message}", ex.Message);
+                _log.Warning(ex, "Error finalizing cleanup: {Message}");
             }
         }
 

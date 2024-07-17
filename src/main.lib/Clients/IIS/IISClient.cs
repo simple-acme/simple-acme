@@ -118,11 +118,11 @@ namespace PKISharp.WACS.Clients.IIS
                                    {
                                        return s.Site.State == ObjectState.Started;
                                    }
-                                   catch
+                                   catch (Exception ex)
                                    {
                                        // Prevent COMExceptions such as misconfigured
                                        // application pools from crashing the whole 
-                                       _log.Warning("Unable to determine state for Site {id}", s.Id);
+                                       _log.Warning(ex, "Unable to determine state for Site {id}", s.Id);
                                        return false;
                                    }
                                default:
@@ -208,7 +208,7 @@ namespace PKISharp.WACS.Clients.IIS
                 }
                 catch (Exception ex)
                 {
-                    _log.Warning("Unable to set attribute {name} on new binding: {ex}", attr.Name, ex.Message);
+                    _log.Warning(ex, "Unable to set attribute {name} on new binding: {ex}", attr.Name, ex.Message);
                 }
             }
 
@@ -378,9 +378,9 @@ namespace PKISharp.WACS.Clients.IIS
                     return new Version(0, 0);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                _log.Warning("Unable to scan for services");
+                _log.Warning(ex, "Unable to scan for services");
             }
             try
             {

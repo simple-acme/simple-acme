@@ -37,7 +37,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to create record at DnsExit: {ex.Message}");
+                _log.Warning(ex, $"Unable to create record at DnsExit");
                 return false;
             }
         }
@@ -52,7 +52,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to delete record from DnsExit: {ex.Message}");
+                _log.Warning(ex, $"Unable to delete record from DnsExit");
             }
         }
     }

@@ -108,8 +108,7 @@ namespace PKISharp.WACS.Client
             }
             catch (Exception ex)
             {
-                _log.Verbose("WebDav error {@ex}", ex);
-                _log.Warning("Error deleting file/folder {path} {Message}", path, ex.Message);
+                _log.Warning(ex, "Error deleting file/folder {path}", path);
             }
         }
 

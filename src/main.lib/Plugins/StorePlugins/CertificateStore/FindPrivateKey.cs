@@ -24,7 +24,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                log.Warning("Unable to find private key file name: {ex}", ex.Message);
+                log.Warning(ex, "Unable to find private key file name");
                 return null;
             }
             try
@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                log.Warning("Unable to find private key folder: {ex}", ex.Message);
+                log.Warning(ex, "Unable to find private key folder");
                 return null;
             }
             return new FileInfo(Path.Combine(dir, file));

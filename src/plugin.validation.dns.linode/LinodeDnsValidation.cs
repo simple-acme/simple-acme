@@ -52,7 +52,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to create record at Linode: {ex.Message}");
+                _log.Warning(ex, $"Unable to create record at Linode");
                 return false;
             }
         }
@@ -71,7 +71,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                         }
                         catch (Exception ex)
                         {
-                            _log.Warning("Unable to delete record {recordId} from Linode domain {domainId}: {message}", recordId, domainId, ex.Message);
+                            _log.Warning(ex, "Unable to delete record {recordId} from Linode domain {domainId}", recordId, domainId);
                         }
                     }
                 }

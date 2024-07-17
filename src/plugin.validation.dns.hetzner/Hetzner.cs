@@ -95,7 +95,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to delete record from Hetzner DNS: {ex.Message}");
+                _log.Warning(ex, $"Unable to delete record from Hetzner DNS");
             }
         }
 

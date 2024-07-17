@@ -235,7 +235,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             catch (Exception ex)
             {
-                log.Warning($"Error opening intermediate certificate store: {ex.Message}");
+                log.Warning(ex, $"Error opening intermediate certificate store");
                 store = _store;
             }
             foreach (var bcCert in certificate.Chain)
@@ -245,9 +245,9 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 {
                     SaveToStore(store, cert, false);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    log.Warning("Error saving intermediate certificate");
+                    log.Warning(ex, "Error saving intermediate certificate");
                 }
             }
             store.Close();

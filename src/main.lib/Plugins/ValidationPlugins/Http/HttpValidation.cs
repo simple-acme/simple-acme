@@ -110,7 +110,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (HttpRequestException hrex)
             {
-                _log.Warning("Preliminary validation failed because '{hrex}'", hrex.Message);
+                _log.Warning(hrex, "Preliminary validation failed because '{hrex}'", hrex.Message);
             }
             catch (Exception ex)
             {
@@ -189,7 +189,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 }
                 catch (Exception ex)
                 {
-                    _log.Warning("Unable to write web.config: {ex}", ex.Message);
+                    _log.Warning(ex, "Unable to write web.config");
                 }
             }
         }

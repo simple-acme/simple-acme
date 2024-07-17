@@ -41,7 +41,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to create record at DnsMadeEasy: {ex.Message}");
+                _log.Warning(ex, $"Unable to create record at DnsMadeEasy");
                 return false;
             }
         }
@@ -56,7 +56,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to delete record from DnsMadeEasy: {ex.Message}");
+                _log.Warning(ex, $"Unable to delete record from DnsMadeEasy");
             }
         }
     }

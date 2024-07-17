@@ -1,6 +1,7 @@
 ﻿using DnsClient;
 using DnsClient.Protocol;
 using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -109,9 +110,9 @@ namespace PKISharp.WACS.Clients.DNS
                     await GetTxtRecords("www.example.com");
                     _connected = true;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    _log.Warning("Error connection to {ip}", IpAddress);
+                    _log.Warning(ex, "Error connection to {ip}", IpAddress);
                     _connected = false;
                 }
             }

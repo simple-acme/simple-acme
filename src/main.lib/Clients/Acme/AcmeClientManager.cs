@@ -307,7 +307,7 @@ namespace PKISharp.WACS.Clients.Acme
             }
             catch (Exception ex)
             {
-                _log.Error(ex, ex.Message);
+                _log.Error(ex, "Error creating account");
                 return null;
             }
             if (newAccountDetails == default)
@@ -428,9 +428,9 @@ namespace PKISharp.WACS.Clients.Acme
                     _ = new MailAddress(x);
                     return true;
                 }
-                catch
+                catch(Exception ex)
                 {
-                    _log.Warning($"Invalid email: {x}");
+                    _log.Warning(ex, $"Invalid email address specified");
                     return false;
                 }
             }).ToList();

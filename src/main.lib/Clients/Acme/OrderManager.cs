@@ -150,7 +150,7 @@ namespace PKISharp.WACS.Clients.Acme
                         }
                         catch (Exception ex)
                         {
-                            log.Warning("Error deactivating pre-existing authorization: {ex}", ex.Message); ;
+                            log.Warning(ex, "Error deactivating pre-existing authorization");
                         }
                     }
                 }
@@ -166,7 +166,7 @@ namespace PKISharp.WACS.Clients.Acme
             }
             catch (Exception ex)
             {
-                log.Warning("Unable to refresh cached order: {ex}", ex.Message);
+                log.Warning(ex, "Unable to refresh cached order");
                 DeleteFromCache(cacheKey);
                 return null;
             }
@@ -290,7 +290,7 @@ namespace PKISharp.WACS.Clients.Acme
             } 
             catch (Exception ex)
             {
-                log.Warning("Unable to read order cache: {ex}", ex.Message);
+                log.Warning(ex, "Unable to read order cache");
             }
             return null;
         }
@@ -351,7 +351,7 @@ namespace PKISharp.WACS.Clients.Acme
             }
             catch (Exception ex)
             {
-                log.Warning("Unable to write to order cache: {ex}", ex.Message);
+                log.Warning(ex, "Unable to write to order cache");
             }
         }
 

@@ -51,7 +51,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
             catch (Exception ex)
             {
-                _log.Warning($"Error creating TXT record: {ex.Message}");
+                _log.Warning(ex, $"Error creating TXT record");
                 return false;
             }
         }
@@ -73,7 +73,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
             catch (Exception ex)
             {
-                _log.Warning($"Error deleting TXT record: {ex.Message}");
+                _log.Warning(ex, $"Error deleting TXT record");
             }
         }
     }

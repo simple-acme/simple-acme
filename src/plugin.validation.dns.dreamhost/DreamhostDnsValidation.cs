@@ -32,7 +32,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to create record at Dreamhost: {ex.Message}");
+                _log.Warning(ex, $"Unable to create record at Dreamhost");
                 return false;
             }
         }
@@ -45,7 +45,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to delete record from Dreamhost: {ex.Message}");
+                _log.Warning(ex, $"Unable to delete record from Dreamhost");
             }
         }
     }

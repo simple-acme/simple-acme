@@ -57,13 +57,13 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                 {
                     installationSite = iisClient.GetSite(options.SiteId.Value);
                 }
-                catch
+                catch (Exception ex)
                 {
                     // Site may have been stopped or removed
                     // after initial renewal setup. This means
                     // we don't know where to create new bindings
                     // anymore, but that's not a fatal error.
-                    log.Warning("Installation site {id} not found running in IIS, only existing bindings will be updated", options.SiteId);
+                    log.Warning(ex, "Installation site {id} not found running in IIS, only existing bindings will be updated", options.SiteId);
                 }
             }
             foreach (var part in target.Parts)

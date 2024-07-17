@@ -146,7 +146,7 @@ namespace PKISharp.WACS.Services
                     }
                     catch (Exception ex)
                     {
-                        log.Warning("Unable to get alternate certificate: {ex}", ex.Message);
+                        log.Warning(ex, "Unable to get alternate certificate");
                     }
                 }
             }

@@ -43,7 +43,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to create record at Simply: {ex.Message}");
+                _log.Warning(ex, $"Unable to create record at Simply");
             }
             return false;
         }
@@ -62,7 +62,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to delete record from Simply: {ex.Message}");
+                _log.Warning(ex, $"Unable to delete record from Simply");
             }
         }
 

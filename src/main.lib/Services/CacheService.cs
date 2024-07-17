@@ -101,7 +101,7 @@ namespace PKISharp.WACS.Services
                 }
                 catch (Exception ex)
                 {
-                    _log.Warning("Error deleting {file} from {folder}: {message}", f.Name, _cache.FullName, ex.Message);
+                    _log.Warning(ex, "Error deleting {file} from {folder}", f.Name, _cache.FullName);
                 }
             }
         }
@@ -234,10 +234,10 @@ namespace PKISharp.WACS.Services
                 {
                     ret.Add(FromCache(file, renewal.PfxPassword?.Value));
                 }
-                catch
+                catch (Exception ex)
                 {
                     // File corrupt or invalid password?
-                    _log.Warning("Unable to read {i} from certificate cache", file.Name);
+                    _log.Warning(ex, "Unable to read {i} from certificate cache", file.Name);
                 }
             }
             return ret;

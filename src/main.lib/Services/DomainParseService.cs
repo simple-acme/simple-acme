@@ -34,7 +34,7 @@ namespace PKISharp.WACS.Services
             }
             catch (Exception ex)
             {
-                _log.Warning("Error loading static public suffix list from {path}: {ex}", path, ex.Message);
+                _log.Warning(ex, "Error loading static public suffix list from {path}", path);
             }
             try
             {
@@ -46,7 +46,7 @@ namespace PKISharp.WACS.Services
             }
             catch (Exception ex)
             {
-                _log.Warning("Error updating public suffix list from {source}: {ex}", Source, ex.Message);
+                _log.Warning(ex, "Error updating public suffix list from {source}", Source);
             }
             if (provider == null)
             {
@@ -92,7 +92,7 @@ namespace PKISharp.WACS.Services
                     }
                     catch (Exception ex)
                     {
-                        _log.Warning("Unable to read public suffix list cache from {path}: {ex}", _file.FullName, ex.Message);
+                        _log.Warning(ex, "Unable to read public suffix list cache from {path}", _file.FullName);
                     };
                 }
                 return _memoryCache;
@@ -120,7 +120,7 @@ namespace PKISharp.WACS.Services
                     } 
                     catch (Exception ex)
                     {
-                        _log.Warning("Unable to write public suffix list cache to {path}: {ex}", _file.FullName, ex.Message);
+                        _log.Warning(ex, "Unable to write public suffix list cache to {path}", _file.FullName);
                     }
                 }
                 _memoryCache = val;

@@ -39,7 +39,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to create record at Godaddy: {ex.Message}");
+                _log.Warning(ex, $"Unable to create record at Godaddy");
                 return false;
             }
         }
@@ -54,7 +54,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to delete record from Godaddy: {ex.Message}");
+                _log.Warning(ex, $"Unable to delete record from Godaddy");
             }
         }
     }

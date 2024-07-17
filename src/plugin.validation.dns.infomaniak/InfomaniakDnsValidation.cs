@@ -57,7 +57,7 @@ internal class InfomaniakDnsValidation(
         }
         catch (Exception ex)
         {
-            _log.Warning($"Unable to create record at Infomaniak: {ex.Message}");
+            _log.Warning(ex, $"Unable to create record at Infomaniak");
             return false;
         }
     }
@@ -74,7 +74,7 @@ internal class InfomaniakDnsValidation(
                 }
                 catch (Exception ex)
                 {
-                    _log.Warning("Unable to delete record {recordId} from Infomaniak domain {domainId}: {message}", recordId, domainId, ex.Message);
+                    _log.Warning(ex, "Unable to delete record {recordId} from Infomaniak domain {domainId}: {message}", recordId, domainId);
                 }
             }
         }

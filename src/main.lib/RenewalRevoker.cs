@@ -54,7 +54,7 @@ namespace PKISharp.WACS
                                 {
                                     ErrorMessages = [$"Error revoking ({ex.Message})"]
                                 });
-                                log.Warning("Error revoking for {order}: {ex}", order, ex.Message);
+                                log.Warning(ex, "Error revoking for {order}", order);
                             }
                         }
                         else

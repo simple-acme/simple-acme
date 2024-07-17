@@ -165,12 +165,11 @@ namespace PKISharp.WACS.Configuration
                     }
                 }
                 var argsFormat = censoredArgs.Count != 0 ? $"Arguments: {string.Join(" ", censoredArgs)}" : "No command line arguments provided";
-                _log.Verbose(LogType.Screen | LogType.Event, argsFormat);
-                _log.Information(LogType.Disk, argsFormat);
+                _log.Verbose(argsFormat);
             }
             catch (Exception ex)
             {
-                _log.Warning("Error censoring command line: {ex}", ex.Message);
+                _log.Warning(ex, "Error censoring command line");
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Org.BouncyCastle.Utilities.Encoders;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -96,7 +97,8 @@ namespace PKISharp.WACS.Services
             "wacs.lib.dll",
             "mscordbi.dll",
             "mscordaccore.dll",
-            "Microsoft.Testing.Platform.MSBuild.dll"
+            "Microsoft.Testing.Platform.MSBuild.dll",
+            "System.Private.CoreLib.dll"
         ];
 
         protected List<TypeDescriptor> LoadFromDisk()
@@ -162,15 +164,16 @@ namespace PKISharp.WACS.Services
                 }
                 catch (ReflectionTypeLoadException rex)
                 {
+                    _log.Error("Error loading some types from {assembly} ({disk})", assembly.FullName, assembly.Location);
                     types = rex.Types.OfType<Type>();
-                    foreach (var lex in rex.LoaderExceptions.OfType<Exception>())
+                    foreach (var lex in rex.LoaderExceptions.OfType<Exception>().GroupBy(l => l.Message))
                     {
-                        _log.Error(lex, "Error loading type from {assembly} ({disk})", assembly.FullName, assembly.Location);
+                        _log.Verbose($"{lex.First().Message} ({lex.Count()})");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Error loading types from assembly {assembly}", assembly.FullName);
+                    _log.Error(ex, "Error loading types from assembly {assembly} ({disk})", assembly.FullName, assembly.Location);
                 }
                 ret.AddRange(types);
             }

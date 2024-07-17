@@ -42,7 +42,7 @@ namespace PKISharp.WACS.Services
                     }
                     catch (Exception ex)
                     {
-                        log.Warning("No write access to all renewals: {reason}", ex.Message);
+                        log.Warning(ex, "No write access to all renewals");
                         break;
                     }
                 }

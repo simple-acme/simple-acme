@@ -516,7 +516,7 @@ namespace PKISharp.WACS
             }
             catch (Exception ex)
             {
-                log.Error(ex, "An error occured while commiting validation configuration: {ex}", ex.Message);
+                log.Error(ex, "An error occured while commiting validation configuration");
                 return false;
             }
         }
@@ -584,7 +584,7 @@ namespace PKISharp.WACS
             }
             catch (Exception ex)
             {
-                log.Warning("An error occured during post-validation cleanup: {ex}", ex.Message);
+                log.Warning(ex, "An error occured during post-validation cleanup");
             }
         }
     }

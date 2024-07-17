@@ -132,9 +132,9 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 {
                     cert = new X509Certificate2(fi.FullName, "");
                 }
-                catch
+                catch (Exception ex)
                 {
-                    _log.Warning("Unable to scan certificate {name}", fi.FullName);
+                    _log.Warning(ex, "Unable to scan certificate {name}", fi.FullName);
                 }
             }
             return cert;

@@ -85,7 +85,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             catch (Exception ex)
             {
-                _log.Warning($"Unable to delete record from Domeneshop: {ex.Message}");
+                _log.Warning(ex, $"Unable to delete record from Domeneshop");
             }
         }
 
