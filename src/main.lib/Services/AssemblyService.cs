@@ -164,7 +164,7 @@ namespace PKISharp.WACS.Services
                 }
                 catch (ReflectionTypeLoadException rex)
                 {
-                    _log.Error("Error loading some types from {assembly} ({disk})", assembly.FullName, assembly.Location);
+                    _log.Warning("Error loading some types from {assembly} ({disk})", assembly.FullName, assembly.Location);
                     types = rex.Types.OfType<Type>();
                     foreach (var lex in rex.LoaderExceptions.OfType<Exception>().GroupBy(l => l.Message))
                     {
@@ -173,7 +173,7 @@ namespace PKISharp.WACS.Services
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Error loading types from assembly {assembly} ({disk})", assembly.FullName, assembly.Location);
+                    _log.Warning(ex, "Error loading types from assembly {assembly} ({disk})", assembly.FullName, assembly.Location);
                 }
                 ret.AddRange(types);
             }
