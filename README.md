@@ -1,18 +1,17 @@
-# Windows ACME Simple (WACS)
-A simple ACME client for Windows - for use with Let's Encrypt. (Formerly known as letsencrypt-win-simple (LEWS))
+# simple-acme
+A simple cross platform ACME client for Windows - for use with Let's Encrypt. Forked from [win-acme](http://github.com/win-acme/win-acme). Please check our [website](https://simple-acme.com/) for an up-to-date overview, documentation and downloads and don't forget to leave a ★ above!
 
-[![Build status](https://ci.appveyor.com/api/projects/status/c4b3t6g82yyjl4v1?svg=true)](https://ci.appveyor.com/project/WouterTinus/win-acme-s8t9q)
+![Screenshot](https://simple-acme.com/assets/screenshot.png)
 
-# Overview
-Please check our [website](https://www.win-acme.com/) for an up-to-date overview, documentation and downloads.
+# Support
+If have questions on how to use the program, first please check to see if your issue is covered in the [manual](https://simple-acme.com/manual/getting-started). If you can't find a solution that way, open a [discussion](https://github.com/orgs/simple-acme/discussions/new?category=q-a) in the Q&A section. Only open an [issue](https://github.com/simple-acme/simple-acme/issues) if you're reasonably sure that you've found a bug in the program, or your use case is not covered but would be a valueable new feature.
 
-![Screenshot](https://win-acme.com/assets/screenshot.png)
+# Sponsorship/donations
+Is your business relying on this program to secure customer websites and perhaps even critical infrastructure? Then maybe it would be good for your peace of mind then to sponsor one of its core developers, to gain guaranteed future support and good karma at the same time. You can become a regular sponsor via [Patreon](https://www.patreon.com/woutertinus) or [GitHub Sponsors](https://github.com/sponsors/WouterTinus) or do a one-time donation at [Paypal](http://paypal.me/woutertinus).
 
-# Community support
-If you run into trouble you can open an [issue](https://github.com/win-acme/win-acme/issues). First please check to see if your issue is covered in the [manual](https://www.win-acme.com/manual/getting-started) or [reference](https://www.win-acme.com/reference/cli). If you can't find a solition that way, describe the exact steps that you are taking and try to provide as much relevant information as possible, preferably including logging.
+[![Build status](https://ci.appveyor.com/api/projects/status/yg3mym4rthh2pu90/branch/main?svg=true)](https://ci.appveyor.com/project/WouterTinus/simple-acme/branch/main)
 
-# Professional support / sponsorship
-Is your business relying on this program to secure customer websites and perhaps even critical infrastructure? Then maybe it would be good for your peace of mind then to sponsor one of its core developers, to gain guaranteed future support and good karma at the same time. I offer my help quickly, discreetly and professionally via [Patreon](https://www.patreon.com/woutertinus).
-
-# Donations
-Do you like the program and want to buy me a beer and discuss the future of the program in private? My [Patreon](https://www.patreon.com/woutertinus) also has some simple "Thank you" tiers, or if you prefer to do a one-time donation you can use [Paypal](http://paypal.me/woutertinus).
+# Contributors
+<a href="https://github.com/simple-acme/simple-acme/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=simple-acme/simple-acme" />
+</a>
