@@ -273,7 +273,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <returns></returns>
         public string RelativeRecordName(string zone, string recordName)
         {
-            var ret = recordName[..recordName.LastIndexOf(zone)].TrimEnd('.');
+            var index = recordName.LastIndexOf(zone);
+            if (index == -1) {
+                throw new InvalidOperationException($"Cannot create {recordName} in zone {zone}");
+            }
+            var ret = recordName[..index].TrimEnd('.');
             return string.IsNullOrEmpty(ret) ? "@" : ret;
         }
 
