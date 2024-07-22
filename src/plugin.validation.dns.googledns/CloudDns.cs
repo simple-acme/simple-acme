@@ -112,7 +112,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
             catch (Exception ex)
             {
-                _log.Warning(ex, "Error deleting TXT record"
+                _log.Warning(ex, "Error deleting TXT record");
                 return;
             }
         }

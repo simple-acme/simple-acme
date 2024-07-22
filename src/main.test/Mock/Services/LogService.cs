@@ -32,7 +32,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
             DebugMessages.Enqueue(message);
             _logger.Debug(message, items);
         }
-        public void Error(Exception ex, string message, params object?[] items)
+        public void Error(Exception? ex, string message, params object?[] items)
         {
             ErrorMessages.Enqueue(message);
             _logger.Error(ex, message, items);
@@ -78,5 +78,11 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
         public void Reset() { }
 
         public void ApplyClientSettings(ClientSettings logPath) {}
+
+        public void Warning(Exception? ex, string message, params object?[] items)
+        {
+            WarningMessages.Enqueue(message);
+            _logger.Warning(ex, message, items);
+        }
     }
 }
