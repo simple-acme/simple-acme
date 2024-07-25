@@ -3,7 +3,10 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PKISharp.WACS.Configuration
 {
@@ -178,29 +181,28 @@ namespace PKISharp.WACS.Configuration
         /// </summary>
         internal void ShowArguments()
         {
-            var markdown = false;
 #if DEBUG
-            markdown = true;
+            ShowArgumentsYaml();
 #endif
             Console.WriteLine();
             foreach (var providerGroup in _providers.GroupBy(p => p.Group).OrderBy(g => g.Key))
             {
                 if (!string.IsNullOrEmpty(providerGroup.Key))
                 {
-                    Console.WriteLine($"{(markdown ? "" : " ---------------------")}");
-                    Console.WriteLine($"{(markdown ? "#" : "")} {providerGroup.Key}");
-                    Console.WriteLine($"{(markdown ? "" : " ---------------------")}");
+                    Console.WriteLine($" ---------------------");
+                    Console.WriteLine($" {providerGroup.Key}");
+                    Console.WriteLine($" ---------------------");
                     Console.WriteLine();
                 }
 
                 foreach (var provider in providerGroup)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine($"{(markdown ? "##" : "   ")} {provider.Name}");
+                    Console.WriteLine($"    {provider.Name}");
                     Console.ResetColor();
                     if (!string.IsNullOrEmpty(provider.Condition))
                     {
-                        Console.Write($"{(markdown ? "```" : "   ")} [{provider.Condition}]{(markdown ? "```" : "")}");
+                        Console.Write($"   [{provider.Condition}]");
                         if (provider.Default)
                         {
                             Console.WriteLine(" (default)");
@@ -210,7 +212,7 @@ namespace PKISharp.WACS.Configuration
                             Console.WriteLine();
                         }
                     }
-                    Console.WriteLine(markdown ? "```" : "");
+                    Console.WriteLine();
                     foreach (var x in provider.Configuration.Where(x => !x.Obsolete))
                     {
                         Console.ForegroundColor = ConsoleColor.White;
@@ -235,9 +237,50 @@ namespace PKISharp.WACS.Configuration
                         }
                         Console.WriteLine();
                     }
-                    Console.WriteLine(markdown ? "```" : "");
+                    Console.WriteLine();
                 }
             }
+        }
+
+        /// <summary>
+        /// Generate YAML for documentation website
+        /// </summary>
+        internal void ShowArgumentsYaml()
+        {
+            var x = new StringBuilder();
+            foreach (var providerGroup in _providers.GroupBy(p => p.Group).OrderBy(g => g.Key))
+            {
+                if (!string.IsNullOrEmpty(providerGroup.Key))
+                {
+                    x.AppendLine($"{providerGroup.Key}:");
+                } 
+                else
+                {
+                    x.AppendLine($"Main:");
+                }
+                foreach (var provider in providerGroup)
+                {
+                    x.AppendLine($"    {provider.Name}:");
+                    foreach (var c in provider.Configuration.Where(x => !x.Obsolete))
+                    {
+                        x.AppendLine($"        -");
+                        x.AppendLine($"            name: {c.ArgumentName}");
+                        if (c.Description != null)
+                        {
+                            x.AppendLine($"            description: \"{EscapeYaml(c.Description)}\"");
+                        }
+                    }
+                    x.AppendLine();
+                }
+            }
+            File.WriteAllText("arguments.yaml", x.ToString());
+        }
+
+        internal static string EscapeYaml(string input)
+        {
+            var escapeQuotes = input.Replace("\"", "\\\"");
+            var code = Regex.Replace(escapeQuotes, "`(.+?)`", "<code>$1</code>");
+            return code;
         }
     }
 }

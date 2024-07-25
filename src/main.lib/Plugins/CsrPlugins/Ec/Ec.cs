@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         EcOptions, CsrPluginOptionsFactory<EcOptions>, 
         DefaultCapability, WacsJsonPlugins>
         ("9aadcf71-5241-4c4f-aee1-bfe3f6be3489", 
-        "EC", "Elliptic Curve key")]
+        "EC", "Generate an EC public/private key pair ")]
     internal class Ec(
         ILogService log,
         ISettingsService settings,
