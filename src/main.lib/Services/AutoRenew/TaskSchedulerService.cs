@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using sys = System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
@@ -142,7 +143,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="runLevel"></param>
         /// <returns></returns>
-        public async System.Threading.Tasks.Task EnsureAutoRenew(RunLevel runLevel)
+        public async sys.Task EnsureAutoRenew(RunLevel runLevel)
         {
             var existingTask = ExistingTask;
             var create = runLevel.HasFlag(RunLevel.Force) || existingTask == null;
@@ -154,7 +155,7 @@ namespace PKISharp.WACS.Services
                 }
                 else
                 {
-                    log.Error("Proceeding with unhealthy scheduled task, automatic renewals may not work until this is addressed");
+                    log.Warning("Proceeding with unhealthy scheduled task, automatic renewals may not work until this is addressed");
                 }
             }
             if (create)
@@ -168,7 +169,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="runLevel"></param>
         /// <returns></returns>
-        public async System.Threading.Tasks.Task SetupAutoRenew(RunLevel runLevel)
+        public async sys.Task SetupAutoRenew(RunLevel runLevel)
         {
             using var taskService = new TaskService();
             var existingTask = ExistingTask;
@@ -306,14 +307,8 @@ namespace PKISharp.WACS.Services
                     }
                     else
                     {
-                        log.Error(cex, "Failed to create task");
-                        break;
+                        throw;
                     }
-                }
-                catch (Exception ex)
-                {
-                    log.Error(ex, "Failed to create task");
-                    break;
                 }
             }
         }

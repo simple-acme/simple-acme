@@ -10,6 +10,7 @@ using PKISharp.WACS.Plugins.Base;
 using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -27,6 +28,7 @@ namespace PKISharp.WACS
         ISettingsService settings,
         DueDateStaticService dueDateStatic,
         DueDateRuntimeService dueDateRuntime,
+        ExceptionHandler exceptionHandler,
         IAutoRenewService taskScheduler,
         AcmeClientManager clientManager,
         ISharingLifetimeScope container)
@@ -132,7 +134,14 @@ namespace PKISharp.WACS
                 {
                     taskLevel |= RunLevel.Force;
                 }
-                await taskScheduler.EnsureAutoRenew(taskLevel);
+                try
+                {
+                    await taskScheduler.EnsureAutoRenew(taskLevel);
+                }
+                catch (Exception ex)
+                {
+                    exceptionHandler.HandleException(ex, "Unable to configure automatic renewals");
+                }
             }
         }
 
