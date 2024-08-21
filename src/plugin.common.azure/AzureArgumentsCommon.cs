@@ -13,13 +13,13 @@ namespace PKISharp.WACS.Plugins.Azure.Common
         [CommandLine(Description = "Use Managed Service Identity for authentication.")]
         public bool AzureUseMsi { get; set; }
 
-        [CommandLine(Description = "Directory/tenant identifier. Found in Azure AD > Properties.")]
+        [CommandLine(Description = "Directory/tenant identifier. Found in Entra ID > Properties.")]
         public string? AzureTenantId { get; set; }
 
-        [CommandLine(Description = "Application/client identifier. Found/created in Azure AD > App registrations.")]
+        [CommandLine(Description = "Application/client identifier. Found/created in Entra ID > App registrations.")]
         public string? AzureClientId { get; set; }
 
-        [CommandLine(Description = "Client secret. Found/created under Azure AD > App registrations.", Secret = true)]
+        [CommandLine(Description = "Client secret. Found/created under Entra ID > App registrations.", Secret = true)]
         public string? AzureSecret { get; set; }
     }
 }

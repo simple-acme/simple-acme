@@ -41,6 +41,7 @@ namespace PKISharp.WACS.Clients.Acme
         private AcmeProtocolClient? _anonymousClient;
         private readonly Dictionary<string, AcmeClient> _authorizedClients = [];
         private readonly AccountManager _accountManager;
+        private readonly SecretServiceManager _secretServiceManager;
 
         public AcmeClientManager(
             IInputService inputService,
@@ -49,6 +50,7 @@ namespace PKISharp.WACS.Clients.Acme
             ISettingsService settings,
             AccountManager accountManager,
             IProxyService proxy,
+            SecretServiceManager secretServiceManager,
             ZeroSsl zeroSsl)
         {
             _log = log;
@@ -58,6 +60,7 @@ namespace PKISharp.WACS.Clients.Acme
             _input = inputService;
             _proxyService = proxy;
             _accountManager = accountManager;
+            _secretServiceManager = secretServiceManager;
             _zeroSsl = zeroSsl;
         }
 
@@ -194,7 +197,7 @@ namespace PKISharp.WACS.Clients.Acme
             var contacts = default(string[]);
 
             var eabKid = _accountArguments.EabKeyIdentifier;
-            var eabKey = _accountArguments.EabKey;
+            var eabKey = _secretServiceManager.EvaluateSecret(_accountArguments.EabKey);
             var eabAlg = _accountArguments.EabAlgorithm ?? "HS256";
             var eabFlow = client.Directory?.Meta?.ExternalAccountRequired ?? false;
             var zeroSslFlow = _settings.BaseUri.Host.Contains("zerossl.com");

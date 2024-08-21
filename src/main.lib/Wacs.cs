@@ -84,6 +84,9 @@ namespace PKISharp.WACS.Host
             if (_args.Help)
             {
                 argumentsParser.ShowArguments();
+#if DEBUG
+                argumentsParser.ShowArgumentsYaml();
+#endif
                 await CloseDefault();
                 if (_args.CloseOnFinish)
                 {

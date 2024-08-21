@@ -181,9 +181,6 @@ namespace PKISharp.WACS.Configuration
         /// </summary>
         internal void ShowArguments()
         {
-#if DEBUG
-            ShowArgumentsYaml();
-#endif
             Console.WriteLine();
             foreach (var providerGroup in _providers.GroupBy(p => p.Group).OrderBy(g => g.Key))
             {
@@ -261,19 +258,33 @@ namespace PKISharp.WACS.Configuration
                 foreach (var provider in providerGroup)
                 {
                     x.AppendLine($"    {provider.Name}:");
+                    if (provider.Condition != null)
+                    {
+                        x.AppendLine($"         condition: \"{EscapeYaml(provider.Condition)}\"");
+                    }
+                    x.AppendLine($"         arguments:");
                     foreach (var c in provider.Configuration.Where(x => !x.Obsolete))
                     {
-                        x.AppendLine($"        -");
-                        x.AppendLine($"            name: {c.ArgumentName}");
+                        x.AppendLine($"             -");
+                        x.AppendLine($"                 name: {c.ArgumentName}");
                         if (c.Description != null)
                         {
-                            x.AppendLine($"            description: \"{EscapeYaml(c.Description)}\"");
+                            x.AppendLine($"                 description: \"{EscapeYaml(c.Description)}\"");
+                        }
+                        if (c.Default != null)
+                        {
+                            x.AppendLine($"                 default: \"{EscapeYaml(c.Default)}\"");
+                        }
+                        if (c.Secret == true)
+                        {
+                            x.AppendLine($"                 secret: true");
                         }
                     }
                     x.AppendLine();
                 }
             }
             File.WriteAllText("arguments.yaml", x.ToString());
+            _log.Debug("YAML written to {0}", new FileInfo("arguments.yaml").FullName);
         }
 
         internal static string EscapeYaml(string input)
