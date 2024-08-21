@@ -72,6 +72,7 @@
     "PreValidateDns": true,
     "PreValidateDnsRetryCount": 10,
     "PreValidateDnsRetryInterval": 30,
+    "PreValidateDnsLocal": false,
     "AllowDnsSubstitution": true,
     "DnsServers": [ "[System]" ]
   },

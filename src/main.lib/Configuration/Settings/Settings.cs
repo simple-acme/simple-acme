@@ -448,6 +448,10 @@ namespace PKISharp.WACS.Configuration.Settings
         /// </summary>
         public int PreValidateDnsRetryInterval { get; set; } = 30;
         /// <summary>
+        /// Amount of time in seconds to wait between each retry.
+        /// </summary>
+        public bool? PreValidateDnsLocal { get; set; } = false;
+        /// <summary>
         /// If set to `true`, the program will attempt to recurively 
         /// follow CNAME records present on _acme-challenge subdomains to 
         /// find the final domain the DNS-01 challenge should be handled by.

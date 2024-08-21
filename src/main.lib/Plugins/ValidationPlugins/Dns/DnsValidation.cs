@@ -94,7 +94,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             try
             {
                 _log.Debug("[{identifier}] Looking for TXT value {DnsRecordValue}...", record.Context.Label, record.Value);
-                foreach (var client in record.Authority.Nameservers)
+                var testClients = record.Authority.Nameservers;
+                if (_settings.Validation.PreValidateDnsLocal == true)
+                {
+                    testClients = testClients.Append(_dnsClient.GetSystemClient());
+                }
+                foreach (var client in testClients)
                 {
                     _log.Debug("[{identifier}] [{ip}] Getting TXT records...", record.Context.Label, client.IpAddress);
                     var answers = await client.GetTxtRecords(record.Authority.Domain);
