@@ -289,9 +289,10 @@ namespace PKISharp.WACS.Configuration
 
         internal static string EscapeYaml(string input)
         {
-            var escapeQuotes = input.Replace("\"", "\\\"");
-            var code = Regex.Replace(escapeQuotes, "`(.+?)`", "<code>$1</code>");
-            return code;
+            input = input.Replace("\"", "\\\""); // Escape quote
+            input = input.Replace("--", "‑‑"); // Regular hyphen to non-breaking
+            input = Regex.Replace(input, "`(.+?)`", "<code>$1</code>");
+            return input;
         }
     }
 }
