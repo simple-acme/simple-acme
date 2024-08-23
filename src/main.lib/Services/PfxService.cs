@@ -38,11 +38,21 @@ namespace PKISharp.WACS.Services
             var outputBuilder = new Pkcs12StoreBuilder();
             if (protectionMode == PfxProtectionMode.Default) 
             {
-                // Windows Server 2019 and above
-                protectionMode = 
-                    Environment.OSVersion.Version.Build >= 17763 ? 
-                    PfxProtectionMode.Aes256 : 
-                    PfxProtectionMode.Legacy;
+                if (OperatingSystem.IsWindows())
+                {
+                    // Windows 10 version 1809 / Server 2019 and above support AES-256
+                    // Older versions only support RC2-40
+                    protectionMode =
+                        Environment.OSVersion.Version.Build >= 17763 ?
+                        PfxProtectionMode.Aes256 :
+                        PfxProtectionMode.Legacy;
+                }
+                else
+                {
+                    // AES-256 default for other platforms
+                    protectionMode = PfxProtectionMode.Aes256;
+                }
+
             }
             if (protectionMode == PfxProtectionMode.Aes256)
             {
