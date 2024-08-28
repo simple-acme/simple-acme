@@ -7,7 +7,7 @@ A simple cross platform ACME client for Windows - for use with Let's Encrypt. Fo
 If have questions on how to use the program, first please check to see if your issue is covered in the [manual](https://simple-acme.com/manual/getting-started). If you can't find a solution that way, open a [discussion](https://github.com/orgs/simple-acme/discussions/new?category=q-a) in the Q&A section. Only open an [issue](https://github.com/simple-acme/simple-acme/issues) if you're reasonably sure that you've found a bug in the program, or your use case is not covered but would be a valueable new feature.
 
 # Sponsorship/donations
-Is your business relying on this program to secure customer websites and perhaps even critical infrastructure? Then maybe it would be good for your peace of mind then to sponsor one of its core developers, to gain guaranteed future support and good karma at the same time. You can become a regular sponsor via [Patreon](https://www.patreon.com/woutertinus) or [GitHub Sponsors](https://github.com/sponsors/WouterTinus) or do a one-time donation at [Paypal](http://paypal.me/woutertinus).
+Is your business relying on this program to secure customer websites and perhaps even critical infrastructure? Then maybe it would be good for your peace of mind then to sponsor its core developer, to gain guaranteed future support and good karma at the same time. You can become a regular sponsor via [Patreon](https://www.patreon.com/woutertinus) or [GitHub Sponsors](https://github.com/sponsors/WouterTinus) or do a one-time donation at [Paypal](http://paypal.me/woutertinus).
 
 [![Build status](https://ci.appveyor.com/api/projects/status/yg3mym4rthh2pu90/branch/main?svg=true)](https://ci.appveyor.com/project/WouterTinus/simple-acme/branch/main)
 
