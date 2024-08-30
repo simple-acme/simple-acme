@@ -13,9 +13,9 @@ using System;
 
 namespace PKISharp.WACS.Plugins.CsrPlugins
 {
-    [IPlugin.Plugin<
-        EcOptions, CsrPluginOptionsFactory<EcOptions>, 
-        DefaultCapability, WacsJsonPlugins>
+    [IPlugin.Plugin1<
+        EcOptions, CsrPluginOptionsFactory<EcOptions, EcArguments>, 
+        DefaultCapability, WacsJsonPlugins, EcArguments>
         ("9aadcf71-5241-4c4f-aee1-bfe3f6be3489", 
         "EC", "Generate an EC public/private key pair ")]
     internal class Ec(

@@ -16,16 +16,6 @@ namespace PKISharp.WACS.Services
         /// Group (e.g. MainTarget, Validation, Store)
         /// </summary>
         string Group { get; }
-
-        /// <summary>
-        /// Precondition to use these parameters
-        /// </summary>
-        string? Condition { get; }
-
-        /// <summary>
-        /// Precondition to use these parameters
-        /// </summary>
-        bool Default { get; }
     }
 
     public interface IArguments : IArgumentsGroup

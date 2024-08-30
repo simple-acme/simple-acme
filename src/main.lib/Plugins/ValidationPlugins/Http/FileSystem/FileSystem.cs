@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         FileSystemOptions, FileSystemOptionsFactory, 
-        HttpValidationCapability, WacsJsonPlugins>
+        HttpValidationCapability, WacsJsonPlugins, FileSystemArguments>
         ("1c77b3a4-5310-4c46-92c6-00d866e84d6b", 
         "FileSystem", "Save verification files on (network) path")]
     internal class FileSystem(FileSystemOptions options, IIISClient iisClient, RunLevel runLevel, HttpValidationParameters pars) : HttpValidation<FileSystemOptions>(options, runLevel, pars)

@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         IISOptions, IISOptionsFactory, 
-        IISCapability, WacsJsonPlugins>
+        IISCapability, WacsJsonPlugins, IISArguments>
         (ID, Name, "Create or update bindings in IIS")]
     [IPlugin.Plugin<
         IISFtpOptions, IISFTPOptionsFactory,

@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
-    public abstract class HttpValidationOptionsFactory<TOptions>(ArgumentsInputService arguments, Target target) : 
+    public abstract class HttpValidationOptionsFactory<TOptions, TArguments>(ArgumentsInputService arguments, Target target) : 
         PluginOptionsFactory<TOptions>
         where TOptions : HttpValidationOptions, new()
+        where TArguments : HttpValidationArguments, new()
     {
         protected readonly ArgumentsInputService _arguments = arguments;
         protected readonly Target _target = target;
@@ -17,7 +18,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         private ArgumentResult<string?> Path(bool allowEmpty)
         {
             var pathArg = _arguments.
-                GetString<HttpValidationArguments>(x => x.WebRoot).
+                GetString<TArguments>(x => x.WebRoot).
                 Validate(p => Task.FromResult(PathIsValid(p!)), $"invalid path");
             if (!allowEmpty)
             {
@@ -28,7 +29,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
 
         private ArgumentResult<bool?> CopyWebConfig =>
             _arguments.
-                GetBool<HttpValidationArguments>(x => x.ManualTargetIsIIS).
+                GetBool<TArguments>(x => x.ManualTargetIsIIS).
                 DefaultAsNull().
                 WithDefault(false);
 

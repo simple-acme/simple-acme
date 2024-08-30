@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         WebDavOptions, WebDavOptionsFactory, 
-        HttpValidationCapability, WebDavJson>
+        HttpValidationCapability, WebDavJson, WebDavArguments>
         ("7e191d0e-30d1-47b3-ae2e-442499d33e16",
         "WebDav", "Upload verification files via WebDav")]
     public class WebDav : HttpValidation<WebDavOptions>

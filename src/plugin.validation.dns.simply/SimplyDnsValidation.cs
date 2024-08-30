@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         SimplyOptions, SimplyOptionsFactory,
-        DnsValidationCapability, SimplyJson>
+        DnsValidationCapability, SimplyJson, SimplyArguments>
         ("3693c40c-7c2f-4b70-aead-27869d8cbdf3", 
         "Simply", "Create verification records in Simply DNS")]
     internal class SimplyDnsValidation(

@@ -12,11 +12,11 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         PfxFileOptions, PfxFileOptionsFactory, 
-        DefaultCapability, WacsJsonPlugins>
+        DefaultCapability, WacsJsonPlugins, PfxFileArguments>
         ("2a2c576f-7637-4ade-b8db-e8613b0bb33e",
-        Name, "PFX archive")]
+        Name, "Create PFX/PKCS12 archive file")]
     internal class PfxFile : IStorePlugin
     {
         internal const string Name = "PfxFile";

@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         UserStoreOptions, UserStoreOptionsFactory,
-        UserStoreCapability, UserStoreJson>
+        UserStoreCapability, UserStoreJson, UserArguments>
         ("95ee94e7-c8e2-40e6-a26f-c9fc3afa9fa5",
-        Name, "Windows Certificate Store (Current User)")]
+        Name, "Add to Windows Certificate Store (Current User)")]
     internal class UserStore : IStorePlugin, IDisposable
     {
         internal const string Name = "UserStore";

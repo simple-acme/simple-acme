@@ -165,15 +165,5 @@ namespace PKISharp.WACS.Configuration
         /// Supergroup
         /// </summary>
         string IArgumentsGroup.Group => DefaultInstance.Group;
-
-        /// <summary>
-        /// Under which conditions is this block of arguments usable
-        /// </summary>
-        string? IArgumentsGroup.Condition => DefaultInstance.Condition;
-
-        /// <summary>
-        /// Is this a default plugin?
-        /// </summary>
-        bool IArgumentsGroup.Default => DefaultInstance.Default;
     }
 }

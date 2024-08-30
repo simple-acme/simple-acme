@@ -11,11 +11,11 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         PemFilesOptions, PemFilesOptionsFactory, 
-        DefaultCapability, WacsJsonPlugins>
+        DefaultCapability, WacsJsonPlugins, PemFilesArguments>
         ("e57c70e4-cd60-4ba6-80f6-a41703e21031",
-        Name, "PEM encoded files (Apache, nginx, etc.)")]
+        Name, "Create PEM encoded files (for Apache, nginx, etc.)")]
     internal class PemFiles : IStorePlugin
     {
         internal const string Name = "PemFiles";

@@ -35,14 +35,12 @@ namespace PKISharp.WACS.Services
                 // Arguments
                 new(typeof(Configuration.Arguments.MainArguments)),
                 new(typeof(Configuration.Arguments.AccountArguments)),
-                new(typeof(Configuration.Arguments.NetworkCredentialArguments)),
   
                 // Target plugins
                 new(typeof(Plugins.TargetPlugins.Csr)), new(typeof(Plugins.TargetPlugins.CsrArguments)),
                 new(typeof(Plugins.TargetPlugins.Manual)), new(typeof(Plugins.TargetPlugins.ManualArguments)),
 
                 // Validation plugins
-                new(typeof(Plugins.ValidationPlugins.HttpValidationArguments)),
                 new(typeof(Plugins.ValidationPlugins.Dns.Manual)),
                 new(typeof(Plugins.ValidationPlugins.Dns.Script)), new(typeof(Plugins.ValidationPlugins.Dns.ScriptArguments)),
                 new(typeof(Plugins.ValidationPlugins.Http.FileSystem)), new(typeof(Plugins.ValidationPlugins.Http.FileSystemArguments)),
@@ -55,9 +53,8 @@ namespace PKISharp.WACS.Services
                 new(typeof(Plugins.OrderPlugins.Single)),
 
                 // CSR plugins
-                new(typeof(Plugins.CsrPlugins.CsrArguments)),
-                new(typeof(Plugins.CsrPlugins.Ec)),
-                new(typeof(Plugins.CsrPlugins.Rsa)),
+                new(typeof(Plugins.CsrPlugins.Ec)), new(typeof(Plugins.CsrPlugins.EcArguments)),
+                new(typeof(Plugins.CsrPlugins.Rsa)), new(typeof(Plugins.CsrPlugins.RsaArguments)),
 
                 // Store plugins
                 new(typeof(Plugins.StorePlugins.CertificateStore)), new(typeof(Plugins.StorePlugins.CertificateStoreArguments)),

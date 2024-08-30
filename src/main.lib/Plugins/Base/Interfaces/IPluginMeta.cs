@@ -20,6 +20,8 @@ namespace PKISharp.WACS.Plugins.Interfaces
         public Type OptionsFactory { get; }
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         public Type OptionsJson { get; }
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        public Type? Arguments { get; }
     }
 
 }

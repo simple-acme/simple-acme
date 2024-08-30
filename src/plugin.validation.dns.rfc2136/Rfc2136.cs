@@ -14,9 +14,9 @@ using ArDnsClient = ARSoft.Tools.Net.Dns.DnsClient;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         Rfc2136Options, Rfc2136OptionsFactory, 
-        DnsValidationCapability, Rfc2136Json>
+        DnsValidationCapability, Rfc2136Json, Rfc2136Arguments>
         ("ed5dc9d1-739c-4f6a-854f-238bf65b63ee",
         "Rfc2136",
         "Create verification records using dynamic updates")]

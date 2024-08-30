@@ -5,11 +5,6 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 {
     internal class CertificateStoreArguments : BaseArguments
     {
-        public override string Name => "Certificate Store plugin";
-        public override string Group => "Store";
-        public override string Condition => "--store certificatestore";
-        public override bool Default => true;
-
         [CommandLine(Description = "This setting can be used to save the certificate in a specific store. By default it will go to 'WebHosting' store on modern versions of Windows.")]
         public string? CertificateStore { get; set; }
 

@@ -13,7 +13,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
         DomainOptions, PluginOptionsFactory<DomainOptions>,
         DomainCapability, WacsJsonPlugins>
         ("b7c331d4-d875-453e-b83a-2b537ca12535", 
-        "Domain", "Separate certificate for each domain (e.g. *.example.com)")]
+        "Domain", "Separate certificate for each registerable domain (e.g. *.example.com)")]
     class Domain(DomainParseService domainParseService, ILogService log) : IOrderPlugin
     {
         public IEnumerable<Order> Split(Renewal renewal, Target target) 

@@ -21,9 +21,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// Handle creation of DNS records in Azure
     /// </summary>
-    [IPlugin.Plugin<
-        AzureOptions, AzureOptionsFactory,
-        DnsValidationCapability, AzureJson>
+    [IPlugin.Plugin1<
+        AzureOptions, AzureOptionsFactory, 
+        DnsValidationCapability, AzureJson, AzureArguments>
         ("aa57b028-45fb-4aca-9cac-a63d94c76b4a",
         "Azure", "Create verification records in Azure DNS")]
     internal class Azure(AzureOptions options,

@@ -16,6 +16,7 @@ namespace PKISharp.WACS.Host
         ILogService logService,
         IInputService inputService,
         ISettingsService settingsService,
+        HelpService helpService,
         VersionService versionService,
         ArgumentsParser argumentsParser,
         AdminService adminService,
@@ -83,9 +84,9 @@ namespace PKISharp.WACS.Host
             // Help function
             if (_args.Help)
             {
-                argumentsParser.ShowArguments();
+                helpService.ShowArguments();
 #if DEBUG
-                argumentsParser.ShowArgumentsYaml();
+                helpService.ShowArgumentsYaml();
 #endif
                 await CloseDefault();
                 if (_args.CloseOnFinish)

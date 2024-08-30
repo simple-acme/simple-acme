@@ -5,10 +5,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     public sealed class Rfc2136Arguments : BaseArguments
     {
-        public override string Name { get; } = "Rfc2136";
-        public override string Group { get; } = "Validation";
-        public override string Condition { get; } = "--validation rfc2136";
-
         [CommandLine(Description = "DNS server host/ip")]
         public string? ServerHost { get; set; }
 

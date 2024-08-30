@@ -15,9 +15,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ("8f1da72e-f727-49f0-8546-ef69e5ecec32", 
         "DnsScript", "Create verification records with your own script", 
         Hidden = true)]
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         ScriptOptions, ScriptOptionsFactory,
-        DnsValidationCapability, WacsJsonPlugins>
+        DnsValidationCapability, WacsJsonPlugins, ScriptArguments>
         ("8f1da72e-f727-49f0-8546-ef69e5ecec32", 
         "Script", "Create verification records with your own script")]
     internal partial class Script(

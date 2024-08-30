@@ -25,9 +25,9 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         IISCapability, WacsJsonPlugins>
         ("2f5dd428-0f5d-4c8a-8fd0-56fc1b5985ce", 
         "IISBinding", "Read bindings from IIS (legacy)", Hidden = true)]
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         IISOptions, IISOptionsFactory, 
-        IISCapability, WacsJsonPlugins>
+        IISCapability, WacsJsonPlugins, IISArguments>
         ("54deb3ee-b5df-4381-8485-fe386054055b", 
         "IIS", "Read bindings from IIS")]
     internal class IIS(ILogService logService, IISHelper helper, IISOptions options) : ITargetPlugin

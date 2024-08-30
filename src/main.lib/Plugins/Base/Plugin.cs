@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Plugins.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
@@ -39,5 +40,7 @@ namespace PKISharp.WACS.Plugins
         public Type OptionsJson => meta.OptionsJson;
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         public Type Capability => meta.Capability;
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        public Type? Arguments => meta.Arguments;
     }
 }

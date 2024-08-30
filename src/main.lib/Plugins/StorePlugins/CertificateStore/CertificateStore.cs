@@ -19,11 +19,11 @@ using static System.IO.FileSystemAclExtensions;
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
     [SupportedOSPlatform("windows")]
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         CertificateStoreOptions, CertificateStoreOptionsFactory, 
-        CertificateStoreCapability, WacsJsonPlugins>
+        CertificateStoreCapability, WacsJsonPlugins, CertificateStoreArguments>
         ("e30adc8e-d756-4e16-a6f2-450f784b1a97", 
-        Name, "Windows Certificate Store (Local Computer)")]
+        Name, "Add to Windows Certificate Store (Local Computer)")]
     internal class CertificateStore : IStorePlugin, IDisposable
     {
         internal const string Name = "CertificateStore";

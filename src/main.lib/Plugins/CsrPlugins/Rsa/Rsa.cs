@@ -10,9 +10,9 @@ using PKISharp.WACS.Services.Serialization;
 
 namespace PKISharp.WACS.Plugins.CsrPlugins
 {
-    [IPlugin.Plugin<
-        RsaOptions, CsrPluginOptionsFactory<RsaOptions>,
-        DefaultCapability, WacsJsonPlugins>
+    [IPlugin.Plugin1<
+        RsaOptions, CsrPluginOptionsFactory<RsaOptions, RsaArguments>,
+        DefaultCapability, WacsJsonPlugins, RsaArguments>
         ("b9060d4b-c2d3-49ac-b37f-962e7c3cbe9d", 
         "RSA", "Generate an RSA public/private key pair")]
     internal class Rsa(

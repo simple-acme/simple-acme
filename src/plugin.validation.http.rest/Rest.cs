@@ -12,11 +12,11 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         RestOptions, RestOptionsFactory, 
-        HttpValidationCapability, RestJson>
+        HttpValidationCapability, RestJson, RestArguments>
         ("11ba2994-ea59-4f2f-b9eb-0eaa2fa3cbfa", 
-        "Rest", "Send verification files to the server by issuing HTTP REST-style request")]
+        "REST request", "Send verification files to the server by issuing an http(s) request")]
     internal sealed class Rest(
         IProxyService proxyService,
         ILogService log,

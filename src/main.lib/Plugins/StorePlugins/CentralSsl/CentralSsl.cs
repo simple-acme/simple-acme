@@ -13,11 +13,11 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         CentralSslOptions, CentralSslOptionsFactory, 
-        DefaultCapability, WacsJsonPlugins>
+        DefaultCapability, WacsJsonPlugins, CentralSslArguments>
         ("af1f77b6-4e7b-4f96-bba5-c2eeb4d0dd42",
-        Name, "IIS Central Certificate Store (.pfx per host)")]
+        Name, "Add to IIS Central Certificate Store")]
     internal class CentralSsl : IStorePlugin
     {
         internal const string Name = "CentralSsl";

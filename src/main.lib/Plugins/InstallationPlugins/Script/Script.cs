@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         ScriptOptions, ScriptOptionsFactory, 
-        InstallationCapability, WacsJsonPlugins>
+        InstallationCapability, WacsJsonPlugins, ScriptArguments>
         ("3bb22c70-358d-4251-86bd-11858363d913", 
         "Script", "Start external script or program")]
     internal partial class Script(

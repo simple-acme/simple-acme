@@ -8,9 +8,9 @@ using System.Collections.Concurrent;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         LinodeOptions, LinodeOptionsFactory,
-        DnsValidationCapability, LinodeJson>
+        DnsValidationCapability, LinodeJson, LinodeArguments>
         ("12fdc54c-be30-4458-8066-2c1c565fe2d9",
         "Linode", "Create verification records in Linode DNS")]
     internal class LinodeDnsValidation(

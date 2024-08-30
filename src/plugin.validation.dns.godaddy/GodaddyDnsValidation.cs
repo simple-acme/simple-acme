@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         GodaddyOptions, GodaddyOptionsFactory, 
-        DnsValidationCapability, GodaddyJson>
+        DnsValidationCapability, GodaddyJson, GodaddyArguments>
         ("966c4c3d-1572-44c7-9134-5e2bc8fa021d", 
         "Godaddy", "Create verification records in Godaddy DNS")]
     internal class GodaddyDnsValidation(

@@ -8,10 +8,8 @@ namespace PKISharp.WACS.Configuration.Arguments
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
     public abstract class BaseArguments : IArguments
     {
-        public abstract string Name { get; }
+        public virtual string Name => "";
         public virtual string Group => "";
-        public virtual string Condition => "";
-        public virtual bool Default => false;
         public virtual bool Active(string[] args) 
         {
             foreach (var (meta, _, _) in GetType().CommandLineProperties())

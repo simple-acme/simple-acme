@@ -1,6 +1,7 @@
-﻿using ACMESharp.Authorizations;
+﻿using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
@@ -17,11 +18,12 @@ namespace PKISharp.WACS.Plugins.Interfaces
         /// <typeparam name="TOptionsFactory"></typeparam>
         /// <typeparam name="TJson"></typeparam>
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-        protected sealed class PluginAttribute<
+        protected class PluginAttribute<
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TOptions,
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TOptionsFactory,
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCapability,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TJson>(string id, string name, string description) : 
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TJson>
+            (string id, string name, string description) : 
             Attribute, IPluginMeta
             where TOptions : PluginOptions, new()
             where TOptionsFactory : IPluginOptionsFactory<TOptions>
@@ -39,6 +41,26 @@ namespace PKISharp.WACS.Plugins.Interfaces
             public Type OptionsJson { get; } = typeof(TJson);
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             public Type Capability { get; } = typeof(TCapability);
+            public Type? Arguments { get; internal set; } = null;
+        }
+
+        /// <summary>
+        /// Derivative class with single argument type
+        /// </summary>
+        [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+        protected sealed class Plugin1Attribute<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TOptions,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TOptionsFactory,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCapability,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TJson,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TArguments> :
+            PluginAttribute<TOptions, TOptionsFactory, TCapability, TJson>
+            where TOptions : PluginOptions, new()
+            where TOptionsFactory : IPluginOptionsFactory<TOptions>
+            where TJson : JsonSerializerContext
+            where TArguments : IArguments
+        {
+            public Plugin1Attribute(string id, string name, string description) : base(id, name, description) => Arguments = typeof(TArguments);
         }
     }
 

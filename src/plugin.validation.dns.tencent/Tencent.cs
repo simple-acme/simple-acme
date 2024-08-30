@@ -12,9 +12,9 @@ using TencentCloud.Common.Profile;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         TencentOptions, TencentOptionsFactory,
-        DnsValidationCapability, TencentJson>
+        DnsValidationCapability, TencentJson, TencentArguments>
         ("6ea628c3-0f74-68bb-cf17-4fdd3d53f3af",
         "Tencent", "Create verification records in Tencent DNS")]
     public class Tencent : DnsValidation<Tencent>, IDisposable

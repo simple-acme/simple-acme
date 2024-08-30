@@ -5,10 +5,6 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
 {
     internal class ScriptArguments : BaseArguments
     {
-        public override string Name => "Script plugin";
-        public override string Group => "Installation";
-        public override string Condition => "--installation script";
-
         [CommandLine(Description = "Path to script file to run after retrieving the certificate. This may be any executable file or a Powershell (.ps1) script.")]
         public string? Script { get; set; }
 

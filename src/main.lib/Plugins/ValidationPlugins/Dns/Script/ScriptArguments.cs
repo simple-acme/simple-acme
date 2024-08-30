@@ -5,10 +5,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     internal class ScriptArguments : BaseArguments
     {
-        public override string Name => "Script";
-        public override string Group => "Validation";
-        public override string Condition => "--validation script";
-
         [CommandLine(Description = "Path to script that creates and deletes validation records, depending on its parameters. If this parameter is provided then --dnscreatescript and --dnsdeletescript are ignored.")]
         public string? DnsScript { get; set; }
 

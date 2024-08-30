@@ -3,12 +3,8 @@ using PKISharp.WACS.Configuration.Arguments;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
-    internal class HttpValidationArguments : BaseArguments
+    public abstract class HttpValidationArguments : BaseArguments
     {
-        public override string Group => "Validation";
-        public override string Name => "Common HTTP validation options";
-        public override string Condition => "--validation filesystem|ftp|sftp|webdav";
-        
         [CommandLine(Description = "Root path of the site that will serve the HTTP validation requests.")]
         public string? WebRoot { get; set; }
 

@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         DreamhostOptions, DreamhostOptionsFactory,
-        DnsValidationCapability, DreamhostJson>
+        DnsValidationCapability, DreamhostJson, DreamhostArguments>
         ("2bfb3ef8-64b8-47f1-8185-ea427b793c1a", 
         "Dreamhost", "Create verification records in Dreamhost DNS")]
     internal class DreamhostDnsValidation(

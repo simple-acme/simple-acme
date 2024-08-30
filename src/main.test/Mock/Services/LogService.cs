@@ -36,7 +36,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
         {
             ErrorMessages.Enqueue(message);
             _logger.Error(ex, message, items);
-            if (throwErrors)
+            if (throwErrors && ex != null)
             {
                 throw ex;
             }
@@ -64,7 +64,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
             VerboseMessages.Enqueue(message);
             _logger.Verbose(message, items);
         }
-        public void Verbose(LogType logType, string message, params object?[] items)
+        public void Verbose(LogType _, string message, params object?[] items)
         {
             VerboseMessages.Enqueue(message);
             _logger.Verbose(message, items);

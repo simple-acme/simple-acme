@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.TargetPlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         ManualOptions, ManualOptionsFactory, 
-        DefaultCapability, WacsJsonPlugins>
+        DefaultCapability, WacsJsonPlugins, ManualArguments>
         ("e239db3b-b42f-48aa-b64f-46d4f3e9941b", 
-        "Manual", ManualOptions.DescriptionText)]
+        "Manual", "Manually create DNS records (auto-renew not possible)")]
     internal class Manual(ManualOptions options) : ITargetPlugin
     {
         public Task<Target?> Generate()

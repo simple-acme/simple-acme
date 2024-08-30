@@ -4,13 +4,12 @@ using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit;
 using PKISharp.WACS.Services;
-using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         DnsexitOptions, DnsexitOptionsFactory, 
-        DnsValidationCapability, DnsexitJson>
+        DnsValidationCapability, DnsexitJson, DnsexitArguments>
         ("C9017182-1000-4257-A8DA-0553CD1490EC", 
         "Dnsexit", "Create verification records in Dnsexit DNS")]
     internal class DnsExitDnsValidation(

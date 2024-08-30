@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         CloudDnsOptions, CloudDnsOptionsFactory, 
-        DnsValidationCapability, CloudDnsJson>
+        DnsValidationCapability, CloudDnsJson, CloudDnsArguments>
         ("B61505E9-1709-43FD-996F-C74C3686286C",
         "GCPDns", "Create verification records in Google Cloud DNS")]
     internal class CloudDns: DnsValidation<CloudDns>

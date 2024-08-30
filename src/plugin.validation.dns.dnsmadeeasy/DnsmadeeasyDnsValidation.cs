@@ -5,15 +5,14 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy;
 using PKISharp.WACS.Services;
 using System;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
 
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         DnsMadeEasyOptions, DnsMadeEasyOptionsFactory,
-        DnsValidationCapability, DnsMadeEasyJson>
+        DnsValidationCapability, DnsMadeEasyJson, DnsMadeEasyArguments>
         ("13993334-2d74-4ff6-801b-833b99bf231d",
         "DnsMadeEasy", "Create verification records in DnsMadeEasy DNS")]
     internal class DnsMadeEasyDnsValidation(

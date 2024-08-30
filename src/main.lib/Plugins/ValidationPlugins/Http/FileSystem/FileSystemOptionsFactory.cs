@@ -16,7 +16,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         Target target,
         IIISClient iisClient,
         ILogService log,
-        ArgumentsInputService arguments) : HttpValidationOptionsFactory<FileSystemOptions>(arguments, target)
+        ArgumentsInputService arguments) : HttpValidationOptionsFactory<FileSystemOptions, FileSystemArguments>(arguments, target)
     {
         public override bool PathIsValid(string path) => path.ValidPath(log);
         public override bool AllowEmtpy() => _target.IIS;

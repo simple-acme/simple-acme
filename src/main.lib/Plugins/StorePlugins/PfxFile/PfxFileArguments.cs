@@ -5,10 +5,6 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 {
     internal class PfxFileArguments : BaseArguments
     {
-        public override string Name => "PFX file plugin";
-        public override string Group => "Store";
-        public override string Condition => "--store pfxfile";
-
         [CommandLine(Description = "Path to write the .pfx file to.")]
         public string? PfxFilePath { get; set; }
 

@@ -14,11 +14,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// <summary>
     /// Handle creation of DNS records in Azure
     /// </summary>
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         KeyVaultOptions, KeyVaultOptionsFactory, 
-        DefaultCapability, KeyVaultJson>
+        DefaultCapability, KeyVaultJson, KeyVaultArguments>
         ("dbfa91e2-28c0-4b37-857c-df6575dbb388", 
-        "KeyVault", "Store certificate in Azure Key Vault")]
+        "KeyVault", "Store in Azure Key Vault")]
     internal class KeyVault(KeyVaultOptions options, SecretServiceManager ssm, IProxyService proxyService, ILogService log) : IStorePlugin
     {
         private readonly AzureHelpers _helpers = new(options, proxyService, ssm);

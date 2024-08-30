@@ -5,10 +5,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
 {
     public class SimplyArguments : BaseArguments
     {
-        public override string Name => "Simply";
-        public override string Group => "Validation";
-        public override string Condition => "--validation simply";
-
         [CommandLine(Description = "Simply Account.")]
         public string? Account { get; set; }
 

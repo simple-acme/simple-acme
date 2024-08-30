@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         AcmeOptions, AcmeOptionsFactory, 
-        DnsValidationCapability, AcmeJson>
+        DnsValidationCapability, AcmeJson, AcmeArguments>
         ("c13acc1b-7571-432b-9652-7a68a5f506c5", 
         "acme-dns", "Create verification records with acme-dns (https://github.com/joohoi/acme-dns)")]
     public class Acme(

@@ -9,14 +9,13 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         Route53Options, Route53OptionsFactory, 
-        DnsValidationCapability, Route53Json>
+        DnsValidationCapability, Route53Json, Route53Arguments>
         ("4e5dc595-45c7-4461-929a-8f96a0c96b3d", 
         "Route53", "Create verification records in AWS Route 53")]
     internal sealed class Route53 : DnsValidation<Route53>

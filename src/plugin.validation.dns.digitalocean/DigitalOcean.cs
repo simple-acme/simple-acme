@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         DigitalOceanOptions, DigitalOceanOptionsFactory,
-        DnsValidationCapability, DigitalOceanJson>
+        DnsValidationCapability, DigitalOceanJson, DigitalOceanArguments>
         ("1a87d670-3fa3-4a2a-bb10-491d48feb5db",
         "DigitalOcean", "Create verification records on DigitalOcean")]
     internal class DigitalOcean(

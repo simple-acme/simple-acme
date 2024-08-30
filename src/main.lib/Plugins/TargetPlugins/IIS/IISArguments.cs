@@ -5,10 +5,6 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
 {
     internal class IISArguments : BaseArguments
     {
-        public override string Name => "IIS plugin";
-        public override string Group => "Source";
-        public override string Condition => "--source iis";
-
         public const string PatternExamples = "You may use a `*` for a range of any characters and a `?` " +
                 "for any single character. For example: the pattern `example.*` will match `example.net` and " +
                 "`example.com` (but not `my.example.com`) and the pattern `?.example.com` will match " +

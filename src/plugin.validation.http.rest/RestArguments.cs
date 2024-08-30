@@ -6,7 +6,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
     internal sealed class RestArguments : BaseArguments
     {
         public override string Name => "Rest plugin";
-        public override string Condition => "--validation rest";
         public override string Group => "Validation";
 
         [CommandLine(Name = "rest-securitytoken", Description = "The bearer token needed to authenticate with the REST API on the server for PUT / DELETE requests.", Secret = true)]
