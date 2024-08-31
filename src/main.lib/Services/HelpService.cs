@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Plugins;
+using PKISharp.WACS.Plugins.Base.Capabilities;
 using System;
 using System.IO;
 using System.Linq;
@@ -34,13 +35,60 @@ namespace PKISharp.WACS.Services
             }).ToList();
 
             var providerPluginGroups = providerPlugins.Select(p => new {
-                p.provider, 
-                p.plugin, 
+                p.provider,
+                p.plugin,
                 name = p.plugin?.Name ?? p.provider.Name,
-                group = p.plugin?.Step.ToString() ?? p.provider.Group
+                order = getOrder(p.plugin),
+                group = getGroup(p.plugin) ?? p.provider.Group
             });
 
-            foreach (var ppgs in providerPluginGroups.GroupBy(p => p.group).OrderBy(g => g.Key))
+            int getOrder(Plugin? plugin)
+            {
+                if (plugin is null)
+                {
+                    return -1;
+                }
+                var offset = 0;
+                if (plugin.Step == Steps.Validation)
+                {
+                    if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
+                    {
+                        offset = 1;
+                    }
+                    if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
+                    {
+                        offset = 2;
+                    }
+                }
+                return (int)plugin.Step + offset;
+            }
+
+            string? getGroup(Plugin? plugin)
+            {
+                if (plugin is null)
+                {
+                    return null;
+                }
+                if (plugin.Step == Steps.Validation)
+                {
+                    if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
+                    {
+                        return "DNS validation";
+                    }
+                    if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
+                    {
+                        return "TLS validation";
+                    }
+                    return "HTTP validation";
+                }
+                return plugin.Step.ToString();
+            }
+
+            var orderedGroups = providerPluginGroups.
+                GroupBy(p => p.group).
+                OrderBy(g => g.Min(x => x.order));
+
+            foreach (var ppgs in orderedGroups)
             {
                 if (!string.IsNullOrEmpty(ppgs.Key))
                 {
@@ -150,10 +198,14 @@ namespace PKISharp.WACS.Services
             input = input.Replace("\"", "\\\""); // Escape quote
             input = input.Replace("--", "‑‑"); // Regular hyphen to non-breaking
             input = BacktickRegex().Replace(input, "<code>$1</code>");
+            input = UrlRegex().Replace(input, "<a href=\"$1\">$1</a>");
             return input;
         }
 
         [GeneratedRegex("`(.+?)`")]
         private static partial Regex BacktickRegex();
+
+        [GeneratedRegex("https://simple-acme.com([^ ]+?)")]
+        private static partial Regex UrlRegex();
     }
 }
