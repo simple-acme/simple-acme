@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Plugins
         public Guid Id { get; } = meta.Id;
         public Steps Step { get; } = step;
 
-        public string Name => meta.Name;
+        public string Name => meta.Trigger;
         public string Description => meta.Description;
         public bool Hidden => meta.Hidden;
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]

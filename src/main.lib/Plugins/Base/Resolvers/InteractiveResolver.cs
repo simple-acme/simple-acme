@@ -196,7 +196,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             var defaultParam2 = settings.Validation.DefaultValidationMode;
             if (string.IsNullOrEmpty(defaultParam2))
             {
-                defaultParam2 = Constants.Http01ChallengeType;
+                defaultParam2 = Constants.DefaultChallengeType;
             }
             if (!string.IsNullOrWhiteSpace(arguments.Validation))
             {

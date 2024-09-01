@@ -2,6 +2,7 @@
 using PKISharp.WACS.Plugins;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace PKISharp.WACS.Services
 {
-    internal partial class HelpService(ILogService log, IPluginService plugins, ArgumentsParser parser)
+    internal partial class HelpService(ILogService log, IPluginService plugins, ISettingsService settings, ArgumentsParser parser)
     {
         /// <summary>
         /// Map arguments to plugins
@@ -22,93 +23,106 @@ namespace PKISharp.WACS.Services
             FirstOrDefault();
 
         /// <summary>
+        /// Map arguments to plugins
+        /// </summary>
+        /// <returns></returns>
+        internal IEnumerable<Plugin> DefaultTypeValidationPlugins() => plugins.
+            GetPlugins(Steps.Validation).
+                Where(p => !p.Hidden).
+                Where(s =>
+                {
+                    return (settings.Validation.DefaultValidationMode ?? Constants.DefaultChallengeType).ToLower() switch
+                    {
+                        Constants.Http01ChallengeType => s.Capability.IsAssignableTo(typeof(HttpValidationCapability)),
+                        Constants.Dns01ChallengeType => s.Capability.IsAssignableTo(typeof(DnsValidationCapability)),
+                        Constants.TlsAlpn01ChallengeType => s.Capability.IsAssignableTo(typeof(TlsValidationCapability)),
+                        _ => false,
+                    };
+                }).
+                ToList();
+
+        internal IOrderedEnumerable<IGrouping<string, Documentation>> GetDocumentations()
+        {
+            var providers = parser.Providers;
+            var providerPlugins = providers.Select(provider => new {
+                provider,
+                plugin = Plugin(provider)
+            }).ToList();
+
+            var defaultTypePlugins = DefaultTypeValidationPlugins();
+            var providerPluginGroups = providerPlugins.Select(p => new Documentation()
+            {
+                Plugin = p.plugin,
+                Provider = p.provider,
+                Name = p.plugin?.Name ?? p.provider.Name,
+                Order = GetOrder(p.plugin),
+                Group = GetGroup(p.plugin) ?? p.provider.Group,
+                Duplicate = !defaultTypePlugins.Contains(p.plugin) && defaultTypePlugins.Any(n => string.Equals(n.Name, p.plugin?.Name))
+            });
+
+            var orderedGroups = providerPluginGroups.
+                GroupBy(p => p.Group).
+                OrderBy(g => g.Min(x => x.Order));
+            return orderedGroups;
+        }
+
+        /// <summary>
         /// Show command line arguments for the help function
         /// </summary>
         internal void ShowArguments()
         {
+            var groups = GetDocumentations();
             Console.WriteLine();
-            var providers = parser.Providers;
-
-            var providerPlugins = providers.Select(provider => new { 
-                provider, 
-                plugin = Plugin(provider) 
-            }).ToList();
-
-            var providerPluginGroups = providerPlugins.Select(p => new {
-                p.provider,
-                p.plugin,
-                name = p.plugin?.Name ?? p.provider.Name,
-                order = getOrder(p.plugin),
-                group = getGroup(p.plugin) ?? p.provider.Group
-            });
-
-            int getOrder(Plugin? plugin)
+            foreach (var ppgs in groups)
             {
-                if (plugin is null)
+                var label = ppgs.Key;
+                if (string.IsNullOrEmpty(label))
                 {
-                    return -1;
-                }
-                var offset = 0;
-                if (plugin.Step == Steps.Validation)
-                {
-                    if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
-                    {
-                        offset = 1;
-                    }
-                    if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
-                    {
-                        offset = 2;
-                    }
-                }
-                return (int)plugin.Step + offset;
-            }
-
-            string? getGroup(Plugin? plugin)
-            {
-                if (plugin is null)
-                {
-                    return null;
-                }
-                if (plugin.Step == Steps.Validation)
-                {
-                    if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
-                    {
-                        return "DNS validation";
-                    }
-                    if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
-                    {
-                        return "TLS validation";
-                    }
-                    return "HTTP validation";
-                }
-                return plugin.Step.ToString();
-            }
-
-            var orderedGroups = providerPluginGroups.
-                GroupBy(p => p.group).
-                OrderBy(g => g.Min(x => x.order));
-
-            foreach (var ppgs in orderedGroups)
-            {
-                if (!string.IsNullOrEmpty(ppgs.Key))
-                {
-                    Console.WriteLine($" ---------------------");
-                    Console.WriteLine($" {ppgs.Key}");
-                    Console.WriteLine($" ---------------------");
-                    Console.WriteLine();
-                }
+                    label = "Main";
+                };
+                Console.WriteLine($" ---------------------");
+                Console.WriteLine($" {label}");
+                Console.WriteLine($" ---------------------");
+                Console.WriteLine("");
 
                 foreach (var ppg in ppgs)
                 {
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine($"    {ppg.name}");
-                    Console.ResetColor();
-                    if (ppg.plugin != null)
+                    if (ppg.Name != "Main")
                     {
-                        Console.WriteLine($"    [--{ppg.plugin.Step.ToString().ToLower()} {ppg.plugin.Name.ToLower()}]");
+                        Console.ForegroundColor = ConsoleColor.White;
+                        if (ppg.Plugin != null)
+                        {
+                            Console.Write($" * {ppg.Name}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($" * {ppg.Name}");
+                            Console.WriteLine();
+                        }
+                        Console.ResetColor();
                     }
-                    Console.WriteLine();
-                    foreach (var x in ppg.provider.Configuration.Where(x => !x.Obsolete))
+                    if (ppg.Plugin != null)
+                    {
+                        if (ppg.Duplicate && ppg.Plugin.Step == Steps.Validation)
+                        {
+                            var mode = Constants.Http01ChallengeType; 
+                            if (ppg.Plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
+                            {
+                                mode = Constants.Dns01ChallengeType;
+                            }
+                            if (ppg.Plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
+                            {
+                                mode = Constants.TlsAlpn01ChallengeType;
+                            }
+                            Console.WriteLine($" [--validationmode {mode} --{ppg.Plugin.Step.ToString().ToLower()} {ppg.Plugin.Name.ToLower()}]");
+                        } 
+                        else
+                        {
+                            Console.WriteLine($" [--{ppg.Plugin.Step.ToString().ToLower()} {ppg.Plugin.Name.ToLower()}]");
+                        }
+                        Console.WriteLine();
+                    }
+                    foreach (var x in ppg.Provider.Configuration.Where(x => !x.Obsolete))
                     {
                         Console.ForegroundColor = ConsoleColor.White;
                         Console.Write($"     --{x.ArgumentName}");
@@ -132,9 +146,60 @@ namespace PKISharp.WACS.Services
                         }
                         Console.WriteLine();
                     }
-                    Console.WriteLine();
                 }
             }
+        }
+
+        /// <summary>
+        /// Determine plugin group
+        /// </summary>
+        /// <param name="plugin"></param>
+        /// <returns></returns>
+        private static string? GetGroup(Plugin? plugin)
+        {
+            if (plugin is null)
+            {
+                return null;
+            }
+            if (plugin.Step == Steps.Validation)
+            {
+                if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
+                {
+                    return "DNS validation";
+                }
+                if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
+                {
+                    return "TLS validation";
+                }
+                return "HTTP validation";
+            }
+            return plugin.Step.ToString();
+        }
+
+        /// <summary>
+        /// Determine plugin order
+        /// </summary>
+        /// <param name="plugin"></param>
+        /// <returns></returns>
+        private static int GetOrder(Plugin? plugin)
+        {
+            if (plugin is null)
+            {
+                return -1;
+            }
+            var offset = 0;
+            if (plugin.Step == Steps.Validation)
+            {
+                if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
+                {
+                    offset = 1;
+                }
+                if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
+                {
+                    offset = 2;
+                }
+            }
+            return (int)plugin.Step + offset;
         }
 
         /// <summary>
@@ -186,6 +251,11 @@ namespace PKISharp.WACS.Services
             log.Debug("YAML written to {0}", new FileInfo("arguments.yaml").FullName);
         }
 
+        /// <summary>
+        /// Process compiled string for console display
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         internal static string? EscapeConsole(string? input)
         {
             if (input == null) { return null; };
@@ -193,6 +263,11 @@ namespace PKISharp.WACS.Services
             return input;
         }
 
+        /// <summary>
+        /// Process compiled string for YAML documentation
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         internal static string EscapeYaml(string input)
         {
             input = input.Replace("\"", "\\\""); // Escape quote
@@ -200,6 +275,19 @@ namespace PKISharp.WACS.Services
             input = BacktickRegex().Replace(input, "<code>$1</code>");
             input = UrlRegex().Replace(input, "<a href=\"$1\">$1</a>");
             return input;
+        }
+
+        /// <summary>
+        /// Helper record to group documentation groups
+        /// </summary>
+        internal record Documentation
+        {
+            internal required string Group;
+            internal required int Order;
+            internal required IArgumentsProvider Provider;
+            internal Plugin? Plugin;
+            internal required string Name;
+            internal bool Duplicate = false;
         }
 
         [GeneratedRegex("`(.+?)`")]

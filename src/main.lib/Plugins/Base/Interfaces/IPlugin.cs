@@ -31,7 +31,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
         {
             public Guid Id { get; } = Guid.Parse(id);
             public bool Hidden { get; set; } = false;
-            public string Name { get; set; } = name;
+            public string Trigger { get; set; } = name;
             public string Description { get; set; } = description;
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             public Type Options { get; } = typeof(TOptions);
