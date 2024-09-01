@@ -114,13 +114,13 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="scope"></param>
         /// <param name="step"></param>
-        /// <param name="name"></param>
+        /// <param name="trigger"></param>
         /// <param name="parameter"></param>
         /// <returns></returns>
-        public Plugin? GetPlugin(Steps step, string name, string? parameter = null)
+        public Plugin? GetPlugin(Steps step, string trigger, string? parameter = null)
         {
             var plugins = GetPlugins(step).
-                Where(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase)).
+                Where(s => string.Equals(s.Trigger, trigger, StringComparison.OrdinalIgnoreCase)).
                 ToList();
             if (step == Steps.Validation)
             {

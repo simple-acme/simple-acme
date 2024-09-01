@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TOptionsFactory,
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCapability,
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TJson>
-            (string id, string name, string description) : 
+            (string id, string trigger, string description, string? name = null) : 
             Attribute, IPluginMeta
             where TOptions : PluginOptions, new()
             where TOptionsFactory : IPluginOptionsFactory<TOptions>
@@ -31,7 +31,8 @@ namespace PKISharp.WACS.Plugins.Interfaces
         {
             public Guid Id { get; } = Guid.Parse(id);
             public bool Hidden { get; set; } = false;
-            public string Trigger { get; set; } = name;
+            public string? Name { get; set; } = name;
+            public string Trigger { get; set; } = trigger;
             public string Description { get; set; } = description;
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             public Type Options { get; } = typeof(TOptions);
@@ -60,7 +61,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
             where TJson : JsonSerializerContext
             where TArguments : IArguments
         {
-            public Plugin1Attribute(string id, string name, string description) : base(id, name, description) => Arguments = typeof(TArguments);
+            public Plugin1Attribute(string id, string trigger, string description, string? name = null) : base(id, trigger, description, name) => Arguments = typeof(TArguments);
         }
     }
 

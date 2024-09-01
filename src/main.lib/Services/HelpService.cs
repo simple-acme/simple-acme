@@ -57,7 +57,7 @@ namespace PKISharp.WACS.Services
                 Name = p.plugin?.Name ?? p.provider.Name,
                 Order = GetOrder(p.plugin),
                 Group = GetGroup(p.plugin) ?? p.provider.Group,
-                Duplicate = !defaultTypePlugins.Contains(p.plugin) && defaultTypePlugins.Any(n => string.Equals(n.Name, p.plugin?.Name))
+                Duplicate = !defaultTypePlugins.Contains(p.plugin) && defaultTypePlugins.Any(n => string.Equals(n.Trigger, p.plugin?.Trigger))
             });
 
             var orderedGroups = providerPluginGroups.
@@ -114,11 +114,11 @@ namespace PKISharp.WACS.Services
                             {
                                 mode = Constants.TlsAlpn01ChallengeType;
                             }
-                            Console.WriteLine($" [--validationmode {mode} --{ppg.Plugin.Step.ToString().ToLower()} {ppg.Plugin.Name.ToLower()}]");
+                            Console.WriteLine($" [--validationmode {mode} --{ppg.Plugin.Step.ToString().ToLower()} {ppg.Plugin.Trigger.ToLower()}]");
                         } 
                         else
                         {
-                            Console.WriteLine($" [--{ppg.Plugin.Step.ToString().ToLower()} {ppg.Plugin.Name.ToLower()}]");
+                            Console.WriteLine($" [--{ppg.Plugin.Step.ToString().ToLower()} {ppg.Plugin.Trigger.ToLower()}]");
                         }
                         Console.WriteLine();
                     }
@@ -128,7 +128,7 @@ namespace PKISharp.WACS.Services
                         Console.Write($"     --{x.ArgumentName}");
                         Console.WriteLine();
                         Console.ResetColor();
-                        var step = 60;
+                        var step = 80;
                         var pos = 0;
                         var words = EscapeConsole(x.Description)?.Split(' ') ?? [];
                         while (pos < words.Length)

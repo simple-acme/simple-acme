@@ -12,10 +12,10 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
         NullOptions, NullOptionsFactory,
         InstallationCapability, WacsJsonPlugins>
         ("aecc502c-5f75-43d2-b578-f95d50c79ea1",
-        Name, "No (additional) installation steps")]
+        Trigger, "No (additional) installation steps")]
     internal class Null : IInstallationPlugin
     {
-        internal const string Name = "None";
+        internal const string Trigger = "None";
         Task<bool> IInstallationPlugin.Install(Dictionary<Type, StoreInfo> storeInfo, ICertificateInfo newCertificateInfo, ICertificateInfo? oldCertificateInfo) => Task.FromResult(true);
     }
 }

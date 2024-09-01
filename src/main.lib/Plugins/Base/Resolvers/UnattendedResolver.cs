@@ -201,13 +201,13 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 // well. Users who don't want this (are there any?)
                 // can work around this with --installation none
                 defaultInstallation = source.Id.ToString() == InstallationPlugins.IIS.ID ?
-                    InstallationPlugins.IIS.Name : 
-                    InstallationPlugins.Null.Name;
+                    InstallationPlugins.IIS.Trigger : 
+                    InstallationPlugins.Null.Trigger;
             } 
             else
             {
                 var index = installation.Count();
-                defaultInstallation = index == parts.Count ? InstallationPlugins.Null.Name : parts[index];
+                defaultInstallation = index == parts.Count ? InstallationPlugins.Null.Trigger : parts[index];
             }
             return await GetPlugin<IInstallationPluginCapability, InstallationPluginOptions>(
                 Steps.Installation,

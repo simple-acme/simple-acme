@@ -73,10 +73,10 @@ namespace PKISharp.WACS
                 }
             }
 
-            args.Add("source", plugin.GetPlugin(renewal.TargetPluginOptions).Name.ToLower());
+            args.Add("source", plugin.GetPlugin(renewal.TargetPluginOptions).Trigger.ToLower());
             addArgs(renewal.TargetPluginOptions);
             var validationPlugin = plugin.GetPlugin(renewal.ValidationPluginOptions);
-            var validationName = validationPlugin.Name.ToLower();
+            var validationName = validationPlugin.Trigger.ToLower();
             if (!string.Equals(validationName, settings.Validation.DefaultValidation ?? "selfhosting", StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("validation", validationName);
@@ -84,7 +84,7 @@ namespace PKISharp.WACS
             addArgs(renewal.ValidationPluginOptions);
             if (renewal.OrderPluginOptions != null)
             {
-                var orderName = plugin.GetPlugin(renewal.OrderPluginOptions).Name.ToLower();
+                var orderName = plugin.GetPlugin(renewal.OrderPluginOptions).Trigger.ToLower();
                 if (!string.Equals(orderName, settings.Order.DefaultPlugin ?? "single", StringComparison.OrdinalIgnoreCase))
                 {
                     args.Add("order", orderName);
@@ -93,14 +93,14 @@ namespace PKISharp.WACS
             }
             if (renewal.CsrPluginOptions != null)
             {
-                var csrName = plugin.GetPlugin(renewal.CsrPluginOptions).Name.ToLower();
+                var csrName = plugin.GetPlugin(renewal.CsrPluginOptions).Trigger.ToLower();
                 if (!string.Equals(csrName, settings.Csr.DefaultCsr ?? "rsa", StringComparison.OrdinalIgnoreCase))
                 {
                     args.Add("csr", csrName);
                 }
                 addArgs(renewal.CsrPluginOptions);
             }
-            var storeNames = string.Join(",", renewal.StorePluginOptions.Select(plugin.GetPlugin).Select(x => x.Name.ToLower()));
+            var storeNames = string.Join(",", renewal.StorePluginOptions.Select(plugin.GetPlugin).Select(x => x.Trigger.ToLower()));
             if (!string.Equals(storeNames, settings.Store.DefaultStore ?? "certificatestore", StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("store", storeNames);
@@ -109,7 +109,7 @@ namespace PKISharp.WACS
             {
                 addArgs(so);
             }
-            var installationNames = string.Join(",", renewal.InstallationPluginOptions.Select(plugin.GetPlugin).Select(x => x.Name.ToLower()));
+            var installationNames = string.Join(",", renewal.InstallationPluginOptions.Select(plugin.GetPlugin).Select(x => x.Trigger.ToLower()));
             if (!string.Equals(installationNames, settings.Installation.DefaultInstallation ?? "none", StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("installation", installationNames);

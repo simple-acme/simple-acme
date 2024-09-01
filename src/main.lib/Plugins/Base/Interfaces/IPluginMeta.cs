@@ -9,6 +9,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
     public interface IPluginMeta
     {
         public Guid Id { get; }
+        public string? Name { get; }
         public string Trigger { get; }
         public string Description { get; }
         public bool Hidden { get; }

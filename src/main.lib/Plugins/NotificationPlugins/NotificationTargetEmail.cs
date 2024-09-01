@@ -145,7 +145,7 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
                         <tr><td colspan=""2"">{NotificationHosts(renewal)}</td></tr>
                         <tr><td colspan=""2"">&nbsp;</td></tr>
                         <tr><td><b>Plugins</b></td><td></td></tr>
-                        <tr><td>Target: </td><td> {_plugin.GetPlugin(renewal.TargetPluginOptions).Name}</td></tr>";
+                        <tr><td>Source: </td><td> {_plugin.GetPlugin(renewal.TargetPluginOptions).Name}</td></tr>";
                 extraMessage += @$"<tr><td>Validation: </td><td> {_plugin.GetPlugin(renewal.ValidationPluginOptions).Name}</td></tr>";
                 if (renewal.OrderPluginOptions != null)
                 {
