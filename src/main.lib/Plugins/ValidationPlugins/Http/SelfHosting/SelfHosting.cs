@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         SelfHostingOptions, SelfHostingOptionsFactory, 
         SelfHostingCapability, WacsJsonPlugins, SelfHostingArguments>
         ("c7d5e050-9363-4ba1-b3a8-931b31c618b7", 
-        "SelfHosting", "Let simple-acme answer HTTP validation request")]
+        "SelfHosting", "Let simple-acme answer HTTP validation request", "Self-hosting")]
     internal class SelfHosting(ILogService log, SelfHostingOptions options) : Validation<Http01ChallengeValidationDetails>
     {
         internal const int DefaultHttpValidationPort = 80;

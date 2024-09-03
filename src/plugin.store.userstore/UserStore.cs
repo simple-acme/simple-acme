@@ -14,10 +14,10 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         UserStoreOptions, UserStoreOptionsFactory,
         UserStoreCapability, UserStoreJson, UserArguments>
         ("95ee94e7-c8e2-40e6-a26f-c9fc3afa9fa5",
-        Name, "Add to Windows Certificate Store (Current User)")]
+        Trigger, "Add to Windows Certificate Store (Current User)", "User Store")]
     internal class UserStore : IStorePlugin, IDisposable
     {
-        internal const string Name = "UserStore";
+        internal const string Trigger = "UserStore";
         private const string DefaultStoreName = nameof(StoreName.My);
         private readonly ILogService _log;
         private readonly CertificateStoreClient _storeClient;
@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             _log.Information("Installing certificate in the certificate store");
             _storeClient.InstallCertificate(input, X509KeyStorageFlags.UserKeySet);
             return Task.FromResult<StoreInfo?>(new StoreInfo() {
-                Name = Name,
+                Name = Trigger,
                 Path = DefaultStoreName
             });
         }

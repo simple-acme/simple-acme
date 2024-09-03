@@ -11,7 +11,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         DnsexitOptions, DnsexitOptionsFactory, 
         DnsValidationCapability, DnsexitJson, DnsexitArguments>
         ("C9017182-1000-4257-A8DA-0553CD1490EC", 
-        "Dnsexit", "Create verification records in Dnsexit DNS")]
+        "DNSExit", "Create verification records in Dnsexit DNS")]
     internal class DnsExitDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,

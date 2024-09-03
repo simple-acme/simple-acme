@@ -16,10 +16,10 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         PfxFileOptions, PfxFileOptionsFactory, 
         DefaultCapability, WacsJsonPlugins, PfxFileArguments>
         ("2a2c576f-7637-4ade-b8db-e8613b0bb33e",
-        Name, "Create PFX/PKCS12 archive file")]
+        Trigger, "Create PFX/PKCS12 archive file", "PFX file")]
     internal class PfxFile : IStorePlugin
     {
-        internal const string Name = "PfxFile";
+        internal const string Trigger = "PfxFile";
 
         private readonly ILogService _log;
         private readonly string _path;
@@ -117,7 +117,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 _log.Error(ex, "Error copying certificate to pfx path");
             }
             return new StoreInfo() {
-                Name = Name,
+                Name = Trigger,
                 Path = _path
             };
         }

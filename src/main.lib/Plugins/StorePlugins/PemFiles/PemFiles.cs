@@ -15,10 +15,10 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         PemFilesOptions, PemFilesOptionsFactory, 
         DefaultCapability, WacsJsonPlugins, PemFilesArguments>
         ("e57c70e4-cd60-4ba6-80f6-a41703e21031",
-        Name, "Create PEM encoded files (for Apache, nginx, etc.)")]
+        Trigger, "Create PEM encoded files (for Apache, nginx, etc.)", "PEM files")]
     internal class PemFiles : IStorePlugin
     {
-        internal const string Name = "PemFiles";
+        internal const string Trigger = "PemFiles";
 
         private readonly ILogService _log;
         private readonly string _path;
@@ -98,7 +98,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                     _log.Warning("No private key found in cache");
                 }
                 return new StoreInfo() {
-                    Name = Name,
+                    Name = Trigger,
                     Path = _path
                 };
             }

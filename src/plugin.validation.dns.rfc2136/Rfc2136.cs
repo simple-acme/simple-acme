@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         Rfc2136Options, Rfc2136OptionsFactory, 
         DnsValidationCapability, Rfc2136Json, Rfc2136Arguments>
         ("ed5dc9d1-739c-4f6a-854f-238bf65b63ee",
-        "Rfc2136",
+        "RFC2136",
         "Create verification records using dynamic updates")]
     internal sealed class Rfc2136 : DnsValidation<Rfc2136>
     {

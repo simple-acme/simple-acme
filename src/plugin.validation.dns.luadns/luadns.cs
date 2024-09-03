@@ -18,8 +18,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LuaDnsOptions, LuaDnsOptionsFactory, 
         DnsValidationCapability, LuaDnsJson, LuaDnsArguments>
         ("3b0c3cca-db98-40b7-b678-b34791070d42", 
-        "LuaDns", 
-        "Create verification records in LuaDns")]
+        "LuaDNS",
+        "Create verification records in LuaDNS")]
     internal sealed class LuaDns(
         LookupClientProvider dnsClient,
         IProxyService proxy,

@@ -57,7 +57,7 @@ namespace PKISharp.WACS.Services
                 Name = p.plugin?.Name ?? p.provider.Name,
                 Order = GetOrder(p.plugin),
                 Group = GetGroup(p.plugin) ?? p.provider.Group,
-                Duplicate = !defaultTypePlugins.Contains(p.plugin) && defaultTypePlugins.Any(n => string.Equals(n.Trigger, p.plugin?.Trigger))
+                Condition = GetCondition(defaultTypePlugins, p.plugin)
             });
 
             var orderedGroups = providerPluginGroups.
@@ -90,7 +90,7 @@ namespace PKISharp.WACS.Services
                     if (ppg.Name != "Main")
                     {
                         Console.ForegroundColor = ConsoleColor.White;
-                        if (ppg.Plugin != null)
+                        if (ppg.Condition != null)
                         {
                             Console.Write($" * {ppg.Name}");
                         }
@@ -101,25 +101,9 @@ namespace PKISharp.WACS.Services
                         }
                         Console.ResetColor();
                     }
-                    if (ppg.Plugin != null)
+                    if (ppg.Condition != null)
                     {
-                        if (ppg.Duplicate && ppg.Plugin.Step == Steps.Validation)
-                        {
-                            var mode = Constants.Http01ChallengeType; 
-                            if (ppg.Plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
-                            {
-                                mode = Constants.Dns01ChallengeType;
-                            }
-                            if (ppg.Plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
-                            {
-                                mode = Constants.TlsAlpn01ChallengeType;
-                            }
-                            Console.WriteLine($" [--validationmode {mode} --{ppg.Plugin.Step.ToString().ToLower()} {ppg.Plugin.Trigger.ToLower()}]");
-                        } 
-                        else
-                        {
-                            Console.WriteLine($" [--{ppg.Plugin.Step.ToString().ToLower()} {ppg.Plugin.Trigger.ToLower()}]");
-                        }
+                        Console.WriteLine($" [{ppg.Condition}]");
                         Console.WriteLine();
                     }
                     foreach (var x in ppg.Provider.Configuration.Where(x => !x.Obsolete))
@@ -203,12 +187,45 @@ namespace PKISharp.WACS.Services
         }
 
         /// <summary>
+        /// Condition
+        /// </summary>
+        /// <param name="defaultTypePlugins"></param>
+        /// <param name="plugin"></param>
+        /// <returns></returns>
+        private static string? GetCondition(IEnumerable<Plugin> defaultTypePlugins, Plugin? plugin)
+        {
+            if (plugin is null)
+            {
+                return null;
+            }
+            var duplicate = !defaultTypePlugins.Contains(plugin) && defaultTypePlugins.Any(n => string.Equals(n.Trigger, plugin?.Trigger));
+            if (duplicate && plugin.Step == Steps.Validation)
+            {
+                var mode = Constants.Http01ChallengeType;
+                if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
+                {
+                    mode = Constants.Dns01ChallengeType;
+                }
+                if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
+                {
+                    mode = Constants.TlsAlpn01ChallengeType;
+                }
+                return $"--validationmode {mode} --validation {plugin.Trigger.ToLower()}";
+            }
+            else
+            {
+                return $"--{plugin.Step.ToString().ToLower()} {plugin.Trigger.ToLower()}";
+            }
+        }
+
+        /// <summary>
         /// Generate YAML for documentation website
         /// </summary>
         internal void ShowArgumentsYaml()
         {
+            var groups = GetDocumentations();
             var x = new StringBuilder();
-            foreach (var providerGroup in parser.Providers.GroupBy(p => p.Group).OrderBy(g => g.Key))
+            foreach (var providerGroup in groups)
             {
                 if (!string.IsNullOrEmpty(providerGroup.Key))
                 {
@@ -221,13 +238,16 @@ namespace PKISharp.WACS.Services
                 foreach (var provider in providerGroup)
                 {
                     x.AppendLine($"    {provider.Name}:");
-                    var plugin = Plugin(provider);
-                    if (plugin != null)
+                    if (provider.Plugin != null)
                     {
-                        x.AppendLine($"         plugin: {plugin.Id}");
+                        x.AppendLine($"         plugin: {provider.Plugin.Id}");
+                    }
+                    if (provider.Condition != null)
+                    {
+                        x.AppendLine($"         condition: \"{provider.Condition}\"");
                     }
                     x.AppendLine($"         arguments:");
-                    foreach (var c in provider.Configuration.Where(x => !x.Obsolete))
+                    foreach (var c in provider.Provider.Configuration.Where(x => !x.Obsolete))
                     {
                         x.AppendLine($"             -");
                         x.AppendLine($"                 name: {c.ArgumentName}");
@@ -273,7 +293,7 @@ namespace PKISharp.WACS.Services
             input = input.Replace("\"", "\\\""); // Escape quote
             input = input.Replace("--", "‑‑"); // Regular hyphen to non-breaking
             input = BacktickRegex().Replace(input, "<code>$1</code>");
-            input = UrlRegex().Replace(input, "<a href=\"$1\">$1</a>");
+            input = UrlRegex().Replace(input, "<a href='$1'>$1</a>");
             return input;
         }
 
@@ -287,13 +307,13 @@ namespace PKISharp.WACS.Services
             internal required IArgumentsProvider Provider;
             internal Plugin? Plugin;
             internal required string Name;
-            internal bool Duplicate = false;
+            internal required string? Condition;
         }
 
         [GeneratedRegex("`(.+?)`")]
         private static partial Regex BacktickRegex();
 
-        [GeneratedRegex("https://simple-acme.com([^ ]+?)")]
+        [GeneratedRegex("https:\\/\\/simple-acme\\.com([^ ]+)")]
         private static partial Regex UrlRegex();
     }
 }

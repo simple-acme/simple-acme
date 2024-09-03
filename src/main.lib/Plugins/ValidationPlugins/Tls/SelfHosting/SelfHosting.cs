@@ -21,7 +21,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
         SelfHostingOptions, SelfHostingOptionsFactory, 
         SelfHostingCapability, WacsJsonPlugins, SelfHostingArguments>
         ("a1565064-b208-4467-8ca1-1bd3c08aa500", 
-        "SelfHosting", "Let simple-acme answer TLS validation request")]
+        "SelfHosting", "Let simple-acme answer TLS validation request", "Self-hosting")]
     internal class SelfHosting(ILogService log, SelfHostingOptions options) : Validation<TlsAlpn01ChallengeValidationDetails>
     {
         internal const int DefaultValidationPort = 443;

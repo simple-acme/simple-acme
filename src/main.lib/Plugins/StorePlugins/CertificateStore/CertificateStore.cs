@@ -23,10 +23,10 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         CertificateStoreOptions, CertificateStoreOptionsFactory, 
         CertificateStoreCapability, WacsJsonPlugins, CertificateStoreArguments>
         ("e30adc8e-d756-4e16-a6f2-450f784b1a97", 
-        Name, "Add to Windows Certificate Store (Local Computer)")]
+        Trigger, "Add to Windows Certificate Store (Local Computer)", "Windows Certificate Store")]
     internal class CertificateStore : IStorePlugin, IDisposable
     {
-        internal const string Name = "CertificateStore";
+        internal const string Trigger = "CertificateStore";
         private const string DefaultStoreName = nameof(StoreName.My);
         private readonly ILogService _log;
         private readonly string _storeName;
@@ -109,7 +109,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 SetAcl(existing, _options.AclRead, FileSystemRights.Read);
             }
             return Task.FromResult<StoreInfo?>(new StoreInfo() {
-                Name = Name,
+                Name = Trigger,
                 Path = _storeName
             });
         }

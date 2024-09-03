@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         DnsMadeEasyOptions, DnsMadeEasyOptionsFactory,
         DnsValidationCapability, DnsMadeEasyJson, DnsMadeEasyArguments>
         ("13993334-2d74-4ff6-801b-833b99bf231d",
-        "DnsMadeEasy", "Create verification records in DnsMadeEasy DNS")]
+        "DnsMadeEasy", "Create verification records in DnsMadeEasy DNS", "DNS Made Easy")]
     internal class DnsMadeEasyDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,

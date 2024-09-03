@@ -11,7 +11,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         FtpOptions, FtpOptionsFactory,
         HttpValidationCapability, FtpJson, FtpArguments>
         ("bc27d719-dcf2-41ff-bf08-54db7ea49c48",
-        "FTP", "Upload verification files via FTP(S)")]
+        "FTP", "Upload verification files via FTP(S)", "FTP(S)")]
     public class Ftp : HttpValidation<FtpOptions>
     {
         private readonly FtpClient _ftpClient;

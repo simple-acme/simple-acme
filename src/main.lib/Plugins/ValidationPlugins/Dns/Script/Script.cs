@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ScriptOptions, ScriptOptionsFactory,
         DnsValidationCapability, WacsJsonPlugins, ScriptArguments>
         ("8f1da72e-f727-49f0-8546-ef69e5ecec32", 
-        "Script", "Create verification records with your own script")]
+        "Script", "Create verification records with your own script", "Custom script")]
     internal partial class Script(
         ScriptOptions options,
         LookupClientProvider dnsClient,

@@ -45,11 +45,11 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             inputService.Show("{CertThumbprint}", "Certificate thumbprint");
             if (OperatingSystem.IsWindows())
             {
-                inputService.Show("{StoreType}", $"Type of store (e.g. {CertificateStore.Name}, {PfxFile.Name}, ...)");
+                inputService.Show("{StoreType}", $"Type of store (e.g. {CertificateStore.Trigger}, {PfxFile.Trigger}, ...)");
             }
             else
             {
-                inputService.Show("{StoreType}", $"Type of store (e.g. {PemFiles.Name}, {PfxFile.Name}, ...)");
+                inputService.Show("{StoreType}", $"Type of store (e.g. {PemFiles.Trigger}, {PfxFile.Trigger}, ...)");
             }
             inputService.Show("{StorePath}", "Path to the store");
             inputService.Show("{RenewalId}", "Renewal identifier");

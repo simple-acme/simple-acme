@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ALiYunOptions, ALiYunOptionsFactory,
         DnsValidationCapability, ALiYunJson, ALiYunArguments>
         ("1d4db2ea-ce7c-46ce-b86f-40b356fcf999",
-        "ALiYun", "Create verification records in ALiYun DNS")]
+        "Aliyun", "Create verification records in ALiYun DNS")]
     public class ALiYun : DnsValidation<ALiYun>, IDisposable
     {
         private ALiYunOptions Options { get; }

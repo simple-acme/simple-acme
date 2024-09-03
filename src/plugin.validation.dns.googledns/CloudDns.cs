@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         CloudDnsOptions, CloudDnsOptionsFactory, 
         DnsValidationCapability, CloudDnsJson, CloudDnsArguments>
         ("B61505E9-1709-43FD-996F-C74C3686286C",
-        "GCPDns", "Create verification records in Google Cloud DNS")]
+        "GCPDns", "Create verification records in Google Cloud DNS", "Google Cloud DNS")]
     internal class CloudDns: DnsValidation<CloudDns>
     {
         private readonly CloudDnsOptions _options;

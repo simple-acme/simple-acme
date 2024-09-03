@@ -4,7 +4,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
 {
     internal class CsrOptions : TargetPluginOptions
     {
-        public const string NameLabel = "CSR";
+        public const string Trigger = "CSR";
         public string? CsrFile { get; set; }
         public string? PkFile { get; set; }
     }

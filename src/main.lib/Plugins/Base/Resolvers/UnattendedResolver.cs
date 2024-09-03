@@ -168,8 +168,8 @@ namespace PKISharp.WACS.Plugins.Resolvers
             if (string.IsNullOrWhiteSpace(defaultStore))
             {
                 defaultStore = OperatingSystem.IsWindows() ? 
-                    StorePlugins.CertificateStore.Name : 
-                    StorePlugins.PemFiles.Name;
+                    StorePlugins.CertificateStore.Trigger : 
+                    StorePlugins.PemFiles.Trigger;
             }
             var parts = defaultStore.ParseCsv();
             if (parts == null)

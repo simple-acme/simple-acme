@@ -17,10 +17,10 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         CentralSslOptions, CentralSslOptionsFactory, 
         DefaultCapability, WacsJsonPlugins, CentralSslArguments>
         ("af1f77b6-4e7b-4f96-bba5-c2eeb4d0dd42",
-        Name, "Add to IIS Central Certificate Store")]
+        Trigger, "Add to IIS Central Certificate Store", "Central Certificate Store")]
     internal class CentralSsl : IStorePlugin
     {
-        internal const string Name = "CentralSsl";
+        internal const string Trigger = "CentralSsl";
 
         private readonly ILogService _log;
         private readonly string _path;
@@ -84,7 +84,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 }
             }
             return new StoreInfo() {
-                Name = Name,
+                Name = Trigger,
                 Path = _path
             };
         }
