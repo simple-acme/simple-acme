@@ -14,7 +14,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DigitalOceanOptions, DigitalOceanOptionsFactory,
         DnsValidationCapability, DigitalOceanJson, DigitalOceanArguments>
         ("1a87d670-3fa3-4a2a-bb10-491d48feb5db",
-        "DigitalOcean", "Create verification records on DigitalOcean")]
+        "DigitalOcean", "Create verification records on DigitalOcean",
+        External = true)]
     internal class DigitalOcean(
         DigitalOceanOptions options, LookupClientProvider dnsClient,
         SecretServiceManager ssm, ILogService log,

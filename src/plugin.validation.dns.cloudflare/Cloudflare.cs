@@ -18,7 +18,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         CloudflareOptions, CloudflareOptionsFactory,
         DnsValidationCapability, CloudflareJson, CloudflareArguments>
         ("73af2c2e-4cf1-4198-a4c8-1129003cfb75", 
-        "Cloudflare", "Create verification records in Cloudflare DNS")]
+        "Cloudflare", "Create verification records in Cloudflare DNS",
+        External = true)]
     public class Cloudflare(
         CloudflareOptions options,
         IProxyService proxyService,

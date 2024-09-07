@@ -12,7 +12,8 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         ManualOptions, ManualOptionsFactory, 
         DefaultCapability, WacsJsonPlugins, ManualArguments>
         ("e239db3b-b42f-48aa-b64f-46d4f3e9941b", 
-        "Manual", "Manually enter host names", "Manual input")]
+        "Manual", "Manually enter host names", 
+        Name = "Manual input")]
     internal class Manual(ManualOptions options) : ITargetPlugin
     {
         public Task<Target?> Generate()

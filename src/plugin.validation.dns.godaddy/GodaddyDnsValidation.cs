@@ -13,7 +13,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         GodaddyOptions, GodaddyOptionsFactory, 
         DnsValidationCapability, GodaddyJson, GodaddyArguments>
         ("966c4c3d-1572-44c7-9134-5e2bc8fa021d", 
-        "GoDaddy", "Create verification records in Godaddy DNS")]
+        "GoDaddy", "Create verification records in GoDaddy DNS",
+        External = true)]
     internal class GodaddyDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,

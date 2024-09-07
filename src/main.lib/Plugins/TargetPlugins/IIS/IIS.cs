@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         IISOptions, IISOptionsFactory, 
         IISCapability, WacsJsonPlugins, IISArguments>
         ("54deb3ee-b5df-4381-8485-fe386054055b", 
-        "IIS", "Read bindings from IIS", "IIS bindings")]
+        "IIS", "Read bindings from IIS", Name = "IIS bindings")]
     internal class IIS(ILogService logService, IISHelper helper, IISOptions options) : ITargetPlugin
     {
         public Task<Target?> Generate()

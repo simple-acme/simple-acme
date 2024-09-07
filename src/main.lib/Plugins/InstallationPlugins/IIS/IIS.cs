@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
     [IPlugin.Plugin1<
         IISOptions, IISOptionsFactory, 
         IISCapability, WacsJsonPlugins, IISArguments>
-        (ID, Trigger, "Create or update bindings in IIS", "Manage IIS bindings")]
+        (ID, Trigger, "Create or update bindings in IIS", Name = "Manage IIS bindings")]
     [IPlugin.Plugin<
         IISFtpOptions, IISFTPOptionsFactory,
         IISCapability, WacsJsonPlugins>

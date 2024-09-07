@@ -16,7 +16,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         TencentOptions, TencentOptionsFactory,
         DnsValidationCapability, TencentJson, TencentArguments>
         ("6ea628c3-0f74-68bb-cf17-4fdd3d53f3af",
-        "Tencent", "Create verification records in Tencent DNS", "Tencent Cloud")]
+        "Tencent", "Create verification records in Tencent DNS", 
+        Name = "Tencent Cloud", External = true)]
     public class Tencent : DnsValidation<Tencent>, IDisposable
     {
         private TencentOptions Options { get; }

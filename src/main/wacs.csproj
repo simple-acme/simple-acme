@@ -69,6 +69,8 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\main.lib\wacs.lib.csproj" />
+		<ProjectReference Include="..\plugin.store.keyvault\wacs.store.keyvault.csproj" />
+		<ProjectReference Include="..\plugin.store.userstore\wacs.store.userstore.csproj" />
 		<ProjectReference Include="..\plugin.validation.dns.acme\wacs.validation.dns.acme.csproj" />
 		<ProjectReference Include="..\plugin.validation.dns.aliyun\wacs.validation.dns.aliyun.csproj" />
 		<ProjectReference Include="..\plugin.validation.dns.azure\wacs.validation.dns.azure.csproj" />

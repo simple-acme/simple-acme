@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Autofac.Features.Metadata;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PKISharp.WACS.Plugins.Interfaces
@@ -23,6 +24,10 @@ namespace PKISharp.WACS.Plugins.Interfaces
         public Type OptionsJson { get; }
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         public Type? Arguments { get; }
+        public bool External { get; }
+        public string? Provider { get; }
+        public string? Page { get; }
+        public string? Download { get; }
     }
 
 }

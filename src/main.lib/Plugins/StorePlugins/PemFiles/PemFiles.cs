@@ -15,7 +15,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         PemFilesOptions, PemFilesOptionsFactory, 
         DefaultCapability, WacsJsonPlugins, PemFilesArguments>
         ("e57c70e4-cd60-4ba6-80f6-a41703e21031",
-        Trigger, "Create PEM encoded files (for Apache, nginx, etc.)", "PEM files")]
+        Trigger, "Create PEM encoded files (for Apache, nginx, etc.)", 
+        Name = "PEM files")]
     internal class PemFiles : IStorePlugin
     {
         internal const string Trigger = "PemFiles";

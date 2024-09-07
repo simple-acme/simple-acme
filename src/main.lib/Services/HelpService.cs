@@ -26,20 +26,14 @@ namespace PKISharp.WACS.Services
         /// Map arguments to plugins
         /// </summary>
         /// <returns></returns>
-        internal IEnumerable<Plugin> DefaultTypeValidationPlugins() => plugins.
-            GetPlugins(Steps.Validation).
-                Where(p => !p.Hidden).
-                Where(s =>
-                {
-                    return (settings.Validation.DefaultValidationMode ?? Constants.DefaultChallengeType).ToLower() switch
-                    {
-                        Constants.Http01ChallengeType => s.Capability.IsAssignableTo(typeof(HttpValidationCapability)),
-                        Constants.Dns01ChallengeType => s.Capability.IsAssignableTo(typeof(DnsValidationCapability)),
-                        Constants.TlsAlpn01ChallengeType => s.Capability.IsAssignableTo(typeof(TlsValidationCapability)),
-                        _ => false,
-                    };
-                }).
-                ToList();
+        internal IEnumerable<Plugin> DefaultTypeValidationPlugins() {
+            var defaultType = settings.Validation.DefaultValidationMode?.ToLower() ?? Constants.DefaultChallengeType;
+            return plugins.
+                GetPlugins(Steps.Validation).
+                    Where(p => !p.Hidden).
+                    Where(s => GetValidationType(s) == defaultType).
+                    ToList();
+        }
 
         internal IOrderedEnumerable<IGrouping<string, Documentation>> GetDocumentations()
         {
@@ -219,56 +213,123 @@ namespace PKISharp.WACS.Services
         }
 
         /// <summary>
-        /// Generate YAML for documentation website
+        /// Determine validation plugin subtype
         /// </summary>
-        internal void ShowArgumentsYaml()
+        /// <param name="plugin"></param>
+        /// <returns></returns>
+        private static string? GetValidationType(Plugin plugin)
+        {
+            if (plugin.Capability.IsAssignableTo(typeof(HttpValidationCapability)))
+            {
+                return Constants.Http01ChallengeType;
+            }
+            if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
+            {
+                return Constants.Dns01ChallengeType;
+            }
+            if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
+            {
+                return Constants.TlsAlpn01ChallengeType;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Determine validation plugin subtype
+        /// </summary>
+        /// <param name="plugin"></param>
+        /// <returns></returns>
+        private static string GetPluginType(Plugin plugin)
+        {
+            var ret = plugin.Step.ToString().ToLower();
+            if (plugin.Step == Steps.Validation)
+            {
+                ret += "." + GetValidationType(plugin)?.Replace("-01", "");
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// Generate arguments YAML for documentation website
+        /// </summary>
+        internal void GenerateArgumentsYaml()
         {
             var groups = GetDocumentations();
             var x = new StringBuilder();
             foreach (var providerGroup in groups)
             {
-                if (!string.IsNullOrEmpty(providerGroup.Key))
-                {
-                    x.AppendLine($"{providerGroup.Key}:");
-                }
-                else
-                {
-                    x.AppendLine($"Main:");
-                }
                 foreach (var provider in providerGroup)
                 {
-                    x.AppendLine($"    {provider.Name}:");
+                    x.AppendLine($"-");
+                    x.AppendLine($" name: {provider.Name}");
                     if (provider.Plugin != null)
                     {
-                        x.AppendLine($"         plugin: {provider.Plugin.Id}");
+                        x.AppendLine($" pluginid: \"{provider.Plugin.Id.ToString().ToLower()}\"");
+                        x.AppendLine($" plugintype: \"{GetPluginType(provider.Plugin)}\"");
                     }
                     if (provider.Condition != null)
                     {
-                        x.AppendLine($"         condition: \"{provider.Condition}\"");
+                        x.AppendLine($" condition: \"{provider.Condition}\"");
                     }
-                    x.AppendLine($"         arguments:");
+                    x.AppendLine($" arguments:");
                     foreach (var c in provider.Provider.Configuration.Where(x => !x.Obsolete))
                     {
-                        x.AppendLine($"             -");
-                        x.AppendLine($"                 name: {c.ArgumentName}");
+                        x.AppendLine($"  -");
+                        x.AppendLine($"   name: {c.ArgumentName}");
                         if (c.Description != null)
                         {
-                            x.AppendLine($"                 description: \"{EscapeYaml(c.Description)}\"");
+                            x.AppendLine($"   description: \"{EscapeYaml(c.Description)}\"");
                         }
                         if (c.Default != null)
                         {
-                            x.AppendLine($"                 default: \"{EscapeYaml(c.Default)}\"");
+                            x.AppendLine($"   default: \"{EscapeYaml(c.Default)}\"");
                         }
                         if (c.Secret == true)
                         {
-                            x.AppendLine($"                 secret: true");
+                            x.AppendLine($"   secret: true");
                         }
                     }
                     x.AppendLine();
                 }
             }
-            File.WriteAllText("arguments.yaml", x.ToString());
-            log.Debug("YAML written to {0}", new FileInfo("arguments.yaml").FullName);
+            File.WriteAllText("arguments.yml", x.ToString());
+            log.Debug("YAML written to {0}", new FileInfo("arguments.yml").FullName);
+        }
+
+        /// <summary>
+        /// Generate plugins YAML for documentation website
+        /// </summary>
+        internal void GeneratePluginsYaml()
+        {
+            var x = new StringBuilder();
+            foreach (var plugin in plugins.GetPlugins().Where(p => !p.Hidden))
+            {
+                x.AppendLine($"-");
+                x.AppendLine($" name: \"{EscapeYaml(plugin.Name)}\"");
+                x.AppendLine($" id: {plugin.Id.ToString().ToLower()}");
+                x.AppendLine($" trigger: {plugin.Trigger.ToLower()}");
+                if (plugin.External == true)
+                {
+                    x.AppendLine($" external: true");
+                }
+                if (plugin.Provider != null)
+                {
+                    x.AppendLine($" provider: {plugin.Provider}");
+                }
+                if (plugin.Page != null)
+                {
+                    x.AppendLine($" page: {plugin.Page}");
+                }
+                if (plugin.Download != null)
+                {
+                    x.AppendLine($" download: {plugin.Download}");
+                }
+                x.AppendLine($" description: \"{EscapeYaml(plugin.Description)}\"");
+                x.AppendLine($" type: {GetPluginType(plugin)}");
+                x.AppendLine();
+            }
+            File.WriteAllText("plugins.yml", x.ToString());
+            log.Debug("YAML written to {0}", new FileInfo("plugins.yml").FullName);
         }
 
         /// <summary>

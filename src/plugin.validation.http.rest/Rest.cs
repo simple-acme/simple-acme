@@ -16,7 +16,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         RestOptions, RestOptionsFactory, 
         HttpValidationCapability, RestJson, RestArguments>
         ("11ba2994-ea59-4f2f-b9eb-0eaa2fa3cbfa", 
-        "REST", "Send verification files to the server by issuing an http(s) request", "REST request")]
+        "REST", "Send verification files to the server by issuing an http(s) request", 
+        Name = "REST request", External = true)]
     internal sealed class Rest(
         IProxyService proxyService,
         ILogService log,

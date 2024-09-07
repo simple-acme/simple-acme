@@ -12,7 +12,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         LinodeOptions, LinodeOptionsFactory,
         DnsValidationCapability, LinodeJson, LinodeArguments>
         ("12fdc54c-be30-4458-8066-2c1c565fe2d9",
-        "Linode", "Create verification records in Linode DNS")]
+        "Linode", "Create verification records in Linode DNS",
+        External = true, Provider = "Akamai")]
     internal class LinodeDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,

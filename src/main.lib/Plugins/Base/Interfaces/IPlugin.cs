@@ -1,7 +1,6 @@
 ﻿using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
@@ -23,7 +22,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TOptionsFactory,
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCapability,
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TJson>
-            (string id, string trigger, string description, string? name = null) : 
+            (string id, string trigger, string description) : 
             Attribute, IPluginMeta
             where TOptions : PluginOptions, new()
             where TOptionsFactory : IPluginOptionsFactory<TOptions>
@@ -31,7 +30,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
         {
             public Guid Id { get; } = Guid.Parse(id);
             public bool Hidden { get; set; } = false;
-            public string? Name { get; set; } = name;
+            public string? Name { get; set; } = null;
             public string Trigger { get; set; } = trigger;
             public string Description { get; set; } = description;
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -43,6 +42,10 @@ namespace PKISharp.WACS.Plugins.Interfaces
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             public Type Capability { get; } = typeof(TCapability);
             public Type? Arguments { get; internal set; } = null;
+            public bool External { get; set; } = false;
+            public string? Download { get; set; } = null;
+            public string? Page { get; set; } = null;
+            public string? Provider { get; set; } = null;
         }
 
         /// <summary>
@@ -61,7 +64,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
             where TJson : JsonSerializerContext
             where TArguments : IArguments
         {
-            public Plugin1Attribute(string id, string trigger, string description, string? name = null) : base(id, trigger, description, name) => Arguments = typeof(TArguments);
+            public Plugin1Attribute(string id, string trigger, string description) : base(id, trigger, description) => Arguments = typeof(TArguments);
         }
     }
 

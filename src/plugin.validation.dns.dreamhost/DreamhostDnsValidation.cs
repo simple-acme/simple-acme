@@ -13,7 +13,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         DreamhostOptions, DreamhostOptionsFactory,
         DnsValidationCapability, DreamhostJson, DreamhostArguments>
         ("2bfb3ef8-64b8-47f1-8185-ea427b793c1a", 
-        "DreamHost", "Create verification records in Dreamhost DNS")]
+        "DreamHost", "Create verification records in DreamHost DNS",
+        External = true)]
     internal class DreamhostDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,

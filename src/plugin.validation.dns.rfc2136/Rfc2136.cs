@@ -19,7 +19,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         DnsValidationCapability, Rfc2136Json, Rfc2136Arguments>
         ("ed5dc9d1-739c-4f6a-854f-238bf65b63ee",
         "RFC2136",
-        "Create verification records using dynamic updates")]
+        "Create verification records using dynamic updates",
+        External = true)]
     internal sealed class Rfc2136 : DnsValidation<Rfc2136>
     {
         private readonly string _key; 

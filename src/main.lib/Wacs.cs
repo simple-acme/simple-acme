@@ -86,7 +86,8 @@ namespace PKISharp.WACS.Host
             {
                 helpService.ShowArguments();
 #if DEBUG
-                helpService.ShowArgumentsYaml();
+                helpService.GenerateArgumentsYaml();
+                helpService.GeneratePluginsYaml();
 #endif
                 await CloseDefault();
                 if (_args.CloseOnFinish)

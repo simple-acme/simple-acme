@@ -23,7 +23,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         CertificateStoreOptions, CertificateStoreOptionsFactory, 
         CertificateStoreCapability, WacsJsonPlugins, CertificateStoreArguments>
         ("e30adc8e-d756-4e16-a6f2-450f784b1a97", 
-        Trigger, "Add to Windows Certificate Store (Local Computer)", "Windows Certificate Store")]
+        Trigger, "Add to Windows Certificate Store (Local Computer)", 
+        Name = "Windows Certificate Store")]
     internal class CertificateStore : IStorePlugin, IDisposable
     {
         internal const string Trigger = "CertificateStore";

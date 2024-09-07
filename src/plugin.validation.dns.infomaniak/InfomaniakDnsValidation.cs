@@ -16,8 +16,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 [IPlugin.Plugin1<
     InfomaniakOptions, InfomaniakOptionsFactory,
     DnsValidationCapability, InfomaniakJson, InfomaniakArguments>
-    ("d1401d1e-b925-407d-a38b-924d67b2d1b5",
-    "Infomaniak", "Create verification records in Infomaniak DNS")]
+        ("d1401d1e-b925-407d-a38b-924d67b2d1b5",
+        "Infomaniak", "Create verification records in Infomaniak DNS",
+        External = true)]
 internal class InfomaniakDnsValidation(
     LookupClientProvider dnsClient,
     ILogService logService,

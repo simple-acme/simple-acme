@@ -16,7 +16,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         PfxFileOptions, PfxFileOptionsFactory, 
         DefaultCapability, WacsJsonPlugins, PfxFileArguments>
         ("2a2c576f-7637-4ade-b8db-e8613b0bb33e",
-        Trigger, "Create PFX/PKCS12 archive file", "PFX file")]
+        Trigger, "Create PFX/PKCS12 archive file", 
+        Name = "PFX file")]
     internal class PfxFile : IStorePlugin
     {
         internal const string Trigger = "PfxFile";

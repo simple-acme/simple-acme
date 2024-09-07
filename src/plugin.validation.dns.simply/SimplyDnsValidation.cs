@@ -14,7 +14,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         SimplyOptions, SimplyOptionsFactory,
         DnsValidationCapability, SimplyJson, SimplyArguments>
         ("3693c40c-7c2f-4b70-aead-27869d8cbdf3", 
-        "Simply", "Create verification records in Simply DNS", "Simply.com")]
+        "Simply", "Create verification records in Simply.com DNS", 
+        Name = "Simply.com", External = true)]
     internal class SimplyDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,

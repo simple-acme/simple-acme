@@ -19,7 +19,8 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         CsrOptions, CsrOptionsFactory, 
         DefaultCapability, WacsJsonPlugins, CsrArguments>
         ("5C3DB0FB-840B-469F-B5A7-0635D8E9A93D", 
-        CsrOptions.Trigger, "CSR created by another program", "Custom CSR")]
+        CsrOptions.Trigger, "CSR created by another program", 
+        Name = "Custom CSR")]
     internal class Csr(ILogService logService, CsrOptions options) : ITargetPlugin
     {
         public Task<Target?> Generate()

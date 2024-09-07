@@ -14,7 +14,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         UserStoreOptions, UserStoreOptionsFactory,
         UserStoreCapability, UserStoreJson, UserArguments>
         ("95ee94e7-c8e2-40e6-a26f-c9fc3afa9fa5",
-        Trigger, "Add to Windows Certificate Store (Current User)", "User Store")]
+        Trigger, "Add to Windows Certificate Store (Current User)", 
+        Name = "User Store", External = true)]
     internal class UserStore : IStorePlugin, IDisposable
     {
         internal const string Trigger = "UserStore";

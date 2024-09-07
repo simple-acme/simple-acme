@@ -16,7 +16,8 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
         ScriptOptions, ScriptOptionsFactory, 
         InstallationCapability, WacsJsonPlugins, ScriptArguments>
         ("3bb22c70-358d-4251-86bd-11858363d913", 
-        "Script", "Start external script or program", "Custom script")]
+        "Script", "Start external script or program", 
+        Name = "Custom script")]
     internal partial class Script(
         Renewal renewal, ScriptOptions options,
         ScriptClient client, SecretServiceManager secretManager) : IInstallationPlugin

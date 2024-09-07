@@ -43,5 +43,9 @@ namespace PKISharp.WACS.Plugins
         public Type Capability => meta.Capability;
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         public Type? Arguments => meta.Arguments;
+        public bool External => meta.External;
+        public string? Provider => meta.Provider;
+        public string? Page => meta.Page;
+        public string? Download => meta.Download;
     }
 }
