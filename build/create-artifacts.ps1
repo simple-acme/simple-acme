@@ -81,7 +81,7 @@ function PlatformRelease
 		}
 		Copy-Item "$Root\dist\*" $Temp -Recurse
 		Set-Content -Path "$Temp\version.txt" -Value "v$Version ($Platform, $Config)"
-		[io.compression.zipfile]::CreateFromDirectory($Temp, $MainZipPath)
+		Compress $Temp $MainZipPath
 	}
 
 	# Managed debugger interface as optional extra download
@@ -94,6 +94,17 @@ function PlatformRelease
 	}
 }
 
+function Compress {
+	param($Dir, $Target)
+	[io.compression.zipfile]::CreateFromDirectory($Temp, $Target)
+	$targetInfo = Get-Item $Target
+	$global:yaml += "
+  - 
+    name: $($targetInfo.Name)
+    size: $(Get-FriendlySize $targetInfo.Length)
+    sha256: $((Get-FileHash $targetInfo).Hash)"
+}
+
 function CreateArtifact {
 	param($Dir, $Files, $Target)
 
@@ -101,7 +112,16 @@ function CreateArtifact {
 	foreach ($file in $files) {
 		Copy-Item "$Dir\$file" $Temp
 	}
-	[io.compression.zipfile]::CreateFromDirectory($Temp, $Target)
+	Compress $Temp $Target
+}
+
+function Get-FriendlySize {
+    param($Bytes)
+    $sizes='Bytes,KB,MB,GB,TB,PB,EB,ZB' -split ','
+    for($i=0; ($Bytes -ge 1kb) -and
+        ($i -lt $sizes.Count); $i++) {$Bytes/=1kb}
+    $N=1; if($i -eq 0) {$N=0}
+    "{0:N$($N)} {1}" -f $Bytes, $sizes[$i]
 }
 
 function PluginRelease
@@ -144,6 +164,12 @@ if ($BuildNuget) {
 	NugetRelease
 }
 
+$global:yaml = "
+releasename: $Version
+releasetag: $Version
+releasebuild: $Version
+downloads: "
+
 foreach ($config in $configs) {
 	foreach ($platform in $platforms) {
 		PlatformRelease $config $platform 
@@ -157,5 +183,5 @@ if ($BuildPlugins) {
 	}
 }
 
-"Created artifacts:"
-dir $Out
+Set-Content -Path "$($out)build.yml" -Value $global:yaml
+"Created artifacts: $global:yaml"
