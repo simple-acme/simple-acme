@@ -340,7 +340,12 @@ namespace PKISharp.WACS.Services
         internal static string? EscapeConsole(string? input)
         {
             if (input == null) { return null; };
-            input = BacktickRegex().Replace(input, "$1");
+            var replace = "$1";
+            if (InputService.SupportsVT100())
+            {
+                replace = $"{InputService.Green}{replace}{InputService.Reset}";
+            }
+            input = BacktickRegex().Replace(input, replace);
             return input;
         }
 

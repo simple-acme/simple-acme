@@ -54,8 +54,11 @@ namespace PKISharp.WACS.Services
             Write($"{text.PadRight(size)}\n", color);
         }
 
-        private const string Black = "\u001b[40m";
-        private const string Reset = "\u001b[0m";
+        internal static bool SupportsVT100() => !OperatingSystem.IsWindows() || Environment.OSVersion.Version.Major >= 10;
+        internal const string Green = "\u001b[32m";
+        internal const string Black = "\u001b[40m";
+        internal const string Reset = "\u001b[0m";
+
         private void Write(string? text = "", ConsoleColor? color = null)
         {
             text ??= "";
@@ -63,8 +66,7 @@ namespace PKISharp.WACS.Services
             {
                 Console.ForegroundColor = color.Value;
             }
-            if (Environment.OSVersion.Version.Major >= 10 && 
-                settings.UI?.Color?.Background == "black")
+            if (SupportsVT100() && settings.UI?.Color?.Background == "black")
             {
                 text = $"{Black}{text}{Reset}";
             }
