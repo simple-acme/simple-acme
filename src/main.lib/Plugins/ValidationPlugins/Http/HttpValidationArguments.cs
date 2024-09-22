@@ -1,7 +1,7 @@
 ﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 
-namespace PKISharp.WACS.Plugins.ValidationPlugins
+namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
     public abstract class HttpValidationArguments : BaseArguments
     {

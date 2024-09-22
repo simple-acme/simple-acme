@@ -7,7 +7,7 @@ using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Plugins.Resolvers;
-using PKISharp.WACS.Plugins.ValidationPlugins;
+using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.AutoRenew;
 using PKISharp.WACS.Services.Serialization;

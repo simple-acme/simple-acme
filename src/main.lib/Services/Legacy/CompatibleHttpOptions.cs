@@ -1,5 +1,5 @@
 ﻿using PKISharp.WACS.Configuration;
-using PKISharp.WACS.Plugins.ValidationPlugins;
+using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 namespace PKISharp.WACS.Services.Legacy
 {
     /// <summary>

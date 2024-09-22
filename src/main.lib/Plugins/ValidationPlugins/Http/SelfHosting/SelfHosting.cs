@@ -17,7 +17,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         ("c7d5e050-9363-4ba1-b3a8-931b31c618b7", 
         "SelfHosting", "Let simple-acme answer HTTP validation request", 
         Name = "Self-hosting")]
-    internal class SelfHosting(ILogService log, SelfHostingOptions options) : Validation<Http01ChallengeValidationDetails>
+    internal class SelfHosting(ILogService log, RunLevel runLevel, IInputService input, SelfHostingOptions options) : 
+        HttpValidationBase(log, runLevel, input)
     {
         internal const int DefaultHttpValidationPort = 80;
         internal const int DefaultHttpsValidationPort = 443;
@@ -65,11 +66,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
         }
 
-        public override Task PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
+        public override async Task PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
             // Add validation file
             _files.GetOrAdd("/" + challenge.HttpResourcePath, challenge.HttpResourceValue);
-            return Task.CompletedTask;
+            await TestChallenge(challenge);
         }
 
         public override Task Commit()

@@ -5,7 +5,7 @@ using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace PKISharp.WACS.Plugins.ValidationPlugins
+namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
     public abstract class HttpValidationOptionsFactory<TOptions, TArguments>(ArgumentsInputService arguments, Target target) : 
         PluginOptionsFactory<TOptions>

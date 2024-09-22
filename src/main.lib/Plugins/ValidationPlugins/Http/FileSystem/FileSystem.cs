@@ -24,12 +24,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             var fi = new FileInfo(path);
             if (fi.Exists)
             {
-                _log.Verbose("Deleting file {path}", path);
+                log.Verbose("Deleting file {path}", path);
                 fi.Delete();
             }
             else
             {
-                _log.Warning("File {path} already deleted", path);
+                log.Warning("File {path} already deleted", path);
             }
             return Task.CompletedTask;
         }
@@ -39,12 +39,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             var di = new DirectoryInfo(path);
             if (di.Exists)
             {
-                _log.Verbose("Deleting folder {path}", path);
+                log.Verbose("Deleting folder {path}", path);
                 di.Delete();
             }
             else
             {
-                _log.Warning("Folder {path} already deleted", path);
+                log.Warning("Folder {path} already deleted", path);
             }
             return Task.CompletedTask;
         }
@@ -62,7 +62,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             {
                 fi.Directory.Create();
             }
-            _log.Verbose("Writing file to {path}", path);
+            log.Verbose("Writing file to {path}", path);
             await File.WriteAllTextAsync(path, content);
         }
 
