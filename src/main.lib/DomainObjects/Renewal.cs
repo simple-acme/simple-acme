@@ -30,12 +30,6 @@ namespace PKISharp.WACS.DomainObjects
         }
 
         /// <summary>
-        /// Is this renewal a test?
-        /// </summary>
-        [JsonIgnore]
-        internal bool Test { get; set; }
-
-        /// <summary>
         /// Has this renewal been changed?
         /// </summary>
         [JsonIgnore]
