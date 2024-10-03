@@ -102,19 +102,37 @@ namespace PKISharp.WACS.Services
             {
                 return;
             }
+            try
+            {     
+                _ = BaseUri;
+            } 
+            catch
+            {
+                _log.Error("Error choosing ACME server");
+                return;
+            }
 
-            var configRoot = ChooseConfigPath();
-            Client.ConfigurationPath = Path.Combine(configRoot, BaseUri.CleanUri());
-            Client.LogPath = ChooseLogPath();
-            Cache.Path = ChooseCachePath();
+            try
+            {
+                var configRoot = ChooseConfigPath();
+                Client.ConfigurationPath = Path.Combine(configRoot, BaseUri.CleanUri());
+                Client.LogPath = ChooseLogPath();
+                Cache.Path = ChooseCachePath();
 
-            EnsureFolderExists(configRoot, "configuration", true);
-            EnsureFolderExists(Client.ConfigurationPath, "configuration", false);
-            EnsureFolderExists(Client.LogPath, "log", !Client.LogPath.StartsWith(Client.ConfigurationPath));
-            EnsureFolderExists(Cache.Path, "cache", !Client.LogPath.StartsWith(Client.ConfigurationPath));
+                EnsureFolderExists(configRoot, "configuration", true);
+                EnsureFolderExists(Client.ConfigurationPath, "configuration", false);
+                EnsureFolderExists(Client.LogPath, "log", !Client.LogPath.StartsWith(Client.ConfigurationPath));
+                EnsureFolderExists(Cache.Path, "cache", !Client.LogPath.StartsWith(Client.ConfigurationPath));
 
-            // Configure disk logger
-            _log.ApplyClientSettings(Client);
+                // Configure disk logger
+                _log.ApplyClientSettings(Client);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Error initializing program");
+                return;
+            }
+
             Valid = true;
         }
 
@@ -122,12 +140,38 @@ namespace PKISharp.WACS.Services
         {
             get
             {
-                var ret = !string.IsNullOrEmpty(_arguments?.BaseUri)
-                    ? new Uri(_arguments.BaseUri)
-                    : _arguments?.Test ?? false ?
-                        Acme.DefaultBaseUriTest :
-                        Acme.DefaultBaseUri;
-                return ret ?? throw new Exception("Unable to determine BaseUri");
+                if (!string.IsNullOrWhiteSpace(_arguments?.BaseUri))
+                {
+                    try
+                    {
+                        return new Uri(_arguments.BaseUri);
+                    } 
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex, "Invalid --baseuri specified");
+                        throw;
+                    }
+                }
+                if (_arguments?.Test ?? false)
+                {
+                    if (Acme.DefaultBaseUriTest?.IsAbsoluteUri ?? false)
+                    {
+                        return Acme.DefaultBaseUriTest;
+                    } 
+                    else
+                    {
+                        _log.Warning("Setting Acme.DefaultBaseUriTest is unspecified or invalid, fallback to Acme.DefaultBaseUri");
+                    }
+                }
+                if (Acme.DefaultBaseUri?.IsAbsoluteUri ?? false)
+                {
+                    return Acme.DefaultBaseUri;
+                }
+                else
+                {
+                    _log.Error("Setting Acme.DefaultBaseUri is unspecified or invalid, please specify a valid absolute URI");
+                    throw new Exception();
+                }
             }
         }
 
