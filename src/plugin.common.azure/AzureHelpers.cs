@@ -37,16 +37,45 @@ namespace PKISharp.WACS.Plugins.Azure.Common
             }
         }
 
+        /// <summary>
+        /// Token endpoint may be different based on chosen region
+        /// </summary>
+        /// <returns></returns>
+        private Uri AzureAuthorityHost
+        {
+            get
+            {
+                if (ArmEnvironment == ArmEnvironment.AzureChina)
+                {
+                    return AzureAuthorityHosts.AzureChina;
+                }
+                else if (ArmEnvironment == ArmEnvironment.AzureGermany)
+                {
+                    return AzureAuthorityHosts.AzureGermany;
+                }
+                else if (ArmEnvironment == ArmEnvironment.AzureGovernment)
+                {
+                    return AzureAuthorityHosts.AzureGovernment;
+                }
+                return AzureAuthorityHosts.AzurePublicCloud;
+            }
+        }
+
+        /// <summary>
+        /// Create the right type of TokenCredential based on user preferences
+        /// </summary>
         public TokenCredential TokenCredential
         {
             get
             {
+                var tokenOptions = new TokenCredentialOptions() { AuthorityHost = AzureAuthorityHost };
                 return options.UseMsi
-                      ? new ManagedIdentityCredential()
-                      : new ClientSecretCredential(
+                    ? new ManagedIdentityCredential(options: tokenOptions)
+                    : new ClientSecretCredential(
                           options.TenantId,
                           options.ClientId,
-                          ssm.EvaluateSecret(options.Secret?.Value));
+                          ssm.EvaluateSecret(options.Secret?.Value),
+                          options: tokenOptions);
             }
         }
 
