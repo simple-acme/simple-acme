@@ -9,7 +9,7 @@ namespace PKISharp.WACS.Services
     public partial class ProxyService(ILogService log, ISettingsService settings, SecretServiceManager secretService) : IProxyService
     {
         private IWebProxy? _proxy;
-
+        private bool _enabled = true;
         public SslProtocols SslProtocols { get; set; } = SslProtocols.None;
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// Is the user requesting the system proxy
         /// </summary>
-        public bool CustomProxy =>
+        private bool CustomProxy =>
             settings.Proxy.Url?.ToLower().Trim() switch
             {
                 "[winhttp]" => false,
@@ -42,10 +42,11 @@ namespace PKISharp.WACS.Services
             };
 
         public HttpMessageHandler GetHttpMessageHandler() => GetHttpMessageHandler(true);
-        public HttpMessageHandler GetHttpMessageHandler(bool checkSsl = true)
+        private HttpMessageHandler GetHttpMessageHandler(bool checkSsl = true)
         {
             var logger = new RequestLogger(log);
-            if (OperatingSystem.IsWindows())
+            var handler = default(HttpMessageHandler);
+            if (OperatingSystem.IsWindows() && _enabled)
             {
                 var winHandler = new WindowsHandler(logger)
                 {
@@ -61,21 +62,22 @@ namespace PKISharp.WACS.Services
                 {
                     winHandler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                 }
-                return winHandler;
+                handler = winHandler;
             }
             else
             {
-                var linuxHandler = new LinuxHandler(logger)
+                var basicHandler = new BasicHandler(logger)
                 {
                     Proxy = GetWebProxy(),
                     SslProtocols = SslProtocols
                 }; 
                 if (!checkSsl)
                 {
-                    linuxHandler.ServerCertificateCustomValidationCallback = (a, b, c, d) => true;
+                    basicHandler.ServerCertificateCustomValidationCallback = (a, b, c, d) => true;
                 }
-                return linuxHandler;
+                handler = basicHandler;
             }
+            return handler;
         }
 
         /// <summary>
@@ -98,6 +100,10 @@ namespace PKISharp.WACS.Services
         
         public IWebProxy? GetWebProxy()
         {
+            if (!_enabled)
+            {
+                return null;
+            }
             if (_proxy == null)
             {
                 var proxy = CustomProxy ? new WebProxy(settings.Proxy.Url) : null;
@@ -113,6 +119,17 @@ namespace PKISharp.WACS.Services
                 _proxy = proxy;
             }
             return _proxy;
+        }
+
+        /// <summary>
+        /// Disable proxy detection and (on Windows) fallback to basic HttpMessageHandler 
+        /// instead of the WinHttpHandler, which sometimes fails especially in AWS VMs
+        /// for some unknown reason.
+        /// </summary>
+        public void Disable()
+        {
+            _enabled = false;
+            _proxy = null;
         }
     }
 }

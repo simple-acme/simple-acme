@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    internal class LinuxHandler(RequestLogger log) : HttpClientHandler
+    internal class BasicHandler(RequestLogger log) : HttpClientHandler
     {
         /// <summary>
         /// Asynchronous request

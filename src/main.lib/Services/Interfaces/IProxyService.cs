@@ -11,5 +11,6 @@ namespace PKISharp.WACS.Services
         HttpMessageHandler GetHttpMessageHandler();
         HttpClient GetHttpClient(bool checkSsl = true);
         IWebProxy? GetWebProxy();
+        void Disable();
     }
 }

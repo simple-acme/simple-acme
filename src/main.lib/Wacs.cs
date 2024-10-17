@@ -16,6 +16,7 @@ namespace PKISharp.WACS.Host
         ILogService logService,
         IInputService inputService,
         ISettingsService settingsService,
+        IProxyService proxyService,
         HelpService helpService,
         VersionService versionService,
         ArgumentsParser argumentsParser,
@@ -205,19 +206,25 @@ namespace PKISharp.WACS.Host
             // Connection test
             logService.Information("Connecting to {ACME}...", settingsService.BaseUri);
             var result = networkCheck.CheckNetwork();
-            await result.WaitAsync(TimeSpan.FromSeconds(30));
-            if (!result.IsCompletedSuccessfully)
+            try
             {
-                logService.Warning("Network check failed or timed out, retry without proxy detection...");
-                settingsService.Proxy.Url = null;
-                result = networkCheck.CheckNetwork();
                 await result.WaitAsync(TimeSpan.FromSeconds(30));
             }
-            if (!result.IsCompletedSuccessfully)
+            catch (TimeoutException)
             {
-                logService.Warning("Network check failed or timed out. Functionality may be limited.");
+                try
+                {
+                    logService.Warning("Network check failed or timed out, retry with proxy bypass...");
+                    proxyService.Disable();
+                    result = networkCheck.CheckNetwork();
+                    await result.WaitAsync(TimeSpan.FromSeconds(30));
+                } 
+                catch (TimeoutException)
+                {
+                    logService.Warning("Network check failed or timed out. Functionality may be limited.");
+                }
             }
-
+  
             // New version test
             if (settingsService.Client.VersionCheck)
             {
