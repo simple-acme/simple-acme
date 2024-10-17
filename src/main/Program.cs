@@ -26,6 +26,9 @@ namespace PKISharp.WACS.Host
             // Are we running in verbose mode?
             var verbose = args.Contains("--verbose") || args.Contains("/verbose");
 
+            // Are we running in config mode?
+            var config = args.Contains("--config") || args.Contains("/config");
+
             // The main class might change the character encoding
             // save the original setting so that it can be restored
             // after the run.
@@ -34,7 +37,7 @@ namespace PKISharp.WACS.Host
             try
             {
                 // Setup IOC container
-                var container = Autofac.Container(args, verbose);
+                var container = Autofac.Container(args, verbose, config);
                 AllowInstanceToRun(container);
                 var wacs = container.Resolve<Wacs>();
                 Environment.ExitCode = await wacs.Start().ConfigureAwait(false);

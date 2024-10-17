@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Host;
 using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Plugins.SecretPlugins;
 using PKISharp.WACS.Services.Legacy;
@@ -18,6 +19,7 @@ namespace PKISharp.WACS.Services.Serialization
     [JsonSerializable(typeof(PluginOptionsBase))]
     [JsonSerializable(typeof(CsrPluginOptions))]
     [JsonSerializable(typeof(Renewal))]
+    [JsonSerializable(typeof(BannerData))]
     [JsonSerializable(typeof(VersionCheckData))]
     [JsonSerializable(typeof(GlobalValidationPluginOptions))]
     [JsonSerializable(typeof(List<GlobalValidationPluginOptions>))]

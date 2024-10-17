@@ -34,7 +34,7 @@ namespace PKISharp.WACS.Services
         // Logging before the disk/event log configuration is available
         private List<LogEntry>? _logs = [];
 
-        public LogService(bool verbose)
+        public LogService(bool verbose, bool config)
         {
             // Custom configuration support
             ConfigurationPath = Path.Combine(VersionService.BasePath, "serilog.json");
@@ -46,6 +46,10 @@ namespace PKISharp.WACS.Services
             if (verbose)
             {
                 initialLevel = LogEventLevel.Verbose;
+            }
+            if (config)
+            {
+                initialLevel = LogEventLevel.Fatal;
             }
             _levelSwitch = new LoggingLevelSwitch(initialMinimumLevel: initialLevel);
             try

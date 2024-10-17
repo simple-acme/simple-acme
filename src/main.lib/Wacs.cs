@@ -1,5 +1,4 @@
-﻿using PKISharp.WACS.Clients;
-using PKISharp.WACS.Clients.IIS;
+﻿using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Extensions;
@@ -12,17 +11,14 @@ namespace PKISharp.WACS.Host
     internal class Wacs(
         ExceptionHandler exceptionHandler,
         IIISClient iis,
-        UpdateClient updateClient,
+        Banner banner,
         ILogService logService,
         IInputService inputService,
         ISettingsService settingsService,
-        IProxyService proxyService,
         HelpService helpService,
         VersionService versionService,
         ArgumentsParser argumentsParser,
-        AdminService adminService,
         RenewalCreator renewalCreator,
-        NetworkCheckService networkCheck,
         RenewalManager renewalManager,
         Unattended unattended,
         IAutoRenewService taskSchedulerService,
@@ -70,7 +66,15 @@ namespace PKISharp.WACS.Host
             // Set console window encoding
             SetEncoding();
 
-            await ShowBanner();
+            // JSON banner for automation
+            if (_args.Config)
+            {
+                banner.WriteJson();
+                return 0;
+            }
+
+            // Text banner for regular use
+            await banner.ShowBanner();
 
             // Version display
             if (_args.Version)
@@ -187,90 +191,6 @@ namespace PKISharp.WACS.Host
             // Return control to the caller
             logService.Verbose("Exiting with status code {code}", exceptionHandler.ExitCode);
             return exceptionHandler.ExitCode;
-        }
-
-        /// <summary>
-        /// Show banner
-        /// </summary>
-        private async Task ShowBanner()
-        {
-            // Version information
-            logService.Dirty = true;
-            inputService.CreateSpace();
-            logService.Information(LogType.Screen, "A simple cross platform ACME client (WACS)");
-            logService.Information(LogType.Screen, "Software version {version} ({build}, {bitness})", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
-            logService.Information(LogType.Disk | LogType.Event, "Software version {version} ({build}, {bitness}) started", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
-            logService.Debug("Running on {platform} {version}", Environment.OSVersion.Platform, Environment.OSVersion.Version);
-            argumentsParser.ShowCommandLine();
-                      
-            // Connection test
-            logService.Information("Connecting to {ACME}...", settingsService.BaseUri);
-            var result = networkCheck.CheckNetwork();
-            try
-            {
-                await result.WaitAsync(TimeSpan.FromSeconds(30));
-            }
-            catch (TimeoutException)
-            {
-                try
-                {
-                    logService.Warning("Network check failed or timed out, retry with proxy bypass...");
-                    proxyService.Disable();
-                    result = networkCheck.CheckNetwork();
-                    await result.WaitAsync(TimeSpan.FromSeconds(30));
-                } 
-                catch (TimeoutException)
-                {
-                    logService.Warning("Network check failed or timed out. Functionality may be limited.");
-                }
-            }
-  
-            // New version test
-            if (settingsService.Client.VersionCheck)
-            {
-                inputService.CreateSpace();
-                await updateClient.CheckNewVersion();
-            }
-
-            // IIS version test
-            if (OperatingSystem.IsWindows())
-            {
-                if (adminService.IsAdmin)
-                {
-                    logService.Debug("Running as administrator");
-                    if (iis.Version.Major > 0)
-                    {
-                        logService.Debug("IIS version {version}", iis.Version);
-                    }
-                    else
-                    {
-                        logService.Debug("IIS not detected");
-                    }
-                }
-                else
-                {
-                    logService.Warning("Running as limited user, some options disabled");
-                }
-            }
-            else
-            {
-                if (adminService.IsAdmin)
-                {
-                    logService.Debug("Running as superuser/root");
-                }
-                else
-                {
-                    logService.Warning("Running as limited user, some options *including autorenewal* disabled");
-                }
-            }
-
-            // Task scheduler health check
-            taskSchedulerService.ConfirmAutoRenew();
-
-            // Further information and tests
-            logService.Information(LogType.Screen, "Check the manual at {webiste}", "https://simple-acme.com");
-            logService.Information(LogType.Screen, "Please leave a {star} at {url}", "★", "https://github.com/simple-acme/simple-acme");
-            logService.Verbose("Unicode test: Mandarin/{chinese} Cyrillic/{russian} Arabic/{arab}", "語言", "язык", "لغة");
         }
 
         /// <summary>

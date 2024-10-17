@@ -22,10 +22,10 @@ namespace PKISharp.WACS.Host
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        internal static ILifetimeScope Container(string[] args, bool verbose)
+        internal static ILifetimeScope Container(string[] args, bool verbose, bool config)
         {
             var builder = new ContainerBuilder();
-            _ = builder.RegisterType<LogService>().WithParameter(new TypedParameter(typeof(bool), verbose)).SingleInstance().As<ILogService>();
+            _ = builder.RegisterType<LogService>().WithParameter(new NamedParameter(nameof(verbose), verbose)).WithParameter(new NamedParameter(nameof(config), config)).SingleInstance().As<ILogService>();
             _ = builder.RegisterType<ExtendedAssemblyService>().As<AssemblyService>().SingleInstance();
             _ = builder.RegisterType<PluginService>().SingleInstance().As<IPluginService>();
             _ = builder.RegisterType<ArgumentsParser>().WithParameter(new TypedParameter(typeof(string[]), args)).SingleInstance();
@@ -93,6 +93,7 @@ namespace PKISharp.WACS.Host
                 _ = builder.RegisterType<Unattended>().SingleInstance();
                 _ = builder.RegisterType<ArgumentsInputService>().SingleInstance();
                 _ = builder.RegisterType<MainMenu>().SingleInstance();
+                _ = builder.RegisterType<Banner>().SingleInstance();
 
                 // Multi-instance types
                 _ = builder.RegisterType<Wacs>();

@@ -44,6 +44,9 @@ namespace PKISharp.WACS.Configuration.Arguments
         [CommandLine(Description = "Show version information.")]
         public bool Version { get; set; }
 
+        [CommandLine(Description = "Show configuration information.")]
+        public bool Config { get; set; }
+
         // Renewal
 
         [CommandLine(Description = "Renew any certificates that are due. This argument is used by the scheduled task. Note that it's not possible to change certificate properties and renew at the same time.")]
