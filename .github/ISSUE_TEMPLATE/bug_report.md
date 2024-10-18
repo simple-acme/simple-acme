@@ -22,11 +22,11 @@ A clear and concise description of what the bug is.
 A clear and concise description of what you expected to happen.
 
 **Log**
-Please add any available log output. You may copy it from the console window, get it from the Windows Event Viewer, or the log files on disk, which can typically be found in a sub folder of `%programdata%\win-acme`.
+Please add any available log output. You may copy it from the console window, get it from the Windows Event Viewer, or the log files on disk, which can typically be found in a sub folder of `%programdata%\simple-acme`.
 
 **Platform:**
  - OS: [e.g. Windows 2016, English]
- - Version: [e.g. 2.1.0, 64-bit, pluggable]
+ - Version: [e.g. 2.3.0, 64-bit, pluggable]
 
 **Additional context**
 Add any other context about the problem here, for example possible network issues (firewalls, proxies, NAT) that might play a role.
