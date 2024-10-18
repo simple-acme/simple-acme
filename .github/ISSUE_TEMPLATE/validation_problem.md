@@ -15,5 +15,5 @@ FAQ/guide at https://simple-acme.com/manual/validation-problems.
 If - and only if - you still believe that your validation issue is caused by a bug you can open 
 an issue here, supported by the appropriate evidence (e.g. logs, screenshots). 
 
-Otherwise please first ask for help at https://github.com/win-acme/win-acme/discussions or 
+Otherwise please first ask for help at https://github.com/simple-acme/simple-acme/discussions or 
 the appropriate support channel at your ACME service provider.
