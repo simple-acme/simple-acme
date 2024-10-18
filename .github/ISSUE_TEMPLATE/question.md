@@ -7,4 +7,4 @@ assignees: ''
 
 ---
 
-Please post your question under: https://github.com/win-acme/win-acme/discussions/
+Please post your question under: https://github.com/simple-acme/simple-acme/discussions/
