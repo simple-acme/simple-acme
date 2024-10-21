@@ -40,13 +40,19 @@ namespace PKISharp.WACS.Plugins.Azure.Common
         public TokenCredential TokenCredential
         {
             get
-            {
-                return options.UseMsi
-                      ? new ManagedIdentityCredential()
-                      : new ClientSecretCredential(
-                          options.TenantId,
-                          options.ClientId,
-                          ssm.EvaluateSecret(options.Secret?.Value));
+            { 
+                if (_options.UseMsi && string.IsNullOrEmpty(_options.ClientId)) {
+                    return new ManagedIdentityCredential();
+                } 
+
+                if (_options.UseMsi && !string.IsNullOrEmpty(_options.ClientId)) {
+                    return new ManagedIdentityCredential(_options.ClientId);
+                } 
+
+                return new ClientSecretCredential(
+                        _options.TenantId,
+                        _options.ClientId,
+                        _ssm.EvaluateSecret(_options.Secret?.Value));
             }
         }
 
