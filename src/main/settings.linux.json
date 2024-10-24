@@ -21,7 +21,8 @@
     "ValidateServerCertificate": true,
     "RetryCount": 15,
     "RetryInterval": 5,
-    "PreferredIssuer": null
+    "PreferredIssuer": null,
+    "MaxDomains": 100
   },
   "Execution": {
     "DefaultPreExecutionScript": null,

@@ -120,7 +120,11 @@ namespace PKISharp.WACS.Configuration.Settings
         /// If there are alternate certificate, select 
         /// which issuer is preferred
         /// </summary>
-        public string? PreferredIssuer { get; set; }        
+        public string? PreferredIssuer { get; set; }
+        /// <summary>
+        /// Maximum number of domains supported
+        /// </summary>
+        public int? MaxDomains { get; set; }
     }
 
     /// <summary>

@@ -21,7 +21,7 @@ namespace PKISharp.WACS
     internal class RenewalCreator(
         MainArguments mainArgs, AccountArguments accountArgs,
         IRenewalStore renewalStore, ISharingLifetimeScope container,
-        IInputService input, ILogService log,
+        IInputService input, ILogService log, TargetValidator targetValidator,
         IPluginService plugin, IAutofacBuilder autofacBuilder,
         IValidationOptionsService validationOptions, AccountManager accountManager,
         NotificationService notification, DueDateStaticService dueDateService,
@@ -115,7 +115,7 @@ namespace PKISharp.WACS
                 exceptionHandler.HandleException(message: $"Source plugin {targetPluginName} was unable to generate the certificate parameters.");
                 return;
             }
-            if (!initialTarget.IsValid(log, false))
+            if (!targetValidator.IsValid(initialTarget, false))
             {
                 exceptionHandler.HandleException(message: $"Source plugin {targetPluginName} generated an invalid source.");
                 return;

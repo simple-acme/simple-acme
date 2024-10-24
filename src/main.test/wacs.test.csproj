@@ -15,6 +15,12 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <Compile Remove="Tests\ParsingTests\**" />
+    <EmbeddedResource Remove="Tests\ParsingTests\**" />
+    <None Remove="Tests\ParsingTests\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <None Remove="Tests\CsrPluginTests\messedup.pfx" />
     <None Remove="Tests\CsrPluginTests\original.pfx" />
     <None Remove="Tests\CsrPluginTests\working.pfx" />
@@ -44,10 +50,6 @@
     <None Update="public_suffix_list.dat">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Tests\ParsingTests\" />
   </ItemGroup>
 
 </Project>

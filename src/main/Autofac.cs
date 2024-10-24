@@ -68,6 +68,7 @@ namespace PKISharp.WACS.Host
                 _ = builder.RegisterType<NetworkCheckService>().SingleInstance();
                 _ = builder.RegisterType<ZeroSsl>().SingleInstance();
                 _ = builder.RegisterType<OrderManager>().SingleInstance();
+                _ = builder.RegisterType<TargetValidator>().SingleInstance();
                 _ = builder.RegisterType<EmailClient>().SingleInstance();
                 _ = builder.RegisterType<ScriptClient>().SingleInstance();
                 _ = builder.RegisterType<LookupClientProvider>().SingleInstance();

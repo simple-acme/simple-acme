@@ -1,9 +1,6 @@
-﻿using Autofac.Core;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PKISharp.WACS.Clients.IIS;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
-using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.TargetPlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
@@ -18,11 +15,13 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
     {
         private readonly ILogService log;
         private readonly IPluginService plugins;
+        private readonly TargetValidator validator;
 
         public ManualTests()
         {
             log = new Mock.Services.LogService(false);
             plugins = new PluginService(log, new MockAssemblyService(log));
+            validator = new TargetValidator(log, new MockSettingsService());
         }
 
         private ManualOptions? Options(string commandLine)
@@ -52,7 +51,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual(options.AlternativeNames.Count, 3);
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
             }
         }
 
@@ -67,7 +66,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual(options.AlternativeNames.First(), "经/已經.example.com");
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
             }
         }
 
@@ -82,7 +81,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual(options.AlternativeNames.First(), "*.经/已經.example.com");
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
             }
         }
 
@@ -97,7 +96,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual(options.AlternativeNames.First(), "经/已經.经/已經.example.com");
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
             }
         }
 
@@ -112,7 +111,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual(options.AlternativeNames.First(), "*.经/已經.example.com");
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
             }
         }
 
@@ -127,7 +126,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual(options.AlternativeNames.First(), "经/已經.经/已經.example.com");
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
             }
         }
 
@@ -140,7 +139,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             {
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
                 Assert.IsTrue(tar.Parts.First().Identifiers.OfType<IpIdentifier>().First().Value == "1.2.3.4");
             }
         }
@@ -154,7 +153,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             {
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
                 Assert.IsTrue(tar.CommonName?.Value == "abc.com");
             }
         }
@@ -170,7 +169,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual(options.AlternativeNames.Count, 4);
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
             }
         }
 
@@ -185,7 +184,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual(options.AlternativeNames.Count, 3);
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(tar.IsValid(log), true);
+                Assert.AreEqual(validator.IsValid(tar), true);
             }
         }
 

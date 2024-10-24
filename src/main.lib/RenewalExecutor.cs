@@ -26,6 +26,7 @@ namespace PKISharp.WACS
         ILogService log,
         IInputService input,
         ISettingsService settings,
+        TargetValidator targetValidator,
         DueDateStaticService dueDateStatic,
         DueDateRuntimeService dueDateRuntime,
         ExceptionHandler exceptionHandler,
@@ -76,7 +77,7 @@ namespace PKISharp.WACS
             log.Information($"Plugin {{order}} created {{n}} order{(orders.Count > 1?"s":"")}", orderPlugin.Meta.Name, orders.Count);
             foreach (var order in orders)
             {
-                if (!order.Target.IsValid(log))
+                if (!targetValidator.IsValid(order.Target))
                 {
                     var blame = orders.Count > 1 ? "Order" : "Source";
                     var blamePlugin = orders.Count > 1 ? orderPlugin.Meta : targetPlugin.Meta;
