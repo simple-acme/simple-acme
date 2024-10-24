@@ -32,6 +32,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<SecretService>().As<SecretService>().As<Real.ISecretService>().SingleInstance();
             _ = builder.RegisterType<AccountManager>();
             _ = builder.RegisterType<OrderManager>();
+            _ = builder.RegisterType<Real.TargetValidator>();
             _ = builder.RegisterType<ZeroSsl>();
             WacsJson.Configure(builder);
             _ = builder.RegisterInstance(log).As<Real.ILogService>();
