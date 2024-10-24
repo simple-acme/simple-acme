@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using sys = System.Threading.Tasks;
+using Net = System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
@@ -143,7 +143,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="runLevel"></param>
         /// <returns></returns>
-        public async sys.Task EnsureAutoRenew(RunLevel runLevel)
+        public async Net.Task EnsureAutoRenew(RunLevel runLevel)
         {
             var existingTask = ExistingTask;
             var create = runLevel.HasFlag(RunLevel.Force) || existingTask == null;
@@ -169,7 +169,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="runLevel"></param>
         /// <returns></returns>
-        public async sys.Task SetupAutoRenew(RunLevel runLevel)
+        public async Net.Task SetupAutoRenew(RunLevel runLevel)
         {
             using var taskService = new TaskService();
             var existingTask = ExistingTask;

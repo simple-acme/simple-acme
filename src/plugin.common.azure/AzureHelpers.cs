@@ -69,13 +69,19 @@ namespace PKISharp.WACS.Plugins.Azure.Common
             get
             {
                 var tokenOptions = new TokenCredentialOptions() { AuthorityHost = AzureAuthorityHost };
-                return options.UseMsi
-                    ? new ManagedIdentityCredential(options: tokenOptions)
-                    : new ClientSecretCredential(
-                          options.TenantId,
-                          options.ClientId,
-                          ssm.EvaluateSecret(options.Secret?.Value),
-                          options: tokenOptions);
+                if (options.UseMsi && string.IsNullOrEmpty(options.ClientId))
+                {
+                    return new ManagedIdentityCredential(options: tokenOptions);
+                }
+                if (options.UseMsi && !string.IsNullOrEmpty(options.ClientId))
+                {
+                    return new ManagedIdentityCredential(options.ClientId, options: tokenOptions);
+                }
+                return new ClientSecretCredential(
+                        options.TenantId,
+                        options.ClientId,
+                        ssm.EvaluateSecret(options.Secret?.Value),
+                        options: tokenOptions);
             }
         }
 
