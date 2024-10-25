@@ -5,6 +5,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+#if PLUGGABLE
+using System.Reflection;
+using System.Runtime.Loader;
+#endif
 using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services
@@ -128,7 +132,7 @@ namespace PKISharp.WACS.Services
         protected static List<TypeDescriptor> LoadFromDiskReal(IEnumerable<FileInfo> _) => [];
 #endif
 
-#if PLUGGABLE 
+#if PLUGGABLE
         protected List<TypeDescriptor> LoadFromDiskReal(IEnumerable<FileInfo> dllFiles)
         {
             var allAssemblies = new List<Assembly>();
