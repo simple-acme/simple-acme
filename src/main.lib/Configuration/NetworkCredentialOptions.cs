@@ -2,6 +2,7 @@
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -40,7 +41,7 @@ namespace PKISharp.WACS.Configuration
             Password = password;
         }
 
-        public static async Task<NetworkCredentialOptions> Create<T>(ArgumentsInputService arguments) 
+        public static async Task<NetworkCredentialOptions> Create<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>(ArgumentsInputService arguments) 
             where T : class, INetworkCredentialArguments, new()
         {
             return new NetworkCredentialOptions(
@@ -49,7 +50,7 @@ namespace PKISharp.WACS.Configuration
             );
         }
 
-        public static async Task<NetworkCredentialOptions> Create<T>(ArgumentsInputService arguments, IInputService input, string purpose)
+        public static async Task<NetworkCredentialOptions> Create<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>(ArgumentsInputService arguments, IInputService input, string purpose)
             where T : class, INetworkCredentialArguments, new()
         {
             return new NetworkCredentialOptions(
@@ -58,7 +59,7 @@ namespace PKISharp.WACS.Configuration
             );
         }
 
-        public IEnumerable<(CommandLineAttribute, object?)> Describe<T>(ArgumentsInputService arguments)
+        public IEnumerable<(CommandLineAttribute, object?)> Describe<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>(ArgumentsInputService arguments)
             where T : class, INetworkCredentialArguments, new()
         {
             yield return (arguments.GetString<T>(x => x.UserName).Meta, UserName);

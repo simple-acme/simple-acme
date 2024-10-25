@@ -3,6 +3,7 @@ using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Plugins.CsrPlugins;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,7 +13,7 @@ namespace PKISharp.WACS.Plugins.Base.Factories
     /// CsrPluginFactory base implementation
     /// </summary>
     /// <typeparam name="TPlugin"></typeparam>
-    public class CsrPluginOptionsFactory<TOptions, TArguments>(ArgumentsInputService arguments) :
+    public class CsrPluginOptionsFactory<TOptions, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TArguments>(ArgumentsInputService arguments) :
         PluginOptionsFactory<TOptions>
         where TOptions : CsrPluginOptions, new()
         where TArguments : CsrArguments, new()

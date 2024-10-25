@@ -3,11 +3,12 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    public abstract class HttpValidationOptionsFactory<TOptions, TArguments>(ArgumentsInputService arguments, Target target) : 
+    public abstract class HttpValidationOptionsFactory<TOptions, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] TArguments>(ArgumentsInputService arguments, Target target) : 
         PluginOptionsFactory<TOptions>
         where TOptions : HttpValidationOptions, new()
         where TArguments : HttpValidationArguments, new()

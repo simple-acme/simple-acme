@@ -41,6 +41,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
             public Type OptionsJson { get; } = typeof(TJson);
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             public Type Capability { get; } = typeof(TCapability);
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             public Type? Arguments { get; internal set; } = null;
             public bool External { get; set; } = false;
             public string? Download { get; set; } = null;
