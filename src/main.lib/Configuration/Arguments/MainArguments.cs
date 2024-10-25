@@ -41,6 +41,9 @@ namespace PKISharp.WACS.Configuration.Arguments
         [CommandLine(Description = "Show information about all available command line options.")]
         public bool Help { get; set; }
 
+        [CommandLine(Description = "Generate YML describing command line arguments for the documentation website.", Obsolete = true)]
+        public bool Docs { get; set; }
+
         [CommandLine(Description = "Show version information.")]
         public bool Version { get; set; }
 

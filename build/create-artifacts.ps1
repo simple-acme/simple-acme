@@ -39,13 +39,13 @@ if (Test-Path $Temp)
 {
     Remove-Item $Temp -Recurse
 }
-New-Item $Temp -Type Directory
+New-Item $Temp -Type Directory | Out-Null
 
 if (Test-Path $Out)
 {
     Remove-Item $Out -Recurse
 }
-New-Item $Out -Type Directory
+New-Item $Out -Type Directory | Out-Null
 
 function PlatformRelease
 {
@@ -58,12 +58,7 @@ function PlatformRelease
 	}
 	$MainZip = "simple-acme.v$Version.$Platform.$Postfix.zip"
 	$MainZipPath = "$Out\$MainZip"
-	$MainBinDir = "$Root\src\main\bin\$Config\$NetVersion\$Platform"
-	if (!(Test-Path $MainBinDir))
-	{
-		# For some reason AppVeyor generates paths like this instead of the above on local systems
-		$MainBinDir = "$Root\src\main\bin\Any CPU\$Config\$NetVersion\$Platform"
-	}
+	$MainBinDir = MainBinDir $Config $Platform
 	$MainBinFile = "wacs.exe"
 	if ($Platform -like "linux*") {
 		$MainBinFile = "wacs"
@@ -160,6 +155,41 @@ function NugetRelease
 	}
 }
 
+function MainBinDir
+{
+	param($Config, $Platform)
+
+	$MainBinDir = "$Root\src\main\bin\$Config\$NetVersion\$Platform"
+	if (!(Test-Path $MainBinDir))
+	{
+		# For some reason AppVeyor generates paths like this instead of the above on local systems
+		$MainBinDir = "$Root\src\main\bin\Any CPU\$Config\$NetVersion\$Platform"
+	}
+	return $MainBinDir
+}
+
+function Arguments
+{
+	param($plugins)
+	if (-not ($Configs -contains "Release")) {
+		return
+	}
+	if (-not ($Platforms -contains "win-x64")) {
+		return
+	}
+	Write-Host "Generating arguments.yml..."
+	$MainBinDir = MainBinDir "Release" "win-x64"
+	foreach ($plugin in $plugins) {
+		foreach ($file in $plugin.files) {
+			Copy-Item "$($plugin.folder)\$file" $MainBinDir
+			Write-Host "copy $($plugin.folder)\$file to $MainBinDir"
+		}
+	}
+	Invoke-Expression "$MainBinDir\wacs.exe --docs --verbose" | Out-Null
+	Copy-Item $root\build\arguments.yml "$($out)arguments.yml"
+	Copy-Item $root\build\plugins.yml "$($out)plugins.yml"
+}
+
 if ($BuildNuget) {
 	NugetRelease
 }
@@ -172,6 +202,7 @@ downloads: "
 
 foreach ($config in $configs) {
 	foreach ($platform in $platforms) {
+		Write-Host "Packaging $config $platform..."
 		PlatformRelease $config $platform 
 	}
 }
@@ -179,9 +210,12 @@ foreach ($config in $configs) {
 if ($BuildPlugins) {
 	$plugins = Import-CliXml -Path $Root\build\plugins.xml
 	foreach ($plugin in $plugins) {
+		Write-Host "Packaging $($plugin.name)..."
 		PluginRelease $plugin.name $plugin.files $plugin.folder
 	}
+	Arguments $plugins
 }
 
 Set-Content -Path "$($out)build.yml" -Value $global:yaml
 "Created artifacts: $global:yaml"
+

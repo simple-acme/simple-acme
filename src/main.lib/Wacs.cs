@@ -90,15 +90,21 @@ namespace PKISharp.WACS.Host
             if (_args.Help)
             {
                 helpService.ShowArguments();
-#if DEBUG
-                helpService.GenerateArgumentsYaml();
-                helpService.GeneratePluginsYaml();
-#endif
                 await CloseDefault();
                 if (_args.CloseOnFinish)
                 {
                     return 0;
                 }
+            }
+
+            // Documentation website helper, hidden from user
+            // but used by the CI/CD system to automatically 
+            // update the website.
+            if (_args.Docs)
+            {
+                helpService.GenerateArgumentsYaml();
+                helpService.GeneratePluginsYaml();
+                return 0;
             }
 
             // Base runlevel flags on command line arguments

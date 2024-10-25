@@ -203,3 +203,5 @@ FakesAssemblies/
 # Rider
 .idea/
 /build/plugins.xml
+/build/arguments.yml
+/build/plugins.yml
