@@ -2,7 +2,6 @@
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
-using PKISharp.WACS.Services;
 using System;
 using System.Net;
 
@@ -10,19 +9,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
     internal class SelfHostingCapability : HttpValidationCapability
     {
-        protected readonly IUserRoleService UserRoleService;
         protected readonly SelfHostingOptions? SelfHostingOptions;
         protected readonly ArgumentsParser ArgumentsParser;
 
-        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args) : base(target)
-        {
-            UserRoleService = user;
-            ArgumentsParser = args;
-        }
+        public SelfHostingCapability(Target target, ArgumentsParser args) : base(target) => ArgumentsParser = args;
 
-        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args, SelfHostingOptions? options) : base(target) 
+        public SelfHostingCapability(Target target, ArgumentsParser args, SelfHostingOptions? options) : base(target) 
         {
-            UserRoleService = user;
             SelfHostingOptions = options;
             ArgumentsParser = args;
         } 
