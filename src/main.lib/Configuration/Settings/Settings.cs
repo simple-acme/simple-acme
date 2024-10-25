@@ -125,6 +125,10 @@ namespace PKISharp.WACS.Configuration.Settings
         /// Maximum number of domains supported
         /// </summary>
         public int? MaxDomains { get; set; }
+        /// <summary>
+        /// Location of the public suffix list
+        /// </summary>
+        public Uri? PublicSuffixListUri { get; set; }
     }
 
     /// <summary>

@@ -14,7 +14,6 @@ namespace PKISharp.WACS.Services
 {
     public class DomainParseService
     {
-        private const string Source = "https://publicsuffix.org/list/public_suffix_list.dat";
         private readonly DomainParser _parser;
         private readonly ILogService _log;
         private readonly ISettingsService _settings;
@@ -36,17 +35,21 @@ namespace PKISharp.WACS.Services
             {
                 _log.Warning(ex, "Error loading static public suffix list from {path}", path);
             }
-            try
+            var update = _settings.Acme.PublicSuffixListUri ?? new Uri("https://publicsuffix.org/list/public_suffix_list.dat");
+            if (update.ToString() != "")
             {
-                var webProvider = new WebTldRuleProvider(_proxy, _log, _settings);
-                if (await webProvider.BuildAsync())
+                try
                 {
-                    provider = webProvider;
+                    var webProvider = new WebTldRuleProvider(_proxy, _log, _settings);
+                    if (await webProvider.BuildAsync())
+                    {
+                        provider = webProvider;
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _log.Warning(ex, "Error updating public suffix list from {source}", Source);
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Error updating public suffix list from {source}", update);
+                }
             }
             if (provider == null)
             {
