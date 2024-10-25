@@ -1,6 +1,4 @@
-﻿using ACMESharp.Protocol.Resources;
-using PKISharp.WACS.Configuration;
-using PKISharp.WACS.DomainObjects;
+﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;

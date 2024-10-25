@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
-    class MockAssemblyService(ILogService log) : AssemblyService(log)
+    internal class MockAssemblyService(ILogService log) : AssemblyService(log)
     {
         public override List<TypeDescriptor> GetResolvable<T>()
         {

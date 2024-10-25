@@ -5,7 +5,6 @@ using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
 {

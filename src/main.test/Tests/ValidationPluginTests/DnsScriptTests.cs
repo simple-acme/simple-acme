@@ -1,12 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Configuration;
-using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
-using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests

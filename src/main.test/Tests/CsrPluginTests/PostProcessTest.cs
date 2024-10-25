@@ -4,7 +4,6 @@ using PKISharp.WACS.Plugins.CsrPlugins;
 using System;
 using System.IO;
 using System.Reflection;
-using Real = PKISharp.WACS.Services;
 
 namespace PKISharp.WACS.UnitTests.Tests.CsrPluginTests
 {

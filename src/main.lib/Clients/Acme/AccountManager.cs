@@ -13,7 +13,7 @@ namespace PKISharp.WACS.Clients.Acme
     /// <summary>
     /// Manage the account used by the AcmeClient
     /// </summary>
-    class AccountManager(
+    internal class AccountManager(
         ILogService log,
         ISettingsService settings)
     {

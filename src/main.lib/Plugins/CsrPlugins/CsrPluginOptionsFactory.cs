@@ -4,7 +4,6 @@ using PKISharp.WACS.Plugins.CsrPlugins;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.Base.Factories

@@ -1,7 +1,6 @@
 ﻿using Autofac;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.UnitTests.Mock;
-using System.Collections.Generic;
 using System.Linq;
 using Real = PKISharp.WACS.Services;
 

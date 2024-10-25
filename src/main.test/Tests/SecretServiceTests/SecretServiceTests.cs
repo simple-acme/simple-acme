@@ -1,15 +1,9 @@
 ﻿using Autofac;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Org.BouncyCastle.Asn1.Pkcs;
-using Org.BouncyCastle.Pkcs;
 using PKISharp.WACS.Clients;
 using PKISharp.WACS.Plugins.InstallationPlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
-using System;
-using System.Security.Cryptography;
-using System.Security.Cryptography.Pkcs;
-using System.Security.Cryptography.X509Certificates;
 using Real = PKISharp.WACS.Services;
 
 namespace PKISharp.WACS.UnitTests.Tests.SecretServiceTests

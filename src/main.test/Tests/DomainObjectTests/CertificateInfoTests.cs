@@ -1,15 +1,11 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
-using Org.BouncyCastle.Tls;
 using Org.BouncyCastle.X509;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Services;
-using Serilog;
 using System;
 using System.Linq;
-using System.Text;
 using Net = System.Security.Cryptography.X509Certificates;
 
 namespace PKISharp.WACS.UnitTests.Tests.CertificateInfoTests

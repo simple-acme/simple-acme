@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Clients
 {
-    class UpdateClient(ILogService log, IProxyService proxy)
+    internal class UpdateClient(ILogService log, IProxyService proxy)
     {
         public async Task CheckNewVersion()
         {

@@ -1,6 +1,6 @@
 ﻿using PKISharp.WACS.Plugins.Interfaces;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 
 namespace PKISharp.WACS.Plugins.Base.Capabilities
 {

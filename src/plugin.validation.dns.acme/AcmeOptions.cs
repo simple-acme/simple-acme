@@ -1,5 +1,4 @@
-﻿using PKISharp.WACS.Clients;
-using PKISharp.WACS.Plugins.Base.Options;
+﻿using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Services.Serialization;
 using System.Text.Json.Serialization;
 

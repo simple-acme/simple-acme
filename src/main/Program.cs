@@ -71,7 +71,7 @@ namespace PKISharp.WACS.Host
         /// overwrite eachothers stuff
         /// </summary>
         /// <returns></returns>
-        static void AllowInstanceToRun(ILifetimeScope container)
+        private static void AllowInstanceToRun(ILifetimeScope container)
         {
             var logger = container.Resolve<ILogService>();
             _globalMutex = new Mutex(true, "wacs.exe", out var created);
@@ -92,7 +92,7 @@ namespace PKISharp.WACS.Host
         /// <summary>
         /// Close in a friendly way
         /// </summary>
-        static void FriendlyClose()
+        private static void FriendlyClose()
         {
             try
             {
@@ -116,7 +116,7 @@ namespace PKISharp.WACS.Host
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="args"></param>
-        static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
+        private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
         {
             var ex = (Exception)args.ExceptionObject;
             Console.WriteLine(" Unhandled exception caught: " + ex.Message);

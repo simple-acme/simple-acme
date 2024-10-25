@@ -1,8 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.DomainObjects;
-using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Plugins.TargetPlugins;
-using PKISharp.WACS.Services;
 using System.IO;
 using System.Linq;
 
@@ -14,7 +12,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         /// <summary>
         /// Generated using https://certificatetools.com/
         /// </summary>
-        readonly string Csr = @"-----BEGIN CERTIFICATE REQUEST-----
+        private readonly string Csr = @"-----BEGIN CERTIFICATE REQUEST-----
 MIIDSzCCAjMCAQAwWzEZMBcGA1UEAwwQd3d3Lndpbi1hY21lLmNvbTELMAkGA1UE
 BhMCSFUxHzAdBgNVBAgMFkJvcnNvZC1BYmHDumotWmVtcGzDqW4xEDAOBgNVBAcM
 B01pc2tvbGMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDhDFr/lZBY

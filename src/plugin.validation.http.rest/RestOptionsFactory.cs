@@ -1,5 +1,4 @@
 ﻿using PKISharp.WACS.Configuration;
-using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;

@@ -17,7 +17,7 @@ using Real = PKISharp.WACS.Services;
 
 namespace PKISharp.WACS.UnitTests.Mock
 {
-    class MockContainer
+    internal class MockContainer
     {
         public static ILifetimeScope TestScope(List<string>? inputSequence = null, string commandLine = "")
         {

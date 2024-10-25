@@ -2,7 +2,6 @@
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.StorePlugins

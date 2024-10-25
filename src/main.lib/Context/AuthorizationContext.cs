@@ -1,5 +1,5 @@
-﻿using PKISharp.WACS.DomainObjects;
-using ACMESharp.Protocol.Resources;
+﻿using ACMESharp.Protocol.Resources;
+using PKISharp.WACS.DomainObjects;
 
 namespace PKISharp.WACS.Context
 {

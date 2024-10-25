@@ -1,6 +1,6 @@
-﻿using System.IO;
-using Org.BouncyCastle.Security;
+﻿using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Utilities.IO.Pem;
+using System.IO;
 using OpenSsl = Org.BouncyCastle.OpenSsl;
 
 namespace PKISharp.WACS.Services

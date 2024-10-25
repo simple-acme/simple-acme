@@ -6,7 +6,6 @@ using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.CsrPlugins;
 using PKISharp.WACS.Services.Serialization;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dns = PKISharp.WACS.Plugins.ValidationPlugins.Dns;

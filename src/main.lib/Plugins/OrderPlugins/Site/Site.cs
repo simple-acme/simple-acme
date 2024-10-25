@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
         SiteCapability, WacsJsonPlugins>
         ("74a42b2d-8eaa-4f40-ab6a-f55304254143", 
         "Site", "Separate certificate for each IIS site")]
-    class Site : IOrderPlugin
+    internal class Site : IOrderPlugin
     {
         public IEnumerable<Order> Split(Renewal renewal, Target target) 
         {

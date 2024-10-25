@@ -1,7 +1,6 @@
 ﻿using Autofac.Core;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace PKISharp.WACS.Services
 {

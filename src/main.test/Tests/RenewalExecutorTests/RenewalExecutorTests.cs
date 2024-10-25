@@ -4,7 +4,6 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
 using System;
-using System.Collections.Generic;
 
 namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
 {

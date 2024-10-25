@@ -16,7 +16,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
     {
         private readonly string _apiKey = apiKey;
         private readonly string _apiSecret = apiSecret;
-        readonly IProxyService _proxyService = proxyService;
+        private readonly IProxyService _proxyService = proxyService;
         private readonly string _uri = "https://api.dnsmadeeasy.com/";
 
         #region Lookup Domain Id
@@ -45,7 +45,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
                 throw new Exception(content);
             }
         }
-        class DomainResponse
+
+        private class DomainResponse
         {
             public string? Id { get; set; }
             public string? Name { get; set; }
@@ -88,11 +89,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
                 throw new Exception(content);
             }
         }
-        class DomainResponseCollection
+
+        private class DomainResponseCollection
         {
             public DomainRequest[]? Data { get; set; }
         }
-        class DomainRequest : DomainResponse {}
+
+        private class DomainRequest : DomainResponse {}
         #endregion
 
         private HttpClient GetClient()

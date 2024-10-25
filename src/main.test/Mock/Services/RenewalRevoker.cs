@@ -1,12 +1,11 @@
 ﻿using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
-    class MockRenewalRevoker(IRenewalStore renewalStore) : IRenewalRevoker
+    internal class MockRenewalRevoker(IRenewalStore renewalStore) : IRenewalRevoker
     {
         public Task CancelRenewals(IEnumerable<Renewal> renewals)
         {

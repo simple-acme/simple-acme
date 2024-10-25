@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Plugins.InstallationPlugins;
-using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
 

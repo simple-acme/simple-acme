@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
-    class InputService(List<string> inputs) : IInputService
+    internal class InputService(List<string> inputs) : IInputService
     {
         private readonly Queue<string> _inputs = new(inputs);
         private string GetNextInput() => _inputs.Dequeue();

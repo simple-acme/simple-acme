@@ -8,7 +8,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
     /// <summary>
     /// DNS system aware host sorting
     /// </summary>
-    class HostnameSorter(DomainParseService domainParser) : IComparer<string>
+    internal class HostnameSorter(DomainParseService domainParser) : IComparer<string>
     {
         private readonly StringComparer _baseComparer = StringComparer.CurrentCulture;
         private readonly Dictionary<string, string> _tldCache = [];

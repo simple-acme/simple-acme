@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
-    class MockRenewalStore : IRenewalStoreBackend
+    internal class MockRenewalStore : IRenewalStoreBackend
     {
         /// <summary>
         /// Local cache to prevent superfluous reading and

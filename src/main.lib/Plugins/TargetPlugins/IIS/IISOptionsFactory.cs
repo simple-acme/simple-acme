@@ -243,7 +243,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         /// <param name="get"></param>
         /// <param name="set"></param>
         /// <returns></returns>
-        async Task InputHosts(
+        private async Task InputHosts(
             string label,
             IInputService input,
             List<IISHelper.IISBindingOption> allBindings,
@@ -272,7 +272,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         /// <param name="get"></param>
         /// <param name="set"></param>
         /// <returns></returns>
-        bool ProcessInputHosts(
+        private bool ProcessInputHosts(
             string raw,
             List<IISHelper.IISBindingOption> allBindings,
             List<IISHelper.IISBindingOption> filtered,
@@ -299,7 +299,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             return ParseHostOptions(raw, allBindings, options, get, set);
         }
 
-        async Task InputCommonName(IInputService input, List<IISHelper.IISBindingOption> filtered, IISOptions options)
+        private async Task InputCommonName(IInputService input, List<IISHelper.IISBindingOption> filtered, IISOptions options)
         {
             var sorted = SortBindings(filtered).ToList();
             var common = await input.ChooseRequired(
@@ -317,7 +317,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         /// <param name="input"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        async Task InputPattern(IInputService input, IISOptions options)
+        private async Task InputPattern(IInputService input, IISOptions options)
         {
             input.CreateSpace();
             input.Show(null, IISArguments.PatternExamples);
@@ -329,7 +329,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             while (!SetPattern(raw, options));
         }
 
-        async Task InputRegex(IInputService input, IISOptions options)
+        private async Task InputRegex(IInputService input, IISOptions options)
         {
             string raw;
             do

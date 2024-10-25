@@ -2,14 +2,11 @@
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
-using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.DomainObjects;
-using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.TargetPlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.Versioning;
 

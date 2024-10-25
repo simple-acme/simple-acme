@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
     /// <summary>
     /// Save secrets to a JSON file in the configuration folder, protected by ProtectedStrings
     /// </summary>
-    class JsonSecretService : ISecretService
+    internal class JsonSecretService : ISecretService
     {
         private readonly FileInfo _file;
         private readonly List<CredentialEntry> _secrets;

@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Clients.Acme
     /// <summary>
     /// The OrderManager makes sure that we don't hit rate limits
     /// </summary>
-    class OrderManager(ILogService log, ISettingsService settings)
+    internal class OrderManager(ILogService log, ISettingsService settings)
     {
         private readonly DirectoryInfo _orderPath = settings.Valid ?
                 new DirectoryInfo(Path.Combine(settings.Client.ConfigurationPath, "Orders")) :

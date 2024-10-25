@@ -13,7 +13,7 @@ namespace PKISharp.WACS.Services
         public string Message { get; set; } = message;
     }
 
-    class MemorySink(List<MemoryEntry> list, IFormatProvider? formatProvider = null) : ILogEventSink
+    internal class MemorySink(List<MemoryEntry> list, IFormatProvider? formatProvider = null) : ILogEventSink
     {
         public void Emit(LogEvent logEvent) => list.Add(new MemoryEntry(logEvent.Level, logEvent.RenderMessage(formatProvider)));
     }

@@ -8,7 +8,7 @@ using static ACMESharp.Crypto.JOSE.JwsHelper;
 
 namespace PKISharp.WACS.Clients.Acme
 {
-    class ExternalAccountBinding(string algorithm, string accountKey, string keyIdentifier, string key, string url)
+    internal class ExternalAccountBinding(string algorithm, string accountKey, string keyIdentifier, string key, string url)
     {
         public string AccountKey { get; set; } = accountKey;
         public string Algorithm { get; set; } = algorithm;

@@ -1,5 +1,4 @@
-﻿using PKISharp.WACS.Clients.Acme;
-using PKISharp.WACS.DomainObjects;
+﻿using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using System;
 using System.Collections.Generic;

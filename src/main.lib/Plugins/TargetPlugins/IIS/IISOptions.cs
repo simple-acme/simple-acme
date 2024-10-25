@@ -1,7 +1,6 @@
 ﻿using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace PKISharp.WACS.Plugins.TargetPlugins

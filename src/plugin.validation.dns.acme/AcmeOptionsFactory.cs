@@ -1,5 +1,4 @@
-﻿using PKISharp.WACS.Clients;
-using PKISharp.WACS.Clients.DNS;
+﻿using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Factories;

@@ -49,10 +49,7 @@ namespace PKISharp.WACS.Configuration
         {
             get
             {
-                if (_arguments == null)
-                {
-                    _arguments = Providers.SelectMany(x => x.Configuration).ToList();
-                }
+                _arguments ??= Providers.SelectMany(x => x.Configuration).ToList();
                 return _arguments;
             }
         }

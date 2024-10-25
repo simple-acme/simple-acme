@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 using Csr = PKISharp.WACS.Plugins.CsrPlugins;
-using Store = PKISharp.WACS.Plugins.StorePlugins;
 using Installation = PKISharp.WACS.Plugins.InstallationPlugins;
 using Order = PKISharp.WACS.Plugins.OrderPlugins;
+using Store = PKISharp.WACS.Plugins.StorePlugins;
 using Target = PKISharp.WACS.Plugins.TargetPlugins;
 using Validation = PKISharp.WACS.Plugins.ValidationPlugins;
 

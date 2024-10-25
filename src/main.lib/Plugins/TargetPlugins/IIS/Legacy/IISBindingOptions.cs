@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace PKISharp.WACS.Plugins.TargetPlugins
+﻿namespace PKISharp.WACS.Plugins.TargetPlugins
 {
     internal class IISBindingOptions : IISOptions
     {

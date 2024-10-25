@@ -4,10 +4,8 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock.Clients;
 using PKISharp.WACS.UnitTests.Mock.Services;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 {

@@ -1,6 +1,5 @@
 ﻿using Org.BouncyCastle.Security;
 using PKISharp.WACS.DomainObjects;
-using PKISharp.WACS.Services;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;

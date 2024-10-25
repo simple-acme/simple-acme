@@ -3,7 +3,6 @@ using PKISharp.WACS.Clients;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Interfaces;
-using Serilog;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;

@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
-    class SecretService : ISecretService
+    internal class SecretService : ISecretService
     {
         private readonly List<Tuple<string, string>> _secrets;
 

@@ -1,5 +1,4 @@
-﻿using Autofac.Features.Metadata;
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PKISharp.WACS.Plugins.Interfaces

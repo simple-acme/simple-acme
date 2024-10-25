@@ -1,3 +1,5 @@
+using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Models;
+using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -7,8 +9,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Threading.Tasks;
-using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Models;
-using PKISharp.WACS.Services;
 
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
 

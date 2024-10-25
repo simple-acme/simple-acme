@@ -7,7 +7,6 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
-using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text.Json;
 using ManualOptions = PKISharp.WACS.Plugins.TargetPlugins.ManualOptions;
