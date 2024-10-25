@@ -177,14 +177,20 @@ function Arguments
 	if (-not ($Platforms -contains "win-x64")) {
 		return
 	}
-	Write-Host "Generating arguments.yml..."
+	Write-Host ""
+	Write-Host "------------------------------------" -ForegroundColor Green
+	Write-Host "Generate YML"						  -ForegroundColor Green
+	Write-Host "------------------------------------" -ForegroundColor Green
+	Write-Host ""
 	$MainBinDir = MainBinDir "Release" "win-x64"
 	foreach ($plugin in $plugins) {
 		foreach ($file in $plugin.files) {
 			Copy-Item "$($plugin.folder)\$file" $MainBinDir
 		}
 	}
-	Invoke-Expression """$MainBinDir\wacs.exe"" --docs --verbose" | Out-Null
+	$path = "$MainBinDir\wacs.exe"
+	$parms = "--docs --verbose".Split(" ")
+	& "$path" $parms | Out-Null
 	Copy-Item $root\build\arguments.yml "$($out)arguments.yml"
 	Copy-Item $root\build\plugins.yml "$($out)plugins.yml"
 }
@@ -201,7 +207,11 @@ downloads: "
 
 foreach ($config in $configs) {
 	foreach ($platform in $platforms) {
-		Write-Host "Packaging $config $platform..."
+		Write-Host ""
+		Write-Host "------------------------------------" -ForegroundColor Green
+		Write-Host "Package $platform $config..."		  -ForegroundColor Green
+		Write-Host "------------------------------------" -ForegroundColor Green
+		Write-Host ""
 		PlatformRelease $config $platform 
 	}
 }
@@ -209,12 +219,28 @@ foreach ($config in $configs) {
 if ($BuildPlugins) {
 	$plugins = Import-CliXml -Path $Root\build\plugins.xml
 	foreach ($plugin in $plugins) {
-		Write-Host "Packaging $($plugin.name)..."
+		Write-Host ""
+		Write-Host "------------------------------------" -ForegroundColor Green
+		Write-Host "Package $($plugin.Name)"			  -ForegroundColor Green
+		Write-Host "------------------------------------" -ForegroundColor Green
+		Write-Host ""
 		PluginRelease $plugin.name $plugin.files $plugin.folder
 	}
 	Arguments $plugins
 }
 
 Set-Content -Path "$($out)build.yml" -Value $global:yaml
-"Created artifacts: $global:yaml"
+
+Write-Host ""
+Write-Host "------------------------------------" -ForegroundColor Green
+Write-Host "Hashes straight from the press" 	  -ForegroundColor Green
+Write-Host "------------------------------------" -ForegroundColor Green
+Write-Host ""
+$global:yaml
+
+Write-Host ""
+Write-Host "------------------------------------" -ForegroundColor Green
+Write-Host "Artifacts created!"					  -ForegroundColor Green
+Write-Host "------------------------------------" -ForegroundColor Green
+Write-Host ""
 
