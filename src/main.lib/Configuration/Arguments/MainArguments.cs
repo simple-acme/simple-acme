@@ -23,13 +23,13 @@ namespace PKISharp.WACS.Configuration.Arguments
 
         // Basic options
 
-        [CommandLine(Description = "Address of the ACMEv2 server to use. The default endpoint can be modified in settings.json.")]
+        [CommandLine(Description = "Address of the ACME server to use. The default endpoint can be modified in settings.json.")]
         public string BaseUri { get; set; } = "";
 
-        [CommandLine(Description = "Import scheduled renewals from version 1.9.x in unattended mode.")]
+        [CommandLine(Description = "Import scheduled renewals from version 1.9.x in unattended mode.", Obsolete = true)]
         public bool Import { get; set; }
 
-        [CommandLine(Description = "[--import] When importing scheduled renewals from version 1.9.x, this argument can change the address of the ACMEv1 server to import from. The default endpoint to import from can be modified in settings.json.")]
+        [CommandLine(Description = "[--import] When importing scheduled renewals from version 1.9.x, this argument can change the address of the ACMEv1 server to import from. The default endpoint to import from can be modified in settings.json.", Obsolete = true)]
         public string? ImportBaseUri { get; set; }
 
         [CommandLine(Description = "Enables testing behaviours in the program which may help with troubleshooting. By default this also switches the --baseuri to the ACME test endpoint. The default endpoint for test mode can be modified in settings.json.")]
@@ -44,7 +44,7 @@ namespace PKISharp.WACS.Configuration.Arguments
         [CommandLine(Description = "Show version information.")]
         public bool Version { get; set; }
 
-        [CommandLine(Description = "Show configuration information.")]
+        [CommandLine(Description = "Output configuration information in JSON format.")]
         public bool Config { get; set; }
 
         // Renewal
