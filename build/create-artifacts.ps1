@@ -182,10 +182,9 @@ function Arguments
 	foreach ($plugin in $plugins) {
 		foreach ($file in $plugin.files) {
 			Copy-Item "$($plugin.folder)\$file" $MainBinDir
-			Write-Host "copy $($plugin.folder)\$file to $MainBinDir"
 		}
 	}
-	Invoke-Expression "$MainBinDir\wacs.exe --docs --verbose" | Out-Null
+	Invoke-Expression """$MainBinDir\wacs.exe"" --docs --verbose" | Out-Null
 	Copy-Item $root\build\arguments.yml "$($out)arguments.yml"
 	Copy-Item $root\build\plugins.yml "$($out)plugins.yml"
 }
