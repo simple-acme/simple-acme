@@ -18,6 +18,7 @@ namespace PKISharp.WACS.Plugins
     /// <summary>
     /// Metadata for a specific plugin
     /// </summary>
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     [DebuggerDisplay("{Backend.Name}")]
     public class Plugin(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] 
