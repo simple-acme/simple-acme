@@ -1,4 +1,4 @@
-name: Build & Test
+name: Unit tests
 
 on:
   pull_request:
@@ -9,12 +9,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore ./src/main.test/wacs.test.csproj
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build ./src/main.test/wacs.test.csproj --configuration Release --no-restore
     - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      run: dotnet test ./src/main.test/wacs.test.csproj --no-restore --verbosity normal
