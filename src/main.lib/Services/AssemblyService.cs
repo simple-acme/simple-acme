@@ -61,6 +61,7 @@ namespace PKISharp.WACS.Services
                 new(typeof(Plugins.StorePlugins.CertificateStore)), new(typeof(Plugins.StorePlugins.CertificateStoreArguments)),
                 new(typeof(Plugins.StorePlugins.PemFiles)), new(typeof(Plugins.StorePlugins.PemFilesArguments)),
                 new(typeof(Plugins.StorePlugins.PfxFile)), new(typeof(Plugins.StorePlugins.PfxFileArguments)),
+                new(typeof(Plugins.StorePlugins.P7bFile)), new(typeof(Plugins.StorePlugins.P7bFileArguments)),
                 new(typeof(Plugins.StorePlugins.Null)),
 
                 // Installation plugins

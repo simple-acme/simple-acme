@@ -588,6 +588,10 @@ namespace PKISharp.WACS.Configuration.Settings
         /// </summary>
         public PfxFileSettings PfxFile { get; set; } = new PfxFileSettings();
 
+        /// <summary>
+        /// Settings for the P7bFile plugin
+        /// </summary>
+        public P7bFileSettings P7bFile { get; set; } = new P7bFileSettings();
     }
 
     public class CertificateStoreSettings
@@ -687,6 +691,19 @@ namespace PKISharp.WACS.Configuration.Settings
         /// Legacy, SHA256 or Default
         /// </summary>
         public string? DefaultProtectionMode { get; set; }
+    }
+
+    public class P7bFileSettings
+    {
+        /// <summary>
+        /// When using --store p7bfile this path is used by default, saving 
+        /// you the effort from providing it manually. Filling this out makes 
+        /// the --p7bfilepath parameter unnecessary in most cases. Renewals 
+        /// created with the default path will automatically change to any 
+        /// future default value, meaning this is also a good practice for 
+        /// maintainability.
+        /// </summary>
+        public string? DefaultPath { get; set; }
     }
 
     public class InstallationSettings

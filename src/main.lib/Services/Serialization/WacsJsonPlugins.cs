@@ -32,6 +32,7 @@ namespace PKISharp.WACS.Services.Serialization
     [JsonSerializable(typeof(Store.CertificateStoreOptions))]
     [JsonSerializable(typeof(Store.PemFilesOptions))]
     [JsonSerializable(typeof(Store.PfxFileOptions))]
+    [JsonSerializable(typeof(Store.P7bFileOptions))]
     [JsonSerializable(typeof(Installation.IISFtpOptions))]
     [JsonSerializable(typeof(Installation.IISOptions), TypeInfoPropertyName = "InstallationIISOptions")]
     [JsonSerializable(typeof(Installation.ScriptOptions), TypeInfoPropertyName = "InstallationScriptOptions")]

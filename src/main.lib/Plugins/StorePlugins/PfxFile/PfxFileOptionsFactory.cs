@@ -57,6 +57,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(PfxFileOptions options)
         {
             yield return (Path.Meta, options.Path);
+            yield return (Name.Meta, options.FileName);
             yield return (Password.Meta, options.PfxPassword);
         }
     }
