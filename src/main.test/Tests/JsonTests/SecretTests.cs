@@ -80,7 +80,7 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
         [TestMethod]
         public void SerializeSecretExternal()
         {
-            Assert.AreEqual(28, _plugin!.GetPlugins().Count());
+            Assert.AreEqual(29, _plugin!.GetPlugins().Count());
             var renewal = new Renewal
             {
                 TargetPluginOptions = new ManualOptions(),
