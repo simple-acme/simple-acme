@@ -128,26 +128,39 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         private async Task<ServiceDirectory> EnsureServiceDirectory(AcmeProtocolClient client)
         {
-            ServiceDirectory? directory;
-            try
-            {
-                _log.Verbose("Getting service directory...");
-                directory = await client.Backoff(async () => await client.GetDirectoryAsync("directory"), _log);
-                if (directory != null)
-                {
-                    return directory;
-                }
-            }
-            catch
-            {
 
-            }
-            // Perhaps the BaseUri *is* the directory, such
-            // as implemented by Digicert (#1434)
-            directory = await client.Backoff(async () => await client.GetDirectoryAsync(""), _log);
-            if (directory != null)
+            var urlsToTry = new List<string>([""]);
+            if (_settings.BaseUri.Host.EndsWith(".letsencrypt.org") &&
+                string.IsNullOrEmpty(_settings.BaseUri.PathAndQuery.TrimEnd('/')))
             {
-                return directory;
+                // For Let's Encrypt, try the /directory endpoint first,
+                // because historically we have only configured the host
+                // name (e.g. https://acme-v02.api.letsencrypt.org/)
+                urlsToTry.Insert(0, "directory");
+            }
+            else
+            {
+                // For other ACME providers, try the user specified endpoint
+                // first,but offer fallback to /directory for backwards
+                // compatiblity with how the client used to behave.
+                urlsToTry.Insert(1, "directory");
+            }
+            ServiceDirectory? directory;
+            foreach (var urlToTry in urlsToTry)
+            {
+                try
+                {
+                    _log.Debug("Getting service directory from {url}...", string.IsNullOrWhiteSpace(urlToTry) ? _settings.BaseUri : "/" + urlToTry);
+                    directory = await client.Backoff(async () => await client.GetDirectoryAsync(urlToTry), _log);
+                    if (directory != null)
+                    {
+                        return directory;
+                    }
+                } 
+                catch
+                {
+                }
+
             }
             throw new Exception("Unable to get service directory");
         }
