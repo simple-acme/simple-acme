@@ -181,7 +181,7 @@ function NugetRelease
 		if (-not [string]::IsNullOrEmpty($SignPathApiToken)) {
 			foreach ($child in Get-ChildItem $PackageFolder -Filter "*.nupkg") {
 				./sign-signpath.ps1 `
-					-Path $child `
+					-Path $PackageFolder\$child `
 					-ApiToken $SignPathApiToken `
 					-Version $version
 			}

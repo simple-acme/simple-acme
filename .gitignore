@@ -205,3 +205,4 @@ FakesAssemblies/
 /build/plugins.xml
 /build/arguments.yml
 /build/plugins.yml
+*.zip
