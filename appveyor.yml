@@ -49,7 +49,6 @@ test_script:
 after_build:
   - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
   - ps: >-
-     # -SelfSigningPassword $env:SelfSigningPassword `
      .\create-artifacts.ps1 `
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
