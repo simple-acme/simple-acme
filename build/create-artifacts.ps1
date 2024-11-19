@@ -146,7 +146,7 @@ function PluginRelease
 
 	# Sign plugin
 	if (-not [string]::IsNullOrEmpty($SignPathApiToken)) {
-		foreach ($child in Get-ChildItem $Folder -Filter "PKISharp.WACS.*.dll") {
+		foreach ($child in (Get-ChildItem $PackageFolder -Filter "PKISharp.WACS.*.dll").FullName) {
 			./sign-signpath.ps1 `
 				-Path $child `
 				-ApiToken $SignPathApiToken `
@@ -179,9 +179,9 @@ function NugetRelease
 	if (Test-Path $PackageFolder)
 	{
 		if (-not [string]::IsNullOrEmpty($SignPathApiToken)) {
-			foreach ($child in Get-ChildItem $PackageFolder -Filter "*.nupkg") {
+			foreach ($child in (Get-ChildItem $PackageFolder -Filter "*.nupkg").FullName) {
 				./sign-signpath.ps1 `
-					-Path $PackageFolder\$child `
+					-Path $child `
 					-ApiToken $SignPathApiToken `
 					-Version $version
 			}

@@ -45,7 +45,6 @@ $ArtifactConfiguration = "initial"
 if ($Path.EndsWith(".nupkg")) {
 	$ArtifactConfiguration = "nuget"
 }
-Write-Host $ArtifactConfiguration
 
 Submit-SigningRequest `
     -InputArtifactPath $Path `
