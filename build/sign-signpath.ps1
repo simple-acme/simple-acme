@@ -41,11 +41,17 @@ Write-Host ""
 $Parameters = @{ 
     productVersion = $Version
 }
+$ArtifactConfiguration = "initial"
+if ($Path.EndsWith(".nupkg")) {
+	$ArtifactConfiguration = "nuget"
+}
+Write-Host $ArtifactConfiguration
 
 Submit-SigningRequest `
     -InputArtifactPath $Path `
     -ProjectSlug "simple-acme" `
     -SigningPolicySlug "test-signing" `
+	-ArtifactConfigurationSlug $ArtifactConfiguration `
     -WaitForCompletion `
 	-Force `
 	-Parameters $Parameters `

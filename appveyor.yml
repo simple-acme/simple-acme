@@ -12,10 +12,15 @@ dotnet_csproj:
 environment:
   Configs: 
     Release
+    ReleaseTrimmed
   Platforms:
     win-x64
-  NuGet: 0
-  Plugins: 0
+    win-x86
+    win-arm64
+    linux-x64
+    linux-arm64
+  NuGet: 1
+  Plugins: 1
   NetVersion: net8.0
   SelfSigningPassword:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=

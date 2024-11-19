@@ -69,18 +69,21 @@ function PlatformRelease
 	if (Test-Path $MainBinDir)
 	{
 		# Code signing
-		if (($Platform -like "win*") -and (-not [string]::IsNullOrEmpty($SelfSigningPassword))) {
-			./sign-selfsigned.ps1 `
-				-Path "$MainBinDir\publish\$MainBinFile" 
-				-Pfx "$Root\build\codesigning.pfx" `
-				-Password $SelfSigningPassword
+		if ($Platform -like "win*") {
+			if (-not [string]::IsNullOrEmpty($SelfSigningPassword)) {
+				./sign-selfsigned.ps1 `
+					-Path "$MainBinDir\publish\$MainBinFile" 
+					-Pfx "$Root\build\codesigning.pfx" `
+					-Password $SelfSigningPassword
+			}
+			elseif (-not [string]::IsNullOrEmpty($SignPathApiToken)) {
+				./sign-signpath.ps1 `
+					-Path "$MainBinDir\publish\$MainBinFile" `
+					-ApiToken $SignPathApiToken `
+					-Version $version
+			}
 		}
-		elseif (-not [string]::IsNullOrEmpty($SignPathApiToken)) {
-			./sign-signpath.ps1 `
-				-Path "$MainBinDir\publish\$MainBinFile" `
-				-ApiToken $SignPathApiToken `
-				-Version $version
-		}
+
 		Copy-Item "$MainBinDir\publish\$MainBinFile" $Temp
 		if ($Platform -like "linux*") {
 			Copy-Item "$MainBinDir\settings.linux.json" "$Temp\settings_default.json"
@@ -175,6 +178,14 @@ function NugetRelease
 	$PackageFolder = "$Root\src\main\nupkg"
 	if (Test-Path $PackageFolder)
 	{
+		if (-not [string]::IsNullOrEmpty($SignPathApiToken)) {
+			foreach ($child in Get-ChildItem $PackageFolder -Filter "*.nupkg") {
+				./sign-signpath.ps1 `
+					-Path $child `
+					-ApiToken $SignPathApiToken `
+					-Version $version
+			}
+		}
 		Copy-Item "$PackageFolder\*" $Out -Recurse
 	}
 }
