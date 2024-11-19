@@ -22,8 +22,10 @@ environment:
   NuGet: 1
   Plugins: 1
   NetVersion: net8.0
-  PfxPassword:
+  SelfSigningPassword:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
+  SignPathApiToken:
+    secure: Au7b75QhYw2tfz/0u4j3bfeN/77l3NmA9gkbbD2DIG1phNWrhx8A+B3ma2IwXGTr
 clone_script:
   - cmd: >-
       git clone -q --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
@@ -56,7 +58,8 @@ after_build:
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
         -NetVersion $env:NetVersion `
-        -SigningPassword $env:PfxPassword `
+        # -SelfSigningPassword $env:SelfSigningPassword `
+        -SignPathApiToken $env:SignPathApiToken `
         -Configs $env:Configs.Split() `
         -Platforms $env:Platforms.Split() `
         -BuildNuget:($env:NuGet -eq "1") `

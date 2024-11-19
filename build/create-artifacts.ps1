@@ -12,7 +12,10 @@
 	$NetVersion,
 
 	[string]
-	$SigningPassword,
+	$SelfSigningPassword,
+	
+	[string]
+	$SignPathApiToken,
 
 	[Parameter(Mandatory=$true)]
 	[string[]]
@@ -65,8 +68,18 @@ function PlatformRelease
 	}
 	if (Test-Path $MainBinDir)
 	{
-		if (($Platform -like "win*") -and (-not [string]::IsNullOrEmpty($SigningPassword))) {
-			./sign-exe.ps1 "$MainBinDir\publish\$MainBinFile" "$Root\build\codesigning.pfx" $SigningPassword
+		# Code signing
+		if (($Platform -like "win*") -and (-not [string]::IsNullOrEmpty($SelfSigningPassword))) {
+			./sign-selfsigned.ps1 `
+				-Path "$MainBinDir\publish\$MainBinFile" 
+				-Pfx "$Root\build\codesigning.pfx" `
+				-Password $SelfSigningPassword
+		}
+		elseif (-not [string]::IsNullOrEmpty($SignPathApiToken)) {
+			./sign-signpath.ps1 `
+				-Path "$MainBinDir\publish\$MainBinFile" `
+				-ApiToken $SignPathApiToken `
+				-Version $version
 		}
 		Copy-Item "$MainBinDir\publish\$MainBinFile" $Temp
 		if ($Platform -like "linux*") {
@@ -127,6 +140,17 @@ function PluginRelease
 	$PlugZip = "$Dir.v$Version.zip"
 	$PlugZipPath = "$Out\$PlugZip"
 	$PlugBin = $Folder
+
+	# Sign plugin
+	if (-not [string]::IsNullOrEmpty($SignPathApiToken)) {
+		foreach ($child in Get-ChildItem $Folder -Filter "PKISharp.WACS.*.dll") {
+			./sign-signpath.ps1 `
+				-Path $child `
+				-ApiToken $SignPathApiToken `
+				-Version $version
+		}
+	}
+
 	CreateArtifact $PlugBin $Files $PlugZipPath
 
 	# Special for the FTP plugin

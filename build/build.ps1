@@ -25,7 +25,10 @@
 	$CreateArtifacts = $true,
 
 	[string]
-	$SigningPassword
+	$SelfSigningPassword,
+	
+	[string]
+	$SignPathApiToken
 )
 
 try {
@@ -161,6 +164,15 @@ Write-Host ""
 
 if ($CreateArtifacts) 
 {
-	./create-artifacts.ps1 -Root $RepoRoot -Version $Version -NetVersion $NetVersion -Configs $Configs -Platforms $Platforms -BuildNuget:$BuildNuget -BuildPlugins:$BuildPlugins -SigningPassword $SigningPassword
+	./create-artifacts.ps1 `
+		-Root $RepoRoot `
+		-Version $Version `
+		-NetVersion $NetVersion `
+		-Configs $Configs `
+		-Platforms $Platforms `
+		-BuildNuget:$BuildNuget `
+		-BuildPlugins:$BuildPlugins `
+		-SelfSigningPassword $SelfSigningPassword `
+		-SignPathApiToken $SignPathApiToken
 }
 Pop-Location
