@@ -12,15 +12,10 @@ dotnet_csproj:
 environment:
   Configs: 
     Release
-    ReleaseTrimmed
   Platforms:
     win-x64
-    win-x86
-    win-arm64
-    linux-x64
-    linux-arm64
-  NuGet: 1
-  Plugins: 1
+  NuGet: 0
+  Plugins: 0
   NetVersion: net8.0
   SelfSigningPassword:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
@@ -54,11 +49,11 @@ test_script:
 after_build:
   - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
   - ps: >-
+     # -SelfSigningPassword $env:SelfSigningPassword `
      .\create-artifacts.ps1 `
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
         -NetVersion $env:NetVersion `
-        # -SelfSigningPassword $env:SelfSigningPassword `
         -SignPathApiToken $env:SignPathApiToken `
         -Configs $env:Configs.Split() `
         -Platforms $env:Platforms.Split() `
