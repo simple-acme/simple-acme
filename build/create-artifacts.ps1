@@ -146,7 +146,7 @@ function PluginRelease
 
 	# Sign plugin
 	if (-not [string]::IsNullOrEmpty($SignPathApiToken)) {
-		foreach ($child in (Get-ChildItem $PackageFolder -Filter "PKISharp.WACS.*.dll").FullName) {
+		foreach ($child in (Get-ChildItem $Folder -Filter "PKISharp.WACS.*.dll").FullName) {
 			./sign-signpath.ps1 `
 				-Path $child `
 				-ApiToken $SignPathApiToken `
