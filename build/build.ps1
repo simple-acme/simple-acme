@@ -1,34 +1,35 @@
 ﻿param (
+	[Parameter(Mandatory=$true)]
 	[ValidatePattern("^\d+\.\d+.\d+.\d+")]
 	[string]
-	$Version = "2.0.0.0",
+	$Version,
 
+	[Parameter(Mandatory=$true)]
 	[string[]]
-	$Configs = @("ReleaseTrimmed"),
+	$Configs,
 
+	[Parameter(Mandatory=$true)]
 	[string[]]
-	$Platforms = @("win-x64"),
+	$Platforms,
 
+	[Parameter(Mandatory=$true)]
 	[string]
-	$NetVersion = "net8.0",
+	$NetVersion,
 
 	[switch]
 	$BuildPlugins = $false,
+
+	[int]
+	$BuildPluginsCount = 1000,
 
 	[switch]
 	$BuildNuget = $false,
 
 	[switch]
-	$Clean = $true,
-
-	[switch]
-	$CreateArtifacts = $true,
+	$Clean = $false,
 
 	[string]
-	$SelfSigningPassword,
-	
-	[string]
-	$SignPathApiToken
+	$SelfSigningPassword
 )
 
 try {
@@ -40,7 +41,6 @@ try {
 $PSScriptFilePath = Get-Item $MyInvocation.MyCommand.Path
 Push-Location $PSScriptFilePath.Directory
 $RepoRoot = $PSScriptFilePath.Directory.Parent.FullName
-$BuildFolder = Join-Path -Path $RepoRoot "build"
 
 # Restore NuGet packages
 & dotnet restore $RepoRoot\src\main\wacs.csproj
@@ -51,26 +51,15 @@ if ($Clean) {
 	{
 		foreach ($config in $configs) 
 		{
-			Write-Host ""
-			Write-Host "------------------------------------" -ForegroundColor Green
-			Write-Host "Clean $platform $config...		    " -ForegroundColor Green
-			Write-Host "------------------------------------" -ForegroundColor Green
-			Write-Host ""
+			Status "Clean $platform $config..."
 			& dotnet clean $RepoRoot\src\main\wacs.csproj -c $release -r $arch /p:SelfContained=true
 		}
 	}
 }
 
-
 # Build Nuget package
-if ($BuildNuget) {
-			
-	Write-Host ""
-	Write-Host "------------------------------------" -ForegroundColor Green
-	Write-Host "Publish Nuget...				    " -ForegroundColor Green
-	Write-Host "------------------------------------" -ForegroundColor Green
-	Write-Host ""
-
+if ($BuildNuget) {	
+	Status "Publish NuGet..."
 	& dotnet pack $RepoRoot\src\main\wacs.csproj -c "Release" /p:PublishSingleFile=false /p:PublishReadyToRun=false
 }
 
@@ -79,11 +68,7 @@ foreach ($platform in $platforms)
 {
 	foreach ($config in $configs) 
 	{
-		Write-Host ""
-		Write-Host "------------------------------------" -ForegroundColor Green
-		Write-Host "Publish $platform $config...		    " -ForegroundColor Green
-		Write-Host "------------------------------------" -ForegroundColor Green
-		Write-Host ""
+		Status "Publish $platform $config..."
 
 		$extra = ""
 		if ($config.EndsWith("Trimmed")) {
@@ -100,20 +85,10 @@ foreach ($platform in $platforms)
 
 # Build plugins
 if ($BuildPlugins) {
-
-	Write-Host ""
-	Write-Host "------------------------------------" -ForegroundColor Green
-	Write-Host "Build reference project..."			  -ForegroundColor Green
-	Write-Host "------------------------------------" -ForegroundColor Green
-	Write-Host ""
+	Status "Build reference project..."
 
 	& dotnet publish $RepoRoot\src\main.lib\wacs.lib.csproj -c Release -r "win-x64"
-	$referenceDir = "$RepoRoot\src\main.lib\bin\Release\$NetVersion\win-x64\Publish"
-	if (!(Test-Path $referenceDir))
-	{
-		# For some reason AppVeyor generates paths like this instead of the above on local systems
-		$referenceDir = "$RepoRoot\src\main.lib\bin\Any CPU\Release\$NetVersion\win-x64\Publish"
-	}
+	$referenceDir = BuildPath "$RepoRoot\src\main.lib\bin\Release\$NetVersion\win-x64\Publish"
 	$referenceFiles = (Get-ChildItem $ReferenceDir).Name
 	if (-not $?)
 	{
@@ -123,15 +98,14 @@ if ($BuildPlugins) {
 
 	# Detect all plugins
 	$pluginFolders = (Get-ChildItem $RepoRoot\src\ plugin.*).Name
-	$plugins = $pluginFolders | Where-Object { -not ($_ -like "*.common.*") } | ForEach-Object { @{ Name = $_; Files = @(); Folder = "" } }
+	$plugins = $pluginFolders | `
+		Where-Object { -not ($_ -like "*.common.*") } | `
+		ForEach-Object { @{ Name = $_; Files = @(); Folder = "" } } | `
+		Select-Object -First $BuildPluginsCount
+
 	foreach ($plugin in $plugins) 
 	{
-
-		Write-Host ""
-		Write-Host "------------------------------------" -ForegroundColor Green
-		Write-Host "Publish $($plugin.Name)..."			  -ForegroundColor Green
-		Write-Host "------------------------------------" -ForegroundColor Green
-		Write-Host ""
+		Status "Publish $($plugin.Name)..."
 
 		$project = $plugin.Name.Replace("plugin.", "")
 		& dotnet publish $RepoRoot\src\$($plugin.Name)\wacs.$project.csproj -c "Release"
@@ -140,12 +114,7 @@ if ($BuildPlugins) {
 			Pop-Location
 			throw "The dotnet publish process returned an error code."
 		}
-		$pluginDir = "$RepoRoot\src\$($plugin.Name)\bin\Release\$NetVersion\publish"
-		if (!(Test-Path $pluginDir))
-		{
-			# For some reason AppVeyor generates paths like this instead of the above on local systems
-			$pluginDir = "$RepoRoot\src\$($plugin.Name)\bin\Any CPU\Release\$NetVersion\publish"
-		}
+		$pluginDir = BuildPath "$RepoRoot\src\$($plugin.Name)\bin\Release\$NetVersion\publish"
 		$pluginFiles = (Get-ChildItem $pluginDir *.dll).Name
 		$plugin.Files = $pluginFiles | Where-Object { -not ($referenceFiles -contains $_) }
 		$plugin.Folder = $pluginDir
@@ -156,23 +125,5 @@ if ($BuildPlugins) {
 	Export-CliXml -InputObject $plugins -Path $RepoRoot\build\plugins.xml
 }
 
-Write-Host ""
-Write-Host "------------------------------------" -ForegroundColor Green
-Write-Host "Build complete!"					  -ForegroundColor Green
-Write-Host "------------------------------------" -ForegroundColor Green
-Write-Host ""
-
-if ($CreateArtifacts) 
-{
-	./create-artifacts.ps1 `
-		-Root $RepoRoot `
-		-Version $Version `
-		-NetVersion $NetVersion `
-		-Configs $Configs `
-		-Platforms $Platforms `
-		-BuildNuget:$BuildNuget `
-		-BuildPlugins:$BuildPlugins `
-		-SelfSigningPassword $SelfSigningPassword `
-		-SignPathApiToken $SignPathApiToken
-}
+Status "Build complete!"
 Pop-Location
