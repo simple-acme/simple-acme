@@ -1,49 +1,5 @@
-﻿param (
-	[Parameter(Mandatory=$true)]
-	[ValidatePattern("^\d+\.\d+.\d+.\d+")]
-	[string]
-	$Version,
-
-	[Parameter(Mandatory=$true)]
-	[string[]]
-	$Configs,
-
-	[Parameter(Mandatory=$true)]
-	[string[]]
-	$Platforms,
-
-	[Parameter(Mandatory=$true)]
-	[string]
-	$NetVersion,
-
-	[switch]
-	$BuildPlugins = $false,
-
-	[int]
-	$BuildPluginsCount = 1000,
-
-	[switch]
-	$BuildNuget = $false,
-
-	[switch]
-	$Clean = $false,
-
-	[string]
-	$SelfSigningPassword
-)
-
-try {
-	cls
-} catch {
-	# Ignore
-}
-
-$PSScriptFilePath = Get-Item $MyInvocation.MyCommand.Path
-Push-Location $PSScriptFilePath.Directory
-$RepoRoot = $PSScriptFilePath.Directory.Parent.FullName
-
-# Restore NuGet packages
-& dotnet restore $RepoRoot\src\main\wacs.csproj
+﻿# Restore NuGet packages
+& dotnet restore $Root\src\main\wacs.csproj
 
 # Clean solution
 if ($Clean) {
@@ -52,7 +8,7 @@ if ($Clean) {
 		foreach ($config in $configs) 
 		{
 			Status "Clean $platform $config..."
-			& dotnet clean $RepoRoot\src\main\wacs.csproj -c $release -r $arch /p:SelfContained=true
+			& dotnet clean $Root\src\main\wacs.csproj -c $release -r $arch /p:SelfContained=true
 		}
 	}
 }
@@ -60,7 +16,7 @@ if ($Clean) {
 # Build Nuget package
 if ($BuildNuget) {	
 	Status "Publish NuGet..."
-	& dotnet pack $RepoRoot\src\main\wacs.csproj -c "Release" /p:PublishSingleFile=false /p:PublishReadyToRun=false
+	& dotnet pack $Root\src\main\wacs.csproj -c "Release" /p:PublishSingleFile=false /p:PublishReadyToRun=false
 }
 
 # Build regular releases
@@ -74,7 +30,7 @@ foreach ($platform in $platforms)
 		if ($config.EndsWith("Trimmed")) {
 			$extra = "/p:warninglevel=0"
 		}
-		& dotnet publish $RepoRoot\src\main\wacs.csproj -c $config -r $platform --self-contained $extra
+		& dotnet publish $Root\src\main\wacs.csproj -c $config -r $platform --self-contained $extra
 		if (-not $?)
 		{
 			Pop-Location
@@ -87,8 +43,8 @@ foreach ($platform in $platforms)
 if ($BuildPlugins) {
 	Status "Build reference project..."
 
-	& dotnet publish $RepoRoot\src\main.lib\wacs.lib.csproj -c Release -r "win-x64"
-	$referenceDir = BuildPath "$RepoRoot\src\main.lib\bin\Release\$NetVersion\win-x64\Publish"
+	& dotnet publish $Root\src\main.lib\wacs.lib.csproj -c Release -r "win-x64"
+	$referenceDir = BuildPath "$Root\src\main.lib\bin\Release\$NetVersion\win-x64\Publish"
 	$referenceFiles = (Get-ChildItem $ReferenceDir).Name
 	if (-not $?)
 	{
@@ -97,7 +53,7 @@ if ($BuildPlugins) {
 	}
 
 	# Detect all plugins
-	$pluginFolders = (Get-ChildItem $RepoRoot\src\ plugin.*).Name
+	$pluginFolders = (Get-ChildItem $Root\src\ plugin.*).Name
 	$plugins = $pluginFolders | `
 		Where-Object { -not ($_ -like "*.common.*") } | `
 		ForEach-Object { @{ Name = $_; Files = @(); Folder = "" } } | `
@@ -108,13 +64,13 @@ if ($BuildPlugins) {
 		Status "Publish $($plugin.Name)..."
 
 		$project = $plugin.Name.Replace("plugin.", "")
-		& dotnet publish $RepoRoot\src\$($plugin.Name)\wacs.$project.csproj -c "Release"
+		& dotnet publish $Root\src\$($plugin.Name)\wacs.$project.csproj -c "Release"
 		if (-not $?)
 		{
 			Pop-Location
 			throw "The dotnet publish process returned an error code."
 		}
-		$pluginDir = BuildPath "$RepoRoot\src\$($plugin.Name)\bin\Release\$NetVersion\publish"
+		$pluginDir = BuildPath "$Root\src\$($plugin.Name)\bin\Release\$NetVersion\publish"
 		$pluginFiles = (Get-ChildItem $pluginDir *.dll).Name
 		$plugin.Files = $pluginFiles | Where-Object { -not ($referenceFiles -contains $_) }
 		$plugin.Folder = $pluginDir
@@ -122,8 +78,7 @@ if ($BuildPlugins) {
 	}
 
 	# Save plugin metadata for create-artifacts script
-	Export-CliXml -InputObject $plugins -Path $RepoRoot\out\plugins.xml
+	Export-CliXml -InputObject $plugins -Path $Root\out\plugins.xml
 }
 
 Status "Build complete!"
-Pop-Location

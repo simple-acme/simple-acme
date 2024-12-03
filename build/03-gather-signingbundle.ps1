@@ -1,30 +1,4 @@
-﻿param (
-	[Parameter(Mandatory=$true)]
-	[string]
-	$Root,
-
-	[Parameter(Mandatory=$true)]
-	[string[]]
-	$Configs,
-
-	[Parameter(Mandatory=$true)]
-	[string[]]
-	$Platforms,
-
-	[Parameter(Mandatory=$true)]
-	[switch]
-	$BuildPlugins,
-
-	[Parameter(Mandatory=$true)]
-	[switch]
-	$BuildNuget
-)
-
-$Temp = "$Root\out\temp\"
-$Out = "$Root\out\artifacts\"
-EnsureFolder $Temp
-EnsureFolder $Out
-
+﻿
 function PlatformRelease
 {
 	param($Config, $Platform)

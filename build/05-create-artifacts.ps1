@@ -1,42 +1,4 @@
-﻿param (
-	[Parameter(Mandatory=$true)]
-	[string]
-	$Root,
-
-	[Parameter(Mandatory=$true)]
-	[string]
-	$Version,
-
-	[Parameter(Mandatory=$true)]
-	[string]
-	$NetVersion,
-
-	[string]
-	$SelfSigningPassword,
-	
-	[Parameter(Mandatory=$true)]
-	[string[]]
-	$Configs,
-
-	[Parameter(Mandatory=$true)]
-	[string[]]
-	$Platforms,
-
-	[Parameter(Mandatory=$true)]
-	[switch]
-	$BuildPlugins,
-
-	[Parameter(Mandatory=$true)]
-	[switch]
-	$BuildNuget
-)
-
-$Temp = "$Root\out\temp\"
-$Out = "$Root\out\artifacts\"
-EnsureFolder $Temp
-EnsureFolder $Out
-
-function PlatformRelease
+﻿function PlatformRelease
 {
 	param($Config, $Platform)
 
@@ -169,7 +131,6 @@ if ($BuildPlugins) {
 		Status "Package $($plugin.Name)"
 		PluginRelease $plugin.name $plugin.files $plugin.folder
 	}
-	Arguments $plugins
 }
-
+Arguments $plugins
 Status "Artifacts created!"

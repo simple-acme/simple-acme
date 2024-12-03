@@ -26,7 +26,7 @@ function EnsureFolder
 	param($path)
 	if (-not (Test-Path $path))
 	{
-		New-Item $Out -Type Directory | Out-Null
+		New-Item $path -Type Directory | Out-Null
 	}
 }
 
@@ -60,3 +60,26 @@ function Status {
 	Write-Host "------------------------------------"	-ForegroundColor Green
 	Write-Host ""
 }
+
+$Version = $env:APPVEYOR_BUILD_VERSION
+$Configs = $env:Configs.Split()
+$Platforms = $env:Platforms.Split()
+$NetVersion = $env:NetVersion
+$BuildNuget = ($env:NuGet -eq "1")
+$BuildPlugins = ($env:Plugins -eq "1")
+$BuildPluginsCount = $env:PluginsCount
+$Clean = ($env:Clean -eq "1")
+$Root = $env:APPVEYOR_BUILD_FOLDER
+$Temp = "$Root\out\temp\"
+$Out = "$Root\out\artifacts\"
+
+try {
+	cls
+} catch {
+	# Ignore
+}
+
+EnsureFolder $Temp
+EnsureFolder $Out
+Remove-Item $Temp\* -recurse
+Remove-Item $Out\* -recurse

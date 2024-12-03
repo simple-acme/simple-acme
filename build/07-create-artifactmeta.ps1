@@ -1,15 +1,4 @@
-﻿param (
-	[Parameter(Mandatory=$true)]
-	[string]
-	$Root,
-
-	[Parameter(Mandatory=$true)]
-	[string]
-	$Version
-)
-
-$Out = "$Root\out\artifacts\"
-$yaml = "releasename: $Version
+﻿$yaml = "releasename: $Version
 releasetag: $Version
 releasebuild: $Version
 downloads: "

@@ -16,6 +16,8 @@ environment:
     win-x64
   NuGet: 0
   Plugins: 0
+  PluginsCount: 999
+  Clean: 0
   NetVersion: net8.0
   SelfSigningPasswordDISABLED:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
@@ -29,27 +31,20 @@ clone_script:
 
 before_build:
   - cmd: dotnet --version
-  - ps: >- 
-     .\01-helpers.ps1
+  - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
+  - ps: . .\01-helpers.ps1
 
 build_script:
-  - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
-  - ps: >- 
-     .\02-build.ps1 `
-        -Version $env:APPVEYOR_BUILD_VERSION `
-        -NetVersion $env:NetVersion `
-        -Configs $env:Configs.Split() `
-        -Platforms $env:Platforms.Split() `
-        -CreateArtifacts:$false `
-        -Clean:$false `
-        -BuildNuget:($env:NuGet -eq "1") `
-        -BuildPlugins:($env:Plugins -eq "1")
+  - ps: .\02-build.ps1
 
 test_script:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%/src/main.test/
   - cmd: nuget install Appveyor.TestLogger -Version 2.0.0
   - cmd: cd %APPVEYOR_BUILD_FOLDER%
   - cmd: dotnet test ./src/main.test/wacs.test.csproj -c Release --test-adapter-path:. --logger:Appveyor 
+
+after_build:
+  - ps: .\03-gather-signingbundle.ps1
 
 deploy:
   - provider: Webhook
@@ -58,24 +53,11 @@ deploy:
         secure: /VER5tKSoGisT3oNWr0QMXvLkcI2ctMBL6OAO+LOVVZZ6fCuUQdaTZH22AIOrayYHty4wuijfltDdKAZU9oZ5g==
 
 after_deploy:
-  - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
+  - ps: .\04-scatter-signingbundle.ps1
+  - ps: .\05-create-artifacts.ps1
+  - ps: .\07-create-artifactmeta.ps1
+  - ps: .\08-clean.ps1
   - ps: >-
-     .\05-scatter-signingbundle.ps1 `
-        -Root $env:APPVEYOR_BUILD_FOLDER `
-        -Version $env:APPVEYOR_BUILD_VERSION `
-        -NetVersion $env:NetVersion `
-        -Configs $env:Configs.Split() `
-        -Platforms $env:Platforms.Split() `
-        -BuildNuget:($env:NuGet -eq "1") `
-        -BuildPlugins:($env:Plugins -eq "1")
-  - ps: >-
-     .\07-create-artifactmeta.ps1 `
-        -Root $RepoRoot `
-        -Version $version
-  - ps: >-
-     .\08-clean.ps1 `
-        -Root $RepoRoot
-  - ps: >-
-     Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\build\artifacts\ | Foreach-Object {
+     Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\out\artifacts\ | Foreach-Object {
         Push-AppveyorArtifact $_.FullName -FileName $_.Name
      }
