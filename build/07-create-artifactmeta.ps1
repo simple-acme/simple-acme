@@ -8,7 +8,7 @@
 	$Version
 )
 
-$Out = "$Root\build\artifacts\"
+$Out = "$Root\out\artifacts\"
 $yaml = "releasename: $Version
 releasetag: $Version
 releasebuild: $Version

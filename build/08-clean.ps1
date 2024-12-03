@@ -1,0 +1,1 @@
+Remove-Item "$Out\signingbundle.zip" -Force

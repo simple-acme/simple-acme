@@ -5,8 +5,8 @@ param (
 # Environment variables
 $version = "2.3.0.0"
 $netVersion = "net8.0"
-$configs = ("Release", "ReleaseTrimmed")
-$platforms = ("win-x64", "win-x86")
+$configs = ("Release")
+$platforms = ("win-x64")
 $clean = $false 
 $nuget = $true 
 $plugins = $true 
@@ -18,15 +18,15 @@ Push-Location $PSScriptFilePath.Directory
 $RepoRoot = $PSScriptFilePath.Directory.Parent.FullName
 
 # AppVeyor: before_build
-. .\helpers.ps1
+. .\01-helpers.ps1
 
 # Always start with a fresh folder
-ClearFolder "$RepoRoot\build\artifacts\"
-ClearFolder "$RepoRoot\build\signingbundle\"
-ClearFolder "$RepoRoot\build\temp\"
+ClearFolder "$RepoRoot\out\artifacts\"
+ClearFolder "$RepoRoot\out\signingbundle\"
+ClearFolder "$RepoRoot\out\temp\"
 
 # AppVeyor: build_script
-.\build.ps1 `
+.\02-build.ps1 `
     -Version $version `
     -NetVersion $netVersion `
     -Configs $configs `
@@ -38,7 +38,7 @@ ClearFolder "$RepoRoot\build\temp\"
     -SelfSigningPassword $SelfSigningPassword
 
 # AppVeyor: after_build
-.\create-signingbundle.ps1 `
+.\03-gather-signingbundle.ps1 `
     -Root $RepoRoot `
     -Configs $configs `
     -Platforms $platforms `
@@ -46,7 +46,13 @@ ClearFolder "$RepoRoot\build\temp\"
     -BuildPlugins:$plugins
 
 # AppVeyor: after_deploy
-.\create-artifacts.ps1 `
+.\04-scatter-signingbundle.ps1 `
+    -Root $RepoRoot `
+    -Configs $configs `
+    -Platforms $platforms `
+    -BuildNuget:$nuget `
+    -BuildPlugins:$plugins
+.\05-create-artifacts.ps1 `
     -Root $RepoRoot `
     -Version $version `
     -NetVersion $netVersion `
@@ -54,9 +60,10 @@ ClearFolder "$RepoRoot\build\temp\"
     -Platforms $platforms `
     -BuildNuget:$nuget `
     -BuildPlugins:$plugins
-.\create-artifactmeta.ps1 `
+.\07-create-artifactmeta.ps1 `
     -Root $RepoRoot `
     -Version $version
+.\08-clean.ps1
 
 Status "All done!"
 Pop-Location

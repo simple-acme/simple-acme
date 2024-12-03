@@ -34,10 +34,12 @@ clone_script:
       && git submodule update --init --recursive
 before_build:
   - cmd: dotnet --version
+  - ps: >- 
+     .\01-helpers.ps1
 build_script:
   - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
   - ps: >- 
-     .\build.ps1 `
+     .\02-build.ps1 `
         -Version $env:APPVEYOR_BUILD_VERSION `
         -NetVersion $env:NetVersion `
         -Configs $env:Configs.Split() `
@@ -54,7 +56,7 @@ test_script:
 after_build:
   - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
   - ps: >-
-     .\create-artifacts.ps1 `
+     .\03-create-artifacts.ps1 `
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
         -NetVersion $env:NetVersion `

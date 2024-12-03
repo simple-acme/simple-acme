@@ -45,6 +45,12 @@ function Compress {
 	[io.compression.zipfile]::CreateFromDirectory($Dir, $Target)
 }
 
+function Decompress {
+	param($Dir, $Target)
+	Add-Type -Assembly "system.io.compression.filesystem"
+	[io.compression.zipfile]::ExtractToDirectory($Target, $Dir)
+}
+
 function Status {
 	param($Message)
 

@@ -195,14 +195,10 @@ FakesAssemblies/
 
 # Visual Studio 6 workspace options file
 *.opt
-/build/temp
-/build/artifacts
-/src/main/Properties/launchSettings.json
-/src/main.lib/Properties/launchSettings.json
 
 # Rider
 .idea/
-/build/plugins.xml
-/build/arguments.yml
-/build/plugins.yml
-*.zip
+
+# Custom
+/out/*
+launchSettings.json

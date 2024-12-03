@@ -5,15 +5,8 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{52ED90D7-705F-4568-A5BE-83E1B159F1C5}"
 	ProjectSection(SolutionItems) = preProject
+		..\.gitignore = ..\.gitignore
 		..\appveyor.yml = ..\appveyor.yml
-		..\build\build-local.ps1 = ..\build\build-local.ps1
-		..\build\build.ps1 = ..\build\build.ps1
-		..\build\create-artifactmeta.ps1 = ..\build\create-artifactmeta.ps1
-		..\build\create-artifacts.ps1 = ..\build\create-artifacts.ps1
-		..\build\create-signingbundle.ps1 = ..\build\create-signingbundle.ps1
-		..\build\helpers.ps1 = ..\build\helpers.ps1
-		..\build\sign-selfsigned.ps1 = ..\build\sign-selfsigned.ps1
-		..\build\tool.ps1 = ..\build\tool.ps1
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentCommandLineParser", "fluent-command-line-parser\FluentCommandLineParser\FluentCommandLineParser.csproj", "{74CDFA61-81D8-40F2-B536-949BABA15D3E}"
@@ -89,6 +82,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wacs.validation.http.webdav", "plugin.validation.http.webdav\wacs.validation.http.webdav.csproj", "{51261EC0-A004-4598-A927-FC31E927684F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wacs.validation.dns.acme", "plugin.validation.dns.acme\wacs.validation.dns.acme.csproj", "{F728DA70-BBF7-4566-918F-2F8188887CF5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "build", "..\build\build.vcxitems", "{64525716-9964-47E2-A71C-0D20F4497C44}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -20,8 +20,8 @@
 	$BuildNuget
 )
 
-$Temp = "$Root\build\temp\"
-$Out = "$Root\build\artifacts\"
+$Temp = "$Root\out\temp\"
+$Out = "$Root\out\artifacts\"
 EnsureFolder $Temp
 EnsureFolder $Out
 
@@ -34,45 +34,41 @@ function PlatformRelease
 	}
 	$MainBinDir = BuildPath "$Root\src\main\bin\$Config\$NetVersion\$Platform"
 	$target = "$Temp\$config\$platform"
-	New-Item $target -Type Directory | Out-Null
-	Copy-Item "$MainBinDir\publish\wacs.exe" $target
+	Copy-Item "$target\wacs.exe" "$MainBinDir\publish" 
 }
 
 function PluginRelease
 {
 	param($Dir, $Files, $Folder)
 	$target = "$Temp\plugins"
-	New-Item $target -Type Directory | Out-Null
-	foreach ($child in (Get-ChildItem $Folder -Filter "PKISharp.WACS.*.dll").FullName) {
-		Copy-Item $child $target
+	foreach ($child in (Get-ChildItem $target -Filter "PKISharp.WACS.*.dll").FullName) {
+		Copy-Item $child $Folder
 	}
 }
 
 function NugetRelease
 {
+	$PackageFolder = "$Root\src\main\nupkg"
 	$target = "$Temp\nuget"
-	New-Item $target -Type Directory | Out-Null
-	foreach ($child in (Get-ChildItem $PackageFolder -Filter "*.nupkg").FullName) {
-		Copy-Item $child $target
+	foreach ($child in (Get-ChildItem $target -Filter "*.nupkg").FullName) {
+		Copy-Item $child $PackageFolder
 	}
 }
 
+Decompress "$Out\signingbundle.zip" $Temp 
 foreach ($config in $configs) {
 	foreach ($platform in $platforms) {
 		PlatformRelease $config $platform 
 	}
 }
-
 if ($BuildPlugins) {
 	$plugins = Import-CliXml -Path $Root\build\plugins.xml
 	foreach ($plugin in $plugins) {
 		PluginRelease $plugin.name $plugin.files $plugin.folder
 	}
 }
-
 if ($BuildNuget) {
 	NugetRelease
 }
 
-Compress $Temp "$Out\signingbundle.zip"
-Status "Signing bundle created!"
+Status "Signed results redistributed!"
