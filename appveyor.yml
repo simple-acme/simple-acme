@@ -18,6 +18,7 @@ environment:
   Plugins: 0
   PluginsCount: 999
   Clean: 0
+  Test: 0
   NetVersion: net8.0
   SelfSigningPasswordDISABLED:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
@@ -37,18 +38,25 @@ before_build:
 build_script:
   - ps: .\02-build.ps1
 
-test_script:
-  - cmd: cd %APPVEYOR_BUILD_FOLDER%/src/main.test/
-  - cmd: nuget install Appveyor.TestLogger -Version 2.0.0
-  - cmd: cd %APPVEYOR_BUILD_FOLDER%
-  - cmd: dotnet test ./src/main.test/wacs.test.csproj -c Release --test-adapter-path:. --logger:Appveyor 
-
 after_build:
   - ps: .\03-gather-signingbundle.ps1
+  - ps: >-
+     Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\out\artifacts\ | Foreach-Object {
+        Push-AppveyorArtifact $_.FullName -FileName $_.Name
+     }
+
+test_script:
+  - ps: >-
+     if ($env:Test -eq "1") {
+        cd $env:APPVEYOR_BUILD_FOLDER/src/main.test/
+        nuget install Appveyor.TestLogger -Version 2.0.0
+        cd $env:APPVEYOR_BUILD_FOLDER
+        dotnet test ./src/main.test/wacs.test.csproj -c Release --test-adapter-path:. --logger:Appveyor 
+     }
 
 deploy:
   - provider: Webhook
-    url: https://app.signpath.io/API/v1/simple-acme/Integrations/AppVeyor?ProjectSlug=simple-acme&SigningPolicySlug=test-signing&ArtifactConfigurationSlug=initial
+    url: https://app.signpath.io/API/v1/e396b30d-0bbf-442f-b958-78da3e8c1b7e/Integrations/AppVeyor?ProjectSlug=simple-acme&SigningPolicySlug=test-signing&ArtifactConfigurationSlug=initial
     authorization:
         secure: /VER5tKSoGisT3oNWr0QMXvLkcI2ctMBL6OAO+LOVVZZ6fCuUQdaTZH22AIOrayYHty4wuijfltDdKAZU9oZ5g==
 
