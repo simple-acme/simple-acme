@@ -63,7 +63,8 @@ ClearFolder "$RepoRoot\out\temp\"
 .\07-create-artifactmeta.ps1 `
     -Root $RepoRoot `
     -Version $version
-.\08-clean.ps1
+.\08-clean.ps1 `
+    -Root $RepoRoot
 
 Status "All done!"
 Pop-Location

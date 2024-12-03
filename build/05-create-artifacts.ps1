@@ -71,6 +71,7 @@ function PlatformRelease
 	Copy-Item "$Root\dist\*" $Temp -Recurse
 	Set-Content -Path "$Temp\version.txt" -Value "v$Version ($Platform, $Config)"
 	Compress $Temp $MainZipPath
+	Remove-Item $Temp\* -recurse
 
 	# Managed debugger interface as optional extra download
 	if ($Platform -like "win*") {
@@ -89,13 +90,13 @@ function CreateArtifact {
 		Copy-Item "$Dir\$file" $Temp
 	}
 	Compress $Temp $Target
+	Remove-Item $Temp\* -recurse
 }
 
 function PluginRelease
 {
 	param($Dir, $Files, $Folder)
 
-	Remove-Item $Temp\* -recurse
 	$PlugZip = "$Dir.v$Version.zip"
 	$PlugZipPath = "$Out\$PlugZip"
 	$PlugBin = $Folder
@@ -146,9 +147,9 @@ function Arguments
 	}
 	$path = "$MainBinDir\wacs.exe"
 	$parms = "--docs --verbose".Split(" ")
+	Push-Location $out
 	& "$path" $parms | Out-Null
-	Copy-Item $root\build\arguments.yml "$($out)arguments.yml"
-	Copy-Item $root\build\plugins.yml "$($out)plugins.yml"
+	Pop-Location
 }
 
 if ($BuildNuget) {
@@ -163,7 +164,7 @@ foreach ($config in $configs) {
 }
 
 if ($BuildPlugins) {
-	$plugins = Import-CliXml -Path $Root\build\plugins.xml
+	$plugins = Import-CliXml -Path $Root\out\plugins.xml
 	foreach ($plugin in $plugins) {
 		Status "Package $($plugin.Name)"
 		PluginRelease $plugin.name $plugin.files $plugin.folder

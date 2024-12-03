@@ -55,14 +55,15 @@ function NugetRelease
 	}
 }
 
-Decompress "$Out\signingbundle.zip" $Temp 
+Remove-Item $Temp\* -recurse
+Decompress $Temp "$Out\signingbundle.zip"
 foreach ($config in $configs) {
 	foreach ($platform in $platforms) {
 		PlatformRelease $config $platform 
 	}
 }
 if ($BuildPlugins) {
-	$plugins = Import-CliXml -Path $Root\build\plugins.xml
+	$plugins = Import-CliXml -Path $Root\out\plugins.xml
 	foreach ($plugin in $plugins) {
 		PluginRelease $plugin.name $plugin.files $plugin.folder
 	}
@@ -70,5 +71,6 @@ if ($BuildPlugins) {
 if ($BuildNuget) {
 	NugetRelease
 }
+Remove-Item $Temp\* -recurse
 
 Status "Signed results redistributed!"

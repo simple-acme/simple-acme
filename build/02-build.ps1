@@ -122,7 +122,7 @@ if ($BuildPlugins) {
 	}
 
 	# Save plugin metadata for create-artifacts script
-	Export-CliXml -InputObject $plugins -Path $RepoRoot\build\plugins.xml
+	Export-CliXml -InputObject $plugins -Path $RepoRoot\out\plugins.xml
 }
 
 Status "Build complete!"

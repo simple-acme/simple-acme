@@ -65,7 +65,7 @@ foreach ($config in $configs) {
 }
 
 if ($BuildPlugins) {
-	$plugins = Import-CliXml -Path $Root\build\plugins.xml
+	$plugins = Import-CliXml -Path $Root\out\plugins.xml
 	foreach ($plugin in $plugins) {
 		PluginRelease $plugin.name $plugin.files $plugin.folder
 	}

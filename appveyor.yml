@@ -12,30 +12,26 @@ dotnet_csproj:
 environment:
   Configs: 
     Release
-    ReleaseTrimmed
   Platforms:
     win-x64
-    win-x86
-    win-arm64
-    linux-x64
-    linux-arm64
-  NuGet: 1
-  Plugins: 1
+  NuGet: 0
+  Plugins: 0
   NetVersion: net8.0
-  SelfSigningPassword:
+  SelfSigningPasswordDISABLED:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
-  SignPathApiToken:
-    secure: Au7b75QhYw2tfz/0u4j3bfeN/77l3NmA9gkbbD2DIG1phNWrhx8A+B3ma2IwXGTr
+
 clone_script:
   - cmd: >-
       git clone -q --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
       && cd %APPVEYOR_BUILD_FOLDER%
       && git checkout -qf %APPVEYOR_REPO_COMMIT%
       && git submodule update --init --recursive
+
 before_build:
   - cmd: dotnet --version
   - ps: >- 
      .\01-helpers.ps1
+
 build_script:
   - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
   - ps: >- 
@@ -48,25 +44,38 @@ build_script:
         -Clean:$false `
         -BuildNuget:($env:NuGet -eq "1") `
         -BuildPlugins:($env:Plugins -eq "1")
+
 test_script:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%/src/main.test/
   - cmd: nuget install Appveyor.TestLogger -Version 2.0.0
   - cmd: cd %APPVEYOR_BUILD_FOLDER%
   - cmd: dotnet test ./src/main.test/wacs.test.csproj -c Release --test-adapter-path:. --logger:Appveyor 
-after_build:
+
+deploy:
+  - provider: Webhook
+    url: https://app.signpath.io/API/v1/simple-acme/Integrations/AppVeyor?ProjectSlug=simple-acme&SigningPolicySlug=test-signing&ArtifactConfigurationSlug=initial
+    authorization:
+        secure: /VER5tKSoGisT3oNWr0QMXvLkcI2ctMBL6OAO+LOVVZZ6fCuUQdaTZH22AIOrayYHty4wuijfltDdKAZU9oZ5g==
+
+after_deploy:
   - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
   - ps: >-
-     .\03-create-artifacts.ps1 `
+     .\05-scatter-signingbundle.ps1 `
         -Root $env:APPVEYOR_BUILD_FOLDER `
         -Version $env:APPVEYOR_BUILD_VERSION `
         -NetVersion $env:NetVersion `
-        -SignPathApiToken $env:SignPathApiToken `
         -Configs $env:Configs.Split() `
         -Platforms $env:Platforms.Split() `
         -BuildNuget:($env:NuGet -eq "1") `
         -BuildPlugins:($env:Plugins -eq "1")
   - ps: >-
+     .\07-create-artifactmeta.ps1 `
+        -Root $RepoRoot `
+        -Version $version
+  - ps: >-
+     .\08-clean.ps1 `
+        -Root $RepoRoot
+  - ps: >-
      Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\build\artifacts\ | Foreach-Object {
         Push-AppveyorArtifact $_.FullName -FileName $_.Name
      }
-deploy: "off"
