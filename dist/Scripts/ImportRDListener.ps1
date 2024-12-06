@@ -57,9 +57,8 @@ if($CertInStore){
 
             $CertInStore = Get-ChildItem -Path Cert:\LocalMachine\My -Recurse | Where-Object {$_.thumbprint -eq $NewCertThumbprint} | Select-Object -f 1
         }
-        wmic /namespace:\\root\cimv2\TerminalServices PATH Win32_TSGeneralSetting Set SSLCertificateSHA1Hash="$($CertInStore.Thumbprint)"
-        # This method might work, but wmi method is more reliable
-        #Set-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name SSLCertificateSHA1Hash -Value $CertInStore.Thumbprint -ErrorAction Stop
+		
+		Get-CimInstance -Namespace root/CIMV2/TerminalServices Win32_TSGeneralSetting | Set-CimInstance -Property @{SSLCertificateSHA1Hash=$CertInStore.Thumbprint}
         "Cert thumbprint set to RDP listener"
     }catch{
         "Cert thumbprint was not set successfully"
