@@ -75,6 +75,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wacs.validation.dns.dnsexit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wacs.validation.dns.hetzner", "plugin.validation.dns.hetzner\wacs.validation.dns.hetzner.csproj", "{DB1444F5-3771-4825-8228-5E1651E84998}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wacs.validation.dns.huaweicloud", "plugin.validation.dns.huaweicloud\wacs.validation.dns.huaweicloud.csproj", "{EC5A5198-7224-447E-AAC5-99C2CCDA78A1}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wacs.validation.http.ftp", "plugin.validation.http.ftp\wacs.validation.http.ftp.csproj", "{D0AE9B01-9D7B-4325-9466-7F0BB109FA5D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wacs.validation.http.sftp", "plugin.validation.http.sftp\wacs.validation.http.sftp.csproj", "{E4ACC01A-E30E-4037-B282-7DB5B94366D6}"
@@ -293,6 +295,14 @@ Global
 		{DB1444F5-3771-4825-8228-5E1651E84998}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DB1444F5-3771-4825-8228-5E1651E84998}.ReleaseTrimmed|Any CPU.ActiveCfg = Debug|Any CPU
 		{DB1444F5-3771-4825-8228-5E1651E84998}.ReleaseTrimmed|Any CPU.Build.0 = Debug|Any CPU
+		{EC5A5198-7224-447E-AAC5-99C2CCDA78A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC5A5198-7224-447E-AAC5-99C2CCDA78A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC5A5198-7224-447E-AAC5-99C2CCDA78A1}.DebugTrimmed|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC5A5198-7224-447E-AAC5-99C2CCDA78A1}.DebugTrimmed|Any CPU.Build.0 = Debug|Any CPU
+		{EC5A5198-7224-447E-AAC5-99C2CCDA78A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC5A5198-7224-447E-AAC5-99C2CCDA78A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC5A5198-7224-447E-AAC5-99C2CCDA78A1}.ReleaseTrimmed|Any CPU.ActiveCfg = Release|Any CPU
+		{EC5A5198-7224-447E-AAC5-99C2CCDA78A1}.ReleaseTrimmed|Any CPU.Build.0 = Release|Any CPU
 		{D0AE9B01-9D7B-4325-9466-7F0BB109FA5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D0AE9B01-9D7B-4325-9466-7F0BB109FA5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0AE9B01-9D7B-4325-9466-7F0BB109FA5D}.DebugTrimmed|Any CPU.ActiveCfg = Debug|Any CPU
