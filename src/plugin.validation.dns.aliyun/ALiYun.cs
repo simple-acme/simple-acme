@@ -1,5 +1,4 @@
 ﻿using AlibabaCloud.OpenApiClient.Models;
-using AlibabaCloud.SDK.Alidns20150109;
 using AlibabaCloud.SDK.Alidns20150109.Models;
 using AlibabaCloud.TeaUtil.Models;
 using PKISharp.WACS.Clients.DNS;
@@ -11,40 +10,45 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
+//Api Key: http://ram.console.aliyun.com/manage/ak
+//Api Doc: https://api.aliyun.com/api/Alidns/2015-01-09/AddDomainRecord
+//Api Server: https://api.aliyun.com/product/Alidns
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    [IPlugin.Plugin1<
-        ALiYunOptions, ALiYunOptionsFactory,
-        DnsValidationCapability, ALiYunJson, ALiYunArguments>
+    [IPlugin.Plugin1<ALiYunOptions, ALiYunOptionsFactory, DnsValidationCapability, ALiYunJson, ALiYunArguments>
         ("1d4db2ea-ce7c-46ce-b86f-40b356fcf999",
         "Aliyun", "Create verification records in ALiYun DNS",
         External = true, Provider = "Alibaba", Page = "alibaba")]
     public class ALiYun : DnsValidation<ALiYun>, IDisposable
     {
-        private ALiYunOptions Options { get; }
         private SecretServiceManager Ssm { get; }
         private HttpClient Hc { get; }
-        private Client Client { get; }
+        private ALiYunOptions Options { get; }
+        private AlibabaCloud.SDK.Alidns20150109.Client Client { get; }
 
-        public ALiYun(
-            ALiYunOptions options,
-            SecretServiceManager ssm,
-            IProxyService proxyService,
-            LookupClientProvider dnsClient,
-            ILogService log,
-            ISettingsService settings) : base(dnsClient, log, settings)
+        public ALiYun(SecretServiceManager ssm, IProxyService proxyService,
+            LookupClientProvider dnsClient, ILogService log, ISettingsService settings,
+            ALiYunOptions options) : base(dnsClient, log, settings)
         {
             Options = options;
             Ssm = ssm;
             Hc = proxyService.GetHttpClient();
-            //New Client
-            var config = new Config
+            try
             {
-                AccessKeyId = Ssm.EvaluateSecret(Options.ApiID),
-                AccessKeySecret = Ssm.EvaluateSecret(Options.ApiSecret),
-                Endpoint = Ssm.EvaluateSecret(Options.ApiServer),
-            };
-            Client = new Client(config);
+                //New Client
+                var config = new Config
+                {
+                    AccessKeyId = Ssm.EvaluateSecret(Options.ApiID),
+                    AccessKeySecret = Ssm.EvaluateSecret(Options.ApiSecret),
+                    Endpoint = Ssm.EvaluateSecret(Options.ApiServer),
+                };
+                Client = new AlibabaCloud.SDK.Alidns20150109.Client(config);
+            }
+            catch (Exception ex)
+            {
+                _log.Error($"Configuration error: {ex.Message}");
+                throw new Exception("Configuration error");
+            }
         }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
@@ -85,6 +89,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
         }
 
+        public void Dispose()
+        {
+            Hc.Dispose();
+            GC.SuppressFinalize(this);
+        }
+
         #region PrivateLogic
 
         /// <summary>
@@ -109,7 +119,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             };
             var runtime = new RuntimeOptions();
             Client.AddDomainRecordWithOptions(addRecords, runtime);
-            //Console.WriteLine(data);
             return true;
         }
 
@@ -132,7 +141,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             };
             var runtime = new RuntimeOptions();
             Client.DeleteDomainRecordWithOptions(delRecords, runtime);
-            //Console.WriteLine(data);
             return true;
         }
 
@@ -174,11 +182,5 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         }
 
         #endregion PrivateLogic
-
-        public void Dispose()
-        {
-            Hc.Dispose();
-            GC.SuppressFinalize(this);
-        }
     }
 }
