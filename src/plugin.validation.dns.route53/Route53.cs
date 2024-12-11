@@ -19,28 +19,57 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ("4e5dc595-45c7-4461-929a-8f96a0c96b3d", 
         "Route53", "Create verification records in Route 53 DNS", 
         Name = "Route 53", External = true, Provider = "Amazon AWS")]
-    internal sealed class Route53 : DnsValidation<Route53>
+    internal sealed class Route53(
+        LookupClientProvider dnsClient,
+        ILogService log,
+        IProxyService proxy,
+        ISettingsService settings,
+        SecretServiceManager ssm,
+        Route53Options options) : DnsValidation<Route53>(dnsClient, log, settings)
     {
-        private readonly AmazonRoute53Client _route53Client;
+        private AmazonRoute53Client? _route53Client;
         private readonly Dictionary<string, List<ResourceRecordSet>> _pendingZoneUpdates = [];
+        public override ParallelOperations Parallelism => ParallelOperations.Answer;
 
-        public override ParallelOperations Parallelism => ParallelOperations.Answer; 
-        public Route53(
-            LookupClientProvider dnsClient,
-            ILogService log,
-            IProxyService proxy,
-            ISettingsService settings,
-            SecretServiceManager ssm,
-            Route53Options options) : base(dnsClient, log, settings)
+        private AWSCredentials? GetCredentials()
         {
-            var region = RegionEndpoint.USEast1;
-            var config = new AmazonRoute53Config() { RegionEndpoint = region };
-            config.SetWebProxy(proxy.GetWebProxy());
-            _route53Client = !string.IsNullOrWhiteSpace(options.IAMRole)
-                ? new AmazonRoute53Client(new InstanceProfileAWSCredentials(options.IAMRole), config)
-                : !string.IsNullOrWhiteSpace(options.AccessKeyId)
-                    ? new AmazonRoute53Client(options.AccessKeyId, ssm.EvaluateSecret(options.SecretAccessKey), config)
-                    : new AmazonRoute53Client(config);
+            var baseCredential = default(AWSCredentials);
+            if (!string.IsNullOrWhiteSpace(options.IAMRole))
+            {
+                baseCredential = new InstanceProfileAWSCredentials(
+                    options.IAMRole, 
+                    proxy.GetWebProxy());
+            }
+            if (!string.IsNullOrWhiteSpace(options.AccessKeyId))
+            {
+                var accessKey = ssm.EvaluateSecret(options.SecretAccessKey);
+                baseCredential = new BasicAWSCredentials(options.AccessKeyId, accessKey);
+            }
+            baseCredential ??= new InstanceProfileAWSCredentials(proxy.GetWebProxy());
+            if (!string.IsNullOrWhiteSpace(options.ARNRole))
+            {
+                baseCredential = new AssumeRoleAWSCredentials(
+                    baseCredential, 
+                    options.ARNRole, 
+                    _settings.Client.ClientName, 
+                    new AssumeRoleAWSCredentialsOptions() { 
+                        ProxySettings = proxy.GetWebProxy()
+                    });
+            }
+            return baseCredential;
+        }
+
+        private AmazonRoute53Client GetClient()
+        {
+            if (_route53Client == null)
+            {
+                var credential = GetCredentials();
+                var region = RegionEndpoint.USEast1;
+                var config = new AmazonRoute53Config() { RegionEndpoint = region };
+                config.SetWebProxy(proxy.GetWebProxy());
+                _route53Client = new AmazonRoute53Client(credential, config);
+            }
+            return _route53Client;
         }
 
         private void CreateOrUpdateResourceRecordSet(string hostedZone, string name, string record)
@@ -105,16 +134,17 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         }
 
         /// <summary>
-        /// Wait for propageation
+        /// Start pending zone updates
         /// </summary>
         /// <returns></returns>
         public override async Task SaveChanges()
         {
+            var client = GetClient();
             var updateTasks = new List<Task<ChangeResourceRecordSetsResponse>>();
             foreach (var zone in _pendingZoneUpdates.Keys)
             {
                 var recordSets = _pendingZoneUpdates[zone];
-                updateTasks.Add(_route53Client.ChangeResourceRecordSetsAsync(
+                updateTasks.Add(client.ChangeResourceRecordSetsAsync(
                     new ChangeResourceRecordSetsRequest(
                         zone,
                         new ChangeBatch(recordSets.Select(x => new Change(ChangeAction.UPSERT, x)).ToList()))));
@@ -122,7 +152,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
             var results = await Task.WhenAll(updateTasks);
             var pendingChanges = results.Select(result => result.ChangeInfo);
-            var propagationTasks = pendingChanges.Select(change => WaitChangesPropagation(change));
+            var propagationTasks = pendingChanges.Select(WaitChangesPropagation);
             await Task.WhenAll(propagationTasks);
         }
 
@@ -132,11 +162,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <returns></returns>
         public override async Task Finalize()
         {
+            var client = GetClient();
             var deleteTasks = new List<Task<ChangeResourceRecordSetsResponse>>();
             foreach (var zone in _pendingZoneUpdates.Keys)
             {
                 var recordSets = _pendingZoneUpdates[zone];
-                deleteTasks.Add(_route53Client.ChangeResourceRecordSetsAsync(
+                deleteTasks.Add(client.ChangeResourceRecordSetsAsync(
                     new ChangeResourceRecordSetsRequest(
                         zone,
                         new ChangeBatch(recordSets.Select(x => new Change(ChangeAction.DELETE, x)).ToList()))));
@@ -151,12 +182,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <returns></returns>
         private async Task<IEnumerable<string>?> GetHostedZoneIds(string recordName)
         {
+            var client = GetClient();
             var hostedZones = new List<HostedZone>();
-            var response = await _route53Client.ListHostedZonesAsync();
+            var response = await client.ListHostedZonesAsync();
             hostedZones.AddRange(response.HostedZones);
             while (response.IsTruncated)
             {
-                response = await _route53Client.ListHostedZonesAsync(
+                response = await client.ListHostedZonesAsync(
                     new ListHostedZonesRequest() {
                         Marker = response.NextMarker
                     });
@@ -175,18 +207,21 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             return null;
         }
 
+        /// <summary>
+        /// Wait for changes to propagate
+        /// </summary>
+        /// <param name="changeInfo"></param>
+        /// <returns></returns>
         private async Task WaitChangesPropagation(ChangeInfo changeInfo)
         {
+            var client = GetClient();
             if (changeInfo.Status == ChangeStatus.INSYNC)
             {
                 return;
             }
-
             _log.Information("Waiting for DNS changes propagation");
-
             var changeRequest = new GetChangeRequest(changeInfo.Id);
-
-            while ((await _route53Client.GetChangeAsync(changeRequest)).ChangeInfo.Status == ChangeStatus.PENDING)
+            while ((await client.GetChangeAsync(changeRequest)).ChangeInfo.Status == ChangeStatus.PENDING)
             {
                 await Task.Delay(2000);
             }

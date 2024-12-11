@@ -2,6 +2,7 @@
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -11,12 +12,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     internal sealed partial class Route53OptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<Route53Options>
     {
         private ArgumentResult<ProtectedString?> AccessKey => arguments.
-            GetProtectedString<Route53Arguments>(a => a.Route53SecretAccessKey).
-            Required();
+            GetProtectedString<Route53Arguments>(a => a.Route53SecretAccessKey);
 
         private ArgumentResult<string?> AccessKeyId => arguments.
-            GetString<Route53Arguments>(a => a.Route53AccessKeyId).
-            Required();
+            GetString<Route53Arguments>(a => a.Route53AccessKeyId);
 
         /// <summary>
         /// https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html
@@ -26,34 +25,49 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             GetString<Route53Arguments>(a => a.Route53IAMRole).
             Validate(x => Task.FromResult(!x?.Contains(':') ?? true), "ARN instead of IAM name").
             Validate(x => Task.FromResult(AimRegex().Match(x ?? "").Success), "invalid IAM name");
+        
+        private ArgumentResult<string?> ArnRole => arguments.
+            GetString<Route53Arguments>(a => a.Route53ArnRole);
+
+        internal const string IAMdefault = "IAM (default role)";
+        internal const string IAMspecific = "IAM (specific role)";
+        internal const string AccessKeySecret = "Access key";
+        internal static string[] AuthenticationOptions = [IAMdefault, IAMspecific, AccessKeySecret];
 
         public override async Task<Route53Options?> Aquire(IInputService input, RunLevel runLevel)
         {
-            var options = new Route53Options
+            var ret = new Route53Options();
+            var menuOption = await input.ChooseRequired("Authentication method", AuthenticationOptions, x => Choice.Create(x));
+            switch (menuOption)
             {
-                IAMRole = await IamRole.Interactive(input, "IAM role name (leave blank to use access key)").GetValue()
-            };
-            if (!string.IsNullOrWhiteSpace(options.IAMRole))
-            {
-                return options;
+                case IAMdefault:
+                    break;
+                case IAMspecific:
+                    ret.IAMRole = await IamRole.Required().GetValue();
+                    break;
+                case AccessKeySecret:
+                    ret.AccessKeyId = await AccessKeyId.Required().GetValue();
+                    ret.SecretAccessKey = await AccessKey.Required().GetValue();
+                    break;
+                default:
+                    throw new InvalidOperationException();
             }
-            options.AccessKeyId = await AccessKeyId.Interactive(input, "Access key ID").GetValue();
-            options.SecretAccessKey = await AccessKey.Interactive(input, "Secret access key").GetValue();
-            return options;
+            ret.ARNRole = await ArnRole.Interactive(input, "Assume STS role? (provide ARN or leave blank to skip)").GetValue();
+            return ret;
         }
 
         public override async Task<Route53Options?> Default()
         {
             var options = new Route53Options
             {
-                IAMRole = await IamRole.GetValue()
+                IAMRole = await IamRole.GetValue(),
+                ARNRole = await ArnRole.GetValue(),
+                AccessKeyId = await AccessKeyId.GetValue()
             };
-            if (!string.IsNullOrWhiteSpace(options.IAMRole))
+            if (options.AccessKeyId != null)
             {
-                return options;
+                options.SecretAccessKey = await AccessKey.Required().GetValue();
             }
-            options.AccessKeyId = await AccessKeyId.GetValue();
-            options.SecretAccessKey = await AccessKey.GetValue();
             return options;
         }
 
