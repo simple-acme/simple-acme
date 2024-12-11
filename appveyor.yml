@@ -61,7 +61,7 @@ test_script:
 
 deploy:
   - provider: Webhook
-    url: https://app.signpath.io/API/v1/e396b30d-0bbf-442f-b958-78da3e8c1b7e/Integrations/AppVeyor?ProjectSlug=simple-acme&SigningPolicySlug=test-signing&ArtifactConfigurationSlug=initial
+    url: https://app.signpath.io/API/v1/e396b30d-0bbf-442f-b958-78da3e8c1b7e/Integrations/AppVeyor?ProjectSlug=simple-acme&SigningPolicySlug=test-signing&ArtifactConfigurationSlug=signingbundle
     authorization:
         secure: /VER5tKSoGisT3oNWr0QMXvLkcI2ctMBL6OAO+LOVVZZ6fCuUQdaTZH22AIOrayYHty4wuijfltDdKAZU9oZ5g==
 
