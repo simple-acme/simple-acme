@@ -12,9 +12,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
     internal sealed class Route53Options : ValidationPluginOptions
     {
+        /// <summary>
+        /// Role on the local machine
+        /// </summary>
         public string? IAMRole { get; set; }
-        public string? AccessKeyId { get; set; }
 
+        /// <summary>
+        /// Role anywhere
+        /// </summary>
+        public string? ARNRole { get; set; }
+
+        /// <summary>
+        /// Basic authentication
+        /// </summary>
+        public string? AccessKeyId { get; set; }
         [JsonPropertyName("SecretAccessKeySafe")]
         public ProtectedString? SecretAccessKey { get; set; }
     }

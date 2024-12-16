@@ -15,8 +15,6 @@ function PlatformRelease
 function PluginRelease
 {
 	param($Dir, $Files, $Folder)
-	$target = "$Temp\plugins"
-	New-Item $target -Type Directory | Out-Null
 	foreach ($child in (Get-ChildItem $Folder -Filter "PKISharp.WACS.*.dll").FullName) {
 		Copy-Item $child $target
 	}
@@ -40,6 +38,8 @@ foreach ($config in $configs) {
 
 if ($BuildPlugins) {
 	$plugins = Import-CliXml -Path $Root\out\plugins.xml
+	$target = "$Temp\plugins"
+	New-Item $target -Type Directory | Out-Null
 	foreach ($plugin in $plugins) {
 		PluginRelease $plugin.name $plugin.files $plugin.folder
 	}

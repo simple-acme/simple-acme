@@ -36,5 +36,8 @@
     <None Include="$(MSBuildThisFileDirectory)08-clean.ps1">
       <Filter>Steps</Filter>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)appveyor-local.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)run.sh" />
+    <None Include="$(MSBuildThisFileDirectory)tool.ps1" />
   </ItemGroup>
 </Project>

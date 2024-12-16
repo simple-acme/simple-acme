@@ -8,7 +8,7 @@ foreach ($artifact in Get-ChildItem $Out) {
   - 
     name: $($artifact.Name)
     size: $(Get-FriendlySize $artifact.Length)
-    sha256: $((Get-FileHash $artifact).Hash)"
+    sha256: $((Get-FileHash $artifact.FullName).Hash)"
 }
 
 Set-Content -Path "$($out)build.yml" -Value $yaml
