@@ -10,38 +10,42 @@ using System.Threading.Tasks;
 using TencentCloud.Common;
 using TencentCloud.Common.Profile;
 
+//Api Key: http://console.cloud.tencent.com/cam/capi
+//Api Doc: https://cloud.tencent.com/document/api/1427/56166
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    [IPlugin.Plugin1<
-        TencentOptions, TencentOptionsFactory,
-        DnsValidationCapability, TencentJson, TencentArguments>
+    [IPlugin.Plugin1<TencentOptions, TencentOptionsFactory, DnsValidationCapability, TencentJson, TencentArguments>
         ("6ea628c3-0f74-68bb-cf17-4fdd3d53f3af",
-        "Tencent", "Create verification records in Tencent DNS", 
+        "Tencent", "Create verification records in Tencent DNS",
         Name = "Tencent Cloud", External = true)]
     public class Tencent : DnsValidation<Tencent>, IDisposable
     {
-        private TencentOptions Options { get; }
         private SecretServiceManager Ssm { get; }
         private HttpClient Hc { get; }
+        private TencentOptions Options { get; }
         private Credential Cred { get; }
 
-        public Tencent(
-            TencentOptions options,
-            SecretServiceManager ssm,
-            IProxyService proxyService,
-            LookupClientProvider dnsClient,
-            ILogService log,
-            ISettingsService settings) : base(dnsClient, log, settings)
+        public Tencent(SecretServiceManager ssm, IProxyService proxyService,
+            LookupClientProvider dnsClient, ILogService log, ISettingsService settings,
+            TencentOptions options) : base(dnsClient, log, settings)
         {
-            Options = options;
             Ssm = ssm;
             Hc = proxyService.GetHttpClient();
-            //
-            Cred = new Credential
+            Options = options;
+            try
             {
-                SecretId = Ssm.EvaluateSecret(Options.ApiID),
-                SecretKey = Ssm.EvaluateSecret(Options.ApiKey),
-            };
+                //New Credential
+                Cred = new Credential
+                {
+                    SecretId = Ssm.EvaluateSecret(Options.ApiID),
+                    SecretKey = Ssm.EvaluateSecret(Options.ApiKey),
+                };
+            }
+            catch (Exception ex)
+            {
+                _log.Error($"Configuration error: {ex.Message}");
+                throw new Exception("Configuration error");
+            }
         }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
@@ -82,6 +86,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
         }
 
+        public void Dispose()
+        {
+            Hc.Dispose();
+            GC.SuppressFinalize(this);
+        }
+
         #region PrivateLogic
 
         /// <summary>
@@ -109,7 +119,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             var req = new CommonRequest(param);
             var act = "CreateRecord";
             client.Call(req, act);
-            //Console.WriteLine(resp);
             return true;
         }
 
@@ -131,7 +140,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             var req = new CommonRequest(param);
             var act = "DeleteRecord";
             client.Call(req, act);
-            //Console.WriteLine(resp);
             return true;
         }
 
@@ -205,11 +213,5 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         }
 
         #endregion PrivateLogic
-
-        public void Dispose()
-        {
-            Hc.Dispose();
-            GC.SuppressFinalize(this);
-        }
     }
 }
