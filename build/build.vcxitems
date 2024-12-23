@@ -16,14 +16,16 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)01-helpers.ps1" />
     <None Include="$(MSBuildThisFileDirectory)02-build.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)03-gather-signingbundle.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)04-scatter-signingbundle.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)05-create-artifacts.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)06-self-sign.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)07-create-artifactmeta.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)08-clean.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)04-gather-signingbundle.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)06-prepare-release.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)03-create-artifacts.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)05-self-sign.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)07-github.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)08-nuget.ps1" />
     <None Include="$(MSBuildThisFileDirectory)appveyor-local.ps1" />
     <None Include="$(MSBuildThisFileDirectory)codesigning.pfx" />
+    <None Include="$(MSBuildThisFileDirectory)environment-local.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)release-local.ps1" />
     <None Include="$(MSBuildThisFileDirectory)run.sh" />
     <None Include="$(MSBuildThisFileDirectory)tool.ps1" />
   </ItemGroup>
