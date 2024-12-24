@@ -1,39 +1,59 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Steps">
+    <Filter Include="BuildSteps">
       <UniqueIdentifier>{b8f5ec87-afaa-49b8-a261-e953cf5a4b8b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Cert">
+    <Filter Include="ReleaseSteps">
+      <UniqueIdentifier>{6f4bd93b-0ab2-4372-8775-32bc3f4404f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runners">
+      <UniqueIdentifier>{60777537-6357-40ff-bd35-f62d72995006}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Certificate">
       <UniqueIdentifier>{1ebb5f78-6276-4118-86de-e9d5cb901eab}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)01-helpers.ps1">
-      <Filter>Steps</Filter>
+      <Filter>BuildSteps</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)02-build.ps1">
-      <Filter>Steps</Filter>
+      <Filter>BuildSteps</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)04-gather-signingbundle.ps1">
-      <Filter>Steps</Filter>
+      <Filter>BuildSteps</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)03-create-artifacts.ps1">
-      <Filter>Steps</Filter>
+      <Filter>BuildSteps</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)05-self-sign.ps1">
-      <Filter>Steps</Filter>
+      <Filter>BuildSteps</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)codesigning.pfx">
-      <Filter>Cert</Filter>
+      <Filter>Certificate</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)appveyor-local.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)run.sh" />
-    <None Include="$(MSBuildThisFileDirectory)tool.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)06-prepare-release.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)07-github.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)08-nuget.ps1" />
     <None Include="$(MSBuildThisFileDirectory)environment-local.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)release-local.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)publish-local.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)release.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)08-nuget.ps1">
+      <Filter>ReleaseSteps</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)07-github.ps1">
+      <Filter>ReleaseSteps</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)09-docs.ps1">
+      <Filter>ReleaseSteps</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)06-prepare-release.ps1">
+      <Filter>ReleaseSteps</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)run.sh">
+      <Filter>Runners</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)tool.ps1">
+      <Filter>Runners</Filter>
+    </None>
   </ItemGroup>
 </Project>

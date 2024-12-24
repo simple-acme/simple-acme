@@ -21,4 +21,5 @@ if ($env:APPVEYOR_REPO_TAG) {
 }
 
 Status "Build complete!"
+explorer "..\out\"
 Pop-Location

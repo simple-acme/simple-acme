@@ -12,18 +12,15 @@ while (!(Test-Path $bundle)) {
 Remove-Item $Final\* -recurse
 Decompress $Final $bundle
 
-# Parse version from file name
-$file = (Get-ChildItem $Final "simple-acme.v*" | Select -First 1).Name
-if ($file -match "v([0-9\.]+)?\.") {
-    $Version = $Matches.1
-     Write-Host "Version $Version detected"
+$yaml = Get-Content -Path "$($Final)build.yml"
+if ($yaml -match "releasetag: (.+)?") {
+    $env:APPVEYOR_REPO_TAG_NAME = $Matches[1]
 } else {
-    Write-Host "No version detected"
+    Write-Host "No tag detected"
+    exit
 }
 
 .\06-prepare-release.ps1
 .\07-github.ps1
-
-if ($env:nuget -eq "1") {
-    .\08-nuget.ps1
-}
+.\08-nuget.ps1
+.\09-docs.ps1

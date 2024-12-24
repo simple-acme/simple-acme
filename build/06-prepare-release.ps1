@@ -1,9 +1,5 @@
-﻿$yaml = "releasename: $Version
-releasetag: $Version
-releasebuild: $Version
-commit: $Commit
-downloads: "
-
+﻿$yaml = "downloads:
+"
 foreach ($artifact in Get-ChildItem $Out "*.zip") {
 	$yaml += "
   - 
@@ -12,8 +8,9 @@ foreach ($artifact in Get-ChildItem $Out "*.zip") {
     sha256: $((Get-FileHash $artifact.FullName).Hash)"
 }
 
-Set-Content -Path "$($Final)build.yml" -Value $yaml
+$buildPath = "$($Final)build.yml"
+Add-Content -Path $buildPath -Value $yaml
 
 Status "Hashes straight from the press"
-$yaml
+Get-Content -Path $buildPath
 Status "Signed results ready!"
