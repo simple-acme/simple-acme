@@ -61,6 +61,17 @@ function Status {
 	Write-Host ""
 }
 
+function ClearFolders {
+	EnsureFolder $Temp
+	EnsureFolder $Out
+	EnsureFolder $Final
+	EnsureFolder $Bundle
+	Remove-Item $Temp\* -recurse
+	Remove-Item $Out\* -recurse
+	Remove-Item $Final\* -recurse
+	Remove-Item $Bundle\* -recurse
+}
+
 $Version = $env:APPVEYOR_BUILD_VERSION
 $Configs = $env:Configs.Split()
 $Platforms = $env:Platforms.Split()
@@ -71,15 +82,12 @@ $BuildPluginsCount = $env:PluginsCount
 $Clean = ($env:Clean -eq "1")
 $Root = $env:APPVEYOR_BUILD_FOLDER
 $Temp = "$Root\out\temp\"
-$Out = "$Root\out\artifacts\"
+$Out = "$Root\out\unsigned\"
+$Bundle = "$Root\out\bundle\"
+$Final = "$Root\out\signed\"
 
 try {
 	cls
 } catch {
 	# Ignore
 }
-
-EnsureFolder $Temp
-EnsureFolder $Out
-Remove-Item $Temp\* -recurse
-Remove-Item $Out\* -recurse

@@ -45,15 +45,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 {
                     args = options.CreateScriptArguments;
                 }
+                var escapeToken = script.EndsWith(".ps1");
+                var actualArguments = ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, false);
+                var censoredArguments = ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, true);
                 return await client.RunScript(
-                    script, 
-                    ProcessArguments(
-                        record.Context.Identifier, 
-                        record.Authority.Domain, 
-                        record.Value,
-                        args, 
-                        script.EndsWith(".ps1"), 
-                        false));
+                    script,
+                    actualArguments,
+                    censoredArguments);
             }
             else
             {

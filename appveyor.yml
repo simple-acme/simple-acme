@@ -23,7 +23,7 @@ environment:
   Plugins: 1
   PluginsCount: 999
   Clean: 0
-  Test: 0
+  Test: 1
   NetVersion: net8.0
   SelfSigningPasswordDISABLED:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
@@ -44,10 +44,17 @@ build_script:
   - ps: .\02-build.ps1
 
 after_build:
-  - ps: .\03-gather-signingbundle.ps1
+  - ps: .\03-create-artifacts.ps1
   - ps: >-
-     Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\out\artifacts\ | Foreach-Object {
-        Push-AppveyorArtifact $_.FullName -FileName $_.Name
+     if ($env:APPVEYOR_REPO_TAG -eq "true") {
+        .\04-gather-signingbundle.ps1
+        Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\out\bundle\ | Foreach-Object {
+            Push-AppveyorArtifact $_.FullName -FileName $_.Name
+        }
+     } else {
+        Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\out\unsigned\ | Foreach-Object {
+            Push-AppveyorArtifact $_.FullName -FileName $_.Name
+        }
      }
 
 test_script:
@@ -64,13 +71,5 @@ deploy:
     url: https://app.signpath.io/API/v1/e396b30d-0bbf-442f-b958-78da3e8c1b7e/Integrations/AppVeyor?ProjectSlug=simple-acme&SigningPolicySlug=test-signing&ArtifactConfigurationSlug=signingbundle
     authorization:
         secure: /VER5tKSoGisT3oNWr0QMXvLkcI2ctMBL6OAO+LOVVZZ6fCuUQdaTZH22AIOrayYHty4wuijfltDdKAZU9oZ5g==
-
-after_deploy:
-  - ps: .\04-scatter-signingbundle.ps1
-  - ps: .\05-create-artifacts.ps1
-  - ps: .\07-create-artifactmeta.ps1
-  - ps: .\08-clean.ps1
-  - ps: >-
-     Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\out\artifacts\ | Foreach-Object {
-        Push-AppveyorArtifact $_.FullName -FileName $_.Name
-     }
+    on:  
+        APPVEYOR_REPO_TAG: true

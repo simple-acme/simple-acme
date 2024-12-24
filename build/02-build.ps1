@@ -1,4 +1,7 @@
-﻿# Restore NuGet packages
+﻿# Clear previous build results
+ClearFolders
+
+# Restore NuGet packages
 & dotnet restore $Root\src\main\wacs.csproj
 
 # Clean solution
