@@ -23,7 +23,7 @@ environment:
   Plugins: 1
   PluginsCount: 999
   Clean: 0
-  Test: 0
+  Test: 1
   NetVersion: net8.0
   SelfSigningPasswordDISABLED:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
@@ -46,7 +46,7 @@ build_script:
 after_build:
   - ps: .\03-create-artifacts.ps1
   - ps: >-
-     if ($env:APPVEYOR_REPO_TAG) {
+     if ($env:APPVEYOR_REPO_TAG -eq "true") {
         .\04-gather-signingbundle.ps1
         Get-ChildItem $env:APPVEYOR_BUILD_FOLDER\out\bundle\ | Foreach-Object {
             Push-AppveyorArtifact $_.FullName -FileName $_.Name
