@@ -55,7 +55,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                 inputService.Show(null,
                        "This plugin will update *all* binding using the previous certificate in both Web and " +
                        "FTP sites, regardless of whether those bindings were created manually or by the program " +
-                       "itself. Therefor you'll never need to run this installation step twice.");
+                       "itself. Therefore, you'll never need to run this installation step twice.");
                 inputService.CreateSpace();
                 inputService.Show(null,
                     "During initial setup, it will try to make as few changes as possible to IIS to cover " +
@@ -69,7 +69,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             {
                 explain();
                 askSite = await inputService.PromptYesNo("Create new bindings in a different site?", false);
-            } 
+            }
             if (askSite)
             {
                 explain();
