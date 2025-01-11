@@ -1,5 +1,5 @@
 # simple-acme
-A simple cross platform ACME client for Windows - for use with Let's Encrypt. Forked from [win-acme](http://github.com/win-acme/win-acme). Please check our [website](https://simple-acme.com/) for an up-to-date overview, documentation and downloads and don't forget to leave a ★ above!
+A simple cross platform ACME client - for use with Let's Encrypt. Forked from [win-acme](http://github.com/win-acme/win-acme). Please check our [website](https://simple-acme.com/) for an up-to-date overview, documentation and downloads and don't forget to leave a ★ above!
 
 ![Screenshot](https://simple-acme.com/assets/screenshot.png)
 
