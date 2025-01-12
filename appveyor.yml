@@ -70,6 +70,6 @@ deploy:
   - provider: Webhook
     url: https://app.signpath.io/API/v1/e396b30d-0bbf-442f-b958-78da3e8c1b7e/Integrations/AppVeyor?ProjectSlug=simple-acme&SigningPolicySlug=release-signing&ArtifactConfigurationSlug=signingbundle
     authorization:
-        secure: f/wgYkRRLuhKlJke+na8l+Uqavwnx2D29r4G7C7eGwHUwHTsT9CVHY6oPy7v83K8
+        secure: N+PcsmSIn5jTUWxGULUqyD3J3uPimLqLZjyO23eJ1LR4UWxEyLa/gqjLmpVxrPWn45ZFSZpLU758avz2A2Gp9w==
     on:  
         APPVEYOR_REPO_TAG: true
