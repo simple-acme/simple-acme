@@ -9,7 +9,10 @@ if (Test-Path $bundle) {
 }
 
 # Choose tag
-$version = Read-host "Tag (ex. v2.3.0)"
+$version = Read-host "Tag (ex. v2.3.1)"
+
+# TODO: automatically update appveyor.yml
+
 git checkout main
 git pull
 git tag $version
