@@ -12,11 +12,17 @@ while (!(Test-Path $bundle)) {
 Remove-Item $Final\* -recurse
 Decompress $Final $bundle
 
-$yaml = Get-Content -Path "$($Final)build.yml"
-if ($yaml -match "releasetag: (.+)?") {
-    $env:APPVEYOR_REPO_TAG_NAME = $Matches[1]
+$yaml = Get-Content -Path "$($Final)build.yml" -raw
+if ($yaml -match "releasetag: ([\S]+)") {
+    if (![string]::IsNullOrWhiteSpace($Matches[1])) {
+         Write-Host "Tag $($Matches[1]) detected"
+        $env:APPVEYOR_REPO_TAG_NAME = $Matches[1]
+    } else {
+        Write-Host "No tag detected 1"
+        exit
+    }
 } else {
-    Write-Host "No tag detected"
+    Write-Host "No tag detected 2"
     exit
 }
 
@@ -24,3 +30,4 @@ if ($yaml -match "releasetag: (.+)?") {
 .\07-github.ps1
 .\08-nuget.ps1
 .\09-docs.ps1
+# .\10-chocolatey.ps1

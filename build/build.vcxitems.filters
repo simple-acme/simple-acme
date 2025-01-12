@@ -55,5 +55,8 @@
     <None Include="$(MSBuildThisFileDirectory)tool.ps1">
       <Filter>Runners</Filter>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)10-chocolatey.ps1">
+      <Filter>ReleaseSteps</Filter>
+    </None>
   </ItemGroup>
 </Project>
