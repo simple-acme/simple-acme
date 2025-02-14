@@ -45,6 +45,7 @@ namespace PKISharp.WACS.Clients.Acme
 
         public AcmeClient(
             ILogService log,
+            IAcmeLogger acmeLogger,
             ISettingsService settings,
             IProxyService proxy,
             ServiceDirectory directory,
@@ -54,7 +55,7 @@ namespace PKISharp.WACS.Clients.Acme
             _settings = settings;
             var httpClient = proxy.GetHttpClient(settings.Acme.ValidateServerCertificate != false);
             httpClient.BaseAddress = settings.BaseUri;
-            _client = new AcmeProtocolClient(httpClient, usePostAsGet: _settings.Acme.PostAsGet)
+            _client = new AcmeProtocolClient(httpClient, acmeLogger, usePostAsGet: _settings.Acme.PostAsGet)
             {
                 Directory = directory,
                 Signer = account.Signer.JwsTool(),

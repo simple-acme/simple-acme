@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using ACMESharp;
+using Microsoft.Extensions.Configuration;
 using PKISharp.WACS.Configuration.Settings;
 using Serilog;
 using Serilog.Core;
@@ -13,7 +14,7 @@ using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services
 {
-    public class LogService : ILogService
+    public class LogService : ILogService, IAcmeLogger
     {
         private readonly Logger? _screenLogger;
         private readonly Logger? _debugScreenLogger;

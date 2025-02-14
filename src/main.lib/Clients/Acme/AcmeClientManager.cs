@@ -1,4 +1,5 @@
-﻿using ACMESharp.Protocol;
+﻿using ACMESharp;
+using ACMESharp.Protocol;
 using ACMESharp.Protocol.Resources;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
@@ -31,6 +32,7 @@ namespace PKISharp.WACS.Clients.Acme
     internal class AcmeClientManager
     {
         private readonly ILogService _log;
+        private readonly IAcmeLogger _acmeLogger;
         private readonly IInputService _input;
         private readonly ISettingsService _settings;
         private readonly ArgumentsParser _arguments;
@@ -46,7 +48,8 @@ namespace PKISharp.WACS.Clients.Acme
         public AcmeClientManager(
             IInputService inputService,
             ArgumentsParser arguments,
-            ILogService log,
+            ILogService log, 
+            IAcmeLogger acmeLogger,
             ISettingsService settings,
             AccountManager accountManager,
             IProxyService proxy,
@@ -54,6 +57,7 @@ namespace PKISharp.WACS.Clients.Acme
             ZeroSsl zeroSsl)
         {
             _log = log;
+            _acmeLogger = acmeLogger;
             _settings = settings;
             _arguments = arguments;
             _accountArguments = _arguments.GetArguments<AccountArguments>() ?? new AccountArguments();
@@ -74,7 +78,7 @@ namespace PKISharp.WACS.Clients.Acme
             var httpClient = _proxyService.GetHttpClient();
             httpClient.BaseAddress = _settings.BaseUri;
             _log.Verbose("Constructing ACME protocol client...");
-            var client = new AcmeProtocolClient(httpClient, usePostAsGet: _settings.Acme.PostAsGet);
+            var client = new AcmeProtocolClient(httpClient, _acmeLogger, usePostAsGet: _settings.Acme.PostAsGet);
             client.Directory = await EnsureServiceDirectory(client);
             return client;
         }
@@ -109,7 +113,7 @@ namespace PKISharp.WACS.Clients.Acme
             }
 
             // Create authorized account
-            var ret = new AcmeClient(_log, _settings, _proxyService, _anonymousClient.Directory, account);
+            var ret = new AcmeClient(_log, _acmeLogger, _settings, _proxyService, _anonymousClient.Directory, account);
             if (!string.IsNullOrWhiteSpace(name))
             {
                 _log.Debug("Using named account {name}...", name);

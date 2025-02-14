@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using ACMESharp;
+using Autofac;
 using Autofac.Core;
 using PKISharp.WACS.Clients;
 using PKISharp.WACS.Clients.Acme;
@@ -25,7 +26,7 @@ namespace PKISharp.WACS.Host
         internal static ILifetimeScope Container(string[] args, bool verbose, bool config)
         {
             var builder = new ContainerBuilder();
-            _ = builder.RegisterType<LogService>().WithParameter(new NamedParameter(nameof(verbose), verbose)).WithParameter(new NamedParameter(nameof(config), config)).SingleInstance().As<ILogService>();
+            _ = builder.RegisterType<LogService>().WithParameter(new NamedParameter(nameof(verbose), verbose)).WithParameter(new NamedParameter(nameof(config), config)).SingleInstance().As<ILogService>().As<IAcmeLogger>();
             _ = builder.RegisterType<ExtendedAssemblyService>().As<AssemblyService>().SingleInstance();
             _ = builder.RegisterType<PluginService>().SingleInstance().As<IPluginService>();
             _ = builder.RegisterType<ArgumentsParser>().WithParameter(new TypedParameter(typeof(string[]), args)).SingleInstance();
