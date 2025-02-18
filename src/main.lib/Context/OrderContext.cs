@@ -49,7 +49,7 @@ namespace PKISharp.WACS.Context
             Order = order;
             RunLevel = runLevel;
             OrderResult = new OrderResult(OrderCacheKey);
-            ShouldRun = order.Renewal.New;
+            ShouldRun = order.Renewal.New || order.Renewal.Updated;
         }
     }
 }
