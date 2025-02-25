@@ -18,7 +18,9 @@ namespace PKISharp.WACS
         Test = 16,
         Import = 32,
         Force = 64,
-        NoCache = 128
+        NoCache = 128,
+        NoTaskScheduler = 256,
+        ForceTaskScheduler = 512
     }
 
     [Flags]

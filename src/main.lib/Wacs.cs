@@ -172,7 +172,7 @@ namespace PKISharp.WACS.Host
                     }
                     else if (_args.SetupTaskScheduler)
                     {
-                        await taskSchedulerService.SetupAutoRenew(unattendedRunLevel);
+                        await taskSchedulerService.SetupAutoRenew(unattendedRunLevel | RunLevel.ForceTaskScheduler);
                         await CloseDefault();
                     }
                     else

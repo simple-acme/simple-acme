@@ -146,7 +146,7 @@ namespace PKISharp.WACS.Services
         public async Net.Task EnsureAutoRenew(RunLevel runLevel)
         {
             var existingTask = ExistingTask;
-            var create = runLevel.HasFlag(RunLevel.Force) || existingTask == null;
+            var create = runLevel.HasFlag(RunLevel.ForceTaskScheduler) || existingTask == null;
             if (!create && existingTask != null && !IsHealthy(existingTask))
             {
                 if (runLevel.HasFlag(RunLevel.Interactive))

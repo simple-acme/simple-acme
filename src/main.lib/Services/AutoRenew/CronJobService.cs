@@ -43,7 +43,7 @@ cd {Path.GetDirectoryName(VersionService.ExePath)}
         /// <returns></returns>
         public async Task EnsureAutoRenew(RunLevel runLevel)
         {
-            var create = runLevel.HasFlag(RunLevel.Force) || !CronFile.Exists;
+            var create = runLevel.HasFlag(RunLevel.ForceTaskScheduler) || !CronFile.Exists;
             if (create)
             {
                 await SetupAutoRenew(runLevel);

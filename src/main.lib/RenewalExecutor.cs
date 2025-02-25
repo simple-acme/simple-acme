@@ -114,34 +114,40 @@ namespace PKISharp.WACS
         private async Task ManageTaskScheduler(Renewal renewal, RenewResult result, RunLevel runLevel)
         {
             // Configure task scheduler
-            var setupTaskScheduler = args.SetupTaskScheduler;
-            if (!setupTaskScheduler && !args.NoTaskScheduler)
+            if (args.SetupTaskScheduler)
             {
-                setupTaskScheduler = result.Success == true && !result.Abort && (renewal.New || renewal.Updated);
+                runLevel |= RunLevel.ForceTaskScheduler;
             }
-            if (setupTaskScheduler && runLevel.HasFlag(RunLevel.Test))
+            if (args.NoTaskScheduler)
             {
-                setupTaskScheduler = await input.PromptYesNo($"[--test] Do you want to automatically renew with these settings?", true);
-                if (!setupTaskScheduler)
-                {
-                    result.Abort = true;
-                }
+                runLevel |= RunLevel.NoTaskScheduler;
             }
-            if (setupTaskScheduler)
+            if (runLevel.HasFlag(RunLevel.NoTaskScheduler))
             {
-                var taskLevel = runLevel;
-                if (args.SetupTaskScheduler)
-                {
-                    taskLevel |= RunLevel.Force;
-                }
-                try
-                {
-                    await taskScheduler.EnsureAutoRenew(taskLevel);
-                }
-                catch (Exception ex)
-                {
-                    exceptionHandler.HandleException(ex, "Unable to configure automatic renewals");
-                }
+                return;
+            }
+
+            // Unless specifically flagged not to setup task scheduler,
+            // --test mode will ask the question whether to setup the 
+            // task or not.
+            if (result.Success == true &&
+                !result.Abort &&
+                (renewal.New || renewal.Updated) &&
+                runLevel.HasFlag(RunLevel.Test) &&
+                !await input.PromptYesNo($"[--test] Do you want to automatically renew with these settings?", true))
+            {
+                result.Abort = true;
+                return;
+            }
+
+            // Attempt to create the scheduled task
+            try
+            {
+                await taskScheduler.EnsureAutoRenew(runLevel);
+            }
+            catch (Exception ex)
+            {
+                exceptionHandler.HandleException(ex, "Unable to configure automatic renewals");
             }
         }
 

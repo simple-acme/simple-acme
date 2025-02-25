@@ -42,7 +42,7 @@ namespace PKISharp.WACS.Services.Legacy
             if (!arguments.NoTaskScheduler)
             {
                 log.Information("Step {x}/3: create new scheduled task", 2);
-                await currentTaskScheduler.EnsureAutoRenew(runLevel | RunLevel.Import);
+                await currentTaskScheduler.EnsureAutoRenew(runLevel | RunLevel.Import | RunLevel.ForceTaskScheduler);
                 legacyTaskScheduler.StopTaskScheduler();
             }
 
