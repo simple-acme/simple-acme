@@ -8,6 +8,7 @@ using Serilog.Settings.Configuration;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -126,6 +127,7 @@ namespace PKISharp.WACS.Services
         /// Set up the disk logger
         /// </summary>
         /// <param name="logPath"></param>
+        [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Primitive type (string) used")]
         private void CreateDiskLogger(string logPath)
         {
             try
