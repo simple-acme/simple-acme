@@ -1,6 +1,6 @@
 ﻿$yaml = "downloads:
 "
-foreach ($artifact in Get-ChildItem $Out "*.zip") {
+foreach ($artifact in Get-ChildItem $Final "*.zip") {
 	$yaml += "
   - 
     name: $($artifact.Name)

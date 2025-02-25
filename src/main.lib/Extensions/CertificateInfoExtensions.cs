@@ -1,6 +1,9 @@
-﻿using Org.BouncyCastle.Security;
+﻿using Microsoft.VisualBasic;
+using Org.BouncyCastle.Security;
 using PKISharp.WACS.DomainObjects;
+using System;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
@@ -55,14 +58,13 @@ namespace PKISharp.WACS.Extensions
         /// <returns></returns>
         public static X509Certificate2Collection AsCollection(this ICertificateInfo ci, X509KeyStorageFlags flags, string? password = null)
         {
-            using var pfxStream = ci.PfxStream(password);
-            using var pfxStreamReader = new BinaryReader(pfxStream);
-            var tempPfx = new X509Certificate2Collection();
-            tempPfx.Import(
-                pfxStreamReader.ReadBytes((int)pfxStream.Length),
-                password,
-                flags);
-            return tempPfx;
+            var ret = X509CertificateLoader.LoadPkcs12Collection(ci.PfxBytes(password), password, flags);
+            if (OperatingSystem.IsWindows())
+            {
+                ret.First(x => x.Thumbprint == ci.Thumbprint).FriendlyName = ci.FriendlyName;
+            }
+            return ret;
         }
+
     }
 }

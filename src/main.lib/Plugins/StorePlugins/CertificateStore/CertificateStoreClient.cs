@@ -240,7 +240,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             foreach (var bcCert in certificate.Chain)
             {
-                var cert = new X509Certificate2(bcCert.GetEncoded());
+                var cert = X509CertificateLoader.LoadCertificate(bcCert.GetEncoded());
                 try
                 {
                     SaveToStore(store, cert, false);
@@ -343,7 +343,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             var parameters = tempRsa.ExportParameters(true);
             rsaProvider.ImportParameters(parameters);
 
-            var tempPfx = new X509Certificate2(original.Export(X509ContentType.Cert, password), password, flags);
+            var tempPfx = X509CertificateLoader.LoadCertificate(original.Export(X509ContentType.Cert));
             tempPfx = tempPfx.CopyWithPrivateKey(rsaProvider);
             tempPfx.FriendlyName = original.FriendlyName;
             return tempPfx;

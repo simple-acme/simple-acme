@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<RuntimeIdentifiers>win-x64;win-x86;win-arm64;linux-x64;linux-arm64</RuntimeIdentifiers>
 		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;</Configurations>
 		<ApplicationIcon>icon.ico</ApplicationIcon>

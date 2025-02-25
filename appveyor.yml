@@ -24,7 +24,7 @@ environment:
   PluginsCount: 999
   Clean: 0
   Test: 1
-  NetVersion: net8.0
+  NetVersion: net9.0
   SelfSigningPasswordDISABLED:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
 
