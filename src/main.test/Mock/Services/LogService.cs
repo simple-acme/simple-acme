@@ -1,4 +1,5 @@
-﻿using PKISharp.WACS.Configuration.Settings;
+﻿using ACMESharp;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Services;
 using Serilog;
 using Serilog.Core;
@@ -8,7 +9,7 @@ using System.Collections.Generic;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
-    internal class LogService(bool throwErrors) : ILogService
+    internal class LogService(bool throwErrors) : ILogService, IAcmeLogger
     {
         private readonly Logger _logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
