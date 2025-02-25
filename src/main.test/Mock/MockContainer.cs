@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using ACMESharp;
+using Autofac;
 using Autofac.Core;
 using Autofac.Features.AttributeFilters;
 using PKISharp.WACS.Clients;
@@ -35,7 +36,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<Real.TargetValidator>();
             _ = builder.RegisterType<ZeroSsl>();
             WacsJson.Configure(builder);
-            _ = builder.RegisterInstance(log).As<Real.ILogService>();
+            _ = builder.RegisterInstance(log).As<Real.ILogService>().As<IAcmeLogger>();
             _ = builder.RegisterInstance(argumentsParser).As<ArgumentsParser>();
             _ = builder.RegisterType<Real.ArgumentsInputService>();
             _ = builder.RegisterInstance(pluginService).As<Real.IPluginService>();
