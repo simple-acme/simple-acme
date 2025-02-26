@@ -1,9 +1,7 @@
-﻿using Microsoft.VisualBasic;
-using Org.BouncyCastle.Security;
+﻿using Org.BouncyCastle.Security;
 using PKISharp.WACS.DomainObjects;
-using System;
+using PKISharp.WACS.Services;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
@@ -56,14 +54,31 @@ namespace PKISharp.WACS.Extensions
         /// </summary>
         /// <param name="ci"></param>
         /// <returns></returns>
-        public static X509Certificate2Collection AsCollection(this ICertificateInfo ci, X509KeyStorageFlags flags, string? password = null)
+        public static X509Certificate2Collection AsCollection(this ICertificateInfo ci, X509KeyStorageFlags flags, ILogService log, string? password = null)
         {
-            var ret = X509CertificateLoader.LoadPkcs12Collection(ci.PfxBytes(password), password, flags);
-            if (OperatingSystem.IsWindows())
+            try
             {
-                ret.First(x => x.Thumbprint == ci.Thumbprint).FriendlyName = ci.FriendlyName;
+                return X509CertificateLoader.LoadPkcs12Collection(ci.PfxBytes(password), password, flags,
+                    new Pkcs12LoaderLimits()
+                    {
+                        PreserveKeyName = true,
+                        PreserveCertificateAlias = true,
+                        PreserveUnknownAttributes = true,
+                        PreserveStorageProvider = false
+                    });
+            } 
+            catch (Pkcs12LoadLimitExceededException ex)
+            {
+                log.Warning(ex, "Reparsing certificate");
+                return X509CertificateLoader.LoadPkcs12Collection(ci.PfxBytes(password), password, flags, 
+                    new Pkcs12LoaderLimits(Pkcs12LoaderLimits.DangerousNoLimits)
+                    {
+                        PreserveKeyName = true,
+                        PreserveCertificateAlias = true,
+                        PreserveUnknownAttributes = true,
+                        PreserveStorageProvider = false 
+                    });
             }
-            return ret;
         }
 
     }

@@ -125,13 +125,13 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             try
             {
-                cert = new X509Certificate2(fi.FullName, _password);
+                cert = X509CertificateLoader.LoadPkcs12FromFile(fi.FullName, _password);
             }
             catch (CryptographicException)
             {
                 try
                 {
-                    cert = new X509Certificate2(fi.FullName, "");
+                    cert = X509CertificateLoader.LoadPkcs12FromFile(fi.FullName, null);
                 }
                 catch (Exception ex)
                 {

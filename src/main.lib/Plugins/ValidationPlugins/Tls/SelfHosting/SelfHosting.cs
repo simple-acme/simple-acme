@@ -57,6 +57,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
             _tokenSource?.Cancel();
             _listener?.Stop();
             _listener = null;
+            _certificate?.Dispose();
             return Task.CompletedTask;
         }
 
@@ -100,9 +101,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                     new DateTimeOffset(DateTime.UtcNow.AddDays(-1)),
                     new DateTimeOffset(DateTime.UtcNow.AddDays(1)));
 
-                _certificate = new X509Certificate2(
-                    _certificate.Export(X509ContentType.Pfx, context.Identifier),
-                    context.Identifier,
+                var password = PasswordGenerator.Generate();
+                _certificate = X509CertificateLoader.LoadPkcs12(
+                    _certificate.Export(X509ContentType.Pfx, password),
+                    password,
                     X509KeyStorageFlags.MachineKeySet);
 
                 _tokenSource = new();

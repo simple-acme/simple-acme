@@ -100,7 +100,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
             try
             {
-                var collection = certificate.AsCollection(tempFlags, password);
+                var collection = certificate.AsCollection(tempFlags, log, password);
                 dotnet = collection.OfType<X509Certificate2>().FirstOrDefault(x => x.HasPrivateKey);
             }
             catch (Exception ex)
@@ -155,11 +155,14 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             // using a key protection mechasims that is not supported
             // by the operating system, causing the caller to retry
             // using a different protection
-            var collection = certificate.AsCollection(X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.Exportable, password).OfType<X509Certificate2>().ToList();
+            var collection = certificate.
+                AsCollection(X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.Exportable, log, password).
+                OfType<X509Certificate2>().
+                ToList();
             
             // If we don't trip on the above, repeat the same 
             // with the actual flags that we want to use.
-            collection = certificate.AsCollection(flags, password).OfType<X509Certificate2>().ToList();
+            collection = certificate.AsCollection(flags, log, password).OfType<X509Certificate2>().ToList();
             var dotnet = collection.FirstOrDefault(x => x.HasPrivateKey);
             if (dotnet == null)
             {
@@ -215,6 +218,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 log.Debug("Close store {name}", store.Name);
                 store.Close();
             }
+            // Release native resources
+            dotnet.Dispose();
         }
 
         /// <summary>
