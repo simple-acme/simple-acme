@@ -12,22 +12,14 @@ while (!(Test-Path $bundle)) {
 Remove-Item $Final\* -recurse
 Decompress $Final $bundle
 
+# Gather build metadata
 $yaml = Get-Content -Path "$($Final)build.yml" -raw
-if ($yaml -match "releasetag: ([\S]+)") {
-    if (![string]::IsNullOrWhiteSpace($Matches[1])) {
-         Write-Host "Tag $($Matches[1]) detected"
-        $env:APPVEYOR_REPO_TAG_NAME = $Matches[1]
-    } else {
-        Write-Host "No tag detected 1"
-        exit
-    }
-} else {
-    Write-Host "No tag detected 2"
-    exit
-}
+$env:APPVEYOR_REPO_TAG_NAME = Get-YamlValue "releasetag" $yaml
+$env:APPVEYOR_BUILD_VERSION = Get-YamlValue "releasebuild" $yaml
+$env:APPVEYOR_REPO_COMMIT = Get-YamlValue "commit" $yaml
 
-.\06-prepare-release.ps1
-.\07-github.ps1
-.\08-nuget.ps1
-.\09-docs.ps1
-# .\10-chocolatey.ps1
+#.\06-prepare-release.ps1
+#.\07-github.ps1
+#.\08-nuget.ps1
+#.\09-docs.ps1
+.\10-chocolatey.ps1

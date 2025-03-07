@@ -39,6 +39,22 @@ function Get-FriendlySize {
     "{0:N$($N)} {1}" -f $Bytes, $sizes[$i]
 }
 
+function Get-YamlValue {
+	param($key, $yaml)
+	if ($yaml -match "$($key): ([\S]+)") {
+		if (![string]::IsNullOrWhiteSpace($Matches[1])) {
+			Write-Host "$key $($Matches[1]) detected"
+			return $Matches[1]
+		} else {
+			Write-Host "No $key detected 1"
+			exit
+		}
+	} else {
+		Write-Host "No $key detected 2"
+		exit
+	}
+}
+
 function Compress {
 	param($Dir, $Target)
 	Add-Type -Assembly "system.io.compression.filesystem"
