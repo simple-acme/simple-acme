@@ -5,6 +5,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dreamhost;
 using PKISharp.WACS.Services;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
@@ -19,16 +20,21 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         LookupClientProvider dnsClient,
         ILogService logService,
         ISettingsService settings,
+        IProxyService proxy,
         SecretServiceManager ssm,
-        DreamhostOptions options) : DnsValidation<DreamhostDnsValidation>(dnsClient, logService, settings)
+        DreamhostOptions options) : DnsValidation<DreamhostDnsValidation, DnsManagementClient>(dnsClient, logService, settings, proxy)
     {
-        private readonly DnsManagementClient _client = new(ssm.EvaluateSecret(options.ApiKey) ?? "", logService);
+        protected override async Task<DnsManagementClient> CreateClient(HttpClient httpClient)
+        {
+            return new(await ssm.EvaluateSecret(options.ApiKey) ?? "", _log, httpClient);
+        }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             try
             {
-                await _client.CreateRecord(record.Authority.Domain, RecordType.TXT, record.Value);
+                var client = await GetClient();
+                await client.CreateRecord(record.Authority.Domain, RecordType.TXT, record.Value);
                 return true;
             }
             catch (Exception ex)
@@ -42,7 +48,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             try
             {
-                await _client.DeleteRecord(record.Authority.Domain, RecordType.TXT, record.Value);
+                var client = await GetClient();
+                await client.DeleteRecord(record.Authority.Domain, RecordType.TXT, record.Value);
             }
             catch (Exception ex)
             {

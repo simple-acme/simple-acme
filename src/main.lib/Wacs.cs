@@ -19,6 +19,8 @@ namespace PKISharp.WACS.Host
         VersionService versionService,
         ArgumentsParser argumentsParser,
         RenewalCreator renewalCreator,
+        DomainParseService domainParseService,
+        SecretServiceManager secretServiceManager,
         RenewalManager renewalManager,
         Unattended unattended,
         IAutoRenewService taskSchedulerService,
@@ -107,6 +109,9 @@ namespace PKISharp.WACS.Host
                 return 0;
             }
 
+            // Initialize domain parser
+            await domainParseService.Initialize();
+
             // Base runlevel flags on command line arguments
             var unattendedRunLevel = RunLevel.Unattended;
             var interactiveRunLevel = RunLevel.Interactive;
@@ -173,6 +178,11 @@ namespace PKISharp.WACS.Host
                     else if (_args.SetupTaskScheduler)
                     {
                         await taskSchedulerService.SetupAutoRenew(unattendedRunLevel | RunLevel.ForceTaskScheduler);
+                        await CloseDefault();
+                    }
+                    else if (_args.VaultStore)
+                    {
+                        await secretServiceManager.StoreSecret(_args.VaultKey, _args.VaultSecret);
                         await CloseDefault();
                     }
                     else

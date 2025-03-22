@@ -37,6 +37,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         protected ISettingsService _settings = pars.Settings;
         protected Renewal _renewal = pars.Renewal;
         protected RunLevel _runLevel = runLevel;
+        protected ILogService _log = pars.LogService;
 
         /// <summary>
         /// Multiple http-01 validation challenges can be answered at the same time
@@ -119,7 +120,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         /// <param name="uri"></param>
         private async Task<string> WarmupSite(Http01ChallengeValidationDetails challenge)
         {
-            using var client = _proxy.GetHttpClient(false);
+            using var client = await _proxy.GetHttpClient(false);
             var response = await client.GetAsync(challenge.HttpResourceUrl);
             return await response.Content.ReadAsStringAsync();
         }

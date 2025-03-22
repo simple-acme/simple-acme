@@ -5,6 +5,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Models;
 using PKISharp.WACS.Services;
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
@@ -17,26 +18,30 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         External = true)]
     public class Hetzner(
         HetznerOptions options,
-        IProxyService proxyService,
+        IProxyService proxy,
         LookupClientProvider dnsClient,
         SecretServiceManager ssm,
         ILogService logService,
-        ISettingsService settings) : DnsValidation<Hetzner>(dnsClient, logService, settings), IDisposable
+        ISettingsService settings) : DnsValidation<Hetzner, HetznerClient>(dnsClient, logService, settings, proxy)
     {
-        private readonly HetznerClient _client = new(ssm.EvaluateSecret(options.ApiToken) ?? throw new InvalidOperationException("API Token cannot be null"), logService, proxyService);
+        protected override async Task<HetznerClient> CreateClient(HttpClient client)
+        {
+            return new HetznerClient(client, await ssm.EvaluateSecret(options.ApiToken) ?? throw new InvalidOperationException("API Token cannot be null"), _log);
+        }
 
         private async Task<Zone?> GetHostedZone(string recordName)
         {
+            var client = await GetClient();
             if (String.IsNullOrWhiteSpace(options.ZoneId) is false)
             {
                 _log.Debug("Using Zone Id specified by input arguments to get zone information.");
 
-                return await _client.GetZoneAsync(options.ZoneId).ConfigureAwait(false);
+                return await client.GetZoneAsync(options.ZoneId).ConfigureAwait(false);
             }
 
             _log.Debug($"Try getting best matching zone for record '{recordName}'.");
 
-            var zones = await _client.GetAllZonesAsync().ConfigureAwait(false);
+            var zones = await client.GetAllZonesAsync().ConfigureAwait(false);
             if (zones.Count == 0)
             {
                 _log.Error("No zones could be found using the Hetzner DNS API. " +
@@ -71,8 +76,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
             var host = record.Authority.Domain.Replace($".{zone.Name}", null);
             var txtRecord = new Record("TXT", host, record.Value, zone.Id);
-
-            return await _client.CreateRecordAsync(txtRecord).ConfigureAwait(false);
+            var client = await GetClient();
+            return await client.CreateRecordAsync(txtRecord).ConfigureAwait(false);
         }
 
         public override async Task DeleteRecord(DnsValidationRecord record)
@@ -91,19 +96,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
                 var host = record.Authority.Domain.Replace($".{zone.Name}", null);
                 var txtRecord = new Record("TXT", host, record.Value, zone.Id);
-
-                await _client.DeleteRecordAsync(txtRecord).ConfigureAwait(false);
+                var client = await GetClient();
+                await client.DeleteRecordAsync(txtRecord).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _log.Warning(ex, $"Unable to delete record from Hetzner DNS");
             }
-        }
-
-        public void Dispose()
-        {
-            _client.Dispose();
-            GC.SuppressFinalize(this);
         }
     }
 }

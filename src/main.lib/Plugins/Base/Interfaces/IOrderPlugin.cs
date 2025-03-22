@@ -5,6 +5,6 @@ namespace PKISharp.WACS.Plugins.Interfaces
 {
     public interface IOrderPlugin : IPlugin
     {
-        IEnumerable<Order> Split(Renewal renewal, Target target);
+        List<Order> Split(Renewal renewal, Target target);
     }
 }

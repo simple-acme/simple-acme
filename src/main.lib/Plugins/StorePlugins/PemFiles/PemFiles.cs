@@ -24,18 +24,26 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         private readonly ILogService _log;
         private readonly string _path;
         private readonly string? _name;
-        private readonly string? _password;
+
+        private readonly string? _passwordRaw;
+        private string? _passwordEvaluated;
+        private readonly SecretServiceManager _secretService;
+        private async Task<string?> GetPassword()
+        {
+            _passwordEvaluated ??= await _secretService.EvaluateSecret(_passwordRaw);
+            return _passwordEvaluated;
+        }
 
         public PemFiles(
-            ILogService log, ISettingsService settings,
-            PemFilesOptions options, SecretServiceManager secretServiceManager)
+            ILogService log,
+            ISettingsService settings,
+            PemFilesOptions options, 
+            SecretServiceManager secretServiceManager)
         {
             _log = log;
 
-            var passwordRaw = 
-                options.PemPassword?.Value ?? 
-                settings.Store.PemFiles.DefaultPassword;
-            _password = secretServiceManager.EvaluateSecret(passwordRaw);
+            _passwordRaw = options.PemPassword?.Value ?? settings.Store.PemFiles.DefaultPassword;
+            _secretService = secretServiceManager;
             _name = options.FileName;
             var path = options.Path;
             if (string.IsNullOrWhiteSpace(path))
@@ -88,7 +96,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 // Private key
                 if (input.PrivateKey != null)
                 {
-                    var pkPem = PemService.GetPem(input.PrivateKey, _password);
+                    var pkPem = PemService.GetPem(input.PrivateKey, await GetPassword());
                     if (!string.IsNullOrEmpty(pkPem))
                     {
                         await File.WriteAllTextAsync(Path.Combine(_path, $"{name}-key.pem"), pkPem);

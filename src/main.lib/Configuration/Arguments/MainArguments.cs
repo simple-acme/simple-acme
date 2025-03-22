@@ -110,6 +110,17 @@ namespace PKISharp.WACS.Configuration.Arguments
         [CommandLine(Description = "Specify which installation plugins to use (if any). This may be a comma-separated list.")]
         public string? Installation { get; set; }
 
+        // Vault manipulation
+
+        [CommandLine(Description = "Store a new value in the secret vault, or overwrite an existing one.")]
+        public bool VaultStore { get; set; }
+
+        [CommandLine(Description = "Key to target for vault commands. This should be in the format like vault://json/mysecret.")]
+        public string? VaultKey { get; set; }
+
+        [CommandLine(Description = "Secret to save in the vault.", Secret = true)]
+        public string? VaultSecret { get; set; }
+
         // Misc
 
         [CommandLine(Description = "[--test] Close the application when complete, which usually does not happen when test mode is active. Useful to test unattended operation.")]

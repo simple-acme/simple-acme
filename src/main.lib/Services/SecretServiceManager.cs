@@ -1,4 +1,6 @@
 ﻿using Autofac;
+using PKISharp.WACS.Configuration.Arguments;
+using PKISharp.WACS.Plugins.SecretPlugins;
 using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Collections.Generic;
@@ -11,7 +13,7 @@ namespace PKISharp.WACS.Services
         ILifetimeScope scope,
         IInputService input,
         IPluginService pluginService,
-        ILogService logService)
+        ILogService log)
     {
         private readonly List<ISecretService> _backends = pluginService.
                 GetSecretServices().
@@ -170,7 +172,7 @@ namespace PKISharp.WACS.Services
                     }
                 }
             }
-            backend.PutSecret(key, secret);
+            await backend.PutSecret(key, secret);
             return FormatKey(backend, key);
         }
 
@@ -207,14 +209,14 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public string? EvaluateSecret(ProtectedString? input) => EvaluateSecret(input?.Value);
+        public async Task<string?> EvaluateSecret(ProtectedString? input) => await EvaluateSecret(input?.Value);
 
         /// <summary>
         /// Try to interpret the secret input as a vault reference
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public string? EvaluateSecret(string? input)
+        public async Task<string?> EvaluateSecret(string? input)
         {
             if (input == null)
             {
@@ -233,7 +235,7 @@ namespace PKISharp.WACS.Services
                     if (remainingValue.StartsWith(providerKey))
                     {
                         var key = remainingValue[providerKey.Length..];
-                        return provider.GetSecret(key);
+                        return await provider.GetSecret(key);
                     }
                 }
             }
@@ -277,7 +279,7 @@ namespace PKISharp.WACS.Services
             var exit = false;
             while (!exit)
             {
-                var secret = backend.GetSecret(key);
+                var secret = await backend.GetSecret(key);
                 input.CreateSpace();
                 input.Show("Reference", key);
                 input.Show("Secret", "********");
@@ -309,7 +311,7 @@ namespace PKISharp.WACS.Services
         private Task DeleteSecret(ISecretService backend, string key)
         {
             backend.DeleteSecret(key);
-            logService.Warning($"Secret {key} deleted from {backend.Prefix} store");
+            log.Warning($"Secret {key} deleted from {backend.Prefix} store");
             return Task.CompletedTask;
         }
 
@@ -323,11 +325,11 @@ namespace PKISharp.WACS.Services
             var secret = await input.ReadPassword("Secret");
             if (!string.IsNullOrWhiteSpace(secret))
             {
-                backend.PutSecret(key, secret);
+                await backend.PutSecret(key, secret);
             }
             else
             {
-                logService.Warning("No input provided, update cancelled");
+                log.Warning("No input provided, update cancelled");
             }
         }
 
@@ -336,10 +338,47 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        private Task ShowSecret(ISecretService backend, string key) {
-            var secret = backend.GetSecret(key);
+        private async Task ShowSecret(ISecretService backend, string key) {
+            var secret = await backend.GetSecret(key);
             input.Show("Secret", secret);
-            return Task.CompletedTask;
         }
-    }
+
+        /// <summary>
+        /// Store a secret directly into a vault
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public async Task StoreSecret(string? uri, string? value)
+        {
+            if (uri == null)
+            {
+                log.Error("Argument --{VaultKey} not specified, schould", nameof(MainArguments.VaultKey).ToLower());
+                return;
+            }
+            if (value == null)
+            {
+                log.Error("Argument --{VaultSecret} not specified", nameof(MainArguments.VaultSecret).ToLower());
+                return;
+            }
+            if (!uri.StartsWith(VaultPrefix))
+            {
+                log.Error("Argument --{VaultKey} should start with {VaultPrefix}", nameof(MainArguments.VaultKey).ToLower(), VaultPrefix);
+                return;
+            }
+            var remainingValue = uri[VaultPrefix.Length..];
+            var backendKey = remainingValue.Split('/').First();
+            var backend = GetBackend(backendKey);
+            if (backend == null)
+            {
+                log.Error("Vault backend {backendKey} is not known. Default is json, other values require plugins", backendKey);
+                return;
+            }
+            var key = remainingValue[(backend.Prefix.Length + 1)..];
+            await backend.PutSecret(key, value);
+            log.Information("Vault secret {key} succesfully stored in backend {json}", key, backendKey);
+        }
+
+        private ISecretService? GetBackend(string key) => _backends.FirstOrDefault(b => string.Equals(b.Prefix, key));
+    } 
 }

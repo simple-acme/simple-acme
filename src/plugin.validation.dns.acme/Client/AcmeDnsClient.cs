@@ -194,7 +194,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         private async Task<RegisterResponse?> Register()
         {
-            using var client = Client();
+            using var client = await Client();
             try
             {
                 var response = await client.PostAsync($"register", new StringContent(""));
@@ -224,7 +224,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 _log.Warning("Registration for domain {domain} appears invalid", domain);
             }
-            using var client = Client();
+            using var client = await Client();
             client.DefaultRequestHeaders.Add("X-Api-User", reg.UserName);
             client.DefaultRequestHeaders.Add("X-Api-Key", reg.Password);
             var request = new UpdateRequest()
@@ -254,9 +254,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// Construct common WebClient
         /// </summary>
         /// <returns></returns>
-        private HttpClient Client()
+        private async Task<HttpClient> Client()
         {
-            var httpClient = _proxy.GetHttpClient();
+            var httpClient = await _proxy.GetHttpClient();
             var uri = _baseUri;
             httpClient.BaseAddress = uri;
             if (uri.UserInfo != null)

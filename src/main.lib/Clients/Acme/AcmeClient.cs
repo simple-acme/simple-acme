@@ -9,6 +9,7 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Clients.Acme
@@ -44,16 +45,15 @@ namespace PKISharp.WACS.Clients.Acme
         public Account Account { get; private set; }
 
         public AcmeClient(
+            HttpClient httpClient,
             ILogService log,
             IAcmeLogger acmeLogger,
             ISettingsService settings,
-            IProxyService proxy,
             ServiceDirectory directory,
             Account account)
         {
             _log = log;
             _settings = settings;
-            var httpClient = proxy.GetHttpClient(settings.Acme.ValidateServerCertificate != false);
             httpClient.BaseAddress = settings.BaseUri;
             _client = new AcmeProtocolClient(httpClient, acmeLogger, usePostAsGet: _settings.Acme.PostAsGet)
             {

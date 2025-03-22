@@ -27,7 +27,7 @@ namespace PKISharp.WACS.UnitTests.Tests.SecretServiceTests
         public void Direct()
         {
             var secondSecret = _container!.Resolve<Real.ISecretService>();
-            var restoredSecret = secondSecret.GetSecret(theKey);
+            var restoredSecret = secondSecret.GetSecret(theKey).Result;
             Assert.AreEqual(theSecret, restoredSecret);
         }
 
@@ -36,7 +36,7 @@ namespace PKISharp.WACS.UnitTests.Tests.SecretServiceTests
         {
             var secretService = _container!.Resolve<Real.ISecretService>();
             var manager = _container!.Resolve<Real.SecretServiceManager>();
-            var restoredSecret = manager.EvaluateSecret($"{SecretServiceManager.VaultPrefix}{secretService.Prefix}/{theKey}");
+            var restoredSecret = manager.EvaluateSecret($"{SecretServiceManager.VaultPrefix}{secretService.Prefix}/{theKey}").Result;
             Assert.AreEqual(theSecret, restoredSecret);
         }
 
@@ -54,7 +54,7 @@ namespace PKISharp.WACS.UnitTests.Tests.SecretServiceTests
                 null,
                 info, 
                 null, 
-                false);
+                false).Result;
             Assert.AreEqual(theSecret, output);
 
             var outputCensor = scriptInstaller.ReplaceParameters(
@@ -62,7 +62,7 @@ namespace PKISharp.WACS.UnitTests.Tests.SecretServiceTests
                 null,
                 info,
                 null,
-                true);
+                true).Result;
             Assert.AreEqual(placeholder, outputCensor);
         }
     }

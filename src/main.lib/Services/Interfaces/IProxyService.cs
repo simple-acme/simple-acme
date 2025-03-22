@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http;
 using System.Security.Authentication;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
@@ -8,9 +9,9 @@ namespace PKISharp.WACS.Services
     {
         SslProtocols SslProtocols { get; set; }
         WindowsProxyUsePolicy ProxyType { get; }
-        HttpMessageHandler GetHttpMessageHandler();
-        HttpClient GetHttpClient(bool checkSsl = true);
-        IWebProxy? GetWebProxy();
+        Task<HttpMessageHandler> GetHttpMessageHandler();
+        Task<HttpClient> GetHttpClient(bool checkSsl = true);
+        Task<IWebProxy?> GetWebProxy();
         void Disable();
     }
 }

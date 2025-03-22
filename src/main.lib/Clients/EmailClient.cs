@@ -32,6 +32,7 @@ namespace PKISharp.WACS.Clients
         private readonly string _computerName;
         private readonly string _version;
         private readonly IEnumerable<string> _receiverAddresses;
+        private readonly SecretServiceManager _secretService;
 
         public EmailClient(
             ILogService log, 
@@ -43,11 +44,13 @@ namespace PKISharp.WACS.Clients
             _server = _settings.Notification.SmtpServer;
             _port = _settings.Notification.SmtpPort;
             _user = _settings.Notification.SmtpUser;
-            _password = secretService.EvaluateSecret(_settings.Notification.SmtpPassword);
+            _password = _settings.Notification.SmtpPassword;
             _secure = _settings.Notification.SmtpSecure;
             _secureMode = _settings.Notification.SmtpSecureMode;
             _senderName = _settings.Notification.SenderName;
             _computerName = _settings.Notification.ComputerName;
+            _secretService = secretService;
+
             if (string.IsNullOrEmpty(_computerName)) {
                 _computerName = Environment.MachineName;
             }
@@ -110,7 +113,8 @@ namespace PKISharp.WACS.Clients
                 await client.ConnectAsync(_server, _port, options);
                 if (!string.IsNullOrEmpty(_user))
                 {
-                    await client.AuthenticateAsync(new NetworkCredential(_user, _password));
+                    var evaluatedPassword = await _secretService.EvaluateSecret(_password);
+                    await client.AuthenticateAsync(new NetworkCredential(_user, evaluatedPassword));
                 }
                 foreach (var receiverAddress in _receiverAddresses)
                 {

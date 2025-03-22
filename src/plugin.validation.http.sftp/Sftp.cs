@@ -2,6 +2,7 @@
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
@@ -11,43 +12,52 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         HttpValidationCapability, SftpJson, SftpArguments>   
         ("048aa2e7-2bce-4d3e-b731-6e0ed8b8170d",
         "SFTP", "Upload verification files via SSH-FTP")]
-    public class Sftp : HttpValidation<SftpOptions>
+    public class Sftp(
+        SftpOptions options,
+        HttpValidationParameters pars,
+        RunLevel runLevel,
+        SecretServiceManager secretService) : HttpValidation<SftpOptions>(options, runLevel, pars)
     {
-        private readonly SshFtpClient _sshFtpClient;
-
-        public Sftp(
-            SftpOptions options,
-            HttpValidationParameters pars,
-            RunLevel runLevel,
-            SecretServiceManager secretService) :
-            base(options, runLevel, pars) =>
-            _sshFtpClient = new SshFtpClient(
-                _options.Credential?.GetCredential(secretService),
-                pars.LogService);
+        private SshFtpClient? _sshFtpClient;
+        private async Task<SshFtpClient> GetClient()
+        {
+            if (_sshFtpClient != null)
+            {
+                return _sshFtpClient;
+            }
+            var credential = default(NetworkCredential);
+            if (_options.Credential != null)
+            {
+                credential = await _options.Credential.GetCredential(secretService);
+            }
+            _sshFtpClient = new SshFtpClient(credential, _log);
+            return _sshFtpClient;
+        }
 
         protected override char PathSeparator => '/';
 
-        protected override Task DeleteFile(string path)
+        protected override async Task DeleteFile(string path)
         {
-            _sshFtpClient.Delete(path, SshFtpClient.FileType.File);
-            return Task.CompletedTask;
+            var client = await GetClient();
+            client.Delete(path, SshFtpClient.FileType.File);
         } 
 
-        protected override Task DeleteFolder(string path)
+        protected override async Task DeleteFolder(string path)
         {
-            _sshFtpClient.Delete(path, SshFtpClient.FileType.Directory);
-            return Task.CompletedTask;
+            var client = await GetClient();
+            client.Delete(path, SshFtpClient.FileType.Directory);
         }
 
-        protected override Task<bool> IsEmpty(string path)
+        protected override async Task<bool> IsEmpty(string path)
         {
-            return Task.FromResult(_sshFtpClient.GetFiles(path).Length == 0);
+            var client = await GetClient();
+            return client.GetFiles(path).Length == 0;
         }
 
-        protected override Task WriteFile(string path, string content)
+        protected override async Task WriteFile(string path, string content)
         {
-            _sshFtpClient.Upload(path, content);
-            return Task.CompletedTask;
+            var client = await GetClient();
+            client.Upload(path, content);
         }
     }
 }

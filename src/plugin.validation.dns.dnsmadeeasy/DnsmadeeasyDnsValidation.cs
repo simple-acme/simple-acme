@@ -5,6 +5,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy;
 using PKISharp.WACS.Services;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
@@ -23,20 +24,24 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         DomainParseService domainParser,
         DnsMadeEasyOptions options,
         SecretServiceManager ssm,
-        IProxyService proxyService) : DnsValidation<DnsMadeEasyDnsValidation>(dnsClient, logService, settings)
+        IProxyService proxyService) : DnsValidation<DnsMadeEasyDnsValidation, DnsManagementClient>(dnsClient, logService, settings, proxyService)
     {
-        private readonly DnsManagementClient _client = new(
-                ssm.EvaluateSecret(options.ApiKey) ?? "",
-                ssm.EvaluateSecret(options.ApiSecret) ?? "",
-                proxyService);
+        protected override async Task<DnsManagementClient> CreateClient(HttpClient client)
+        {
+            return new(
+                await ssm.EvaluateSecret(options.ApiKey) ?? "",
+                await ssm.EvaluateSecret(options.ApiSecret) ?? "",
+                client);
+        }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             try
             {
+                var client = await GetClient();
                 var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
-                await _client.CreateRecord(domain, recordName, RecordType.TXT, record.Value);
+                await client.CreateRecord(domain, recordName, RecordType.TXT, record.Value);
                 return true;
             }
             catch (Exception ex)
@@ -50,9 +55,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             try
             {
+                var client = await GetClient();
                 var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
-                await _client.DeleteRecord(domain, recordName, RecordType.TXT);
+                await client.DeleteRecord(domain, recordName, RecordType.TXT);
             }
             catch (Exception ex)
             {

@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         IProxyService proxyService) : DnsValidation<DnsExitDnsValidation>(dnsClient, logService, settings)
     {
         private readonly DnsManagementClient _client = new(
-                ssm.EvaluateSecret(options.ApiKey) ?? "",
+                ssm.EvaluateSecret(options.ApiKey).Result ?? "",
                 logService, proxyService);
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)

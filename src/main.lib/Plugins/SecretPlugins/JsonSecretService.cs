@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.SecretPlugins
 {
@@ -72,21 +73,15 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
         /// </summary>
         /// <param name="identifier"></param>
         /// <returns></returns>
-        public string? GetSecret(string? identifier)
-        { 
-            if (string.IsNullOrWhiteSpace(identifier))
-            {
-                return identifier;
-            }
-            return _secrets.FirstOrDefault(x => string.Equals(x.Key, identifier, StringComparison.OrdinalIgnoreCase))?.Secret?.Value ?? identifier;
-        }
+        public Task<string?> GetSecret(string? identifier) => 
+            Task.FromResult(_secrets.FirstOrDefault(x => string.Equals(x.Key, identifier, StringComparison.OrdinalIgnoreCase))?.Secret?.Value);
 
         /// <summary>
         /// Add or overwrite secret, return the key to store
         /// </summary>
         /// <param name="identifier"></param>
         /// <param name="secret"></param>
-        public void PutSecret(string identifier, string secret)
+        public async Task PutSecret(string identifier, string secret)
         {
             var existing = _secrets.FirstOrDefault(x => x.Key == identifier);
             if (existing != null)
@@ -101,13 +96,13 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
                     Secret = new ProtectedString(secret)
                 });
             }
-            Save();
+            await Save();
         }
 
         /// <summary>
         /// Save files back to JSON
         /// </summary>
-        private void Save()
+        private async Task Save()
         {
             var options = new JsonSerializerOptions();
             options.Converters.Add(new ProtectedStringConverter(_log, _settings));
@@ -118,13 +113,13 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
             {
                 if (_file.Exists)
                 {
-                    File.WriteAllText(_file.FullName + ".new", newData);
+                    await File.WriteAllTextAsync(_file.FullName + ".new", newData);
                     File.Replace(_file.FullName + ".new", _file.FullName, _file.FullName + ".previous", true);
                     File.Delete(_file.FullName + ".previous");
                 }
                 else
                 {
-                    File.WriteAllText(_file.FullName, newData);
+                    await File.WriteAllTextAsync(_file.FullName, newData);
                 }
             }
         }
@@ -135,17 +130,17 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
                 Where(x => !string.IsNullOrEmpty(x)).
                 OfType<string>();
 
-        public void DeleteSecret(string key)
+        public async Task DeleteSecret(string key)
         {
             var item = _secrets.Where(x => x.Key == key).FirstOrDefault();
             if (item != null)
             {
                 _ = _secrets.Remove(item);
-                Save();
+                await Save();
             }
         }
 
-        public void Encrypt() => Save();
+        public async Task Encrypt() => await Save();
 
         /// <summary>
         /// Interal data storage format

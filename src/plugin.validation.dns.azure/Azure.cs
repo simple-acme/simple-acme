@@ -11,6 +11,7 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -32,11 +33,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         SecretServiceManager ssm,
         IProxyService proxyService,
         ILogService log,
-        ISettingsService settings) : DnsValidation<Azure>(dnsClient, log, settings)
+        ISettingsService settings) : DnsValidation<Azure, ArmClient>(dnsClient, log, settings, proxyService)
     {
-        private ArmClient? _armClient;
         private SubscriptionResource? _subscriptionResource;
-        private readonly AzureHelpers _helpers = new(options, proxyService, ssm);
+        private readonly AzureHelpers _helpers = new(options, ssm);
         private readonly Dictionary<DnsZoneResource, Dictionary<string, DnsTxtRecordData>> _recordSets = [];
         private IEnumerable<DnsZoneResource>? _hostedZones;
 
@@ -162,16 +162,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
         }
 
-        private ArmClient Client
+        protected override async Task<ArmClient> CreateClient(HttpClient client)
         {
-            get
-            {
-                _armClient ??= new ArmClient(
-                        _helpers.TokenCredential,
-                        options.SubscriptionId,
-                        _helpers.ArmOptions);
-                return _armClient;
-            }
+            return new ArmClient(
+                await _helpers.GetTokenCredential(),
+                options.SubscriptionId,
+                _helpers.ArmOptions(client));
         }
 
         /// <summary>
@@ -180,7 +176,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <returns></returns>
         private async Task<SubscriptionResource> Subscription()
         {
-            _subscriptionResource ??= await Client.GetDefaultSubscriptionAsync();
+            var client = await GetClient();
+            _subscriptionResource ??= await client.GetDefaultSubscriptionAsync();
             if (_subscriptionResource == null)
             {
                 throw new Exception($"Unable to find subscription {options.SubscriptionId ?? "default"}");

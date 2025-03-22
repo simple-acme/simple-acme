@@ -26,23 +26,23 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         SecretServiceManager ssm,
         ILogService log,
-        ISettingsService settings) : DnsValidation<Cloudflare>(dnsClient, log, settings), IDisposable
+        ISettingsService settings) : DnsValidation<Cloudflare, IAuthorizedSyntax>(dnsClient, log, settings, proxyService)
     {
-        private readonly HttpClient _hc = proxyService.GetHttpClient();
-
-        private IAuthorizedSyntax GetContext() =>
-            // avoid name collision with this class
-            FluentCloudflare.Cloudflare.WithToken(ssm.EvaluateSecret(options.ApiToken));
+        protected override async Task<IAuthorizedSyntax> CreateClient(HttpClient client)
+        {
+            return FluentCloudflare.Cloudflare.WithToken(await ssm.EvaluateSecret(options.ApiToken));
+        }         
 
         private async Task<Zone> GetHostedZone(IAuthorizedSyntax context, string recordName)
         {
             var page = 0;
             var allZones = new List<Zone>();
             var totalCount = int.MaxValue;
+            var http = await GetHttpClient();
             while (allZones.Count < totalCount)
             {
                 page++;
-                var zonesResp = await context.Zones.List().PerPage(50).Page(page).ParseAsync(_hc).ConfigureAwait(false);
+                var zonesResp = await context.Zones.List().PerPage(50).Page(page).ParseAsync(http).ConfigureAwait(false);
                 if (!zonesResp.Success || zonesResp.ResultInfo.Count == 0)
                 {
                     break;
@@ -69,7 +69,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
-            var ctx = GetContext();
+            var ctx = await GetClient();
+            var hc = await GetHttpClient();
             var zone = await GetHostedZone(ctx, record.Authority.Domain).ConfigureAwait(false);
             if (zone == null)
             {
@@ -83,13 +84,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             var dns = ctx.Zone(zone).Dns;
             _ = await dns.Create(DnsRecordType.TXT, record.Authority.Domain, record.Value)
                 .Ttl(60)
-                .CallAsync(_hc)
+                .CallAsync(hc)
                 .ConfigureAwait(false);
             return true;
         }
 
         private async Task DeleteRecord(string recordName, string token, IAuthorizedSyntax context, Zone zone)
         {
+            var hc = await GetHttpClient();
             var dns = context.Zone(zone).Dns;
             var records = await dns
                 .List()
@@ -97,7 +99,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 .WithName(recordName)
                 .WithContent(token)
                 .Match(MatchType.All)
-                .CallAsync(_hc)
+                .CallAsync(hc)
                 .ConfigureAwait(false);
             var record = records.FirstOrDefault();
             if (record == null)
@@ -109,7 +111,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             try
             {
                 _ = await dns.Delete(record.Id)
-                    .CallAsync(_hc)
+                    .CallAsync(hc)
                     .ConfigureAwait(false);
             } 
             catch (Exception ex)
@@ -121,15 +123,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
-            var ctx = GetContext();
+            var ctx = await GetClient();
             var zone = await GetHostedZone(ctx, record.Authority.Domain).ConfigureAwait(false);
             await DeleteRecord(record.Authority.Domain, record.Value, ctx, zone);
-        }
-
-        public void Dispose()
-        {
-            _hc.Dispose();
-            GC.SuppressFinalize(this);
         }
     }
 }

@@ -6,34 +6,37 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using WebDav;
 
 namespace PKISharp.WACS.Client
 {
-    internal class WebDavClientWrapper : IDisposable
+    internal class WebDavClientWrapper(
+        NetworkCredentialOptions? options,
+        ILogService log,
+        IProxyService proxy,
+        SecretServiceManager secretService) : IDisposable
     {
-        private readonly NetworkCredential? _credential;
-        private readonly ILogService _log;
-        private readonly IProxyService _proxy;
-        private readonly WebDavClient _client;
-        public WebDavClientWrapper(
-            NetworkCredentialOptions? options, 
-            ILogService log, 
-            IProxyService proxy, 
-            SecretServiceManager secretService)
+        private WebDavClient? _client;
+        private async Task<WebDavClient> GetWebDavClientAsync()
         {
-            _log = log;
+            if (_client != null)
+            {
+                return _client;
+            }
+            var credential = default(NetworkCredential);
             if (options != null && options.UserName != null)
             {
-                _credential = options.GetCredential(secretService);
+                credential = await options.GetCredential(secretService);
             }
-            _proxy = proxy;
-            _client = new WebDavClient(new WebDavClientParams()
+            var temp = new WebDavClient(new WebDavClientParams()
             {
-                Proxy = _proxy.GetWebProxy(),
-                UseDefaultCredentials = _proxy.ProxyType == WindowsProxyUsePolicy.UseWinInetProxy,
-                Credentials = _credential
+                Proxy = await proxy.GetWebProxy(),
+                UseDefaultCredentials = proxy.ProxyType == WindowsProxyUsePolicy.UseWinInetProxy,
+                Credentials = credential
             });
+            _client = temp;
+            return _client;
         }
 
         private static string NormalizePath(string path)
@@ -45,10 +48,11 @@ namespace PKISharp.WACS.Client
                 Replace("\\", "/");
         }
 
-        public void Upload(string originalPath, string content)
+        public async Task Upload(string originalPath, string content)
         {
             try
             {
+                var client = await GetWebDavClientAsync();
                 var path = NormalizePath(originalPath);
                 var uri = new Uri(path);
                 var stream = new MemoryStream();
@@ -61,9 +65,9 @@ namespace PKISharp.WACS.Client
                 for (var i = 0; i < directories.Length - 1; i++)
                 {
                     currentPath += $"/{directories[i]}";
-                    if (!FolderExists(currentPath))
+                    if (!await FolderExists(currentPath))
                     {
-                        var dirCreated = _client.Mkcol(currentPath).Result;
+                        var dirCreated = await client.Mkcol(currentPath);
                         if (!dirCreated.IsSuccessful)
                         {
                             throw new Exception($"path {currentPath} - {dirCreated.StatusCode} ({dirCreated.Description})");
@@ -72,7 +76,7 @@ namespace PKISharp.WACS.Client
                 }
                 // Upload file
                 currentPath += $"/{directories[^1]}";
-                var fileUploaded = _client.PutFile(currentPath, stream).Result;
+                var fileUploaded = await client.PutFile(currentPath, stream);
                 if (!fileUploaded.IsSuccessful)
                 {
                     throw new Exception($"{fileUploaded.StatusCode} ({fileUploaded.Description})");
@@ -80,44 +84,48 @@ namespace PKISharp.WACS.Client
             }
             catch (Exception ex)
             {
-                _log.Error("Error uploading file {path} {Message}", originalPath, ex.Message);
+                log.Error("Error uploading file {path} {Message}", originalPath, ex.Message);
                 throw;
             }
         }
 
-        private bool FolderExists(string path)
+        private async Task<bool> FolderExists(string path)
         {
-            var exists = _client.Propfind(path).Result;
+            var client = await GetWebDavClientAsync();
+            var exists = await client.Propfind(path);
             return exists.IsSuccessful &&
                 exists.Resources.Count != 0 &&
                 exists.Resources.First().IsCollection;
         }
 
-        internal bool IsEmpty(string path)
+        internal async Task<bool> IsEmpty(string path)
         {
-            var exists = _client.Propfind(path).Result;
+            var client = await GetWebDavClientAsync();
+            var exists = await client.Propfind(path);
             return exists.IsSuccessful && exists.Resources.Count == 0;
         }
 
-        public void Delete(string path)
+        public async Task Delete(string path)
         {
+            var client = await GetWebDavClientAsync();
             path = NormalizePath(path);
             try
             {
-                var x = _client.Delete(path).Result;
+                var x = client.Delete(path);
             }
             catch (Exception ex)
             {
-                _log.Warning(ex, "Error deleting file/folder {path}", path);
+                log.Warning(ex, "Error deleting file/folder {path}", path);
             }
         }
 
-        public IEnumerable<string> GetFiles(string path)
+        public async Task<IEnumerable<string>> GetFiles(string path)
         {
             try
             {
+                var client = await GetWebDavClientAsync();
                 path = NormalizePath(path);
-                var folderFiles = _client.Propfind(path).Result;
+                var folderFiles = await client.Propfind(path);
                 if (folderFiles.IsSuccessful)
                 {
                     return folderFiles.Resources.Select(r => r.DisplayName);
@@ -125,7 +133,7 @@ namespace PKISharp.WACS.Client
             }
             catch (Exception ex)
             {
-                _log.Verbose("WebDav error {@ex}", ex);
+                log.Verbose("WebDav error {@ex}", ex);
             }
             return [];
         }

@@ -28,29 +28,26 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 proxy, 
                 secretService);
 
-        protected override Task DeleteFile(string path) 
+        protected override async Task DeleteFile(string path) 
         { 
-            _webdavClient.Delete(path); 
-            return Task.CompletedTask; 
+            await _webdavClient.Delete(path);
         }
 
-        protected override Task DeleteFolder(string path)
+        protected override async Task DeleteFolder(string path)
         {
-            _webdavClient.Delete(path);
-            return Task.CompletedTask;
+            await _webdavClient.Delete(path);
         }
 
-        protected override Task<bool> IsEmpty(string path)
+        protected override async Task<bool> IsEmpty(string path)
         {
-            return Task.FromResult(_webdavClient.IsEmpty(path));
+            return await _webdavClient.IsEmpty(path);
         }
 
         protected override char PathSeparator => '/';
 
-        protected override Task WriteFile(string path, string content)
+        protected override async Task WriteFile(string path, string content)
         {
-            _webdavClient.Upload(path, content);
-            return Task.CompletedTask;
+            await _webdavClient.Upload(path, content);
         }
 
         public override async Task CleanUp()

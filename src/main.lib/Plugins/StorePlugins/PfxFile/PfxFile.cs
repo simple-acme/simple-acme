@@ -24,8 +24,16 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         private readonly ILogService _log;
         private readonly string _path;
         private readonly string? _name;
-        private readonly string? _password;
         private readonly string? _protectionMode;
+
+        private readonly string? _passwordRaw;
+        private string? _passwordEvaluated;
+        private readonly SecretServiceManager _secretService;
+        private async Task<string?> GetPassword()
+        {
+            _passwordEvaluated ??= await _secretService.EvaluateSecret(_passwordRaw);
+            return _passwordEvaluated;
+        }
 
         public static string? DefaultPath(ISettingsService settings) => 
             settings.Store.PfxFile?.DefaultPath;
@@ -41,10 +49,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         {
             _log = log;
 
-            var passwordRaw = 
-                options.PfxPassword?.Value ?? 
-                settings.Store.PfxFile?.DefaultPassword;
-            _password = secretServiceManager.EvaluateSecret(passwordRaw);
+            _passwordRaw = options.PfxPassword?.Value ?? settings.Store.PfxFile?.DefaultPassword;
+            _secretService = secretServiceManager;
             _name = options.FileName;
             _protectionMode = settings.Store.PfxFile?.DefaultProtectionMode;
 
@@ -110,7 +116,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 var dest = PathForIdentifier(_name ?? input.CommonName?.Value ?? input.SanNames.First().Value);
                 var outInfo = new CertificateInfo(output);
                 _log.Information("Copying certificate to the pfx folder {dest}", dest);
-                await outInfo.PfxSave(dest, _password);
+                await outInfo.PfxSave(dest, await GetPassword());
             }
             catch (Exception ex)
             {

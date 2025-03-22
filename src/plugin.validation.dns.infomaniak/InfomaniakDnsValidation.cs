@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns;
@@ -22,22 +23,26 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 internal class InfomaniakDnsValidation(
     LookupClientProvider dnsClient,
     ILogService logService,
+    IProxyService proxy,
     ISettingsService settings,
     DomainParseService domainParser,
     InfomaniakOptions options,
-    SecretServiceManager ssm,
-    IProxyService proxyService) : DnsValidation<InfomaniakDnsValidation>(dnsClient, logService, settings)
+    SecretServiceManager ssm) : DnsValidation<InfomaniakDnsValidation, InfomaniakClient>(dnsClient, logService, settings, proxy)
 {
-    private readonly InfomaniakClient _client = new(ssm.EvaluateSecret(options.ApiToken) ?? "", logService, proxyService);
     private readonly Dictionary<string, int> _domainIds = [];
     private readonly ConcurrentDictionary<int, List<int>> _recordIds = new();
 
+    protected override async Task<InfomaniakClient> CreateClient(HttpClient client)
+    {
+        return new(await ssm.EvaluateSecret(options.ApiToken) ?? "", _log, client);
+    }
     public override async Task<bool> CreateRecord(DnsValidationRecord record)
     {
         try
         {
+            var client = await GetClient();
             var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
-            var domainId = await _client.GetDomainId(domain);
+            var domainId = await client.GetDomainId(domain);
             if (domainId == 0)
             {
                 throw new InvalidDataException("Infomaniak did not return a valid domain id.");
@@ -45,7 +50,7 @@ internal class InfomaniakDnsValidation(
             _ = _domainIds.TryAdd(record.Authority.Domain, domainId);
 
             var recordName = RelativeRecordName(domain, record.Authority.Domain);
-            var recordId = await _client.CreateRecord(domainId, recordName, record.Value);
+            var recordId = await client.CreateRecord(domainId, recordName, record.Value);
             if (recordId == 0)
             {
                 throw new InvalidDataException("Infomaniak did not return a valid domain record id.");
@@ -65,13 +70,15 @@ internal class InfomaniakDnsValidation(
 
     public override async Task DeleteRecord(DnsValidationRecord record)
     {
-        if (_domainIds.TryGetValue(record.Authority.Domain, out var domainId) && _recordIds.TryGetValue(domainId, out var recordIds))
+        var client = await GetClient();
+        if (_domainIds.TryGetValue(record.Authority.Domain, out var domainId) && 
+            _recordIds.TryGetValue(domainId, out var recordIds))
         {
             foreach (var recordId in recordIds)
             {
                 try
                 {
-                    await _client.DeleteRecord(domainId, recordId);
+                    await client.DeleteRecord(domainId, recordId);
                 }
                 catch (Exception ex)
                 {

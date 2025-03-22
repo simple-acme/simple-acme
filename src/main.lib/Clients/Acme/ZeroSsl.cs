@@ -14,8 +14,6 @@ namespace PKISharp.WACS.Clients.Acme
     /// </summary>
     internal class ZeroSsl(IProxyService proxy, ILogService log)
     {
-        private readonly HttpClient _httpClient = proxy.GetHttpClient();
-
         /// <summary>
         /// Register new account using email address
         /// </summary>
@@ -29,7 +27,8 @@ namespace PKISharp.WACS.Clients.Acme
             ]);
             try
             {
-                var response = await _httpClient.PostAsync("https://api.zerossl.com/acme/eab-credentials-email", formContent);
+                var httpClient = await proxy.GetHttpClient();
+                var response = await httpClient.PostAsync("https://api.zerossl.com/acme/eab-credentials-email", formContent);
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -72,7 +71,8 @@ namespace PKISharp.WACS.Clients.Acme
         {
             try
             {
-                var response = await _httpClient.PostAsync($"https://api.zerossl.com/acme/eab-credentials?access_key={accessKey}", new StringContent(""));
+                var httpClient = await proxy.GetHttpClient();
+                var response = await httpClient.PostAsync($"https://api.zerossl.com/acme/eab-credentials?access_key={accessKey}", new StringContent(""));
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();

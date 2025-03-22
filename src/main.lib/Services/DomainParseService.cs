@@ -12,12 +12,14 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    public class DomainParseService
+    public class DomainParseService(ILogService log, IProxyService proxy, ISettingsService settings)
     {
-        private readonly DomainParser _parser;
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-        private readonly IProxyService _proxy;
+        private DomainParser? _parser;
+        private readonly ILogService _log = log;
+        private readonly ISettingsService _settings = settings;
+        private readonly IProxyService _proxy = proxy;
+
+        public async Task Initialize() => _parser ??= await CreateParser();
 
         private async Task<DomainParser> CreateParser()
         {
@@ -54,20 +56,21 @@ namespace PKISharp.WACS.Services
             if (provider == null)
             {
                 throw new Exception("Public suffix list unavailable");
-            } 
+            }
             return new DomainParser(provider);
         }
 
-        public DomainParseService(ILogService log, IProxyService proxy, ISettingsService settings)
+        private DomainInfo? GetParseResult(string fulldomain)
         {
-            _log = log;
-            _settings = settings;
-            _proxy = proxy;
-            _parser = CreateParser().Result;
+            if (_parser == null)
+            {
+                throw new InvalidOperationException("DomainParseService is not initialized");
+            }
+            return _parser.Parse(fulldomain);
         }
 
-        public string GetTLD(string fulldomain) => _parser.Parse(fulldomain)?.TopLevelDomain ?? throw new Exception($"Unable to parse domain {fulldomain}");
-        public string GetRegisterableDomain(string fulldomain) => _parser.Parse(fulldomain)?.RegistrableDomain ?? throw new Exception($"Unable to parse domain {fulldomain}");
+        public string GetTLD(string fulldomain) => GetParseResult(fulldomain)?.TopLevelDomain ?? fulldomain;
+        public string GetRegisterableDomain(string fulldomain) => GetParseResult(fulldomain)?.RegistrableDomain ?? fulldomain;
 
         /// <summary>
         /// Regular 30 day file cache in the configuration folder
@@ -166,7 +169,7 @@ namespace PKISharp.WACS.Services
 
             public async Task<string> LoadFromUrl(string url)
             {
-                using var httpClient = proxy.GetHttpClient();
+                using var httpClient = await proxy.GetHttpClient();
                 using var response = await httpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode)
                 {

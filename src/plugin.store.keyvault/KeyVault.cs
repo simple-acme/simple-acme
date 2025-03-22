@@ -21,17 +21,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         Name = "Azure Key Vault", External = true, Provider = "Microsoft")]
     internal class KeyVault(KeyVaultOptions options, SecretServiceManager ssm, IProxyService proxyService, ILogService log) : IStorePlugin
     {
-        private readonly AzureHelpers _helpers = new(options, proxyService, ssm);
+        private readonly AzureHelpers _helpers = new(options, ssm);
 
         public Task Delete(ICertificateInfo certificateInfo) => Task.CompletedTask;
 
         public async Task<StoreInfo?> Save(ICertificateInfo certificateInfo)
         {
+            var token = await _helpers.GetTokenCredential();
+            var httpClient = await proxyService.GetHttpClient();
+            var armOptions = _helpers.ArmOptions(httpClient);
             var client = new CertificateClient(
                 new Uri($"https://{options.VaultName}.vault.azure.net/"),
-                _helpers.TokenCredential,
+                token,
                 new CertificateClientOptions() {
-                    Transport = _helpers.ArmOptions.Transport
+                    Transport = armOptions.Transport
                 });
             var importOptions = new ImportCertificateOptions(
                 options.CertificateName,

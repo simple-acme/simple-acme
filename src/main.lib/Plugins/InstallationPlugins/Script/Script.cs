@@ -31,20 +31,21 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                 {
                     defaultStoreInfo = storeInfo.First().Value;
                 }
-                var parameters = ReplaceParameters(options.ScriptParameters ?? "", defaultStoreInfo, newCertificate, oldCertificate, false);
-                var censoredParameters = ReplaceParameters(options.ScriptParameters ?? "", defaultStoreInfo, newCertificate, oldCertificate, true);
+                var parameters = await ReplaceParameters(options.ScriptParameters ?? "", defaultStoreInfo, newCertificate, oldCertificate, false);
+                var censoredParameters = await ReplaceParameters(options.ScriptParameters ?? "", defaultStoreInfo, newCertificate, oldCertificate, true);
                 return await client.RunScript(options.Script, parameters, censoredParameters);
             }
             return false;
         }
 
-        internal string ReplaceParameters(string input, StoreInfo? defaultStoreInfo, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate, bool censor)
+        internal async Task<string> ReplaceParameters(string input, StoreInfo? defaultStoreInfo, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate, bool censor)
         {
             // Numbered parameters for backwards compatibility only,
             // do not extend for future updates
             var cachedCertificate = newCertificate as CertificateInfoCache;
-            return TemplateRegex().Replace(input, (m) => {
-                return m.Value switch
+            foreach (Match m in TemplateRegex().Matches(input))
+            {
+                var replacement = m.Value switch
                 {
                     "{0}" or "{CertCommonName}" => newCertificate.CommonName?.Value ?? "",
                     "{1}" or "{CachePassword}" => (censor ? renewal.PfxPassword?.DisplayValue : renewal.PfxPassword?.Value) ?? "",
@@ -58,11 +59,13 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                     "{OldCertCommonName}" => oldCertificate?.CommonName?.Value ?? "",
                     "{OldCertFriendlyName}" => oldCertificate?.FriendlyName ?? "",
                     "{OldCertThumbprint}" => oldCertificate?.Thumbprint ?? "",
-                    var s when s.StartsWith($"{{{SecretServiceManager.VaultPrefix}") => 
-                        censor ? s : secretManager.EvaluateSecret(s.Trim('{', '}')) ?? s,
+                    var s when s.StartsWith($"{{{SecretServiceManager.VaultPrefix}") =>
+                        censor ? s : await secretManager.EvaluateSecret(s.Trim('{', '}')) ?? s,
                     _ => m.Value
                 };
-            });
+                input = input.Replace(m.Value, replacement);
+            }
+            return input;
         }
 
         [GeneratedRegex("{.+?}")]

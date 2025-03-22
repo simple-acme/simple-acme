@@ -6,6 +6,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Services;
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Options = Abstractions.Integrations.Domeneshop.DomeneshopOptions;
 
@@ -17,32 +18,28 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         ("0BD9B320-08E0-4BFE-A535-B979886187E4",
         "Domeneshop", "Create verification records in Domeneshop DNS",
         External = true, Page = "domene")]
-    internal class DomeneshopDnsValidation : DnsValidation<DomeneshopDnsValidation>
+    internal class DomeneshopDnsValidation(
+        LookupClientProvider dnsClient,
+        ILogService logService,
+        ISettingsService settings,
+        IProxyService proxy,
+        DomainParseService domainParser,
+        DomeneshopOptions options,
+        SecretServiceManager ssm) : DnsValidation<DomeneshopDnsValidation, DomeneshopClient>(dnsClient, logService, settings, proxy)
     {
-        private readonly DomeneshopClient _client;
-        private readonly DomainParseService _domainParser;
-        private readonly ILogService _logService;
+        private readonly DomainParseService _domainParser = domainParser;
+        private readonly ILogService _logService = logService;
 
         private Domain? domain;
         private DnsRecord? txt;
 
-        public DomeneshopDnsValidation(
-            LookupClientProvider dnsClient,
-            ILogService logService,
-            ISettingsService settings,
-            DomainParseService domainParser,
-            DomeneshopOptions options,
-            SecretServiceManager ssm)
-            : base(dnsClient, logService, settings)
+        protected override async Task<DomeneshopClient> CreateClient(HttpClient httpClient)
         {
-            _client = new DomeneshopClient(new Options
+            return new DomeneshopClient(new Options
             {
-                ClientId = ssm.EvaluateSecret(options.ClientId) ?? "",
-                ClientSecret = ssm.EvaluateSecret(options.ClientSecret) ?? ""
+                ClientId = await ssm.EvaluateSecret(options.ClientId) ?? "",
+                ClientSecret = await ssm.EvaluateSecret(options.ClientSecret) ?? "",
             });
-
-            _domainParser = domainParser;
-            _logService = logService;
         }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
@@ -51,8 +48,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 var domainname = _domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domainname, record.Authority.Domain);
-
-                var domains = await _client.GetDomainsAsync();
+                var client = await GetClient();
+                var domains = await client.GetDomainsAsync();
                 domain = domains.FirstOrDefault(d => d.Name.Equals(domainname, StringComparison.OrdinalIgnoreCase));
 
                 if (domain == null)
@@ -62,7 +59,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 }
 
                 txt = new DnsRecord(DnsRecordType.TXT, recordName, record.Value);
-                txt = await _client.EnsureDnsRecordAsync(domain.Id, txt);
+                txt = await client.EnsureDnsRecordAsync(domain.Id, txt);
 
                 return true;
             }
@@ -77,9 +74,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             try
             {
+                var client = await GetClient();
                 #pragma warning disable CS8602 // Dereference of a possibly null reference.
                 #pragma warning disable CS8629 // Nullable value type may be null.
-                await _client.DeleteDnsRecordAsync(domain.Id, txt.Id.Value);
+                await client.DeleteDnsRecordAsync(domain.Id, txt.Id.Value);
                 #pragma warning restore CS8629 // Nullable value type may be null.
                 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 
@@ -88,12 +86,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 _log.Warning(ex, $"Unable to delete record from Domeneshop");
             }
-        }
-
-        public override Task Finalize()
-        {
-            _client?.Dispose();
-            return base.Finalize();
         }
     }
 }

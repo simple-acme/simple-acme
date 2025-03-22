@@ -4,6 +4,7 @@ using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services.Serialization;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.OrderPlugins
 {
@@ -14,6 +15,6 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
         "Single", "Single certificate")]
     internal class Single : IOrderPlugin
     {
-        public IEnumerable<Order> Split(Renewal renewal, Target target) => [new(renewal, target)];
+        public List<Order> Split(Renewal renewal, Target target) => [new(renewal, target)];
     }
 }

@@ -68,7 +68,7 @@ namespace PKISharp.WACS
             // Create one or more orders from the target
             var targetScope = scopeBuilder.Split(es, target);
             var orderPlugin = targetScope.Resolve<PluginBackend<IOrderPlugin, IPluginCapability, OrderPluginOptions>>();
-            var orders = orderPlugin.Backend.Split(renewal, target).ToList();
+            var orders = orderPlugin.Backend.Split(renewal, target);
             if (orders == null || orders.Count == 0)
             {
                 return new RenewResult($"Order plugin {orderPlugin.Meta.Name} failed to create order(s)");

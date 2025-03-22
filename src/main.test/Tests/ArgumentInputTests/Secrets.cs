@@ -149,7 +149,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
                 Result;
             Assert.AreEqual(output, result?.Value);
 
-            var foundSecret = secrets.EvaluateSecret(result?.Value);
+            var foundSecret = secrets.EvaluateSecret(result?.Value).Result;
             Assert.AreEqual(secret, foundSecret);
         }
 
@@ -176,7 +176,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
                 Result;
             Assert.AreEqual(output, result?.Value);
 
-            var foundSecret = secrets.EvaluateSecret(result?.Value);
+            var foundSecret = secrets.EvaluateSecret(result?.Value).Result;
             Assert.AreEqual(secret, foundSecret);
         }
 
