@@ -29,7 +29,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             var input = new InputService(inputSequence ?? []);
 
             var builder = new ContainerBuilder();
-            _ = builder.RegisterType<Real.SecretServiceManager>();
+            _ = builder.RegisterType<Real.SecretServiceManager>().SingleInstance();
             _ = builder.RegisterType<SecretService>().As<SecretService>().As<Real.ISecretService>().SingleInstance();
             _ = builder.RegisterType<AccountManager>();
             _ = builder.RegisterType<OrderManager>();
@@ -81,7 +81,15 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<RenewalManager>().SingleInstance();
             _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
 
-            return builder.Build();
+            var ret = builder.Build();
+            return ret.BeginLifetimeScope("wacs", builder =>
+            {
+                // Plugins
+                foreach (var plugin in pluginService.GetSecretServices())
+                {
+                    _ = builder.RegisterType(plugin.Backend);
+                }
+            });
         }
     }
 }

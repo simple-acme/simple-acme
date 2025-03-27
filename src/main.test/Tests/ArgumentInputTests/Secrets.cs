@@ -157,7 +157,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow(
             "", // Command line 
             new[] { // UserInput
-                "3", // "Use from vault"
+                "3", // "Use from vault",
                 "1" // Select key1
             },
             "vault://mock/key1", // Expected output

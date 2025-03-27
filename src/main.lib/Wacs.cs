@@ -130,6 +130,7 @@ namespace PKISharp.WACS.Host
                 unattendedRunLevel |= RunLevel.Test;
             }
 
+            await secretServiceManager.EvaluateSecret("vault://script/bla");
             // Main loop
             do
             {

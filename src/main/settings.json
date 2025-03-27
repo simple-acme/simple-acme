@@ -133,6 +133,10 @@
   "Secrets": {
     "Json": {
       "FilePath": null
+    },
+    "Script": {
+      "Get": null,
+      "GetArguments": null
     }
   }
 }
