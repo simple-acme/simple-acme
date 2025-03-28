@@ -70,6 +70,8 @@ namespace PKISharp.WACS.Services
 
                 // Secret plugins
                 new(typeof(Plugins.SecretPlugins.JsonSecretService)),
+                new(typeof(Plugins.SecretPlugins.ScriptSecretService)),
+                new(typeof(Plugins.SecretPlugins.EnvironmentSecretService)),
 
                 // Notification targets
                 new(typeof(Plugins.NotificationPlugins.NotificationTargetEmail))

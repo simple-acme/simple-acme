@@ -172,6 +172,7 @@ namespace PKISharp.WACS.Configuration.Settings
     public class SecretsSettings
     {
         public JsonSettings? Json { get; set; }
+        public ScriptSecretsSettings? Script { get; set; }
     }
 
     /// <summary>
@@ -180,6 +181,15 @@ namespace PKISharp.WACS.Configuration.Settings
     public class JsonSettings
     {
         public string? FilePath { get; set; }
+    }
+
+    /// <summary>
+    /// Settings for script secret store
+    /// </summary>
+    public class ScriptSecretsSettings
+    {
+        public string? Get { get; set; }
+        public string? GetArguments { get; set; }
     }
 
     public class CacheSettings

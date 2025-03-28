@@ -7,7 +7,6 @@ using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
@@ -19,8 +18,10 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
         "Script", "Start external script or program", 
         Name = "Custom script")]
     internal partial class Script(
-        Renewal renewal, ScriptOptions options,
-        ScriptClient client, SecretServiceManager secretManager) : IInstallationPlugin
+        Renewal renewal, 
+        ScriptOptions options, 
+        ScriptClient client, 
+        SecretServiceManager secretServiceManager) : IInstallationPlugin
     {
         public async Task<bool> Install(Dictionary<Type, StoreInfo> storeInfo, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate)
         {
@@ -33,42 +34,43 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                 }
                 var parameters = await ReplaceParameters(options.ScriptParameters ?? "", defaultStoreInfo, newCertificate, oldCertificate, false);
                 var censoredParameters = await ReplaceParameters(options.ScriptParameters ?? "", defaultStoreInfo, newCertificate, oldCertificate, true);
-                return await client.RunScript(options.Script, parameters, censoredParameters);
+                var result = await client.RunScript(options.Script, parameters, censoredParameters);
+                return result.Success;
             }
             return false;
         }
 
         internal async Task<string> ReplaceParameters(string input, StoreInfo? defaultStoreInfo, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate, bool censor)
         {
+            var cachedCertificate = newCertificate as CertificateInfoCache;
+            var replacements = new Dictionary<string, string?>
+            {
+                { "RenewalId", renewal.Id },
+                { "CacheFile", cachedCertificate?.CacheFile.FullName },
+                { "CacheFolder", cachedCertificate?.CacheFile.Directory?.FullName },
+                { "CachePassword", censor ? renewal.PfxPassword?.DisplayValue : renewal.PfxPassword?.Value },
+                { "CertCommonName", newCertificate.CommonName?.Value },
+                { "CertFriendlyName", newCertificate.FriendlyName },
+                { "CertThumbprint", newCertificate.Thumbprint },
+                { "StorePath", defaultStoreInfo?.Path },
+                { "StoreType", defaultStoreInfo?.Name },
+                { "OldCertCommonName",oldCertificate?.CommonName?.Value },
+                { "OldCertFriendlyName", oldCertificate?.FriendlyName },
+                { "OldCertThumbprint", oldCertificate?.Thumbprint }
+            };
+
             // Numbered parameters for backwards compatibility only,
             // do not extend for future updates
-            var cachedCertificate = newCertificate as CertificateInfoCache;
-            foreach (Match m in TemplateRegex().Matches(input))
-            {
-                var replacement = m.Value switch
-                {
-                    "{0}" or "{CertCommonName}" => newCertificate.CommonName?.Value ?? "",
-                    "{1}" or "{CachePassword}" => (censor ? renewal.PfxPassword?.DisplayValue : renewal.PfxPassword?.Value) ?? "",
-                    "{2}" or "{CacheFile}" => cachedCertificate?.CacheFile.FullName ?? "",
-                    "{3}" or "{StorePath}" => defaultStoreInfo?.Path ?? "",
-                    "{4}" or "{CertFriendlyName}" => newCertificate.FriendlyName,
-                    "{5}" or "{CertThumbprint}" => newCertificate.Thumbprint,
-                    "{6}" or "{CacheFolder}" => cachedCertificate?.CacheFile.Directory?.FullName ?? "",
-                    "{7}" or "{RenewalId}" => renewal.Id,
-                    "{StoreType}" => defaultStoreInfo?.Name ?? "",
-                    "{OldCertCommonName}" => oldCertificate?.CommonName?.Value ?? "",
-                    "{OldCertFriendlyName}" => oldCertificate?.FriendlyName ?? "",
-                    "{OldCertThumbprint}" => oldCertificate?.Thumbprint ?? "",
-                    var s when s.StartsWith($"{{{SecretServiceManager.VaultPrefix}") =>
-                        censor ? s : await secretManager.EvaluateSecret(s.Trim('{', '}')) ?? s,
-                    _ => m.Value
-                };
-                input = input.Replace(m.Value, replacement);
-            }
-            return input;
-        }
+            replacements["0"] = replacements["CertCommonName"];
+            replacements["1"] = replacements["CachePassword"];
+            replacements["2"] = replacements["CacheFile"];
+            replacements["3"] = replacements["StorePath"];
+            replacements["4"] = replacements["CertFriendlyName"];
+            replacements["5"] = replacements["CertThumbprint"];
+            replacements["6"] = replacements["CacheFolder"];
+            replacements["7"] = replacements["RenewalId"];
 
-        [GeneratedRegex("{.+?}")]
-        private static partial Regex TemplateRegex();
+            return await ScriptClient.ReplaceTokens(input, replacements, secretServiceManager, censor);
+        }
     }
 }

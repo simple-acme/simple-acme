@@ -75,7 +75,7 @@ namespace PKISharp.WACS.Services
             }
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Server returned status {response.StatusCode}:{response.ReasonPhrase}");
+                throw new Exception($"Server returned status {(int)response.StatusCode}: {response.ReasonPhrase ?? response.StatusCode.ToString()}");
             }
             string? content;
             try

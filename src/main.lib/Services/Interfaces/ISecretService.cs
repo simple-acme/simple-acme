@@ -3,7 +3,10 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    public interface ISecretService
+    /// <summary>
+    /// Read only
+    /// </summary>
+    public interface ISecretProvider
     {
         /// <summary>
         /// Make references to this provider unique from 
@@ -11,6 +14,19 @@ namespace PKISharp.WACS.Services
         /// </summary>
         string Prefix { get; }
 
+        /// <summary>
+        /// Get a secret from the vault
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        Task<string?> GetSecret(string? key);
+    }
+
+    /// <summary>
+    /// Read-write
+    /// </summary>
+    public interface ISecretService : ISecretProvider
+    {
         /// <summary>
         /// (Re)save to disk to support encrypt/decrypt operations
         /// </summary>
@@ -20,13 +36,6 @@ namespace PKISharp.WACS.Services
         /// List available keys in the system
         /// </summary>
         IEnumerable<string> ListKeys();
-
-        /// <summary>
-        /// Get a secret from the vault
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        Task<string?> GetSecret(string? key);
 
         /// <summary>
         /// Put a secret in the vault

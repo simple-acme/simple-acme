@@ -4,7 +4,7 @@ using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
-using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
@@ -26,8 +26,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         ScriptClient client,
         ILogService log,
-        DomainParseService domainParseService,
         SecretServiceManager secretServiceManager,
+        DomainParseService domainParseService,
         ISettingsService settings) : DnsValidation<Script>(dnsClient, log, settings)
     {
         internal const string DefaultCreateArguments = "create {Identifier} {RecordName} {Token}";
@@ -48,10 +48,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 var escapeToken = script.EndsWith(".ps1");
                 var actualArguments = await ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, false);
                 var censoredArguments = await ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, true);
-                return await client.RunScript(
-                    script,
-                    actualArguments,
-                    censoredArguments);
+                var result = await client.RunScript(script, actualArguments, censoredArguments);
+                return result.Success;
             }
             else
             {
@@ -113,26 +111,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 ret = ret.Replace("{Token}", "\"{Token}\"");
             }
 
-            // Replace special tokens
-            foreach (Match m in TokenRegex().Matches(ret))
+            // Replace tokens in the script
+            var replacements = new Dictionary<string, string?>
             {
-                var replacement = m.Value switch
-                {
-                    "{ZoneName}" => zoneName,
-                    "{NodeName}" => nodeName,
-                    "{Identifier}" => identifier,
-                    "{RecordName}" => recordName,
-                    "{Token}" => token,
-                    var s when s.StartsWith($"{{{SecretServiceManager.VaultPrefix}") =>
-                        censor ? s : await secretServiceManager.EvaluateSecret(s.Trim('{', '}')) ?? s,
-                    _ => m.Value
-                };
-                ret = ret.Replace(m.Value, replacement);
-            }
-            return ret;
+                { "ZoneName", zoneName },
+                { "NodeName", nodeName },
+                { "Identifier", identifier },
+                { "RecordName", recordName },
+                { "Token", censor ? "***" : token }
+            };
+            return await ScriptClient.ReplaceTokens(ret, replacements, secretServiceManager, censor);
         }
-
-        [GeneratedRegex("{.+?}")]
-        private static partial Regex TokenRegex();
     }
 }

@@ -30,7 +30,7 @@ namespace PKISharp.WACS.Services
             AddPluginType<ICsrPlugin>(Steps.Csr);
             AddPluginType<IStorePlugin>(Steps.Store);
             AddPluginType<IInstallationPlugin>(Steps.Installation);
-            _secretServices = GetPluginType<ISecretService>("secret");
+            _secretServices = GetPluginType<ISecretProvider>("secret");
             _notificationTargets = GetPluginType<INotificationTarget>("notification");
         }
 
