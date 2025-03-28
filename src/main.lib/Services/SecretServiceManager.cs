@@ -407,7 +407,7 @@ namespace PKISharp.WACS.Services
                 return;
             }
             await backend.PutSecret(key.Key, value);
-            log.Information("Vault secret {key} succesfully stored in backend {backend}", key, key.Provider);
+            log.Information("Vault secret {key} successfully stored in backend {backend}", key, key.Provider);
         }
 
         private ISecretService? GetService(string? key) => _services.FirstOrDefault(b => string.Equals(b.Prefix, key));
