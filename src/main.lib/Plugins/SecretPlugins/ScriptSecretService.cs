@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
         public string Prefix => "script";
 
         /// <summary>
-        /// Read secret from the file
+        /// Get secret from a script
         /// </summary>
         /// <param name="identifier"></param>
         /// <returns></returns>
