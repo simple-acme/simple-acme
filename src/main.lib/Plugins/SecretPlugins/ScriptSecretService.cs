@@ -42,7 +42,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
                 { "Key", identifier },
                 { "Operation", "get" }
             };
-            var censored = await ScriptClient.ReplaceTokens(getScriptArgs, replacements);
+            var censored = await ScriptClient.ReplaceTokens(getScriptArgs, replacements, censor: true);
             var actual = await ScriptClient.ReplaceTokens(getScriptArgs, replacements);
             var result = await scriptClient.RunScript(getScript, actual, censored, hideOutput: true);
             return result.Output?.Trim();
