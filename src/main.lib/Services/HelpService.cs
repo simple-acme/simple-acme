@@ -312,6 +312,10 @@ namespace PKISharp.WACS.Services
                 {
                     x.AppendLine($" external: true");
                 }
+                if (plugin.Schema == true)
+                {
+                    x.AppendLine($" schema: true");
+                }
                 if (plugin.Provider != null)
                 {
                     x.AppendLine($" provider: {plugin.Provider}");
