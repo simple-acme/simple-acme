@@ -43,9 +43,36 @@ namespace PKISharp.WACS.Plugins.Interfaces
             public Type Capability { get; } = typeof(TCapability);
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             public Type? Arguments { get; internal set; } = null;
+
+            /// <summary>
+            /// True if the plugin require an additional downloads
+            /// False if the plugin is bundled with the main program
+            /// </summary>
             public bool External { get; set; } = false;
+
+            /// <summary>
+            /// True if a JSON schema has been published in the documentation 
+            /// repository
+            /// </summary>
+            public bool JsonSchemaPublished { get; set; } = false;
+
+            /// <summary>
+            /// Used to indicate if the name of the binary is different from the trigger command
+            /// NOTE: prefer not to use this at all for consistency.
+            /// </summary>
             public string? Download { get; set; } = null;
+
+            /// <summary>
+            /// Used to indicate if the slug for the documentation page is different from the trigger command
+            /// NOTE: prefer not to use this at all for consistency.
+            /// </summary>
             public string? Page { get; set; } = null;
+
+            /// <summary>
+            /// Used to indicate the name of the company responsible for an external service to make
+            /// the plugin more discoverable, e.g. for Route53 the provider is Amazon, for Azure the
+            /// provider is Microsoft.
+            /// </summary>
             public string? Provider { get; set; } = null;
         }
 

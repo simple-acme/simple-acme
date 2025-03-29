@@ -24,6 +24,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         public Type? Arguments { get; }
         public bool External { get; }
+        public bool JsonSchemaPublished { get; }
         public string? Provider { get; }
         public string? Page { get; }
         public string? Download { get; }

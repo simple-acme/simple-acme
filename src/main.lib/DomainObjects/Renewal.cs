@@ -29,6 +29,9 @@ namespace PKISharp.WACS.DomainObjects
             return ret;
         }
 
+        [JsonPropertyName("$schema")]
+        public string Schema { get; set; } = "https://simple-acme.com/schema/renewal.json";
+
         /// <summary>
         /// Has this renewal been changed?
         /// </summary>
