@@ -25,7 +25,7 @@ function Replace-Stuff {
 	$content = $content -replace '\$build(.+=.+)"(.+)"',"`$build`$1`"$env:APPVEYOR_BUILD_VERSION`""
 	$content = $content -replace 'build:\(.+?\)',"build:(v$env:APPVEYOR_BUILD_VERSION)"
 	$content = $content -replace 'commit:\(.+?\)',"commit:($env:APPVEYOR_REPO_COMMIT)"
-	$content = $content -replace 'https:\/\/github\.com\/simple-acme\/simple-acme\/releases\/download\/(.+?).zip$',"https://github.com/simple-acme/simple-acme/releases/download/$env:APPVEYOR_REPO_TAG_NAME/simple-acme.v$env:APPVEYOR_BUILD_VERSION.`$2.`$3.zip"
+	$content = $content -replace 'https:\/\/github\.com\/simple-acme\/simple-acme\/releases\/download\/(.+?)\/simple-acme\.[v\.0-9]+\.(.+?)\.(.+?).zip',"https://github.com/simple-acme/simple-acme/releases/download/$env:APPVEYOR_REPO_TAG_NAME/simple-acme.v$env:APPVEYOR_BUILD_VERSION.`$2.`$3.zip"
 	$content = $content -replace 'checksum32: .+',"checksum32: $checksum32"
 	$content = $content -replace 'checksum64: .+',"checksum64: $checksum64"
 	$content = $content -replace '<version>.+</version>',"<version>$packageVersion</version>"
@@ -94,7 +94,7 @@ Replace-Stuff ".\simple-acme\tools\chocolateyinstall.ps1"
 Replace-Stuff ".\simple-acme\tools\chocolateyuninstall.ps1"
 Replace-Stuff ".\simple-acme\tools\VERIFICATION.txt"
 Replace-Stuff ".\simple-acme\simple-acme.nuspec"
-# Publish-Package ".\simple-acme\simple-acme.nuspec"
+Publish-Package ".\simple-acme\simple-acme.nuspec"
 
 $templateFolder = ".\simple-acme-plugin-template"
 $pluginsYml = Get-Content "$Final\plugins.yml" -Raw
@@ -153,8 +153,8 @@ foreach ($plugin in $matches) {
 	break;
 }
 
-# git add .
-# git commit -m "Release $env:APPVEYOR_REPO_TAG_NAME"
-# git push --set-upstream origin $env:APPVEYOR_REPO_TAG_NAME
+git add .
+git commit -m "Release $env:APPVEYOR_REPO_TAG_NAME"
+git push --set-upstream origin $env:APPVEYOR_REPO_TAG_NAME
 
 Pop-Location
