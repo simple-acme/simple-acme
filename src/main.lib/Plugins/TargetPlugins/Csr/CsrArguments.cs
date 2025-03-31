@@ -8,6 +8,9 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         [CommandLine(Description = "Specify the location of a CSR file to make a certificate for")]
         public string? CsrFile { get; set; }
 
+        [CommandLine(Description = "Specify the location of a script that will generate the CSR file on demand")]
+        public string? CsrScript { get; set; }
+
         [CommandLine(Description = "Specify the location of the private key corresponding to the CSR")]
         public string? PkFile { get; set; }
     }
