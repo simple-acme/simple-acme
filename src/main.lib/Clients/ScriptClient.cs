@@ -1,4 +1,5 @@
-﻿using PKISharp.WACS.Services;
+﻿using PKISharp.WACS.Extensions;
+using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -79,11 +80,15 @@ namespace PKISharp.WACS.Clients
         /// <param name="parameters"></param>
         /// <param name="censoredParameters"></param>
         /// <returns></returns>
-        public async Task<ScriptResult> RunScript(string script, string parameters, string? censoredParameters = null, bool hideOutput = false)
+        public async Task<ScriptResult> RunScript(string script, string? parameters = null, string? censoredParameters = null, bool hideOutput = false)
         {
             if (string.IsNullOrWhiteSpace(script))
             {
                 logService.Warning("No script configured.");
+                return new ScriptResult() { Success = false };
+            }
+            if (!script.ValidFile(logService))
+            {
                 return new ScriptResult() { Success = false };
             }
             if (!string.IsNullOrWhiteSpace(parameters))
@@ -208,7 +213,7 @@ namespace PKISharp.WACS.Clients
         /// <param name="script"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private ProcessStartInfo CreatePsi(string script, string parameters)
+        private ProcessStartInfo CreatePsi(string script, string? parameters)
         {
             var actualScript = Environment.ExpandEnvironmentVariables(script);
             var actualParameters = parameters;
@@ -221,7 +226,7 @@ namespace PKISharp.WACS.Clients
                 {
                     baseParameters += " -windowstyle hidden";
                 }
-                actualParameters = $"{baseParameters} -command \"&{{&'{script.Replace("'", "''")}' {parameters.Replace("\"", "\"\"\"")}; exit $LastExitCode}}\"";
+                actualParameters = $"{baseParameters} -command \"&{{&'{script.Replace("'", "''")}' {parameters?.Replace("\"", "\"\"\"")}; exit $LastExitCode}}\"";
             }
             else if (actualScript.EndsWith(".sh"))
             {
