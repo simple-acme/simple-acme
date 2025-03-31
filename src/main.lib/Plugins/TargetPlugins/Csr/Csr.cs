@@ -104,6 +104,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                 {
                     throw new InvalidOperationException($"File {options.CsrFile} was empty");
                 }
+                return ret;
             }
 
             // Get CSR from script
