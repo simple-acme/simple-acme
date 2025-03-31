@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.TargetPlugins;
+using PKISharp.WACS.UnitTests.Mock.Services;
 using System.IO;
 using System.Linq;
 
@@ -42,7 +43,7 @@ ZkoLUgEWU5OcCkq5AIpmloeaCTC/vKrlS5M3BvjEmQ==
                 File.WriteAllText(tempFile, Csr);
                 var csrOptions = new CsrOptions() { CsrFile = tempFile };
                 var log = new Mock.Services.LogService(false);
-                var csrPlugin = new Csr(log, csrOptions);
+                var csrPlugin = new Csr(log, csrOptions, new Clients.ScriptClient(log, new MockSettingsService()));
                 var target = csrPlugin.Generate().Result;
                 Assert.IsNotNull(target);
                 Assert.IsTrue(target.Parts.Count == 1);
