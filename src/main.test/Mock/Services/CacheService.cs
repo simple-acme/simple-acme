@@ -20,7 +20,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
 
         public void Delete(Renewal renewal) {}
 
-        public void Encrypt()
+        public Task Encrypt()
         {
             throw new NotImplementedException();
         }

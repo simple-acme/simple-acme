@@ -23,7 +23,7 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
           
             Assert.IsNotNull(renewalManager);
             renewalManager.ManageRenewals().Wait();
-            Assert.AreEqual(0, renewalStore.Renewals.Count());
+            Assert.AreEqual(0, renewalStore.List().Result.Count());
         }
 
     }

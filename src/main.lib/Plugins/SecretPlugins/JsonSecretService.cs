@@ -1,4 +1,5 @@
-﻿using PKISharp.WACS.Services;
+﻿using PKISharp.WACS.Extensions;
+using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Collections.Generic;
@@ -111,16 +112,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
             var newData = JsonSerializer.Serialize(_secrets, _wacsJson.ListCredentialEntry);
             if (newData != null)
             {
-                if (_file.Exists)
-                {
-                    await File.WriteAllTextAsync(_file.FullName + ".new", newData);
-                    File.Replace(_file.FullName + ".new", _file.FullName, _file.FullName + ".previous", true);
-                    File.Delete(_file.FullName + ".previous");
-                }
-                else
-                {
-                    await File.WriteAllTextAsync(_file.FullName, newData);
-                }
+                await _file.SafeWrite(newData);
             }
         }
 

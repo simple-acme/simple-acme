@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Services
         CertificateInfoCache? CachedInfo(Order order);
         CertificateInfoCache? PreviousInfo(Renewal renewal, string order);
 
-        void Encrypt();
+        Task Encrypt();
         void Revoke(Renewal renewal);
     }
 }

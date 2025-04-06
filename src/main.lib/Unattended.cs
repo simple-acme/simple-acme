@@ -26,8 +26,9 @@ namespace PKISharp.WACS
         /// <returns></returns>
         internal async Task List()
         {
+            var renewals = await renewalStore.List();
             await input.WritePagedList(
-                 renewalStore.Renewals.Select(x => Choice.Create<Renewal?>(x,
+                 renewals.Select(x => Choice.Create<Renewal?>(x,
                     description: x.ToString(dueDate, input),
                     color: x.History.Last().Success == true ?
                             dueDate.IsDue(x) ?
@@ -42,7 +43,7 @@ namespace PKISharp.WACS
         /// <returns></returns>
         internal async Task Cancel()
         {
-            var targets = FilterRenewalsByCommandLine("cancel");
+            var targets = await FilterRenewalsByCommandLine("cancel");
             await renewalRevoker.CancelRenewals(targets);
         }
 
@@ -53,7 +54,7 @@ namespace PKISharp.WACS
         internal async Task Revoke()
         {
             log.Warning($"Certificates should only be revoked in case of a (suspected) security breach. Cancel the renewal if you simply don't need the certificate anymore.");
-            var renewals = FilterRenewalsByCommandLine("revoke");
+            var renewals = await FilterRenewalsByCommandLine("revoke");
             await renewalRevoker.RevokeCertificates(renewals);
         }
 
@@ -68,13 +69,11 @@ namespace PKISharp.WACS
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
-        private IEnumerable<Renewal> FilterRenewalsByCommandLine(string command)
+        private async Task<IEnumerable<Renewal>> FilterRenewalsByCommandLine(string command)
         {
             if (args.HasFilter)
             {
-                var targets = renewalStore.FindByArguments(
-                    args.Id,
-                    args.FriendlyName);
+                var targets = await renewalStore.FindByArguments(args.Id, args.FriendlyName);
                 if (!targets.Any())
                 {
                     log.Error("No renewals matched.");

@@ -109,7 +109,7 @@ namespace PKISharp.WACS.Clients.Acme
                     throw new Exception("AcmeClient was unable to find or create an account");
                 }
                 // Save newly created account to disk
-                _accountManager.StoreAccount(account, name);
+                await _accountManager.StoreAccount(account, name);
             }
 
             // Create authorized account
@@ -475,7 +475,7 @@ namespace PKISharp.WACS.Clients.Acme
             if (newDetails.Payload != null)
             {
                 client.Account.Details = newDetails;
-                _accountManager.StoreAccount(client.Account, name);
+                await _accountManager.StoreAccount(client.Account, name);
             }
         }
     }

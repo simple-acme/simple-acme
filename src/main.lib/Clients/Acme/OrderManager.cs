@@ -347,7 +347,7 @@ namespace PKISharp.WACS.Clients.Acme
                 }
                 var content = JsonSerializer.Serialize(order, AcmeClientJson.Default.AcmeOrderDetails);
                 var path = Path.Combine(_orderPath.FullName, $"{cacheKey}.{_orderFileExtension}");
-                await File.WriteAllTextAsync(path, content);
+                await FileInfoExtensions.SafeWrite(path, content);
             }
             catch (Exception ex)
             {
@@ -358,13 +358,13 @@ namespace PKISharp.WACS.Clients.Acme
         /// <summary>
         /// Encrypt or decrypt the cached private keys
         /// </summary>
-        public void Encrypt()
+        public async Task Encrypt()
         {
             foreach (var f in _orderPath.EnumerateFiles($"*.{_orderKeyExtension}"))
             {
                 var x = new ProtectedString(File.ReadAllText(f.FullName), log);
                 log.Information("Rewriting {x}", f.Name);
-                File.WriteAllText(f.FullName, x.DiskValue(settings.Security.EncryptConfig));
+                await f.SafeWrite(x.DiskValue(settings.Security.EncryptConfig));
             }
         }
 

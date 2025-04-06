@@ -69,7 +69,7 @@ namespace PKISharp.WACS
 
                     // Make sure private keys are not reused after this
                     cacheService.Revoke(renewal);
-                    renewalStore.Save(renewal, result);
+                    await renewalStore.Save(renewal, result);
                 }
                 catch (Exception ex)
                 {
@@ -94,7 +94,7 @@ namespace PKISharp.WACS
                 log.Warning($"Cancelling renewal {renewal.LastFriendlyName}");
                 try
                 {
-                    renewalStore.Cancel(renewal);
+                    await renewalStore.Cancel(renewal);
                     cacheService.Delete(renewal);
                     await notification.NotifyCancel(renewal);
                 }
