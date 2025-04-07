@@ -104,7 +104,7 @@ namespace PKISharp.WACS.Services
             foreach (var r in renewals)
             {
                 r.Updated = true;
-                _log.Information("Re-writing secrets for for {renewal}", r);
+                _log.Information("Re-writing secrets for {renewal}", r);
             }
             await _backend.Write(renewals);
         }
