@@ -12,13 +12,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         NullOptions, PluginOptionsFactory<NullOptions>,
         DnsValidationCapability, WacsJsonPlugins>
         ("a37b41dc-b45a-42fe-8d81-82ca409a5491",
-        "none", "Domains should be pre-authorized with the server outside of simple-acme",
+        "none", "Domain(s) are pre-authorized outside of simple-acme",
         Name = "None")]
     class Null : IValidationPlugin
     {
         public ParallelOperations Parallelism => ParallelOperations.Answer | ParallelOperations.Prepare | ParallelOperations.Reuse;
         public Task CleanUp() => Task.CompletedTask;
         public Task Commit() => Task.CompletedTask;
-        public Task PrepareChallenge(ValidationContext context) => throw new InvalidOperationException();
+        public Task PrepareChallenge(ValidationContext context) => throw new InvalidOperationException("Server issued challenge to pre-authorizated plugin");
     }
 }
