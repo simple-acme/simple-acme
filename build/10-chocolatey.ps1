@@ -41,7 +41,7 @@ function Replace-Stuff-Plugin {
 	$content = $content -replace 'checksum: .+',"checksum: $($plugin.checksum)"
 	$content = $content -replace '<version>.+</version>',"<version>$packageVersion</version>"
 	$content = $content -replace '<id>.+</id>',"<id>$($plugin.packageId)</id>"
-	$content = $content -replace '<packageSourceUrl>.+</packageSourceUrl>',"<packageSourceUrl>https://github.com/simple-acme/chocolatey/$($plugin.packageId)</packageSourceUrl>"
+	$content = $content -replace '<packageSourceUrl>.+</packageSourceUrl>',"<packageSourceUrl>https://github.com/simple-acme/chocolatey/tree/main/$($plugin.packageId)</packageSourceUrl>"
 	$content = $content -replace '<title>.+</title>',"<title>simple-acme $($plugin.name) plugin</title>"
 	$content = $content -replace '<description>.+</description>',"<description>$($plugin.name) $($plugin.typeHuman) plugin for simple-acme</description>"
 	$content = $content -replace '<summary>.+</summary>',"<summary>$($plugin.name) $($plugin.typeHuman) plugin for simple-acme</summary>"
