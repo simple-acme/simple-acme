@@ -81,7 +81,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                         }
                         if (await VerifyRegistration(domain, newReg.Fulldomain, interactive))
                         {
-                            await File.WriteAllTextAsync(FileForDomain(domain), JsonSerializer.Serialize(newReg, AcmeJson.Default.RegisterResponse));
+                            await FileInfoExtensions.SafeWrite(FileForDomain(domain), JsonSerializer.Serialize(newReg, AcmeJson.Default.RegisterResponse));
                             return true;
                         }
                     }

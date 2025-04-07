@@ -60,7 +60,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
 
             if (!string.IsNullOrEmpty(keyPath))
             {
-                SaveToCache(keyPath);
+                await SaveToCache(keyPath);
             }
 
             return csr;
@@ -103,10 +103,10 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         /// Save cached key information to disk, if needed
         /// </summary>
         /// <param name="cachePath"></param>
-        private void SaveToCache(string cachePath)
+        private async Task SaveToCache(string cachePath)
         {
             var rawData = new ProtectedString(_cacheData);
-            File.WriteAllText(cachePath, rawData.DiskValue(_settings.Security.EncryptConfig));
+            await FileInfoExtensions.SafeWrite(cachePath, rawData.DiskValue(_settings.Security.EncryptConfig));
         }
 
         public abstract string GetSignatureAlgorithm();

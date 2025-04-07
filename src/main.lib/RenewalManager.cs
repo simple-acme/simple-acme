@@ -54,7 +54,7 @@ namespace PKISharp.WACS
         /// <returns></returns>
         internal async Task ManageRenewals()
         {
-            IEnumerable<Renewal> originalSelection = renewalStore.Renewals.OrderBy(x => x.LastFriendlyName);
+            IEnumerable<Renewal> originalSelection = (await renewalStore.List()).OrderBy(x => x.LastFriendlyName);
             var selectedRenewals = originalSelection;
             var quit = false;
             var displayAll = false;
@@ -115,12 +115,12 @@ namespace PKISharp.WACS
                 if (displayLimited)
                 {
                     options.Add(
-                        Choice.Create<Func<Task>>(
+                        Choice.Create(
                             () => { displayAll = true; return Task.CompletedTask; },
                             "List all selected renewals", Shortcuts.A.ToString()));
                 }
                 options.Add(
-                    Choice.Create<Func<Task>>(
+                    Choice.Create(
                         async () => { quit = true; await EditRenewal(selectedRenewals.First()); },
                         "Edit renewal", Shortcuts.E.ToString(), state: editState));
                 if (selectedRenewals.Count() > 1)
@@ -137,12 +137,12 @@ namespace PKISharp.WACS
                 if (!all)
                 {
                     options.Add(
-                        Choice.Create<Func<Task>>(
+                        Choice.Create(
                             () => { selectedRenewals = originalSelection; return Task.CompletedTask; },
                             "Reset sorting and filtering", Shortcuts.X.ToString()));
                 }
                 options.Add(
-                    Choice.Create<Func<Task>>(
+                    Choice.Create(
                         async () => { 
                             foreach (var renewal in selectedRenewals) {
                                 var index = selectedRenewals.ToList().IndexOf(renewal) + 1;
@@ -169,7 +169,7 @@ namespace PKISharp.WACS
                         $"Show details for {selectionLabel}", Shortcuts.D.ToString(),
                         state: noneState));
                 options.Add(
-                    Choice.Create<Func<Task>>(
+                    Choice.Create(
                         async () => {
                             foreach (var renewal in selectedRenewals)
                             {
@@ -181,15 +181,15 @@ namespace PKISharp.WACS
                         $"Show command line for {selectionLabel}", Shortcuts.L.ToString(),
                         state: noneState));
                 options.Add(
-                    Choice.Create<Func<Task>>(() => Run(selectedRenewals, RunLevel.Interactive),
+                    Choice.Create(() => Run(selectedRenewals, RunLevel.Interactive),
                         $"Run {selectionLabel}", Shortcuts.R.ToString(), state: noneState));
                 options.Add(
-                    Choice.Create<Func<Task>>(() => Run(selectedRenewals, RunLevel.Interactive | RunLevel.Force),
+                    Choice.Create(() => Run(selectedRenewals, RunLevel.Interactive | RunLevel.Force),
                         $"Run {selectionLabel} (force)", Shortcuts.S.ToString(), state: noneState));
                 if (settings.Cache.ReuseDays > 0)
                 {
                     options.Add(
-                        Choice.Create<Func<Task>>(() => Run(selectedRenewals, RunLevel.Interactive | RunLevel.Force | RunLevel.NoCache),
+                        Choice.Create(() => Run(selectedRenewals, RunLevel.Interactive | RunLevel.Force | RunLevel.NoCache),
                         $"Run {selectionLabel} (force, no cache)", Shortcuts.T.ToString(), state: noneState));
                 }
                 options.Add(
@@ -203,13 +203,14 @@ namespace PKISharp.WACS
                             if (confirm)
                             {
                                 await renewalRevoker.CancelRenewals(selectedRenewals);
-                                originalSelection = renewalStore.Renewals.OrderBy(x => x.LastFriendlyName);
+                                var list = await renewalStore.List();
+                                originalSelection = list.OrderBy(x => x.LastFriendlyName);
                                 selectedRenewals = originalSelection;
                             }
                         },
                         $"Cancel {selectionLabel}", Shortcuts.C.ToString(), state: noneState));
                 options.Add(
-                    Choice.Create<Func<Task>>(
+                    Choice.Create(
                         async () => {
                             var confirm = await input.PromptYesNo($"Are you sure you want to revoke the most recently issued certificate for {selectedRenewals.Count()} currently selected {renewalSelectedLabel}? This should only be done in case of a (suspected) security breach. Cancel the {renewalSelectedLabel} if you simply don't need the certificates anymore.", false);
                             if (confirm)
@@ -219,7 +220,7 @@ namespace PKISharp.WACS
                         },
                         $"Revoke certificate(s) for {selectionLabel}", Shortcuts.V.ToString(), state: noneState));
                 options.Add(
-                    Choice.Create<Func<Task>>(
+                    Choice.Create(
                         () => { quit = true; return Task.CompletedTask; },
                         "Back", Shortcuts.Q.ToString(),
                         @default: !originalSelection.Any()));
@@ -233,7 +234,7 @@ namespace PKISharp.WACS
                     "Choose an action or type numbers to select renewals",
                     options, 
                     (string unexpected) =>
-                        Choice.Create<Func<Task>>(() => { selectedRenewals = FilterRenewalsById(selectedRenewals, unexpected); return Task.CompletedTask; }));
+                        Choice.Create(() => { selectedRenewals = FilterRenewalsById(selectedRenewals, unexpected); return Task.CompletedTask; }));
                 await chosen.Invoke();
                 container.Resolve<IIISClient>().Refresh();
             }
@@ -476,7 +477,7 @@ namespace PKISharp.WACS
             IEnumerable<Renewal> renewals;
             if (args.HasFilter)
             {
-                renewals = renewalStore.FindByArguments(args.Id, args.FriendlyName);
+                renewals = await renewalStore.FindByArguments(args.Id, args.FriendlyName);
                 if (!renewals.Any())
                 {
                     log.Error("No renewals found that match the filter parameters --id and/or --friendlyname.");
@@ -485,7 +486,7 @@ namespace PKISharp.WACS
             else
             {
                 log.Verbose("Checking renewals");
-                renewals = renewalStore.Renewals;
+                renewals = await renewalStore.List();
                 if (!renewals.Any())
                 {
                     log.Warning("No scheduled renewals found.");
@@ -527,7 +528,7 @@ namespace PKISharp.WACS
                 var result = await renewalExecutor.HandleRenewal(renewal, runLevel);
                 if (result.OrderResults.Count != 0)
                 {
-                    renewalStore.Save(renewal, result);
+                    await renewalStore.Save(renewal, result);
                 }
                 if (!result.Abort)
                 {

@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.TargetPlugins;
 using PKISharp.WACS.Services.Serialization;
 using System;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
@@ -25,7 +27,7 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// Parse renewals from store
         /// </summary>
-        public IEnumerable<Renewal> Read()
+        public async Task<IEnumerable<Renewal>> Read()
         {
             if (_renewalsCache == null)
             {
@@ -50,7 +52,7 @@ namespace PKISharp.WACS.Services
                 {
                     try
                     {
-                        var text = File.ReadAllText(rj.FullName);
+                        var text = await File.ReadAllTextAsync(rj.FullName);
                         var result = JsonSerializer.Deserialize(text, wacsJson.Renewal) ?? throw new Exception("result is empty");
                         if (result.Id != rj.Name.Replace(postFix, ""))
                         {
@@ -98,10 +100,10 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="BaseUri"></param>
         /// <param name="Renewals"></param>
-        public void Write(IEnumerable<Renewal> Renewals)
+        public async Task Write(IEnumerable<Renewal> Renewals)
         {
             var list = Renewals.ToList();
-            list.ForEach(renewal =>
+            foreach (var renewal in list)
             {
                 if (renewal.Deleted)
                 {
@@ -123,18 +125,8 @@ namespace PKISharp.WACS.Services
                             {
                                 throw new Exception("Serialization yielded empty result");
                             }
-                            if (file.Exists)
-                            {
-                                File.WriteAllText(file.FullName + ".new", renewalContent);
-                                File.Replace(file.FullName + ".new", file.FullName, file.FullName + ".previous", true);
-                                File.Delete(file.FullName + ".previous");
-                            } 
-                            else
-                            {
-                                File.WriteAllText(file.FullName, renewalContent);
-                            }
-
-                        } 
+                            await file.SafeWrite(renewalContent);
+                        }
                         catch (Exception ex)
                         {
                             log.Error(ex, "Unable to write {renewal} to disk", renewal.LastFriendlyName);
@@ -143,7 +135,8 @@ namespace PKISharp.WACS.Services
                     renewal.New = false;
                     renewal.Updated = false;
                 }
-            });
+            }
+            // Update cache
             _renewalsCache = [.. list.Where(x => !x.Deleted).OrderBy(x => dueDate.DueDate(x)?.Start)];
         }
 

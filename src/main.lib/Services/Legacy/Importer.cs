@@ -31,13 +31,14 @@ namespace PKISharp.WACS.Services.Legacy
             {
                 log.Warning("No legacy renewals found");
             }
+            var currentRenewals = await currentRenewal.List();
             log.Information("Legacy renewals {x}", legacyRenewal.Renewals.Count().ToString());
-            log.Information("Current renewals {x}", currentRenewal.Renewals.Count().ToString());
+            log.Information("Current renewals {x}", currentRenewals.Count.ToString());
             log.Information("Step {x}/3: convert renewals", 1);
             foreach (var legacyRenewal in legacyRenewal.Renewals)
             {
                 var converted = Convert(legacyRenewal);
-                currentRenewal.Import(converted);
+                await currentRenewal.Import(converted);
             }
             if (!arguments.NoTaskScheduler)
             {

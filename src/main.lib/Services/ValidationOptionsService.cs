@@ -71,7 +71,10 @@ namespace PKISharp.WACS.Services
                 return;
             }
             var rawJson = JsonSerializer.Serialize(_options, wacsJson.ListGlobalValidationPluginOptions);
-            await File.WriteAllTextAsync(Store.FullName, rawJson);
+            if (!string.IsNullOrWhiteSpace(rawJson))
+            {
+                await Store.SafeWrite(rawJson);
+            }
         }
 
         /// <summary>

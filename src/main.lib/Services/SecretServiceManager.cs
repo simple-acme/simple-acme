@@ -149,9 +149,9 @@ namespace PKISharp.WACS.Services
         /// Add a secret to the backend from the main menu
         /// </summary>
         /// <returns></returns>
-        public void Encrypt() {
+        public async Task Encrypt() {
             foreach (var backend in _services) {
-                backend.Encrypt();
+                await backend.Encrypt();
             }
         }
 

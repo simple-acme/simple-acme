@@ -5,6 +5,7 @@ using Nager.PublicSuffix.Models;
 using Nager.PublicSuffix.RuleParsers;
 using Nager.PublicSuffix.RuleProviders;
 using Nager.PublicSuffix.RuleProviders.CacheProviders;
+using PKISharp.WACS.Extensions;
 using System;
 using System.IO;
 using System.Threading;
@@ -122,7 +123,7 @@ namespace PKISharp.WACS.Services
                 {
                     try
                     {
-                        await File.WriteAllTextAsync(_file.FullName, val);
+                        await _file.SafeWrite(val);
                     } 
                     catch (Exception ex)
                     {

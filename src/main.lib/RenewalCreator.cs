@@ -37,14 +37,16 @@ namespace PKISharp.WACS
         private async Task<Renewal> CreateRenewal(Renewal temp, RunLevel runLevel)
         {
             // First check by id
-            var existing = renewalStore.FindByArguments(temp.Id, null).FirstOrDefault();
+            var existingList = await renewalStore.FindByArguments(temp.Id, null);
+            var existing = existingList.FirstOrDefault();
 
             // If Id has been specified, we don't consider the Friendlyname anymore
             // So specifying --id becomes a way to create duplicate certificates
             // with the same --friendlyname in unattended mode.
             if (existing == null && string.IsNullOrEmpty(mainArgs.Id))
             {
-                existing = renewalStore.FindByArguments(null, temp.LastFriendlyName?.EscapePattern()).FirstOrDefault();
+                existingList = await renewalStore.FindByArguments(null, temp.LastFriendlyName?.EscapePattern());
+                existing = existingList.FirstOrDefault();
             }
 
             // This will be a completely new renewal, no further processing needed
@@ -308,7 +310,7 @@ namespace PKISharp.WACS
                     runLevel.HasFlag(RunLevel.Interactive) &&
                     await input.PromptYesNo("Save these new settings anyway?", false))
                 {
-                    renewalStore.Save(renewal, result);
+                    await renewalStore.Save(renewal, result);
                 }
                 exceptionHandler.HandleException(message: $"Create certificate failed");
             }
@@ -316,7 +318,7 @@ namespace PKISharp.WACS
             {
                 try
                 {
-                    renewalStore.Save(renewal, result);
+                    await renewalStore.Save(renewal, result);
                     await notification.NotifyCreated(renewal, log.Lines);
                 }
                 catch (Exception ex)

@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services.Serialization;
@@ -63,7 +64,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 fi.Directory.Create();
             }
             log.Verbose("Writing file to {path}", path);
-            await File.WriteAllTextAsync(path, content);
+            await fi.SafeWrite(content);
         }
 
         /// <summary>

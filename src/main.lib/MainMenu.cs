@@ -42,32 +42,33 @@ namespace PKISharp.WACS.Host
         /// </summary>
         public async Task MainMenuEntry(RunLevel runLevel)
         {
-            var total = renewalStore.Renewals.Count();
-            var due = renewalStore.Renewals.Count(dueDateService.IsDue);
-            var error = renewalStore.Renewals.Count(x => !x.History.LastOrDefault()?.Success ?? false);
+            var renewals = await renewalStore.List();
+            var total = renewals.Count;
+            var due = renewals.Count(dueDateService.IsDue);
+            var error = renewals.Count(x => !x.History.LastOrDefault()?.Success ?? false);
             var options = new List<Choice<Func<Task>>>
             {
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => renewalCreator.SetupRenewal(runLevel | RunLevel.Simple), 
                     "Create certificate (default settings)", "N", 
                     @default: true),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => renewalCreator.SetupRenewal(runLevel | RunLevel.Advanced),
                     "Create certificate (full options)", "M"),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => renewalManager.CheckRenewals(runLevel),
                     $"Run renewals ({due} currently due)", "R",
                     color: due == 0 ? null : ConsoleColor.Yellow,
                     state: total == 0 ? State.DisabledState("No renewals have been created yet.") : State.EnabledState()),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => renewalManager.ManageRenewals(),
                     $"Manage renewals ({total} total{(error == 0 ? "" : $", {error} in error")})", "A",
                     color: error == 0 ? null : ConsoleColor.Red,
                     state: total == 0 ? State.DisabledState("No renewals have been created yet.") : State.EnabledState()),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => ExtraMenu(), 
                     "More options...", "O"),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => { _args.CloseOnFinish = true; _args.Test = false; return Task.CompletedTask; }, 
                     "Quit", "Q")
             };
@@ -171,19 +172,19 @@ namespace PKISharp.WACS.Host
             }
             if (userApproved)
             {
-                renewalStore.Encrypt(); //re-saves all renewals, forcing re-write of all protected strings 
+                await renewalStore.Encrypt(); //re-saves all renewals, forcing re-write of all protected strings 
 
                 var accountManager = container.Resolve<AccountManager>();
-                accountManager.Encrypt(); //re-writes the signer file
+                await accountManager.Encrypt(); //re-writes the signer file
 
                 var cacheService = container.Resolve<ICacheService>();
-                cacheService.Encrypt(); //re-saves all cached private keys
+                await cacheService.Encrypt(); //re-saves all cached private keys
 
                 var secretService = container.Resolve<SecretServiceManager>();
-                secretService.Encrypt(); //re-writes the secrets file
+                await secretService.Encrypt(); //re-writes the secrets file
 
                 var orderManager = container.Resolve<OrderManager>();
-                orderManager.Encrypt(); //re-writes the cached order files
+                await orderManager.Encrypt(); //re-writes the cached order files
 
                 var validationOptionsService = container.Resolve<IValidationOptionsService>();
                 await validationOptionsService.Encrypt(); //re-saves all global validation options
@@ -198,7 +199,7 @@ namespace PKISharp.WACS.Host
         /// <param name="runLevel"></param>
         private async Task UpdateAccount(RunLevel runLevel)
         {
-            var renewals = renewalStore.Renewals;
+            var renewals = await renewalStore.List();
             var accounts = accountManager.ListAccounts();
             var account = accounts.FirstOrDefault();
             if (accounts.Count() > 1)
