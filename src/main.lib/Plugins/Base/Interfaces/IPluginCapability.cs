@@ -31,8 +31,8 @@ namespace PKISharp.WACS.Plugins.Interfaces
     public interface IValidationPluginCapability : IPluginCapability
     {
         /// <summary>
-        /// Which type of challenge can this plugin handle
+        /// Which type(s) of challenge can this plugin handle
         /// </summary>
-        string ChallengeType { get; }
+        IEnumerable<string> ChallengeTypes { get; }
     }
 }

@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Services.Serialization
     [JsonSerializable(typeof(Target.CsrOptions))]
     [JsonSerializable(typeof(Validation.Dns.ManualOptions), TypeInfoPropertyName = "DnsManualOptions")]
     [JsonSerializable(typeof(Validation.Dns.ScriptOptions))]
-    [JsonSerializable(typeof(Validation.Dns.NullOptions), TypeInfoPropertyName = "ValidationNullOptions")]
+    [JsonSerializable(typeof(Validation.Any.NullOptions), TypeInfoPropertyName = "ValidationNullOptions")]
     [JsonSerializable(typeof(Validation.Http.FileSystemOptions))]
     [JsonSerializable(typeof(Validation.Http.SelfHostingOptions))]
     [JsonSerializable(typeof(Validation.Tls.SelfHostingOptions), TypeInfoPropertyName = "TlsSelfHostingOptions")]

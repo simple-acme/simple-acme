@@ -173,6 +173,7 @@ namespace PKISharp.WACS
                 var orderResult = order.OrderResult;
                 if (order.NewCertificate == null)
                 {
+                    log.Error("No certificate generated");
                     orderResult.AddErrorMessage("No certificate generated");
                     continue;
                 }

@@ -16,7 +16,7 @@ namespace PKISharp.WACS
         Simple = 4,
         Advanced = 8,
         Test = 16,
-        Import = 32,
+        ForceValidation = 32,
         Force = 64,
         NoCache = 128,
         NoTaskScheduler = 256,

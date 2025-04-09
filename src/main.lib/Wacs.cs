@@ -128,6 +128,11 @@ namespace PKISharp.WACS.Host
             {
                 interactiveRunLevel |= RunLevel.Test;
                 unattendedRunLevel |= RunLevel.Test;
+                if (_args.NoCache)
+                {
+                    interactiveRunLevel |= RunLevel.ForceValidation;
+                    unattendedRunLevel |= RunLevel.ForceValidation;
+                }
             }
 
             // Main loop
