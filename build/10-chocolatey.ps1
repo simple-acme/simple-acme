@@ -46,7 +46,7 @@ function Replace-Stuff-Plugin {
 	$content = $content -replace '<description>.+</description>',"<description>$($plugin.name) $($plugin.typeHuman) plugin for simple-acme</description>"
 	$content = $content -replace '<summary>.+</summary>',"<summary>$($plugin.name) $($plugin.typeHuman) plugin for simple-acme</summary>"
 	$content = $content -replace '<docsUrl>.+</docsUrl>',"<docsUrl>https://simple-acme.com/reference/plugins/$($plugin.type.Replace(".","/"))/$($plugin.page)</docsUrl>"
-	$content = $content -replace '<dependency id="simple-acme" version=".+" />',"<dependency id=`"simple-acme`" version=`"$packageVersion`" />"
+	$content = $content -replace '<dependency id="simple-acme" version=".+" />',"<dependency id=`"simple-acme`" version=`"[$packageVersion,2.4)`" />"
 	$content = $content -replace '\$artifact(.+=.+)"(.+)?"',"`$artifact`$1`"$($plugin.artifact)`""
 	$tags = @("simple-acme", "plugin")
 	$tags += $($plugin.type.Split(".")[0])
@@ -94,7 +94,7 @@ Replace-Stuff ".\simple-acme\tools\chocolateyinstall.ps1"
 Replace-Stuff ".\simple-acme\tools\chocolateyuninstall.ps1"
 Replace-Stuff ".\simple-acme\tools\VERIFICATION.txt"
 Replace-Stuff ".\simple-acme\simple-acme.nuspec"
-Publish-Package ".\simple-acme\simple-acme.nuspec"
+# Publish-Package ".\simple-acme\simple-acme.nuspec"
 
 $templateFolder = ".\simple-acme-plugin-template"
 $pluginsYml = Get-Content "$Final\plugins.yml" -Raw
