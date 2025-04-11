@@ -160,7 +160,7 @@ namespace PKISharp.WACS.Services
                 {
                     return false;
                 }
-                var ruleParser = new TldRuleParser();
+                var ruleParser = new TldRuleParser(TldRuleDivisionFilter.ICANNOnly);
                 var enumerable = ruleParser.ParseRules(ruleData);
                 _data.AddRules(enumerable);
                 return true;
