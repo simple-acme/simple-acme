@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="52.0.0" />
+    <PackageReference Include="FluentFTP" Version="52.1.0" />
     <PackageReference Include="FluentFTP.GnuTLS" Version="1.0.37" />
   </ItemGroup>
 
