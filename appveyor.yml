@@ -1,4 +1,7 @@
-version: 2.3.1.{build}
+version: 2.3.2.{build}
+branches:
+  only:
+    - main
 image: Visual Studio 2022
 platform: Any CPU
 shallow_clone: true

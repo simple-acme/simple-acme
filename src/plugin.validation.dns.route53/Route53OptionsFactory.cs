@@ -43,11 +43,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 case IAMdefault:
                     break;
                 case IAMspecific:
-                    ret.IAMRole = await IamRole.Required().GetValue();
+                    ret.IAMRole = await IamRole.Interactive(input).Required().GetValue();
                     break;
                 case AccessKeySecret:
-                    ret.AccessKeyId = await AccessKeyId.Required().GetValue();
-                    ret.SecretAccessKey = await AccessKey.Required().GetValue();
+                    ret.AccessKeyId = await AccessKeyId.Interactive(input).Required().GetValue();
+                    ret.SecretAccessKey = await AccessKey.Interactive(input).Required().GetValue();
                     break;
                 default:
                     throw new InvalidOperationException();
@@ -74,6 +74,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(Route53Options options)
         {
             yield return (IamRole.Meta, options.IAMRole);
+            yield return (ArnRole.Meta, options.ARNRole);
             yield return (AccessKeyId.Meta, options.AccessKeyId);
             yield return (AccessKey.Meta, options.SecretAccessKey);
         }
