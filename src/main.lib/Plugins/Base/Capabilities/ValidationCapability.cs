@@ -34,7 +34,7 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
     public class TlsValidationCapability(Target target) : ValidationCapability
     {
         protected readonly Target Target = target;
-        public override IEnumerable<string> ChallengeTypes => [Constants.Dns01ChallengeType];
+        public override IEnumerable<string> ChallengeTypes => [Constants.TlsAlpn01ChallengeType];
         public override State State =>
             Target.GetIdentifiers(false).Any(x => x.Value.StartsWith("*.")) ?
             State.DisabledState("TLS-ALPN validation cannot be used for wildcard identifiers (e.g. *.example.com)") :
@@ -42,13 +42,6 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
     }
 
     public class AnyValidationCapability(Target target) : ValidationCapability
-    {
-        protected readonly Target Target = target;
-        public override IEnumerable<string> ChallengeTypes => [Constants.Dns01ChallengeType, Constants.Http01ChallengeType, Constants.TlsAlpn01ChallengeType];
-        public override State State => State.EnabledState();
-    }
-
-    public class MaualValidationCapability(Target target) : ValidationCapability
     {
         protected readonly Target Target = target;
         public override IEnumerable<string> ChallengeTypes => [Constants.Dns01ChallengeType, Constants.Http01ChallengeType, Constants.TlsAlpn01ChallengeType];
