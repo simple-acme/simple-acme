@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <param name="context"></param>
         /// <param name="challenge"></param>
         /// <returns></returns>
-        public override async Task PrepareChallenge(ValidationContext context, Dns01ChallengeValidationDetails challenge)
+        public override async Task<bool> PrepareChallenge(ValidationContext context, Dns01ChallengeValidationDetails challenge)
         {
             // Check for substitute domains
             var authority = await _dnsClient.GetAuthority(
@@ -53,6 +53,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                     _recordsCreated.Add(record);
                 }
             }
+            return true;
         }
 
         /// <summary>

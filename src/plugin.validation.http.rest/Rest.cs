@@ -31,7 +31,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         public override ParallelOperations Parallelism => ParallelOperations.Prepare | ParallelOperations.Answer;
 
-        public override Task PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
+        public override Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
             var resourceUrl = challenge.HttpResourceUrl;
             if (_useHttps)
@@ -39,7 +39,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 resourceUrl = resourceUrl.Replace("http://", "https://");
             }
             _urlsChallenges.Add((resourceUrl, challenge.HttpResourceValue));
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         public override async Task Commit()

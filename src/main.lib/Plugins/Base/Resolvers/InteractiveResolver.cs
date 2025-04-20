@@ -210,15 +210,23 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 Steps.Validation,
                 sort: frontend =>
                 {
-                    return frontend.Capability.ChallengeType switch
+                    if (frontend.Capability.ChallengeTypes.Count() > 1)
                     {
-                        Constants.Http01ChallengeType => 0,
-                        Constants.Dns01ChallengeType => 1,
-                        Constants.TlsAlpn01ChallengeType => 2,
-                        _ => 3,
+                        return 4;
+                    }
+                    return frontend.Capability.ChallengeTypes.First() switch
+                    {
+                        Constants.Http01ChallengeType => 1,
+                        Constants.Dns01ChallengeType => 2,
+                        Constants.TlsAlpn01ChallengeType => 3,
+                        _ => 5,
                     };
                 },
-                description: x => $"[{x.Capability.ChallengeType.Replace("-01", "")}] {x.Meta.Description}",
+                description: x =>
+                {
+                    var prefix = x.Capability.ChallengeTypes.Count() > 1 ? "any" : x.Capability.ChallengeTypes.First().Replace("-01", "");
+                    return $"[{prefix}] {x.Meta.Description}";
+                },
                 defaultParam1: defaultParam1,
                 defaultParam2: defaultParam2,
                 defaultBackends: [typeof(SelfHosting), typeof(FileSystem)],

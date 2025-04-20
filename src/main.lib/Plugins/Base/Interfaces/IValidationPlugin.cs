@@ -1,5 +1,7 @@
-﻿using PKISharp.WACS.Context;
+﻿using ACMESharp.Protocol.Resources;
+using PKISharp.WACS.Context;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.Interfaces
@@ -10,13 +12,20 @@ namespace PKISharp.WACS.Plugins.Interfaces
     public interface IValidationPlugin : IPlugin
     {
         /// <summary>
+        /// Select one of the available challenges to process
+        /// </summary>
+        /// <param name="supportedChallenges"></param>
+        /// <returns></returns>
+        Task<AcmeChallenge?> SelectChallenge(List<AcmeChallenge> supportedChallenges);
+
+        /// <summary>
         /// Prepare single challenge
         /// </summary>
         /// <param name="options"></param>
         /// <param name="target"></param>
         /// <param name="challenge"></param>
         /// <returns></returns>
-        Task PrepareChallenge(ValidationContext context);
+        Task<bool> PrepareChallenge(ValidationContext context);
 
         /// <summary>
         /// Commit changes after all the challenges have been prepared

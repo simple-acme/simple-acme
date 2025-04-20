@@ -128,7 +128,7 @@ namespace PKISharp.WACS.Client
                 var folderFiles = await client.Propfind(path);
                 if (folderFiles.IsSuccessful)
                 {
-                    return folderFiles.Resources.Select(r => r.DisplayName);
+                    return folderFiles.Resources.Select(r => r.DisplayName).OfType<string>();
                 }
             }
             catch (Exception ex)

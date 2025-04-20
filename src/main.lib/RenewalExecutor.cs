@@ -126,12 +126,15 @@ namespace PKISharp.WACS
             {
                 return;
             }
+            if (result.Success == false)
+            {
+                return;
+            }
 
             // Unless specifically flagged not to setup task scheduler,
             // --test mode will ask the question whether to setup the 
             // task or not.
-            if (result.Success == true &&
-                !result.Abort &&
+            if (!result.Abort &&
                 (renewal.New || renewal.Updated) &&
                 runLevel.HasFlag(RunLevel.Test) &&
                 !await input.PromptYesNo($"[--test] Do you want to automatically renew with these settings?", true))
