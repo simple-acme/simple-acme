@@ -481,7 +481,11 @@ namespace PKISharp.WACS
                     var client = context.Scope.Resolve<AcmeClient>();
                     context.ChallengeDetails = client.DecodeChallengeValidation(context.Authorization, challenge);
                     context.Challenge = challenge;
-                    await context.ValidationPlugin.PrepareChallenge(context);
+                    var ret = await context.ValidationPlugin.PrepareChallenge(context);
+                    if (!ret)
+                    {
+                        throw new Exception("User aborted");
+                    }
                 }
                 catch (Exception ex)
                 {

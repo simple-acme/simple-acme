@@ -66,11 +66,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
         }
 
-        public override async Task PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
+        public override async Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
             // Add validation file
             _files.GetOrAdd("/" + challenge.HttpResourcePath, challenge.HttpResourceValue);
             await TestChallenge(challenge);
+            return true;
         }
 
         public override Task Commit()

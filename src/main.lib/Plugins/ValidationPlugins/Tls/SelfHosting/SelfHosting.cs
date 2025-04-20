@@ -73,7 +73,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
             return (testListener, port);
         }
 
-        public override Task PrepareChallenge(ValidationContext context, TlsAlpn01ChallengeValidationDetails challenge)
+        public override Task<bool> PrepareChallenge(ValidationContext context, TlsAlpn01ChallengeValidationDetails challenge)
         {
             var port = DefaultValidationPort;
             try
@@ -120,7 +120,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                 log.Error("Unable to activate TcpClient for port {port}", port);
                 throw;
             }
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
     }
 }

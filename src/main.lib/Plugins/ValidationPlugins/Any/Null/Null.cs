@@ -21,7 +21,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         public ParallelOperations Parallelism => ParallelOperations.Answer | ParallelOperations.Prepare | ParallelOperations.Reuse;
         public Task CleanUp() => Task.CompletedTask;
         public Task Commit() => Task.CompletedTask;
-        public Task PrepareChallenge(ValidationContext context) => Task.CompletedTask;
+        public Task<bool> PrepareChallenge(ValidationContext context) => Task.FromResult(true);
         public Task<AcmeChallenge?> SelectChallenge(List<AcmeChallenge> supportedChallenges) => Task.FromResult(supportedChallenges.FirstOrDefault());
     }
 }

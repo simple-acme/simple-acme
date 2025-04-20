@@ -1,27 +1,16 @@
 ﻿using PKISharp.WACS.Clients.DNS;
-using PKISharp.WACS.Plugins.Base.Capabilities;
-using PKISharp.WACS.Plugins.Base.Factories;
-using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
-using PKISharp.WACS.Services.Serialization;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
+namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 {
-    [IPlugin.Plugin<
-        ManualOptions, PluginOptionsFactory<ManualOptions>, 
-        DnsValidationCapability, WacsJsonPlugins>
-        ("e45d62b9-f9a8-441e-b95f-c5ee0dcd8040", 
-        "Manual", "Create verification records manually (auto-renew not possible)")]
-    internal class Manual(
+    internal class ManualDns(
         LookupClientProvider dnsClient,
         ILogService log,
         IInputService input,
         ISettingsService settings) : DnsValidation<Manual>(dnsClient, log, settings)
     {
-        public override ParallelOperations Parallelism => ParallelOperations.Answer;
-
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             input.CreateSpace();
@@ -55,7 +44,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     var options = new List<Choice<bool?>>
                     {
                         Choice.Create<bool?>(null, "Retry check"),
-                        Choice.Create<bool?>(true, "Ignore and continue"),                        
+                        Choice.Create<bool?>(true, "Ignore and continue"),
                         Choice.Create<bool?>(false, "Abort")
                     };
                     var chosen = await input.ChooseFromMenu("How would you like to proceed?", options);

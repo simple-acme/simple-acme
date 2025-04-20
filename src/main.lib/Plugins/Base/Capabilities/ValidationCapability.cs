@@ -47,4 +47,11 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
         public override IEnumerable<string> ChallengeTypes => [Constants.Dns01ChallengeType, Constants.Http01ChallengeType, Constants.TlsAlpn01ChallengeType];
         public override State State => State.EnabledState();
     }
+
+    public class MaualValidationCapability(Target target) : ValidationCapability
+    {
+        protected readonly Target Target = target;
+        public override IEnumerable<string> ChallengeTypes => [Constants.Dns01ChallengeType, Constants.Http01ChallengeType, Constants.TlsAlpn01ChallengeType];
+        public override State State => State.EnabledState();
+    }
 }

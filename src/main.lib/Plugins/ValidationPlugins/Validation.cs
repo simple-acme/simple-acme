@@ -22,18 +22,18 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <param name="supportedChallenges"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Task<AcmeChallenge?> SelectChallenge(List<AcmeChallenge> supportedChallenges) => 
+        public virtual Task<AcmeChallenge?> SelectChallenge(List<AcmeChallenge> supportedChallenges) => 
             Task.FromResult(supportedChallenges.FirstOrDefault());
 
         /// <summary>
         /// Handle the challenge
         /// </summary>
         /// <param name="challenge"></param>
-        public async Task PrepareChallenge(ValidationContext context)
+        public async Task<bool> PrepareChallenge(ValidationContext context)
         {
             if (context.ChallengeDetails is TChallenge typed)
             {
-                await PrepareChallenge(context, typed);
+                return await PrepareChallenge(context, typed);
             } 
             else
             {
@@ -45,7 +45,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// Handle the challenge
         /// </summary>
         /// <param name="challenge"></param>
-        public abstract Task PrepareChallenge(ValidationContext context, TChallenge typed);
+        public abstract Task<bool> PrepareChallenge(ValidationContext context, TChallenge typed);
 
         /// <summary>
         /// Commit changes

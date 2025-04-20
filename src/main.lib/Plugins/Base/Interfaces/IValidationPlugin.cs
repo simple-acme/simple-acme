@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
         /// <param name="target"></param>
         /// <param name="challenge"></param>
         /// <returns></returns>
-        Task PrepareChallenge(ValidationContext context);
+        Task<bool> PrepareChallenge(ValidationContext context);
 
         /// <summary>
         /// Commit changes after all the challenges have been prepared
