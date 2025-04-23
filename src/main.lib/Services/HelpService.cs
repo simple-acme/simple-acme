@@ -244,7 +244,11 @@ namespace PKISharp.WACS.Services
             var ret = plugin.Step.ToString().ToLower();
             if (plugin.Step == Steps.Validation)
             {
-                ret += "." + GetValidationType(plugin)?.Replace("-01", "");
+                var validationType = GetValidationType(plugin);
+                if (validationType != null)
+                {
+                    ret += "." + validationType.Replace("-01", "");
+                }
             }
             return ret;
         }
