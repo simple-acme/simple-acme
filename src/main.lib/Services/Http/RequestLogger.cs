@@ -43,24 +43,29 @@ namespace PKISharp.WACS.Services
             {
                 log.Warning("[HTTP] Request completed with status {s}", response.StatusCode);
             }
-            if (response.Content != null && response.Content.Headers.ContentLength > 0)
+            if (response.Content != null)
             {
                 var printableTypes = new[] {
                     "text/json",
                     "application/json",
                     "application/problem+json"
                 };
-                if (printableTypes.Contains(response.Content.Headers.ContentType?.MediaType))
+                var responseType = response.Content.Headers.ContentType?.MediaType ?? "unknown";
+                if (printableTypes.Contains(responseType))
                 {
                     var content = await response.Content.ReadAsStringAsync(cancellationToken);
                     if (!string.IsNullOrWhiteSpace(content))
                     {
                         log.Verbose("[HTTP] Response content: {content}", content);
                     }
+                    else
+                    {
+                        log.Verbose("[HTTP] Empty response of type {type}", responseType);
+                    }
                 }
                 else
                 {
-                    log.Verbose("[HTTP] Response of type {type} ({bytes} bytes)", response.Content.Headers.ContentType?.MediaType, response.Content.Headers.ContentLength);
+                    log.Verbose("[HTTP] Response of type {type} ({bytes} bytes)", responseType, response.Content.Headers.ContentLength?.ToString() ?? "?");
                 }
             }
             else
