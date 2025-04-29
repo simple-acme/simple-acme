@@ -236,9 +236,18 @@ namespace PKISharp.WACS.Clients.Acme
                 }
                 catch (AcmeProtocolException ex)
                 {
-                    if (previous != null && ex.ProblemType == ProblemType.Conflict)
+                    if (previous != null)
                     {
-                        log.Warning("This order has already been replaced, possibly due to multiple renewals generating the same certificate. You may use the Renewal Manager to scan for duplicates.");
+                        if (ex.ProblemType == ProblemType.AlreadyReplaced || 
+                            ex.ProblemType == ProblemType.Conflict)
+                        {
+                            log.Warning(ex, "This order has already been replaced. You may use the Renewal Manager to check for previous errors or duplicates.");
+                        }
+                        else
+                        {
+                            log.Warning(ex, "This order failed, possibly due to the server not properly processing information about the previous certificate.");
+                        }
+                        log.Information("Retrying without providing the server with replacement info...");
                         order = await client.CreateOrder(identifiers, null, notAfter);
                     }
                     else
