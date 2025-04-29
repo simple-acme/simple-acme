@@ -179,7 +179,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             var hostedZones = new List<HostedZone>();
             var response = await client.ListHostedZonesAsync();
             hostedZones.AddRange(response.HostedZones);
-            while (response.IsTruncated)
+            while (response.IsTruncated == true)
             {
                 response = await client.ListHostedZonesAsync(
                     new ListHostedZonesRequest() {
@@ -189,7 +189,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
             _log.Debug("Found {count} hosted zones in AWS", hostedZones.Count);
 
-            hostedZones = hostedZones.Where(x => !x.Config.PrivateZone).ToList();
+            hostedZones = [.. hostedZones.Where(x => !x.Config.PrivateZone == true)];
             var hostedZoneSets = hostedZones.GroupBy(x => x.Name);
             var hostedZone = FindBestMatch(hostedZoneSets.ToDictionary(x => x.Key), recordName);
             if (hostedZone != null)
