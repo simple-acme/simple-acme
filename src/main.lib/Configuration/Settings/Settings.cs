@@ -466,9 +466,14 @@ namespace PKISharp.WACS.Configuration.Settings
         /// </summary>
         public int PreValidateDnsRetryInterval { get; set; } = 30;
         /// <summary>
-        /// Amount of time in seconds to wait between each retry.
+        /// Add the local DNS server to the list of servers to query during prevalidation
         /// </summary>
         public bool? PreValidateDnsLocal { get; set; } = false;
+        /// <summary>
+        /// Amount of time to wait for DNS propagation to complete *after* (optional) PreValidation
+        /// step has been run.
+        /// </summary>
+        public int DnsPropagationDelay { get; set; } = 0;
         /// <summary>
         /// If set to `true`, the program will attempt to recurively 
         /// follow CNAME records present on _acme-challenge subdomains to 
