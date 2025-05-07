@@ -337,6 +337,10 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             {
                 cspFlags |= CspProviderFlags.UseNonExportableKey;
             }
+            // Documentation for CspParameters:
+            // https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.cspparameters?view=net-9.0
+            // Enumeration of possible provider types: 
+            // HKEY_LOCAL_MACHINE\Software\Microsoft\Cryptography\Defaults\Provider Types
             var cspParameters = new CspParameters
             {
                 KeyContainerName = Guid.NewGuid().ToString(),
