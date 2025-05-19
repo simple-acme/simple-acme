@@ -103,10 +103,14 @@ namespace PKISharp.WACS.Services
             {
                 throw new InvalidOperationException($"Missing argumentprovider for type {typeof(T).Name}");
             }
-            var argumentName = GetMetaData(action).ArgumentName;
+            var meta = GetMetaData(action);
+            var argumentName = meta.ArgumentName;
             if (returnValue == null)
             {
-                log.Verbose("No value provided for {optionName}", $"--{argumentName}");
+                if (!meta.Obsolete)
+                {
+                    log.Verbose("No value provided for {optionName}", $"--{argumentName}");
+                }
             }
             else
             {

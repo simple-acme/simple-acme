@@ -11,7 +11,9 @@ namespace PKISharp.WACS.Configuration
 {
     public interface INetworkCredentialArguments : IArguments
     {
+        [CommandLine(Description = "Username for remote server")]
         public string? UserName { get; }
+        [CommandLine(Description = "Password for remote server", Secret = true)]
         public string? Password { get; }
     }
 

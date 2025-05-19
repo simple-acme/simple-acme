@@ -6,7 +6,6 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -77,7 +76,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 Refresh(context.TargetPart);
             }
             await WriteAuthorizationFile(challenge);
-            await WriteWebConfig(challenge);
+            await WriteWebConfig();
             await TestChallenge(challenge);
 
             string? foundValue = null;
@@ -134,11 +133,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         /// <param name="fileContents">the contents of the file to write</param>
         private async Task WriteAuthorizationFile(Http01ChallengeValidationDetails challenge)
         {
-            if (_path == null)
-            {
-                throw new InvalidOperationException("No path specified for HttpValidation");
-            }
-            var path = CombinePath(_path, challenge.HttpResourcePath);
+            // Create full path from the base path
+            var path = CreatePath(challenge.HttpResourceName);
             await WriteFile(path, challenge.HttpResourceValue);
             if (!_filesWritten.Contains(path))
             {
@@ -147,12 +143,34 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         }
 
         /// <summary>
+        /// Create the full path for the file to be written
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        private string CreatePath(string name)
+        {
+            if (_path == null)
+            {
+                throw new InvalidOperationException("No path specified for HttpValidation");
+            }
+
+            // Create full path from the base path
+            var path = _path;
+            if (_options.IsRootPath != false)
+            {
+                path = CombinePath(path, Http01ChallengeValidationDetails.HttpPathPrefix);
+            }
+            return CombinePath(path, name);
+        }
+
+        /// <summary>
         /// Can be used to write out server specific configuration, to handle extensionless files etc.
         /// </summary>
         /// <param name="target"></param>
         /// <param name="answerPath"></param>
         /// <param name="token"></param>
-        private async Task WriteWebConfig(Http01ChallengeValidationDetails challenge)
+        private async Task WriteWebConfig()
         {
             if (_path == null)
             {
@@ -162,8 +180,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             {
                 try
                 {
-                    var partialPath = challenge.HttpResourcePath.Split('/').Last();
-                    var destination = CombinePath(_path, challenge.HttpResourcePath.Replace(partialPath, "web.config"));
+                    var destination = CreatePath("web.config");
                     if (!_filesWritten.Contains(destination))
                     {
                         var content = HttpValidation<TOptions>.GetWebConfig().Value;
@@ -173,7 +190,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                             await WriteFile(destination, content);
                             _filesWritten.Add(destination);
                         }
-
                     }
                 }
                 catch (Exception ex)
