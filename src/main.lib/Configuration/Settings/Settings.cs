@@ -20,7 +20,9 @@ namespace PKISharp.WACS.Configuration.Settings
     /// <summary>
     /// All settings
     /// </summary>
-    public class Settings : ISettings
+#pragma warning disable CS0618 // Type or member is obsolete
+    public class Settings : ISettings, ISettingsService
+#pragma warning restore CS0618 // Type or member is obsolete
     {
         public ClientSettings Client { get; set; } = new ClientSettings();
         public UiSettings UI { get; set; } = new UiSettings();
