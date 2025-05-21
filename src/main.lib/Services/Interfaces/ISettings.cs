@@ -1,5 +1,4 @@
 ﻿using PKISharp.WACS.Configuration.Settings;
-using System;
 
 namespace PKISharp.WACS.Services
 {
@@ -24,7 +23,4 @@ namespace PKISharp.WACS.Services
         InstallationSettings Installation { get; }
         bool Valid { get; }
     }
-
-    [Obsolete("Use ISettings instead")]
-    public interface ISettingsService : ISettings { }
 }

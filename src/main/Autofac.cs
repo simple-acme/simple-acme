@@ -105,9 +105,7 @@ namespace PKISharp.WACS.Host
                 // Specials
                 _ = builder.RegisterType<HttpValidationParameters>().InstancePerLifetimeScope();
                 _ = builder.Register(c => c.Resolve<ArgumentsParser>().GetArguments<MainArguments>()!);
-#pragma warning disable CS0618 // Type or member is obsolete
-                _ = builder.Register(c => c.Resolve<SettingsService>().Settings).As<ISettings>().As<ISettingsService>();
-#pragma warning restore CS0618 // Type or member is obsolete
+                _ = builder.Register(c => c.Resolve<SettingsService>().Settings).As<ISettings>();
                 _ = builder.Register(c => c.Resolve<ArgumentsParser>().GetArguments<AccountArguments>()!);
                 _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
             });
