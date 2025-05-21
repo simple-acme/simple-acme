@@ -16,11 +16,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     public abstract class DnsValidation<TPlugin>(
         LookupClientProvider dnsClient,
         ILogService log,
-        ISettingsService settings) : Validation<Dns01ChallengeValidationDetails>
+        ISettings settings) : Validation<Dns01ChallengeValidationDetails>
     {
         protected readonly LookupClientProvider _dnsClient = dnsClient;
         protected readonly ILogService _log = log;
-        protected readonly ISettingsService _settings = settings;
+        protected readonly ISettings _settings = settings;
         private readonly List<DnsValidationRecord> _recordsCreated = [];
 
         /// <summary>
@@ -304,7 +304,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         }
     }
 
-    public abstract class DnsValidation<TPlugin, TClient>(LookupClientProvider dnsClient, ILogService log, ISettingsService settings, IProxyService proxy) : 
+    public abstract class DnsValidation<TPlugin, TClient>(LookupClientProvider dnsClient, ILogService log, ISettings settings, IProxyService proxy) : 
         DnsValidation<TPlugin>(dnsClient, log, settings), IDisposable 
         where TClient: class
     {

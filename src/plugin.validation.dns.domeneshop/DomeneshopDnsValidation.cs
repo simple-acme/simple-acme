@@ -21,7 +21,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class DomeneshopDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         IProxyService proxy,
         DomainParseService domainParser,
         DomeneshopOptions options,

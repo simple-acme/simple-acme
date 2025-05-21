@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Clients
 
 #pragma warning disable
         // Not used, but must be initialized to create settings.json on clean install
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
 #pragma warning enable
 
         private readonly string _server;
@@ -36,7 +36,7 @@ namespace PKISharp.WACS.Clients
 
         public EmailClient(
             ILogService log, 
-            ISettingsService settings, 
+            ISettings settings, 
             SecretServiceManager secretService)
         {
             _log = log;

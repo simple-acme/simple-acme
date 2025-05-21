@@ -9,7 +9,7 @@ using System.Xml;
 
 namespace PKISharp.WACS.Host.Services.Legacy
 {
-    public class LegacySettingsService : ISettingsService
+    public class LegacySettingsService : ISettings
     {
         private readonly ILogService _log;
         public ClientSettings Client { get; private set; } = new ClientSettings();
@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Host.Services.Legacy
         public Uri BaseUri { get; private set; }
         public bool Valid => true;
 
-        public LegacySettingsService(ILogService log, MainArguments main, ISettingsService settings)
+        public LegacySettingsService(ILogService log, MainArguments main, ISettings settings)
         {
             _log = log;
             UI = settings.UI;

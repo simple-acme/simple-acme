@@ -26,7 +26,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         SecretServiceManager ssm,
         ILogService log,
-        ISettingsService settings) : DnsValidation<Cloudflare, IAuthorizedSyntax>(dnsClient, log, settings, proxyService)
+        ISettings settings) : DnsValidation<Cloudflare, IAuthorizedSyntax>(dnsClient, log, settings, proxyService)
     {
         protected override async Task<IAuthorizedSyntax> CreateClient(HttpClient client)
         {

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace PKISharp.WACS.Services
 {
     internal class RenewalStoreDisk(
-        ISettingsService settings,
+        ISettings settings,
         DueDateStaticService dueDate,
         ILogService log,
         WacsJson wacsJson) : object(), IRenewalStoreBackend

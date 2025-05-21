@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     internal class DigitalOcean(
         DigitalOceanOptions options, LookupClientProvider dnsClient,
         SecretServiceManager ssm, ILogService log, IProxyService proxy,
-        ISettingsService settings) : DnsValidation<DigitalOcean, IDigitalOceanClient>(dnsClient, log, settings, proxy)
+        ISettings settings) : DnsValidation<DigitalOcean, IDigitalOceanClient>(dnsClient, log, settings, proxy)
     {
         private long? _recordId;
         private string? _zone;

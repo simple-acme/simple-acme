@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Host
             IAutofacBuilder scopeBuilder,
             ExceptionHandler exceptionHandler,
             ILogService log,
-            ISettingsService settings,
+            ISettings settings,
             IUserRoleService userRoleService,
             IInputService input,
             DueDateStaticService dueDateService,

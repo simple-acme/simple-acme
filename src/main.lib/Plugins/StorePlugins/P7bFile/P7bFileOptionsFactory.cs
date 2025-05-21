@@ -2,7 +2,6 @@
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
-using PKISharp.WACS.Services.Serialization;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -10,7 +9,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 {
     internal class P7bFileOptionsFactory(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         ArgumentsInputService arguments) : PluginOptionsFactory<P7bFileOptions>
     {
         private ArgumentResult<string?> Path => arguments.

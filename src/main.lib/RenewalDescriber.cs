@@ -12,7 +12,7 @@ namespace PKISharp.WACS
     internal class RenewalDescriber(
         ISharingLifetimeScope container,
         IPluginService plugin,
-        ISettingsService settings,
+        ISettings settings,
         IInputService input,
         ILogService log,
         DueDateStaticService dueDate,

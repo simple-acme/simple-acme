@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         SecretServiceManager ssm,
         ILogService logService,
-        ISettingsService settings) : DnsValidation<Hetzner, HetznerClient>(dnsClient, logService, settings, proxy)
+        ISettings settings) : DnsValidation<Hetzner, HetznerClient>(dnsClient, logService, settings, proxy)
     {
         protected override async Task<HetznerClient> CreateClient(HttpClient client)
         {

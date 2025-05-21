@@ -35,15 +35,15 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             return _passwordEvaluated;
         }
 
-        public static string? DefaultPath(ISettingsService settings) => 
+        public static string? DefaultPath(ISettings settings) => 
             settings.Store.PfxFile?.DefaultPath;
 
-        public static string? DefaultPassword(ISettingsService settings)
+        public static string? DefaultPassword(ISettings settings)
             => settings.Store.PfxFile?.DefaultPassword;
 
         public PfxFile(
             ILogService log, 
-            ISettingsService settings, 
+            ISettings settings, 
             PfxFileOptions options,
             SecretServiceManager secretServiceManager)
         {

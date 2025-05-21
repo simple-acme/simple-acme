@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         protected TOptions _options = options;
         protected IInputService _input = pars.InputService;
-        protected ISettingsService _settings = pars.Settings;
+        protected ISettings _settings = pars.Settings;
         protected Renewal _renewal = pars.Renewal;
         protected RunLevel _runLevel = runLevel;
         protected ILogService _log = pars.LogService;

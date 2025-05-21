@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
     internal class InteractiveResolver(
         ILogService log,
         IInputService inputService,
-        ISettingsService settings,
+        ISettings settings,
         MainArguments arguments,
         IPluginService pluginService,
         ILifetimeScope scope,

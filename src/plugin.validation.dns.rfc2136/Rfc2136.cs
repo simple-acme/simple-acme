@@ -24,7 +24,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     internal sealed class Rfc2136(
         LookupClientProvider dnsClient,
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         SecretServiceManager ssm,
         LookupClientProvider lcp,
         DomainParseService domainParser,

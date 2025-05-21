@@ -21,7 +21,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         Name = "Elliptic Curve")]
     internal class Ec(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         EcOptions options) : CsrPlugin<EcOptions>(log, settings, options)
     {
         internal override AsymmetricCipherKeyPair GenerateNewKeyPair()

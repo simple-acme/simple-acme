@@ -8,7 +8,7 @@ using System.Linq;
 namespace PKISharp.WACS.Services
 {
     public class DueDateRuntimeService(
-        ISettingsService settings,
+        ISettings settings,
         ILogService logService,
         IInputService input)
     {

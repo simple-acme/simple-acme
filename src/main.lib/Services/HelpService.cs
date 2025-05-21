@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace PKISharp.WACS.Services
 {
-    internal partial class HelpService(ILogService log, IPluginService plugins, ISettingsService settings, ArgumentsParser parser)
+    internal partial class HelpService(ILogService log, IPluginService plugins, ISettings settings, ArgumentsParser parser)
     {
         /// <summary>
         /// Map arguments to plugins

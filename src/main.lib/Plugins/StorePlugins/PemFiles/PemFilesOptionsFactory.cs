@@ -10,7 +10,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 {
     internal class PemFilesOptionsFactory(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         ArgumentsInputService arguments) : PluginOptionsFactory<PemFilesOptions>
     {
         private ArgumentResult<ProtectedString?> Password => arguments.

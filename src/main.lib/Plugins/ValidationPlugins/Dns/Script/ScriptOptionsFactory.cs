@@ -10,7 +10,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     internal class ScriptOptionsFactory(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         ArgumentsInputService arguments) : PluginOptionsFactory<ScriptOptions>
     {
         private ArgumentResult<string?> CommonScript => arguments.

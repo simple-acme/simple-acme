@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Host
         Banner banner,
         ILogService logService,
         IInputService inputService,
-        ISettingsService settingsService,
+        ISettings settingsService,
         HelpService helpService,
         VersionService versionService,
         ArgumentsParser argumentsParser,

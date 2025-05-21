@@ -64,7 +64,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
                     As<IPluginService>().
                     SingleInstance();
             _ = builder.RegisterInstance(settings).
-                  As<ISettingsService>().
+                  As<ISettings>().
                   SingleInstance();
             _ = builder.RegisterInstance(log).
                     As<ILogService>().

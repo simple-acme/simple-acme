@@ -17,13 +17,13 @@ namespace PKISharp.WACS.Clients.DNS
         private readonly LookupClientWrapper _systemClient;
 
         private readonly ILogService _log;
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
         private readonly DomainParseService _domainParser;
 
         public LookupClientProvider(
             DomainParseService domainParser,
             ILogService logService,
-            ISettingsService settings)
+            ISettings settings)
         {
             _log = logService;
             _settings = settings;

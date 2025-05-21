@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class DreamhostDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         IProxyService proxy,
         SecretServiceManager ssm,
         DreamhostOptions options) : DnsValidation<DreamhostDnsValidation, DnsManagementClient>(dnsClient, logService, settings, proxy)

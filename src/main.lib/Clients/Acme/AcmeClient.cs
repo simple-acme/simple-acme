@@ -36,7 +36,7 @@ namespace PKISharp.WACS.Clients.Acme
         public const string ChallengeValid = "valid";
 
         private readonly ILogService _log;
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
         private readonly AcmeProtocolClient _client;
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace PKISharp.WACS.Clients.Acme
             HttpClient httpClient,
             ILogService log,
             IAcmeLogger acmeLogger,
-            ISettingsService settings,
+            ISettings settings,
             ServiceDirectory directory,
             Account account)
         {

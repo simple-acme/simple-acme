@@ -3,7 +3,7 @@ using PKISharp.WACS.Extensions;
 
 namespace PKISharp.WACS.Services
 {
-    internal class TargetValidator(ILogService log, ISettingsService settings)
+    internal class TargetValidator(ILogService log, ISettings settings)
     {
         public bool IsValid(Target target, bool validateMax = true)
         {

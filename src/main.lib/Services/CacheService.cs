@@ -25,10 +25,10 @@ namespace PKISharp.WACS.Services
         private const string PfxPostFixLegacy = "-cache.pfx";
 
         private readonly ILogService _log;
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
         private readonly DirectoryInfo _cache;
 
-        public CacheService(ILogService log, ISettingsService settingsService)
+        public CacheService(ILogService log, ISettings settingsService)
         {
             _settings = settingsService;
             _log = log;

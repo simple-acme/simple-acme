@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Services
     internal class ValidationOptionsService(
         IInputService input,
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         IAutofacBuilder autofac,
         WacsJson wacsJson) : IValidationOptionsService
     {

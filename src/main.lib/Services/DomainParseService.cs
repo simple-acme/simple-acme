@@ -13,11 +13,11 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    public class DomainParseService(ILogService log, IProxyService proxy, ISettingsService settings)
+    public class DomainParseService(ILogService log, IProxyService proxy, ISettings settings)
     {
         private DomainParser? _parser;
         private readonly ILogService _log = log;
-        private readonly ISettingsService _settings = settings;
+        private readonly ISettings _settings = settings;
         private readonly IProxyService _proxy = proxy;
 
         public async Task Initialize() => _parser ??= await CreateParser();
@@ -82,7 +82,7 @@ namespace PKISharp.WACS.Services
             private string? _memoryCache;
             private readonly ILogService _log;
 
-            public FileCacheProvider(ILogService log, ISettingsService settings)
+            public FileCacheProvider(ILogService log, ISettings settings)
             {
                 _log = log;
                 var path = Path.Combine(settings.Client.ConfigurationPath, "public_suffix_list.dat");
@@ -138,7 +138,7 @@ namespace PKISharp.WACS.Services
         /// Custom implementation so that we can use the proxy 
         /// that the user has configured and 
         /// </summary>
-        private class WebTldRuleProvider(IProxyService proxy, ILogService log, ISettingsService settings) : IRuleProvider
+        private class WebTldRuleProvider(IProxyService proxy, ILogService log, ISettings settings) : IRuleProvider
         {
             private readonly string _fileUrl = "https://publicsuffix.org/list/public_suffix_list.dat";
             private readonly FileCacheProvider _cache = new(log, settings);

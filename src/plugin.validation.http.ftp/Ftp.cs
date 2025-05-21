@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         public Ftp(
             FtpOptions options,
             HttpValidationParameters pars,
-            ISettingsService settings,
+            ISettings settings,
             RunLevel runLevel,
             SecretServiceManager secretService) :
             base(options, runLevel, pars) =>

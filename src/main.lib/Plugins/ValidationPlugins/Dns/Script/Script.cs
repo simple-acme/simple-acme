@@ -28,7 +28,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ILogService log,
         SecretServiceManager secretServiceManager,
         DomainParseService domainParseService,
-        ISettingsService settings) : DnsValidation<Script>(dnsClient, log, settings)
+        ISettings settings) : DnsValidation<Script>(dnsClient, log, settings)
     {
         internal const string DefaultCreateArguments = "create {Identifier} {RecordName} {Token}";
         internal const string DefaultDeleteArguments = "delete {Identifier} {RecordName} {Token}";

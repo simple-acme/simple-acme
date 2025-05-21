@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         SecretServiceManager ssm,
         IProxyService proxyService,
         ILogService log,
-        ISettingsService settings) : DnsValidation<Azure, ArmClient>(dnsClient, log, settings, proxyService)
+        ISettings settings) : DnsValidation<Azure, ArmClient>(dnsClient, log, settings, proxyService)
     {
         private SubscriptionResource? _subscriptionResource;
         private readonly AzureHelpers _helpers = new(options, ssm);

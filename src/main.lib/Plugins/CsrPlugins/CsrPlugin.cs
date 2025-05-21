@@ -23,12 +23,12 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
     /// <summary>
     /// Common implementation between RSA and EC certificates
     /// </summary>
-    public abstract class CsrPlugin<TOptions>(ILogService log, ISettingsService settings, TOptions options) : 
+    public abstract class CsrPlugin<TOptions>(ILogService log, ISettings settings, TOptions options) : 
         ICsrPlugin
         where TOptions : CsrPluginOptions
     {
         protected readonly ILogService _log = log;
-        protected readonly ISettingsService _settings = settings;
+        protected readonly ISettings _settings = settings;
         protected readonly TOptions _options = options;
 
         protected string? _cacheData;

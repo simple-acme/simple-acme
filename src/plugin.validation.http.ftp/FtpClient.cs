@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Clients
 {
     internal class FtpClient(
         NetworkCredentialOptions? options,
-        ISettingsService settings,
+        ISettings settings,
         ILogService log,
         SecretServiceManager secretService)
     {

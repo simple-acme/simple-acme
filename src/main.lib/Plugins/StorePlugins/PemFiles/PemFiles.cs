@@ -36,7 +36,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
         public PemFiles(
             ILogService log,
-            ISettingsService settings,
+            ISettings settings,
             PemFilesOptions options, 
             SecretServiceManager secretServiceManager)
         {

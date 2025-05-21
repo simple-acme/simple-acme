@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Services
 {
     [SupportedOSPlatform("windows")]
     internal class TaskSchedulerService(
-        ISettingsService settings,
+        ISettings settings,
         MainArguments arguments,
         IInputService input,
         ILogService log) : IAutoRenewService

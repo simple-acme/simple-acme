@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Configuration.Settings
     /// <summary>
     /// All settings
     /// </summary>
-    public class Settings : ISettingsService
+    public class Settings : ISettings
     {
         public ClientSettings Client { get; set; } = new ClientSettings();
         public UiSettings UI { get; set; } = new UiSettings();

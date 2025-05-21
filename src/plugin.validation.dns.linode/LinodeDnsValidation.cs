@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class LinodeDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         DomainParseService domainParser,
         LinodeOptions options,
         SecretServiceManager ssm,

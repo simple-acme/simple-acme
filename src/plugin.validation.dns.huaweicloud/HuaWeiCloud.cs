@@ -21,7 +21,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         External = true, Provider = "HuaWeiCloud", Page = "huaweicloud")]
     public class HuaWeiCloud(HuaWeiCloudOptions options, SecretServiceManager ssm,
         IProxyService proxyService, LookupClientProvider dnsClient, ILogService log,
-        ISettingsService settings) : DnsValidation<HuaWeiCloud, HuaweiCloud.SDK.Dns.V2.DnsClient>(dnsClient, log, settings, proxyService)
+        ISettings settings) : DnsValidation<HuaWeiCloud, HuaweiCloud.SDK.Dns.V2.DnsClient>(dnsClient, log, settings, proxyService)
     {
 
         protected override async Task<HuaweiCloud.SDK.Dns.V2.DnsClient> CreateClient(HttpClient httpClient)

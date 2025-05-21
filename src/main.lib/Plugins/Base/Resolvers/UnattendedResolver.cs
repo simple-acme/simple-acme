@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
 {
     internal class UnattendedResolver(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         IAutofacBuilder autofacBuilder,
         ILifetimeScope scope,
         MainArguments arguments,

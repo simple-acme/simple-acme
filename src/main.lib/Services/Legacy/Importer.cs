@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Services.Legacy
 {
     internal class Importer(
         ILogService log, ILegacyRenewalService legacyRenewal,
-        ISettingsService settings, IRenewalStore currentRenewal,
+        ISettings settings, IRenewalStore currentRenewal,
         IInputService input, MainArguments arguments,
         LegacyTaskSchedulerService legacyTaskScheduler,
         IAutoRenewService currentTaskScheduler,

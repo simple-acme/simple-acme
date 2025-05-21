@@ -26,12 +26,12 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         private readonly string _path;
         private readonly string? _name;
 
-        public static string? DefaultPath(ISettingsService settings) =>
+        public static string? DefaultPath(ISettings settings) =>
             settings.Store.P7bFile?.DefaultPath;
 
         public P7bFile(
             ILogService log,
-            ISettingsService settings,
+            ISettings settings,
             P7bFileOptions options)
         {
             _log = log;

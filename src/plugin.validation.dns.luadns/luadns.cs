@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         IProxyService proxy,
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         SecretServiceManager ssm,
         LuaDnsOptions options) : DnsValidation<LuaDns, HttpClient>(dnsClient, log, settings, proxy)
     {

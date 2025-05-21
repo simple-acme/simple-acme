@@ -34,7 +34,7 @@ namespace PKISharp.WACS
     /// </summary>
     internal class RenewalValidator(
         IAutofacBuilder scopeBuilder,
-        ISettingsService settings,
+        ISettings settings,
         ILogService log,
         IPluginService plugin,
         AcmeClient client,

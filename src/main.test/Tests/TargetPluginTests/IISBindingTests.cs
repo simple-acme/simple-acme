@@ -17,7 +17,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
     public class IISBindingTests
     {
         private readonly ILogService log;
-        private readonly ISettingsService settings;
+        private readonly ISettings settings;
         private readonly IIISClient iis;
         private readonly IISHelper helper;
         private readonly PluginService plugins;

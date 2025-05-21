@@ -11,7 +11,7 @@ using System.Security.Cryptography.X509Certificates;
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
     [SupportedOSPlatform("windows")]
-    public class CertificateStoreClient(string storeName, StoreLocation storeLocation, ILogService log, ISettingsService settings) : IDisposable
+    public class CertificateStoreClient(string storeName, StoreLocation storeLocation, ILogService log, ISettings settings) : IDisposable
     {
         private readonly X509Store _store = new(storeName, storeLocation);
         private bool disposedValue;

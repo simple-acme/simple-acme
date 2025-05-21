@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Host
         UpdateClient updateClient,
         ILogService logService,
         IInputService inputService,
-        ISettingsService settingsService,
+        ISettings settingsService,
         IProxyService proxyService,
         ArgumentsParser argumentsParser,
         AdminService adminService,

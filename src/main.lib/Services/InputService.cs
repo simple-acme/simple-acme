@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    public class InputService(MainArguments arguments, ISettingsService settings, ILogService log) : IInputService
+    public class InputService(MainArguments arguments, ISettings settings, ILogService log) : IInputService
     {
         private const string _cancelCommand = "C";
         private bool _dirty;

@@ -9,7 +9,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         LookupClientProvider dnsClient,
         ILogService log,
         IInputService input,
-        ISettingsService settings) : DnsValidation<Manual>(dnsClient, log, settings)
+        ISettings settings) : DnsValidation<Manual>(dnsClient, log, settings)
     {
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {

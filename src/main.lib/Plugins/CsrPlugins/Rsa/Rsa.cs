@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         "RSA", "Generate an RSA public/private key pair")]
     internal class Rsa(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         RsaOptions options) : CsrPlugin<RsaOptions>(log, settings, options)
     {
 
