@@ -16,7 +16,7 @@ namespace PKISharp.WACS.Services
         internal async Task CheckNetwork()
         {
             using var httpClient = await proxy.GetHttpClient();
-            httpClient.BaseAddress = settings.BaseUri;
+            httpClient.BaseAddress = settings.Acme.BaseUri;
             httpClient.Timeout = new TimeSpan(0, 0, 10);
             var success = await CheckNetworkUrl(httpClient, "directory");
             if (!success)

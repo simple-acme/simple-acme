@@ -54,7 +54,7 @@ namespace PKISharp.WACS.Clients.Acme
         {
             _log = log;
             _settings = settings;
-            httpClient.BaseAddress = settings.BaseUri;
+            httpClient.BaseAddress = settings.Acme.BaseUri;
             _client = new AcmeProtocolClient(httpClient, acmeLogger, usePostAsGet: _settings.Acme.PostAsGet)
             {
                 Directory = directory,

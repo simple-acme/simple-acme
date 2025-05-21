@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -19,7 +20,7 @@ namespace PKISharp.WACS.Configuration.Settings
     /// <summary>
     /// All settings
     /// </summary>
-    public class Settings
+    public class Settings : ISettingsService
     {
         public ClientSettings Client { get; set; } = new ClientSettings();
         public UiSettings UI { get; set; } = new UiSettings();
@@ -40,6 +41,7 @@ namespace PKISharp.WACS.Configuration.Settings
         public StoreSettings Store { get; set; } = new StoreSettings();
         public InstallationSettings Installation { get; set; } = new InstallationSettings();
         public SecretsSettings Secrets { get; set; } = new SecretsSettings();
+        public bool Valid { get; set; } = false;
     }
 
     public class ClientSettings
@@ -82,6 +84,12 @@ namespace PKISharp.WACS.Configuration.Settings
 
     public class AcmeSettings
     {
+        /// <summary>
+        /// Selected BaseUri
+        /// </summary>
+        [JsonIgnore]
+        public Uri BaseUri { get; set; } = new Uri("https://localhost");
+
         /// <summary>
         /// Default ACMEv2 endpoint to use when none 
         /// is specified with the command line.

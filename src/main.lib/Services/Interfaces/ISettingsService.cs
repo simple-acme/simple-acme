@@ -1,11 +1,9 @@
 ﻿using PKISharp.WACS.Configuration.Settings;
-using System;
 
 namespace PKISharp.WACS.Services
 {
     public interface ISettingsService
     { 
-        Uri BaseUri { get; }
         UiSettings UI { get; }
         AcmeSettings Acme { get; }
         ExecutionSettings Execution { get; }

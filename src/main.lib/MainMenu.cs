@@ -136,7 +136,7 @@ namespace PKISharp.WACS.Host
             }
             if (importUri != null)
             {
-                using var scope = scopeBuilder.Legacy(container, importUri, settings.BaseUri);
+                using var scope = scopeBuilder.Legacy(container, importUri, settings.Acme.BaseUri);
                 var importer = scope.Resolve<Importer>();
                 await importer.Import(runLevel);
             }

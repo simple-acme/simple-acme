@@ -30,7 +30,7 @@ namespace PKISharp.WACS.Host
             _ = builder.RegisterType<ExtendedAssemblyService>().As<AssemblyService>().SingleInstance();
             _ = builder.RegisterType<PluginService>().SingleInstance().As<IPluginService>();
             _ = builder.RegisterType<ArgumentsParser>().WithParameter(new TypedParameter(typeof(string[]), args)).SingleInstance();
-            _ = builder.RegisterType<SettingsService>().As<ISettingsService>().SingleInstance();
+            _ = builder.RegisterType<SettingsService>().SingleInstance();
             var plugin = builder.Build();
 
             var pluginService = plugin.Resolve<IPluginService>();
@@ -105,6 +105,7 @@ namespace PKISharp.WACS.Host
                 // Specials
                 _ = builder.RegisterType<HttpValidationParameters>().InstancePerLifetimeScope();
                 _ = builder.Register(c => c.Resolve<ArgumentsParser>().GetArguments<MainArguments>()!);
+                _ = builder.Register(c => c.Resolve<SettingsService>().Settings).As<ISettingsService>();
                 _ = builder.Register(c => c.Resolve<ArgumentsParser>().GetArguments<AccountArguments>()!);
                 _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
             });

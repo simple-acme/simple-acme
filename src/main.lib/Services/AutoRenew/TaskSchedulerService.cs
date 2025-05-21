@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Services
         IInputService input,
         ILogService log) : IAutoRenewService
     {
-        private string TaskName => $"{settings.Client.ClientName.CleanPath()} renew ({settings.BaseUri.CleanUri()})";
+        private string TaskName => $"{settings.Client.ClientName.CleanPath()} renew ({settings.Acme.BaseUri.CleanUri()})";
         private static string WorkingDirectory => Path.GetDirectoryName(VersionService.ExePath) ?? "";
         private static string ExecutingFile => Path.GetFileName(VersionService.ExePath);
 
@@ -136,7 +136,7 @@ namespace PKISharp.WACS.Services
         private string Arguments =>
             $"--{nameof(MainArguments.Renew).ToLowerInvariant()} " +
             $"--{nameof(MainArguments.BaseUri).ToLowerInvariant()} " +
-            $"\"{settings.BaseUri}\"";
+            $"\"{settings.Acme.BaseUri}\"";
 
         /// <summary>
         /// Decide to (re)create scheduled task or not

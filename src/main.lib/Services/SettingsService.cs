@@ -12,18 +12,16 @@ using static System.Environment;
 
 namespace PKISharp.WACS.Services
 {
-    public class SettingsService : ISettingsService
+    public class SettingsService
     {
         private readonly ILogService _log;
-        private readonly Settings _settings;
         private readonly MainArguments? _arguments;
-
-        public bool Valid { get; private set; } = false;
+        public Settings Settings { get; private set; }
 
         public SettingsService(ILogService log, ArgumentsParser parser)
         {
             _log = log;
-            _settings = new Settings();
+            Settings = new Settings();
             var settingsFileName = "settings.json";
             var settingsFileTemplateName = "settings_default.json";
             _log.Verbose("Looking for {settingsFileName} in {path}", settingsFileName, VersionService.SettingsPath);
@@ -66,18 +64,18 @@ namespace PKISharp.WACS.Services
                 var newSettings = JsonSerializer.Deserialize(fs, SettingsJson.Insensitive.Settings);
                 if (newSettings != null)
                 {
-                    _settings = newSettings;
+                    Settings = newSettings;
                 }
 
                 // This code specifically deals with backwards compatibility 
                 // so it is allowed to use obsolete properties
 #pragma warning disable CS0618
                 static string? Fallback(string? x, string? y) => x ?? y;
-                Source.DefaultSource = Fallback(Source.DefaultSource, Target.DefaultTarget);
-                Store.PemFiles.DefaultPath = Fallback(Store.PemFiles.DefaultPath, Store.DefaultPemFilesPath);
-                Store.CentralSsl.DefaultPath = Fallback(Store.CentralSsl.DefaultPath, Store.DefaultCentralSslStore);
-                Store.CentralSsl.DefaultPassword = Fallback(Store.CentralSsl.DefaultPassword, Store.DefaultCentralSslPfxPassword);
-                Store.CertificateStore.DefaultStore = Fallback(Store.CertificateStore.DefaultStore, Store.DefaultCertificateStore);
+                Settings.Source.DefaultSource = Fallback(Settings.Source.DefaultSource, Settings.Target.DefaultTarget);
+                Settings.Store.PemFiles.DefaultPath = Fallback(Settings.Store.PemFiles.DefaultPath, Settings.Store.DefaultPemFilesPath);
+                Settings.Store.CentralSsl.DefaultPath = Fallback(Settings.Store.CentralSsl.DefaultPath, Settings.Store.DefaultCentralSslStore);
+                Settings.Store.CentralSsl.DefaultPassword = Fallback(Settings.Store.CentralSsl.DefaultPassword, Settings.Store.DefaultCentralSslPfxPassword);
+                Settings.Store.CertificateStore.DefaultStore = Fallback(Settings.Store.CertificateStore.DefaultStore, Settings.Store.DefaultCertificateStore);
 #pragma warning restore CS0618
             }
             catch (Exception ex)
@@ -104,7 +102,7 @@ namespace PKISharp.WACS.Services
             }
             try
             {     
-                _ = BaseUri;
+                Settings.Acme.BaseUri = ChooseBaseUri();
             } 
             catch
             {
@@ -115,63 +113,64 @@ namespace PKISharp.WACS.Services
             try
             {
                 var configRoot = ChooseConfigPath();
-                Client.ConfigurationPath = Path.Combine(configRoot, BaseUri.CleanUri());
-                Client.LogPath = ChooseLogPath();
-                Cache.Path = ChooseCachePath();
+                Settings.Client.ConfigurationPath = Path.Combine(configRoot, Settings.Acme.BaseUri.CleanUri());
+                Settings.Client.LogPath = ChooseLogPath();
+                Settings.Cache.Path = ChooseCachePath();
 
                 EnsureFolderExists(configRoot, "configuration", true);
-                EnsureFolderExists(Client.ConfigurationPath, "configuration", false);
-                EnsureFolderExists(Client.LogPath, "log", !Client.LogPath.StartsWith(Client.ConfigurationPath));
-                EnsureFolderExists(Cache.Path, "cache", !Client.LogPath.StartsWith(Client.ConfigurationPath));
+                EnsureFolderExists(Settings.Client.ConfigurationPath, "configuration", false);
+                EnsureFolderExists(Settings.Client.LogPath, "log", !Settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath));
+                EnsureFolderExists(Settings.Cache.Path, "cache", !Settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath));
 
                 // Configure disk logger
-                _log.ApplyClientSettings(Client);
+                _log.ApplyClientSettings(Settings.Client);
             }
             catch (Exception ex)
             {
                 _log.Error(ex, "Error initializing program");
                 return;
             }
-
-            Valid = true;
+            Settings.Valid = true;
         }
 
-        public Uri BaseUri
+        /// <summary>
+        /// Choose the base URI based on command line options and/or global settings defaults
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public Uri ChooseBaseUri()
         {
-            get
+            if (!string.IsNullOrWhiteSpace(_arguments?.BaseUri))
             {
-                if (!string.IsNullOrWhiteSpace(_arguments?.BaseUri))
+                try
                 {
-                    try
-                    {
-                        return new Uri(_arguments.BaseUri);
-                    } 
-                    catch (Exception ex)
-                    {
-                        _log.Error(ex, "Invalid --baseuri specified");
-                        throw;
-                    }
-                }
-                if (_arguments?.Test ?? false)
+                    return new Uri(_arguments.BaseUri);
+                } 
+                catch (Exception ex)
                 {
-                    if (Acme.DefaultBaseUriTest?.IsAbsoluteUri ?? false)
-                    {
-                        return Acme.DefaultBaseUriTest;
-                    } 
-                    else
-                    {
-                        _log.Warning("Setting Acme.DefaultBaseUriTest is unspecified or invalid, fallback to Acme.DefaultBaseUri");
-                    }
+                    _log.Error(ex, "Invalid --baseuri specified");
+                    throw;
                 }
-                if (Acme.DefaultBaseUri?.IsAbsoluteUri ?? false)
+            }
+            if (_arguments?.Test ?? false)
+            {
+                if (Settings.Acme.DefaultBaseUriTest?.IsAbsoluteUri ?? false)
                 {
-                    return Acme.DefaultBaseUri;
-                }
+                    return Settings.Acme.DefaultBaseUriTest;
+                } 
                 else
                 {
-                    _log.Error("Setting Acme.DefaultBaseUri is unspecified or invalid, please specify a valid absolute URI");
-                    throw new Exception();
+                    _log.Warning("Setting Acme.DefaultBaseUriTest is unspecified or invalid, fallback to Acme.DefaultBaseUri");
                 }
+            }
+            if (Settings.Acme.DefaultBaseUri?.IsAbsoluteUri ?? false)
+            {
+                return Settings.Acme.DefaultBaseUri;
+            }
+            else
+            {
+                _log.Error("Setting Acme.DefaultBaseUri is unspecified or invalid, please specify a valid absolute URI");
+                throw new Exception();
             }
         }
 
@@ -180,7 +179,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         private string ChooseConfigPath()
         {
-            var userRoot = Client.ConfigurationPath;
+            var userRoot = Settings.Client.ConfigurationPath;
             string? configRoot;
             if (!string.IsNullOrEmpty(userRoot))
             {
@@ -190,7 +189,7 @@ namespace PKISharp.WACS.Services
                 // check for possible sub directories with client name
                 // to keep bug-compatible with older releases that
                 // created a subfolder inside of the users chosen config path
-                var configRootWithClient = Path.Combine(userRoot, Client.ClientName);
+                var configRootWithClient = Path.Combine(userRoot, Settings.Client.ClientName);
                 if (Directory.Exists(configRootWithClient))
                 {
                     configRoot = configRootWithClient;
@@ -199,14 +198,14 @@ namespace PKISharp.WACS.Services
             else if (OperatingSystem.IsWindows() || Environment.IsPrivilegedProcess)
             {
                 var appData = Environment.GetFolderPath(SpecialFolder.CommonApplicationData, SpecialFolderOption.DoNotVerify);
-                configRoot = Path.Combine(appData, Client.ClientName);
+                configRoot = Path.Combine(appData, Settings.Client.ClientName);
             }
             else
             {
                 // For non-elevated Linux we have to fall back to the user directory
                 // These user will not be able to auto-renew.
                 var appData = Environment.GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify);
-                configRoot = Path.Combine(appData, Client.ClientName);
+                configRoot = Path.Combine(appData, Settings.Client.ClientName);
             }
             return configRoot;
         }
@@ -216,14 +215,14 @@ namespace PKISharp.WACS.Services
         /// </summary>
         private string ChooseLogPath()
         {
-            if (string.IsNullOrWhiteSpace(Client.LogPath))
+            if (string.IsNullOrWhiteSpace(Settings.Client.LogPath))
             {
-                return Path.Combine(Client.ConfigurationPath, "Log");
+                return Path.Combine(Settings.Client.ConfigurationPath, "Log");
             }
             else
             {
                 // Create separate logs for each endpoint
-                return Path.Combine(Client.LogPath, BaseUri.CleanUri());
+                return Path.Combine(Settings.Client.LogPath, Settings.Acme.BaseUri.CleanUri());
             }
         }
 
@@ -232,11 +231,11 @@ namespace PKISharp.WACS.Services
         /// </summary>
         private string ChooseCachePath()
         {
-            if (string.IsNullOrWhiteSpace(Cache.Path))
+            if (string.IsNullOrWhiteSpace(Settings.Cache.Path))
             {
-                return Path.Combine(Client.ConfigurationPath, "Certificates");
+                return Path.Combine(Settings.Client.ConfigurationPath, "Certificates");
             }
-            return Cache.Path;
+            return Settings.Cache.Path;
         }
 
         /// <summary>
@@ -383,29 +382,5 @@ namespace PKISharp.WACS.Services
             }
             return (hit, inherited);
         }
-
-        /// <summary>
-        /// Interface implementation
-        /// </summary>
-
-        public UiSettings UI => _settings.UI;
-        public AcmeSettings Acme => _settings.Acme;
-        public ExecutionSettings Execution => _settings.Execution;
-        public ProxySettings Proxy => _settings.Proxy;
-        public CacheSettings Cache => _settings.Cache;
-        public SecretsSettings Secrets => _settings.Secrets;
-        public ScheduledTaskSettings ScheduledTask => _settings.ScheduledTask;
-        public NotificationSettings Notification => _settings.Notification;
-        public SecuritySettings Security => _settings.Security;
-        public ScriptSettings Script => _settings.Script;
-        public ClientSettings Client => _settings.Client;
-        public SourceSettings Source => _settings.Source;
-        [Obsolete("Use Source instead")]
-        public SourceSettings Target => _settings.Target;
-        public ValidationSettings Validation => _settings.Validation;
-        public OrderSettings Order => _settings.Order;
-        public CsrSettings Csr => _settings.Csr;
-        public StoreSettings Store => _settings.Store;
-        public InstallationSettings Installation => _settings.Installation;
     }
 }
