@@ -3,15 +3,23 @@
     /// <summary>
     /// Settings regarding the execution of the renewal
     /// </summary>
-    public class ExecutionSettings
+    public interface IExecutionSettings
     {
         /// <summary>
         /// Default script to run before executing a renewal
         /// </summary>
-        public string? DefaultPreExecutionScript { get; set; }
+        /// 
+        string? DefaultPostExecutionScript { get; }
         /// <summary>
         /// Default script to run after execution a renewal
         /// </summary>
+        string? DefaultPreExecutionScript { get; }
+    }
+
+    internal class ExecutionSettings : IExecutionSettings
+    {
+        public string? DefaultPreExecutionScript { get; set; }
+
         public string? DefaultPostExecutionScript { get; set; }
     }
 }

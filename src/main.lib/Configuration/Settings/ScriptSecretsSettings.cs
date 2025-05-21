@@ -3,7 +3,13 @@
     /// <summary>
     /// Settings for script secret store
     /// </summary>
-    public class ScriptSecretsSettings
+    public interface IScriptSecretsSettings
+    {
+        string? Get { get; }
+        string? GetArguments { get; }
+    }
+
+    internal class ScriptSecretsSettings : IScriptSecretsSettings
     {
         public string? Get { get; set; }
         public string? GetArguments { get; set; }

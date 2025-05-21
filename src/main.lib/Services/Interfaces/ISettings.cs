@@ -4,23 +4,23 @@ namespace PKISharp.WACS.Services
 {
     public interface ISettings
     { 
-        UiSettings UI { get; }
-        AcmeSettings Acme { get; }
-        ExecutionSettings Execution { get; }
-        ProxySettings Proxy { get; }
-        CacheSettings Cache { get; }
-        SecretsSettings Secrets { get; }
-        ScheduledTaskSettings ScheduledTask { get; }
-        NotificationSettings Notification { get; }
-        SecuritySettings Security { get; }
-        ScriptSettings Script { get; }
-        ClientSettings Client { get; }
-        SourceSettings Source { get; }
-        ValidationSettings Validation { get; }
-        OrderSettings Order { get; }
-        CsrSettings Csr { get; }
-        StoreSettings Store { get; }
-        InstallationSettings Installation { get; }
+        IUiSettings UI { get; }
+        IAcmeSettings Acme { get; }
+        IExecutionSettings Execution { get; }
+        IProxySettings Proxy { get; }
+        ICacheSettings Cache { get; }
+        ISecretsSettings Secrets { get; }
+        IScheduledTaskSettings ScheduledTask { get; }
+        INotificationSettings Notification { get; }
+        ISecuritySettings Security { get; }
+        IScriptSettings Script { get; }
+        IClientSettings Client { get; }
+        ISourceSettings Source { get; }
+        IValidationSettings Validation { get; }
+        IOrderSettings Order { get; }
+        ICsrSettings Csr { get; }
+        IStoreSettings Store { get; }
+        IInstallationSettings Installation { get; }
         bool Valid { get; }
     }
 }

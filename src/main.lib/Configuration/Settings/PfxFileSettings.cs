@@ -1,16 +1,7 @@
 ﻿namespace PKISharp.WACS.Configuration.Settings
 {
-    public class PfxFileSettings
+    public interface IPfxFileSettings
     {
-        /// <summary>
-        /// When using --store pfxfile this path is used by default, saving 
-        /// you the effort from providing it manually. Filling this out makes 
-        /// the --pfxfilepath parameter unnecessary in most cases. Renewals 
-        /// created with the default path will automatically change to any 
-        /// future default value, meaning this is also a good practice for 
-        /// maintainability.
-        /// </summary>
-        public string? DefaultPath { get; set; }
         /// <summary>
         /// When using --store pfxfile this password is used by default for 
         /// the pfx files, saving you the effort from providing it manually. 
@@ -19,10 +10,28 @@
         /// automatically change to any future default value, meaning this
         /// is also a good practice for maintainability.
         /// </summary>
-        public string? DefaultPassword { get; set; }
+        string? DefaultPassword { get; }
+
+        /// <summary>
+        /// When using --store pfxfile this path is used by default, saving 
+        /// you the effort from providing it manually. Filling this out makes 
+        /// the --pfxfilepath parameter unnecessary in most cases. Renewals 
+        /// created with the default path will automatically change to any 
+        /// future default value, meaning this is also a good practice for 
+        /// maintainability.
+        /// </summary>
+        string? DefaultPath { get; }
+
         /// <summary>
         /// Legacy, SHA256 or Default
         /// </summary>
+        string? DefaultProtectionMode { get; }
+    }
+
+    internal class PfxFileSettings : IPfxFileSettings
+    {
+        public string? DefaultPath { get; set; }
+        public string? DefaultPassword { get; set; }
         public string? DefaultProtectionMode { get; set; }
     }
 }

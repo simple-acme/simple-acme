@@ -2,16 +2,10 @@
 
 namespace PKISharp.WACS.Configuration.Settings
 {
-    public class SecuritySettings
+    public interface ISecuritySettings
     {
-        [Obsolete("Use Csr.Rsa.KeySize")]
-        public int? RSAKeyBits { get; set; }
-
         [Obsolete("Use Csr.Ec.CurveName")]
-        public string? ECCurve { get; set; }
-
-        [Obsolete("Use Store.CertificateStore.PrivateKeyExportable")]
-        public bool? PrivateKeyExportable { get; set; }
+        string? ECCurve { get; }
 
         /// <summary>
         /// Uses Microsoft Data Protection API to encrypt 
@@ -19,11 +13,27 @@ namespace PKISharp.WACS.Configuration.Settings
         /// passwords. This may be disabled to share 
         /// the configuration across a cluster of machines.
         /// </summary>
-        public bool EncryptConfig { get; set; }
+        bool EncryptConfig { get; }
+
         /// <summary>
         /// Apply a datetimestamp to the friendly name 
         /// of the generated certificates
         /// </summary>
+        bool? FriendlyNameDateTimeStamp { get; }
+
+        [Obsolete("Use Store.CertificateStore.PrivateKeyExportable")]
+        bool? PrivateKeyExportable { get; }
+
+        [Obsolete("Use Csr.Rsa.KeySize")]
+        int? RSAKeyBits { get; }
+    }
+
+    internal class SecuritySettings : ISecuritySettings
+    {
+        public int? RSAKeyBits { get; set; }
+        public string? ECCurve { get; set; }
+        public bool? PrivateKeyExportable { get; set; }
+        public bool EncryptConfig { get; set; }
         public bool? FriendlyNameDateTimeStamp { get; set; }
     }
 }

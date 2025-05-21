@@ -102,7 +102,7 @@ namespace PKISharp.WACS.Services
         /// Before that all happens we can only log to the screen.
         /// </summary>
         /// <param name="settings"></param>
-        public void ApplyClientSettings(ClientSettings settings)
+        public void ApplyClientSettings(IClientSettings settings)
         {
             CreateDiskLogger(settings.LogPath ?? settings.ConfigurationPath);
             if (OperatingSystem.IsWindows())

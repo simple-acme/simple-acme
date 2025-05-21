@@ -1,18 +1,29 @@
 ﻿namespace PKISharp.WACS.Configuration.Settings
 {
-    public class CsrSettings
-    {
-        /// <summary>
+    public interface ICsrSettings
+    {        
+        /// <summary> 
         /// Default plugin to select 
         /// </summary>
-        public string? DefaultCsr { get; set; }
-        /// <summary>
-        /// RSA key settings
-        /// </summary>
-        public RsaSettings? Rsa { get; set; }
+        string? DefaultCsr { get; }
+
         /// <summary>
         /// EC key settings
         /// </summary>
+        IEcSettings? Ec { get; }
+
+        /// <summary>
+        /// RSA key settings
+        /// </summary>
+        IRsaSettings? Rsa { get; }
+    }
+
+    internal class CsrSettings : ICsrSettings
+    {
+        public string? DefaultCsr { get; set; }
+        public RsaSettings? Rsa { get; set; }
         public EcSettings? Ec { get; set; }
+        IEcSettings? ICsrSettings.Ec => Ec;
+        IRsaSettings? ICsrSettings.Rsa => Rsa;
     }
 }

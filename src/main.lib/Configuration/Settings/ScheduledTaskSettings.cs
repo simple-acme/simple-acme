@@ -2,8 +2,21 @@
 
 namespace PKISharp.WACS.Configuration.Settings
 {
-    public class ScheduledTaskSettings
+    public interface IScheduledTaskSettings
     {
+        /// <summary>
+        /// Configures time after which the scheduled 
+        /// task will be terminated if it hangs for
+        /// whatever reason.
+        /// </summary>
+        TimeSpan ExecutionTimeLimit { get; }
+
+        /// <summary>
+        /// Configures random time to wait for starting 
+        /// the scheduled task.
+        /// </summary>
+        TimeSpan RandomDelay { get; }
+
         /// <summary>
         /// The number of days to renew a certificate 
         /// after. Let’s Encrypt certificates are 
@@ -14,20 +27,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// issues if the certificate doesn’t renew 
         /// correctly.
         /// </summary>
-        public int RenewalDays { get; set; }
-
-        /// <summary>
-        /// If a certificate is valid for less time than
-        /// specified in RenewalDays it is at risk of expiring.
-        /// E.g. a certificate valid for 30 days, would be invalid
-        /// for 15 days already before it would be renewed at 
-        /// 55 days. This is of course undesirable, so this setting
-        /// defines the minimum number of valid days that the 
-        /// certificate should have left. E.g. when the setting is 7,
-        /// any certificate due to expire in less than 7 days will be
-        /// renewed, regardless of when they were created.
-        /// </summary>
-        public int? RenewalMinimumValidDays { get; set; }
+        int RenewalDays { get; }
 
         /// <summary>
         /// To spread service load, program run time and/or to minimize 
@@ -42,31 +42,42 @@ namespace PKISharp.WACS.Configuration.Settings
         /// If you use an order plugin to split your renewal into 
         /// multiple orders, orders may run on different days.
         /// </summary>
-        public int? RenewalDaysRange { get; set; }
+        int? RenewalDaysRange { get; }
 
         /// <summary>
         /// By default we use ARI to manage renewal period (if available
         /// on the endpoint). This switch allows users to disable it.
         /// https://datatracker.ietf.org/doc/draft-ietf-acme-ari/
         /// </summary>
-        public bool? RenewalDisableServerSchedule { get; set; }
+        bool? RenewalDisableServerSchedule { get; }
 
         /// <summary>
-        /// Configures random time to wait for starting 
-        /// the scheduled task.
+        /// If a certificate is valid for less time than
+        /// specified in RenewalDays it is at risk of expiring.
+        /// E.g. a certificate valid for 30 days, would be invalid
+        /// for 15 days already before it would be renewed at 
+        /// 55 days. This is of course undesirable, so this setting
+        /// defines the minimum number of valid days that the 
+        /// certificate should have left. E.g. when the setting is 7,
+        /// any certificate due to expire in less than 7 days will be
+        /// renewed, regardless of when they were created.
         /// </summary>
-        public TimeSpan RandomDelay { get; set; }
+        int? RenewalMinimumValidDays { get; }
 
         /// <summary>
         /// Configures start time for the scheduled task.
         /// </summary>
-        public TimeSpan StartBoundary { get; set; }
+        TimeSpan StartBoundary { get; }
+    }
 
-        /// <summary>
-        /// Configures time after which the scheduled 
-        /// task will be terminated if it hangs for
-        /// whatever reason.
-        /// </summary>
+    internal class ScheduledTaskSettings : IScheduledTaskSettings
+    {
+        public int RenewalDays { get; set; }
+        public int? RenewalMinimumValidDays { get; set; }
+        public int? RenewalDaysRange { get; set; }
+        public bool? RenewalDisableServerSchedule { get; set; }
+        public TimeSpan RandomDelay { get; set; }
+        public TimeSpan StartBoundary { get; set; }
         public TimeSpan ExecutionTimeLimit { get; set; }
     }
 }

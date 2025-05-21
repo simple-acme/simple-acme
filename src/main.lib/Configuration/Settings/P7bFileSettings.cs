@@ -1,6 +1,6 @@
 ﻿namespace PKISharp.WACS.Configuration.Settings
 {
-    public class P7bFileSettings
+    public interface IP7bFileSettings
     {
         /// <summary>
         /// When using --store p7bfile this path is used by default, saving 
@@ -10,6 +10,11 @@
         /// future default value, meaning this is also a good practice for 
         /// maintainability.
         /// </summary>
+        string? DefaultPath { get; }
+    }
+
+    internal class P7bFileSettings : IP7bFileSettings
+    {
         public string? DefaultPath { get; set; }
     }
 }

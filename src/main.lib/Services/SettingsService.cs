@@ -16,12 +16,13 @@ namespace PKISharp.WACS.Services
     {
         private readonly ILogService _log;
         private readonly MainArguments? _arguments;
-        public Settings Settings { get; private set; }
+        private readonly Settings _settings;
+        public ISettings Settings => _settings;
 
         public SettingsService(ILogService log, ArgumentsParser parser)
         {
             _log = log;
-            Settings = new Settings();
+            _settings = new Settings();
             var settingsFileName = "settings.json";
             var settingsFileTemplateName = "settings_default.json";
             _log.Verbose("Looking for {settingsFileName} in {path}", settingsFileName, VersionService.SettingsPath);
@@ -64,19 +65,15 @@ namespace PKISharp.WACS.Services
                 var newSettings = JsonSerializer.Deserialize(fs, SettingsJson.Insensitive.Settings);
                 if (newSettings != null)
                 {
-                    Settings = newSettings;
+                    _settings = newSettings;
                 }
 
-                // This code specifically deals with backwards compatibility 
-                // so it is allowed to use obsolete properties
-#pragma warning disable CS0618
                 static string? Fallback(string? x, string? y) => x ?? y;
-                Settings.Source.DefaultSource = Fallback(Settings.Source.DefaultSource, Settings.Target.DefaultTarget);
-                Settings.Store.PemFiles.DefaultPath = Fallback(Settings.Store.PemFiles.DefaultPath, Settings.Store.DefaultPemFilesPath);
-                Settings.Store.CentralSsl.DefaultPath = Fallback(Settings.Store.CentralSsl.DefaultPath, Settings.Store.DefaultCentralSslStore);
-                Settings.Store.CentralSsl.DefaultPassword = Fallback(Settings.Store.CentralSsl.DefaultPassword, Settings.Store.DefaultCentralSslPfxPassword);
-                Settings.Store.CertificateStore.DefaultStore = Fallback(Settings.Store.CertificateStore.DefaultStore, Settings.Store.DefaultCertificateStore);
-#pragma warning restore CS0618
+                _settings.Source.DefaultSource = Fallback(Settings.Source.DefaultSource, _settings.Target.DefaultTarget);
+                _settings.Store.PemFiles.DefaultPath = Fallback(Settings.Store.PemFiles.DefaultPath, _settings.Store.DefaultPemFilesPath);
+                _settings.Store.CentralSsl.DefaultPath = Fallback(Settings.Store.CentralSsl.DefaultPath, _settings.Store.DefaultCentralSslStore);
+                _settings.Store.CentralSsl.DefaultPassword = Fallback(Settings.Store.CentralSsl.DefaultPassword, _settings.Store.DefaultCentralSslPfxPassword);
+                _settings.Store.CertificateStore.DefaultStore = Fallback(Settings.Store.CertificateStore.DefaultStore, _settings.Store.DefaultCertificateStore);
             }
             catch (Exception ex)
             {
@@ -102,7 +99,7 @@ namespace PKISharp.WACS.Services
             }
             try
             {     
-                Settings.Acme.BaseUri = ChooseBaseUri();
+                _settings.Acme.BaseUri = ChooseBaseUri();
             } 
             catch
             {
@@ -113,14 +110,14 @@ namespace PKISharp.WACS.Services
             try
             {
                 var configRoot = ChooseConfigPath();
-                Settings.Client.ConfigurationPath = Path.Combine(configRoot, Settings.Acme.BaseUri.CleanUri());
-                Settings.Client.LogPath = ChooseLogPath();
-                Settings.Cache.Path = ChooseCachePath();
+                _settings.Client.ConfigurationPath = Path.Combine(configRoot, Settings.Acme.BaseUri.CleanUri());
+                _settings.Client.LogPath = ChooseLogPath();
+                _settings.Cache.Path = ChooseCachePath();
 
                 EnsureFolderExists(configRoot, "configuration", true);
-                EnsureFolderExists(Settings.Client.ConfigurationPath, "configuration", false);
-                EnsureFolderExists(Settings.Client.LogPath, "log", !Settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath));
-                EnsureFolderExists(Settings.Cache.Path, "cache", !Settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath));
+                EnsureFolderExists(_settings.Client.ConfigurationPath, "configuration", false);
+                EnsureFolderExists(_settings.Client.LogPath, "log", !_settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath));
+                EnsureFolderExists(_settings.Cache.Path, "cache", !_settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath));
 
                 // Configure disk logger
                 _log.ApplyClientSettings(Settings.Client);
@@ -130,7 +127,7 @@ namespace PKISharp.WACS.Services
                 _log.Error(ex, "Error initializing program");
                 return;
             }
-            Settings.Valid = true;
+            _settings.Valid = true;
         }
 
         /// <summary>

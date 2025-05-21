@@ -3,7 +3,12 @@
     /// <summary>
     /// Colors
     /// </summary>
-    public class ColorSettings
+    public interface IColorSettings
+    {
+        string? Background { get; }
+    }
+
+    internal class ColorSettings : IColorSettings
     {
         public string? Background { get; set; }
     }

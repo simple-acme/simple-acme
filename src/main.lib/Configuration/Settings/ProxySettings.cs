@@ -1,7 +1,12 @@
 ﻿namespace PKISharp.WACS.Configuration.Settings
 {
-    public class ProxySettings
-    {
+    public interface IProxySettings
+    {        
+        /// <summary>
+        /// Password used to access the proxy server.
+        /// </summary>
+        string? Password { get; }
+
         /// <summary>
         /// Configures a proxy server to use for 
         /// communication with the ACME server. The 
@@ -9,14 +14,18 @@
         /// Passing an empty string will bypass the 
         /// system proxy.
         /// </summary>
-        public string? Url { get; set; }
+        string? Url { get; }
+
         /// <summary>
         /// Username used to access the proxy server.
         /// </summary>
+        string? Username { get; }
+    }
+
+    internal class ProxySettings : IProxySettings
+    {
+        public string? Url { get; set; }
         public string? Username { get; set; }
-        /// <summary>
-        /// Password used to access the proxy server.
-        /// </summary>
         public string? Password { get; set; }
     }
 }

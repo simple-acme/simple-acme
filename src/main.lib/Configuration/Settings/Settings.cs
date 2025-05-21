@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Configuration.Settings
     /// <summary>
     /// All settings
     /// </summary>
-    public class Settings : ISettings
+    internal class Settings : ISettings
     {
         public ClientSettings Client { get; set; } = new ClientSettings();
         public UiSettings UI { get; set; } = new UiSettings();
@@ -31,7 +31,6 @@ namespace PKISharp.WACS.Configuration.Settings
         public NotificationSettings Notification { get; set; } = new NotificationSettings();
         public SecuritySettings Security { get; set; } = new SecuritySettings();
         public ScriptSettings Script { get; set; } = new ScriptSettings();
-        [Obsolete("Use Source instead")]
         public SourceSettings Target { get; set; } = new SourceSettings();
         public SourceSettings Source { get; set; } = new SourceSettings();
         public ValidationSettings Validation { get; set; } = new ValidationSettings();
@@ -41,5 +40,23 @@ namespace PKISharp.WACS.Configuration.Settings
         public InstallationSettings Installation { get; set; } = new InstallationSettings();
         public SecretsSettings Secrets { get; set; } = new SecretsSettings();
         public bool Valid { get; set; } = false;
+
+        ICacheSettings ISettings.Cache => Cache;
+        IAcmeSettings ISettings.Acme => Acme;
+        IUiSettings ISettings.UI => UI;
+        IExecutionSettings ISettings.Execution => Execution;
+        IProxySettings ISettings.Proxy => Proxy;
+        ISecretsSettings ISettings.Secrets => Secrets;
+        IScheduledTaskSettings ISettings.ScheduledTask => ScheduledTask;
+        INotificationSettings ISettings.Notification => Notification;
+        ISecuritySettings ISettings.Security => Security;
+        IScriptSettings ISettings.Script => Script;
+        IClientSettings ISettings.Client => Client;
+        ISourceSettings ISettings.Source => Source;
+        IValidationSettings ISettings.Validation => Validation;
+        IOrderSettings ISettings.Order => Order;
+        ICsrSettings ISettings.Csr => Csr;
+        IStoreSettings ISettings.Store => Store;
+        IInstallationSettings ISettings.Installation => Installation;
     }
 }

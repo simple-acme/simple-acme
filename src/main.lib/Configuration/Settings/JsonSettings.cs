@@ -3,7 +3,12 @@
     /// <summary>
     /// Settings for json secret store
     /// </summary>
-    public class JsonSettings
+    public interface IJsonSettings
+    {
+        string? FilePath { get; }
+    }
+
+    internal class JsonSettings : IJsonSettings
     {
         public string? FilePath { get; set; }
     }

@@ -1,24 +1,36 @@
 ﻿namespace PKISharp.WACS.Configuration.Settings
 {
-    public class UiSettings
+    public interface IUiSettings
     {
         /// <summary>
-        /// The number of hosts to display per page.
+        /// Which colors should be applied
         /// </summary>
-        public int PageSize { get; set; } = 50;
+        IColorSettings? Color { get; }
+
         /// <summary>
         /// A string that is used to format the date of the 
         /// pfx file friendly name. Documentation for 
         /// possibilities is available from Microsoft.
         /// </summary>
-        public string? DateFormat { get; set; }
+        string? DateFormat { get; }
+
+        /// <summary>
+        /// The number of hosts to display per page.
+        /// </summary>
+        int PageSize { get; }
+
         /// <summary>
         /// How console tekst should be encoded
         /// </summary>
+        string? TextEncoding { get; }
+    }
+
+    internal class UiSettings : IUiSettings
+    {
+        public int PageSize { get; set; } = 50;
+        public string? DateFormat { get; set; }
         public string? TextEncoding { get; set; }
-        /// <summary>
-        /// Which colors should be applied
-        /// </summary>
         public ColorSettings? Color { get; set; }
+        IColorSettings? IUiSettings.Color => Color;
     }
 }

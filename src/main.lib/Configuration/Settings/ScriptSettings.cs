@@ -3,7 +3,13 @@
     /// <summary>
     /// Options for installation and DNS scripts
     /// </summary>
-    public class ScriptSettings
+    public interface IScriptSettings
+    {
+        string? PowershellExecutablePath { get; }
+        int Timeout { get; }
+    }
+
+    internal class ScriptSettings : IScriptSettings
     {
         public int Timeout { get; set; } = 600;
         public string? PowershellExecutablePath { get; set; }

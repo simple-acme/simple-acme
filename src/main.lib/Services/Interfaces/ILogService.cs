@@ -30,6 +30,6 @@ namespace PKISharp.WACS.Services
         void Verbose(string message, params object?[] items);
         void Warning(Exception? ex, string message, params object?[] items);
         void Warning(string message, params object?[] items);
-        void ApplyClientSettings(ClientSettings settings);
+        void ApplyClientSettings(IClientSettings settings);
     }
 }
