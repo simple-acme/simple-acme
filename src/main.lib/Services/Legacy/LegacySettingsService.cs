@@ -13,9 +13,9 @@ namespace PKISharp.WACS.Host.Services.Legacy
     {
         private readonly ILogService _log;
         private readonly ClientSettings _client = new();
-        public IClientSettings Client => _client;
-        public IUiSettings UI { get; private set; } = new UiSettings();
-        public IAcmeSettings Acme { get; private set; } = new AcmeSettings();
+        public IClientSettings Client => new InheritClientSettings(_client);
+        public IUiSettings UI { get; private set; } = new InheritUiSettings(new UiSettings());
+        public IAcmeSettings Acme { get; private set; } = new InheritAcmeSettings(new AcmeSettings());
         public IExecutionSettings Execution { get; private set; } = new ExecutionSettings();
         public IProxySettings Proxy { get; private set; } = new ProxySettings();
         public ICacheSettings Cache { get; private set; } = new CacheSettings();

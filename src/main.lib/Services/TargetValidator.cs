@@ -10,7 +10,7 @@ namespace PKISharp.WACS.Services
             var ret = target.GetIdentifiers(true);
             if (validateMax)
             {
-                var max = settings.Acme.MaxDomains ?? 100;
+                var max = settings.Acme.MaxDomains;
                 if (ret.Count > max)
                 {
                     log.Error($"Too many identifiers in a single certificate. The maximum is {max} identifiers.", max);

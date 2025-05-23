@@ -99,7 +99,7 @@ namespace PKISharp.WACS.Services
             }
             try
             {     
-                _settings.Acme.BaseUri = ChooseBaseUri();
+                _settings.BaseUri = ChooseBaseUri();
             } 
             catch
             {
@@ -110,7 +110,7 @@ namespace PKISharp.WACS.Services
             try
             {
                 var configRoot = ChooseConfigPath();
-                _settings.Client.ConfigurationPath = Path.Combine(configRoot, Settings.Acme.BaseUri.CleanUri());
+                _settings.Client.ConfigurationPath = Path.Combine(configRoot, Settings.BaseUri.CleanUri());
                 _settings.Client.LogPath = ChooseLogPath();
                 _settings.Cache.Path = ChooseCachePath();
 
@@ -212,14 +212,14 @@ namespace PKISharp.WACS.Services
         /// </summary>
         private string ChooseLogPath()
         {
-            if (string.IsNullOrWhiteSpace(Settings.Client.LogPath))
+            if (string.IsNullOrWhiteSpace(_settings.Client.LogPath))
             {
                 return Path.Combine(Settings.Client.ConfigurationPath, "Log");
             }
             else
             {
                 // Create separate logs for each endpoint
-                return Path.Combine(Settings.Client.LogPath, Settings.Acme.BaseUri.CleanUri());
+                return Path.Combine(Settings.Client.LogPath, Settings.BaseUri.CleanUri());
             }
         }
 

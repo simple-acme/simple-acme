@@ -76,7 +76,7 @@ namespace PKISharp.WACS.Clients.Acme
         internal async Task<AcmeProtocolClient> CreateAnonymousClient()
         {
             var httpClient = await _proxyService.GetHttpClient();
-            httpClient.BaseAddress = _settings.Acme.BaseUri;
+            httpClient.BaseAddress = _settings.BaseUri;
             _log.Verbose("Constructing ACME protocol client...");
             var client = new AcmeProtocolClient(httpClient, _acmeLogger, usePostAsGet: _settings.Acme.PostAsGet);
             client.Directory = await EnsureServiceDirectory(client);
@@ -113,7 +113,7 @@ namespace PKISharp.WACS.Clients.Acme
             }
 
             // Create authorized account
-            var httpClient = await _proxyService.GetHttpClient(_settings.Acme.ValidateServerCertificate != false);
+            var httpClient = await _proxyService.GetHttpClient(_settings.Acme.ValidateServerCertificate);
             var ret = new AcmeClient(httpClient, _log, _acmeLogger, _settings, _anonymousClient.Directory, account);
             if (!string.IsNullOrWhiteSpace(name))
             {
@@ -135,8 +135,8 @@ namespace PKISharp.WACS.Clients.Acme
         {
 
             var urlsToTry = new List<string>([""]);
-            if (_settings.Acme.BaseUri.Host.EndsWith(".letsencrypt.org") &&
-                string.IsNullOrEmpty(_settings.Acme.BaseUri.PathAndQuery.TrimEnd('/')))
+            if (_settings.BaseUri.Host.EndsWith(".letsencrypt.org") &&
+                string.IsNullOrEmpty(_settings.BaseUri.PathAndQuery.TrimEnd('/')))
             {
                 // For Let's Encrypt, try the /directory endpoint first,
                 // because historically we have only configured the host
@@ -155,7 +155,7 @@ namespace PKISharp.WACS.Clients.Acme
             {
                 try
                 {
-                    _log.Debug("Getting service directory from {url}...", string.IsNullOrWhiteSpace(urlToTry) ? _settings.Acme.BaseUri : "/" + urlToTry);
+                    _log.Debug("Getting service directory from {url}...", string.IsNullOrWhiteSpace(urlToTry) ? _settings.BaseUri : "/" + urlToTry);
                     directory = await client.Backoff(async () => await client.GetDirectoryAsync(urlToTry), _log);
                     if (directory != null)
                     {
@@ -218,7 +218,7 @@ namespace PKISharp.WACS.Clients.Acme
             var eabKey = await _secretServiceManager.EvaluateSecret(_accountArguments.EabKey);
             var eabAlg = _accountArguments.EabAlgorithm ?? "HS256";
             var eabFlow = client.Directory?.Meta?.ExternalAccountRequired ?? false;
-            var zeroSslFlow = _settings.Acme.BaseUri.Host.Contains("zerossl.com");
+            var zeroSslFlow = _settings.BaseUri.Host.Contains("zerossl.com");
 
             // Warn about unneeded EAB
             if (!eabFlow && !string.IsNullOrWhiteSpace(eabKid))

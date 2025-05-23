@@ -91,7 +91,7 @@ namespace PKISharp.WACS.Host
                     $"Manage global validation options", "V"),
                 Choice.Create<Func<Task>>(
                     () => taskScheduler.SetupAutoRenew(RunLevel.Interactive | RunLevel.Advanced | RunLevel.ForceTaskScheduler), 
-                    OperatingSystem.IsWindows() ? "(Re)create scheduled task" : "(Re)create cronjob", "T",
+                    OperatingSystem.IsWindows() ? "(Re)create scheduled task" : "(Re)create cronjob", "TData",
                     state: !userRoleService.AllowAutoRenew ? State.DisabledState(OperatingSystem.IsWindows() ? "Run as an administrator to allow access to the task scheduler." : "Run as a superuser to allow scheduling cronjob.") : State.EnabledState()),
                 Choice.Create<Func<Task>>(
                     () => container.Resolve<NotificationService>().NotifyTest(), 
@@ -136,7 +136,7 @@ namespace PKISharp.WACS.Host
             }
             if (importUri != null)
             {
-                using var scope = scopeBuilder.Legacy(container, importUri, settings.Acme.BaseUri);
+                using var scope = scopeBuilder.Legacy(container, importUri, settings.BaseUri);
                 var importer = scope.Resolve<Importer>();
                 await importer.Import(runLevel);
             }

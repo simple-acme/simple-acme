@@ -1,15 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace PKISharp.WACS.Configuration.Settings
 {
     public interface IAcmeSettings
     {       
-        /// <summary>
-        /// Selected BaseUri
-        /// </summary>
-        Uri BaseUri { get; }
-
         /// <summary>
         /// Default ACMEv2 endpoint to use when none 
         /// is specified with the command line.
@@ -31,7 +27,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// <summary>
         /// Maximum number of domains supported
         /// </summary>
-        int? MaxDomains { get; }        
+        int MaxDomains { get; }        
 
         /// <summary>                        
         /// Use POST-as-GET request mode
@@ -65,22 +61,50 @@ namespace PKISharp.WACS.Configuration.Settings
         /// <summary>
         /// Validate the server certificate
         /// </summary>
-        bool? ValidateServerCertificate { get; }
+        bool ValidateServerCertificate { get; }
     }
 
-    internal class AcmeSettings : IAcmeSettings
+    internal class InheritAcmeSettings(params IEnumerable<AcmeSettings> chain) : InheritSettings<AcmeSettings>(chain), IAcmeSettings
     {
-        [JsonIgnore]
-        public Uri BaseUri { get; set; } = new Uri("https://localhost");
+        public Uri BaseUri => throw new NotImplementedException();
+        public Uri? DefaultBaseUri => Get(x => x.DefaultBaseUri);
+        public Uri? DefaultBaseUriImport => Get(x => x.DefaultBaseUriImport);
+        public Uri? DefaultBaseUriTest => Get(x => x.DefaultBaseUriTest);
+        public int MaxDomains => Get(x => x.MaxDomains) ?? 100;
+        public bool PostAsGet => Get(x => x.PostAsGet) ?? true;
+        public string? PreferredIssuer => Get(x => x.PreferredIssuer) ?? null;
+        public Uri? PublicSuffixListUri
+        {
+            get
+            {
+                var uri = Get(x => x.PublicSuffixListUri);
+                if (uri == "")
+                {
+                    return null;
+                }
+                if (uri == null)
+                {
+                    return new Uri("https://publicsuffix.org/list/public_suffix_list.dat");
+                }
+                return new Uri(uri);
+            }
+        }
+        public int RetryCount => Get(x => x.RetryCount) ?? 4;
+        public int RetryInterval => Get(x => x.RetryInterval) ?? 2;
+        public bool ValidateServerCertificate => Get(x => x.ValidateServerCertificate) ?? true;
+    }
+
+    internal class AcmeSettings
+    {
         public Uri? DefaultBaseUri { get; set; }
         public Uri? DefaultBaseUriTest { get; set; }
         public Uri? DefaultBaseUriImport { get; set; }
-        public bool PostAsGet { get; set; }
+        public bool? PostAsGet { get; set; }
         public bool? ValidateServerCertificate { get; set; }
-        public int RetryCount { get; set; } = 4;
-        public int RetryInterval { get; set; } = 2;
+        public int? RetryCount { get; set; }
+        public int? RetryInterval { get; set; }
         public string? PreferredIssuer { get; set; }
         public int? MaxDomains { get; set; }
-        public Uri? PublicSuffixListUri { get; set; }
+        public string? PublicSuffixListUri { get; set; }
     }
 }

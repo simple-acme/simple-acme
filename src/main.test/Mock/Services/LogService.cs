@@ -78,7 +78,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
 
         public void Reset() { }
 
-        public void ApplyClientSettings(ClientSettings logPath) {}
+        public void ApplyClientSettings(IClientSettings logPath) {}
 
         public void Warning(Exception? ex, string message, params object?[] items)
         {

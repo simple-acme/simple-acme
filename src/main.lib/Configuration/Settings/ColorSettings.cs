@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     /// <summary>
     /// Colors
@@ -8,7 +10,12 @@
         string? Background { get; }
     }
 
-    internal class ColorSettings : IColorSettings
+    internal class InheritColorSettings(params IEnumerable<ColorSettings?> chain) : InheritSettings<ColorSettings>(chain), IColorSettings
+    {
+        public string? Background => Get(x => x.Background);
+    }
+
+    internal class ColorSettings
     {
         public string? Background { get; set; }
     }

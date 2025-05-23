@@ -37,7 +37,7 @@ namespace PKISharp.WACS.Host
             argumentsParser.ShowCommandLine();
 
             // Connection test
-            logService.Information("Connecting to {ACME}...", settingsService.Acme.BaseUri);
+            logService.Information("Connecting to {ACME}...", settingsService.BaseUri);
             var result = networkCheck.CheckNetwork();
             try
             {
@@ -59,7 +59,7 @@ namespace PKISharp.WACS.Host
             }
 
             // New version test
-            if (settingsService.Client.VersionCheck)
+            if (settingsService.Client.VersionCheck == true)
             {
                 inputService.CreateSpace();
                 await updateClient.CheckNewVersion();
@@ -120,7 +120,7 @@ namespace PKISharp.WACS.Host
                 DotNetTool = VersionService.DotNetTool,
                 Pluggable = VersionService.Pluggable,
                 Bitness = VersionService.Bitness,
-                BaseUri = settingsService.Acme.BaseUri,
+                BaseUri = settingsService.BaseUri,
                 ConfigurationPath = settingsService.Client.ConfigurationPath,
                 LogPath = settingsService.Client.LogPath,
                 CachePath = settingsService.Cache.Path,

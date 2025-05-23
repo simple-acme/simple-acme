@@ -107,7 +107,7 @@ namespace PKISharp.WACS.Services
             CreateDiskLogger(settings.LogPath ?? settings.ConfigurationPath);
             if (OperatingSystem.IsWindows())
             {
-                CreateEventLogger(settings.ClientName ?? "simple-acme");
+                CreateEventLogger(settings.ClientName);
             }
             if (_logs != null)
             {

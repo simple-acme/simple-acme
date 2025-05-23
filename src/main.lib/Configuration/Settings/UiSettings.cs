@@ -1,4 +1,7 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface IUiSettings
     {
@@ -25,12 +28,21 @@
         string? TextEncoding { get; }
     }
 
-    internal class UiSettings : IUiSettings
+internal class InheritUiSettings : InheritSettings<UiSettings>, IUiSettings
     {
-        public int PageSize { get; set; } = 50;
+        private readonly IEnumerable<UiSettings> _chain;
+        public InheritUiSettings(params IEnumerable<UiSettings> chain) : base(chain) => _chain = chain;
+        public IColorSettings? Color => new InheritColorSettings(_chain.Select(c => c.Color));
+        public string? DateFormat => Get(x => x.DateFormat);
+        public int PageSize => Get(x => x.PageSize) ?? 50;
+        public string? TextEncoding => Get(x => x.TextEncoding);
+    }
+
+    internal class UiSettings
+    {
+        public int? PageSize { get; set; }
         public string? DateFormat { get; set; }
         public string? TextEncoding { get; set; }
         public ColorSettings? Color { get; set; }
-        IColorSettings? IUiSettings.Color => Color;
     }
 }

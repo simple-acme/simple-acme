@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.Configuration.Settings;
+using System;
 
 namespace PKISharp.WACS.Services
 {
@@ -21,6 +22,7 @@ namespace PKISharp.WACS.Services
         ICsrSettings Csr { get; }
         IStoreSettings Store { get; }
         IInstallationSettings Installation { get; }
+        Uri BaseUri { get; }
         bool Valid { get; }
     }
 }
