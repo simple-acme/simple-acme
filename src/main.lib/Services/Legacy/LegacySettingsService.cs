@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Host.Services.Legacy
         public IAcmeSettings Acme { get; private set; } = new InheritAcmeSettings(new AcmeSettings());
         public IExecutionSettings Execution { get; private set; } = new ExecutionSettings();
         public IProxySettings Proxy { get; private set; } = new ProxySettings();
-        public ICacheSettings Cache { get; private set; } = new CacheSettings();
+        public ICacheSettings Cache { get; private set; } = new InheritCacheSettings(new CacheSettings());
         public IScheduledTaskSettings ScheduledTask { get; private set; } = new ScheduledTaskSettings();
         public INotificationSettings Notification { get; private set; } = new NotificationSettings();
         public ISecuritySettings Security { get; private set; } = new SecuritySettings();

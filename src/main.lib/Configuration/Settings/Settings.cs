@@ -29,6 +29,7 @@ namespace PKISharp.WACS.Configuration.Settings
         internal IUiSettings UI => new InheritUiSettings(_settings.Select(c => c.UI));
         internal IClientSettings Client => new InheritClientSettings(_settings.Select(c => c.Client));
         internal IAcmeSettings Acme => new InheritAcmeSettings(_settings.Select(c => c.Acme));
+        internal ICacheSettings Cache => new InheritCacheSettings(_settings.Select(c => c.Cache));
     }
 
     /// <summary>
@@ -60,7 +61,7 @@ namespace PKISharp.WACS.Configuration.Settings
         public bool Valid { get; set; } = false;
         public Uri BaseUri { get; set; } = new Uri("https://localhost");
 
-        ICacheSettings ISettings.Cache => Cache;
+        ICacheSettings ISettings.Cache => _internal.Cache;
         IAcmeSettings ISettings.Acme => _internal.Acme;
         IUiSettings ISettings.UI => _internal.UI;
         IExecutionSettings ISettings.Execution => Execution;

@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface ICacheSettings
     {
@@ -12,13 +14,13 @@
         bool DeleteStaleFiles { get; }
 
         /// <summary>
-        /// Automatically delete files older than 120 days 
+        /// Automatically delete files older than this many days 
         /// from the CertificatePath folder. Running with 
         /// default settings, these should only be long-
         /// expired certificates, generated for abandoned
         /// renewals. However we do advise caution.
         /// </summary>
-        int? DeleteStaleFilesDays { get; }
+        int DeleteStaleFilesDays { get; }
 
         /// <summary>
         /// The path where certificates and request files are 
@@ -50,11 +52,20 @@
         int ReuseDays { get; }
     }
 
-    internal class CacheSettings : ICacheSettings
+    internal class InheritCacheSettings(params IEnumerable<CacheSettings> chain) : InheritSettings<CacheSettings>(chain), ICacheSettings
+    {
+        public bool DeleteStaleFiles => Get(x => x.DeleteStaleFiles) ?? false;
+        public int DeleteStaleFilesDays => Get(x => x.DeleteStaleFilesDays) ?? 120;
+        public string? Path => Get(x => x.Path);
+        public string? ProtectionMode => Get(x => x.ProtectionMode);
+        public int ReuseDays => Get(x => x.ReuseDays) ?? 1;
+    }
+
+    internal class CacheSettings
     {
         public string? Path { get; set; }
-        public int ReuseDays { get; set; }
-        public bool DeleteStaleFiles { get; set; }
+        public int? ReuseDays { get; set; }
+        public bool? DeleteStaleFiles { get; set; }
         public int? DeleteStaleFilesDays { get; set; }
         public string? ProtectionMode { get; set; }
     }

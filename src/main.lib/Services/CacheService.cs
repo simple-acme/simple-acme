@@ -52,7 +52,7 @@ namespace PKISharp.WACS.Services
         private void CheckStaleFiles()
         {
             var days = Math.Max(
-                _settings.Cache.DeleteStaleFilesDays ?? 120, 
+                _settings.Cache.DeleteStaleFilesDays, 
                 _settings.ScheduledTask.RenewalDays + 30);
             var files = _cache.
                 GetFiles().
