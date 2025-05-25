@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using PKISharp.WACS.Services;
+using System.Collections.Generic;
+using System.IO;
 
 namespace PKISharp.WACS.Configuration.Settings
 {
@@ -6,7 +8,7 @@ namespace PKISharp.WACS.Configuration.Settings
     {
         /// <summary>
         /// Automatically delete files older than
-        /// (DeleteStaleFilesDays) days from the (Path). 
+        /// (DeleteStaleFilesDays) days from the (CachePath). 
         /// Running with default settings, these should 
         /// only be long expired certificates, generated for 
         /// abandoned renewals. However we do advise caution.
@@ -31,7 +33,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// [[Central SSL Store|Store-Plugins#centralssl]], this
         /// can not be set to the same path.
         /// </summary>
-        string? Path { get; }
+        string CachePath { get; }
 
         /// <summary>
         /// Legacy, SHA256 or Default
@@ -52,11 +54,20 @@ namespace PKISharp.WACS.Configuration.Settings
         int ReuseDays { get; }
     }
 
-    internal class InheritCacheSettings(params IEnumerable<CacheSettings> chain) : InheritSettings<CacheSettings>(chain), ICacheSettings
+    internal class InheritCacheSettings(ISettings root, params IEnumerable<CacheSettings> chain) : InheritSettings<CacheSettings>(chain), ICacheSettings
     {
         public bool DeleteStaleFiles => Get(x => x.DeleteStaleFiles) ?? false;
         public int DeleteStaleFilesDays => Get(x => x.DeleteStaleFilesDays) ?? 120;
-        public string? Path => Get(x => x.Path);
+        public string CachePath { 
+            get { 
+                var userPath = Get(x => x.Path);
+                if (string.IsNullOrWhiteSpace(userPath))
+                {
+                    return Path.Combine(root.Client.ConfigurationPath, "Certificates");
+                }
+                return userPath;
+            } 
+        }
         public string? ProtectionMode => Get(x => x.ProtectionMode);
         public int ReuseDays => Get(x => x.ReuseDays) ?? 1;
     }

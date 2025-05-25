@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Configuration.Settings.Validation;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PKISharp.WACS.Configuration.Settings
 {
@@ -27,17 +28,17 @@ namespace PKISharp.WACS.Configuration.Settings
         /// supported for the target), or when nothing is 
         /// specified on the command line.
         /// </summary>
-        string? DefaultValidation { get; }
+        string DefaultValidation { get; }
 
         /// <summary>
         /// Default plugin type, e.g. HTTP-01 (default), DNS-01, etc.
         /// </summary>
-        string? DefaultValidationMode { get; }
+        string DefaultValidationMode { get; }
 
         /// <summary>
         /// Disable multithreading for validation
         /// </summary>
-        bool? DisableMultiThreading { get; }
+        bool DisableMultiThreading { get; }
 
         /// <summary>
         /// Amount of time to wait for DNS propagation to complete *after* (optional) PreValidation
@@ -55,17 +56,17 @@ namespace PKISharp.WACS.Configuration.Settings
         /// can lead to prevalidation failures when your Active Directory is 
         /// hosting a private version of the DNS zone for internal use.
         /// </summary>
-        List<string>? DnsServers { get; }
+        IEnumerable<string> DnsServers { get; }
 
         /// <summary>
         /// Settings for FTP validation
         /// </summary>
-        IFtpSettings? Ftp { get; }
+        IFtpSettings Ftp { get; }
 
         /// <summary>
         /// Max number of validations to run in parallel
         /// </summary>
-        int? ParallelBatchSize { get; }
+        int ParallelBatchSize { get; }
 
         /// <summary>
         /// If set to `true`, it will wait until it can verify that the 
@@ -77,7 +78,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// <summary>
         /// Add the local DNS server to the list of servers to query during prevalidation
         /// </summary>
-        bool? PreValidateDnsLocal { get; }
+        bool PreValidateDnsLocal { get; }
 
         /// <summary>
         /// Maximum numbers of times to retry DNS pre-validation, while
@@ -92,21 +93,37 @@ namespace PKISharp.WACS.Configuration.Settings
         int PreValidateDnsRetryInterval { get; }
     }
 
-    internal class ValidationSettings : IValidationSettings
+    internal class InheritValidationSettings(params IEnumerable<ValidationSettings> chain) : InheritSettings<ValidationSettings>(chain), IValidationSettings
+    {
+        public bool AllowDnsSubstitution => Get(x => x.AllowDnsSubstitution) ?? true;
+        public bool CleanupFolders => Get(x => x.CleanupFolders) ?? false;
+        public string DefaultValidation => Get(x => x.DefaultValidation) ?? "selfhosting";
+        public string DefaultValidationMode => Get(x => x.DefaultValidationMode) ?? Constants.DefaultChallengeType;
+        public bool DisableMultiThreading => Get(x => x.DisableMultiThreading) ?? true;
+        public int DnsPropagationDelay => Get(x => x.DnsPropagationDelay) ?? 0;
+        public IEnumerable<string> DnsServers => Get(x => x.DnsServers) ?? [];
+        public IFtpSettings Ftp => new InheritFtpSettings(Chain.Select(c => c?.Ftp));
+        public int ParallelBatchSize => Get(x => x.ParallelBatchSize) ?? 100;
+        public bool PreValidateDns => Get(x => x.PreValidateDns) ?? true;
+        public bool PreValidateDnsLocal => Get(x => x.PreValidateDnsLocal) ?? false;
+        public int PreValidateDnsRetryCount => Get(x => x.PreValidateDnsRetryCount) ?? 5;
+        public int PreValidateDnsRetryInterval => Get(x => x.PreValidateDnsRetryInterval) ?? 30;
+    }
+
+    internal class ValidationSettings
     {
         public string? DefaultValidation { get; set; }
         public string? DefaultValidationMode { get; set; }
         public bool? DisableMultiThreading { get; set; }
         public int? ParallelBatchSize { get; set; }
-        public bool CleanupFolders { get; set; }
-        public bool PreValidateDns { get; set; } = true;
-        public int PreValidateDnsRetryCount { get; set; } = 5;
-        public int PreValidateDnsRetryInterval { get; set; } = 30;
-        public bool? PreValidateDnsLocal { get; set; } = false;
-        public int DnsPropagationDelay { get; set; } = 0;
-        public bool AllowDnsSubstitution { get; set; } = true;
+        public bool? CleanupFolders { get; set; }
+        public bool? PreValidateDns { get; set; } = true;
+        public int? PreValidateDnsRetryCount { get; set; }
+        public int? PreValidateDnsRetryInterval { get; set; }
+        public bool? PreValidateDnsLocal { get; set; }
+        public int? DnsPropagationDelay { get; set; }
+        public bool? AllowDnsSubstitution { get; set; }
         public List<string>? DnsServers { get; set; }
         public FtpSettings? Ftp { get; set; }
-        IFtpSettings? IValidationSettings.Ftp => Ftp;
     }
 }

@@ -18,13 +18,76 @@ namespace PKISharp.WACS.Services
     {
         private readonly ILogService _log;
         private readonly MainArguments? _arguments;
-        private readonly Settings _settings;
+        private readonly InheritSettings _settings = new();
         public ISettings Settings => _settings;
 
         public SettingsService(ILogService log, ArgumentsParser parser)
         {
             _log = log;
-            _settings = new Settings();
+
+            // Validate command line and ensure main arguments
+            // are loaded, because those influence the BaseUri
+            if (!parser.Validate())
+            {
+                return;
+            }
+            _arguments = parser.GetArguments<MainArguments>();
+            if (_arguments == null)
+            {
+                return;
+            }
+
+            var globalFile = EnsureGlobalSettingsFile();
+            try
+            {
+                var globalSettings = Load(globalFile);
+                _settings = new InheritSettings(globalSettings);
+            }
+            catch (Exception ex)
+            {
+                _log.Error($"Unable to start program using {globalFile.Name}");
+                while (ex.InnerException != null)
+                {
+                    _log.Error(ex.InnerException.Message);
+                    ex = ex.InnerException;
+                }
+                return;
+            }
+
+            try
+            {
+                _settings.BaseUri = ChooseBaseUri();
+            }
+            catch
+            {
+                _log.Error("Error choosing ACME server");
+                return;
+            }
+
+            try
+            {
+                EnsureFolderExists(_settings.Client.ConfigRoot, "configuration", true);
+                EnsureFolderExists(_settings.Client.ConfigurationPath, "configuration", false);
+                var pathCompareMode = 
+                    OperatingSystem.IsWindows() ? 
+                    StringComparison.OrdinalIgnoreCase : 
+                    StringComparison.Ordinal;
+                EnsureFolderExists(_settings.Client.LogPath, "log", !_settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath, pathCompareMode));
+                EnsureFolderExists(_settings.Cache.CachePath, "cache", !_settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath, pathCompareMode));
+
+                // Configure disk logger
+                _log.ApplyClientSettings(Settings.Client);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Error initializing program");
+                return;
+            }
+            _settings.Valid = true;
+        }
+
+        private FileInfo EnsureGlobalSettingsFile()
+        {
             var settingsFileName = "settings.json";
             var settingsFileTemplateName = "settings_default.json";
             _log.Verbose("Looking for {settingsFileName} in {path}", settingsFileName, VersionService.SettingsPath);
@@ -60,64 +123,7 @@ namespace PKISharp.WACS.Services
                     }
                 }
             }
-
-            try
-            {
-                _settings = Load(useFile);
-            }
-            catch (Exception ex)
-            {
-                _log.Error($"Unable to start program using {useFile.Name}");
-                while (ex.InnerException != null)
-                {
-                    _log.Error(ex.InnerException.Message);
-                    ex = ex.InnerException;
-                }
-                return;
-            }
-
-            // Validate command line and ensure main arguments
-            // are loaded, because those influence the BaseUri
-            if (!parser.Validate())
-            {
-                return;
-            }
-            _arguments = parser.GetArguments<MainArguments>();
-            if (_arguments == null)
-            {
-                return;
-            }
-            try
-            {     
-                _settings.BaseUri = ChooseBaseUri();
-            } 
-            catch
-            {
-                _log.Error("Error choosing ACME server");
-                return;
-            }
-
-            try
-            {
-                var configRoot = ChooseConfigPath();
-                _settings.Client.ConfigurationPath = Path.Combine(configRoot, Settings.BaseUri.CleanUri());
-                _settings.Client.LogPath = ChooseLogPath();
-                _settings.Cache.Path = ChooseCachePath();
-
-                EnsureFolderExists(configRoot, "configuration", true);
-                EnsureFolderExists(_settings.Client.ConfigurationPath, "configuration", false);
-                EnsureFolderExists(_settings.Client.LogPath, "log", !_settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath));
-                EnsureFolderExists(_settings.Cache.Path, "cache", !_settings.Client.LogPath.StartsWith(Settings.Client.ConfigurationPath));
-
-                // Configure disk logger
-                _log.ApplyClientSettings(Settings.Client);
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex, "Error initializing program");
-                return;
-            }
-            _settings.Valid = true;
+            return useFile;
         }
 
         /// <summary>
@@ -132,7 +138,7 @@ namespace PKISharp.WACS.Services
             var newSettings = JsonSerializer.Deserialize(fs, SettingsJson.Insensitive.Settings) ?? throw new Exception($"Unable to deserialize {useFile.FullName}");
 
             // Migrate old-style settings to new-style settings
-            newSettings.Source.DefaultSource ??= _settings.Target.DefaultTarget;
+            newSettings.Source.DefaultSource ??= newSettings.Target.DefaultTarget;
             if (newSettings.Store.DefaultPemFilesPath != null)
             {
                 newSettings.Store.PemFiles ??= new PemFilesSettings();
@@ -148,25 +154,25 @@ namespace PKISharp.WACS.Services
                 newSettings.Store.CentralSsl ??= new CentralSslSettings();
                 newSettings.Store.CentralSsl.DefaultPassword ??= newSettings.Store.DefaultCentralSslPfxPassword;
             }
-            if (_settings.Store.DefaultCertificateStore != null)
+            if (newSettings.Store.DefaultCertificateStore != null)
             {
                 newSettings.Store.CertificateStore ??= new CertificateStoreSettings();
                 newSettings.Store.CertificateStore.DefaultStore ??= newSettings.Store.DefaultCertificateStore;
             }
-            if (_settings.Security.ECCurve != null)
+            if (newSettings.Security.ECCurve != null)
             {
                 newSettings.Csr.Ec ??= new EcSettings();
-                newSettings.Csr.Ec.CurveName ??= _settings.Security.ECCurve;
+                newSettings.Csr.Ec.CurveName ??= newSettings.Security.ECCurve;
             }
-            if (_settings.Security.PrivateKeyExportable != null)
+            if (newSettings.Security.PrivateKeyExportable != null)
             {
                 newSettings.Store.CertificateStore ??= new CertificateStoreSettings();
-                newSettings.Store.CertificateStore.PrivateKeyExportable ??= _settings.Security.PrivateKeyExportable;
+                newSettings.Store.CertificateStore.PrivateKeyExportable ??= newSettings.Security.PrivateKeyExportable;
             }
-            if (_settings.Security.RSAKeyBits != null)
+            if (newSettings.Security.RSAKeyBits != null)
             {
                 newSettings.Csr.Rsa ??= new RsaSettings();
-                newSettings.Csr.Rsa.KeyBits ??= _settings.Security.RSAKeyBits;
+                newSettings.Csr.Rsa.KeyBits ??= newSettings.Security.RSAKeyBits;
             }
             return newSettings;
         }
@@ -210,70 +216,6 @@ namespace PKISharp.WACS.Services
                 _log.Error("Setting Acme.DefaultBaseUri is unspecified or invalid, please specify a valid absolute URI");
                 throw new Exception();
             }
-        }
-
-        /// <summary>
-        /// Determine which folder to use for configuration data
-        /// </summary>
-        private string ChooseConfigPath()
-        {
-            var userRoot = Settings.Client.ConfigurationPath;
-            string? configRoot;
-            if (!string.IsNullOrEmpty(userRoot))
-            {
-                configRoot = userRoot;
-
-                // Path configured in settings always wins, but
-                // check for possible sub directories with client name
-                // to keep bug-compatible with older releases that
-                // created a subfolder inside of the users chosen config path
-                var configRootWithClient = Path.Combine(userRoot, Settings.Client.ClientName);
-                if (Directory.Exists(configRootWithClient))
-                {
-                    configRoot = configRootWithClient;
-                }
-            }
-            else if (OperatingSystem.IsWindows() || Environment.IsPrivilegedProcess)
-            {
-                var appData = Environment.GetFolderPath(SpecialFolder.CommonApplicationData, SpecialFolderOption.DoNotVerify);
-                configRoot = Path.Combine(appData, Settings.Client.ClientName);
-            }
-            else
-            {
-                // For non-elevated Linux we have to fall back to the user directory
-                // These user will not be able to auto-renew.
-                var appData = Environment.GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify);
-                configRoot = Path.Combine(appData, Settings.Client.ClientName);
-            }
-            return configRoot;
-        }
-
-        /// <summary>
-        /// Determine which folder to use for logging
-        /// </summary>
-        private string ChooseLogPath()
-        {
-            if (string.IsNullOrWhiteSpace(_settings.Client.LogPath))
-            {
-                return Path.Combine(Settings.Client.ConfigurationPath, "Log");
-            }
-            else
-            {
-                // Create separate logs for each endpoint
-                return Path.Combine(_settings.Client.LogPath, Settings.BaseUri.CleanUri());
-            }
-        }
-
-        /// <summary>
-        /// Determine which folder to use for cache certificates
-        /// </summary>
-        private string ChooseCachePath()
-        {
-            if (string.IsNullOrWhiteSpace(Settings.Cache.Path))
-            {
-                return Path.Combine(Settings.Client.ConfigurationPath, "Certificates");
-            }
-            return Settings.Cache.Path;
         }
 
         /// <summary>

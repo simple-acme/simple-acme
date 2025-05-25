@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// Required to receive renewal failure 
         /// notifications.
         /// </summary>
-        List<string>? ReceiverAddresses { get; }
+        IEnumerable<string> ReceiverAddresses { get; }
 
         /// <summary>
         /// Email address to use as the sender 
@@ -63,7 +63,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// 3: StartTls
         /// 4: StartTlsWhenAvailable
         /// </summary>
-        int? SmtpSecureMode { get; }
+        int SmtpSecureMode { get; }
 
         /// <summary>
         /// SMTP server to use for sending email notifications. 
@@ -78,18 +78,33 @@ namespace PKISharp.WACS.Configuration.Settings
         string? SmtpUser { get; }
     }
 
-    internal class NotificationSettings : INotificationSettings
+    internal class InheritNotificationSettings(params IEnumerable<NotificationSettings?> chain) : InheritSettings<NotificationSettings>(chain), INotificationSettings
+    {
+        public string? ComputerName => Get(x => x.ComputerName);
+        public bool EmailOnSuccess => Get(x => x.EmailOnSuccess) ?? true;
+        public IEnumerable<string> ReceiverAddresses => Get(x => x.ReceiverAddresses) ?? [];
+        public string? SenderAddress => Get(x => x.SenderAddress);
+        public string? SenderName => Get(x => x.SenderName);
+        public string? SmtpPassword => Get(x => x.SmtpPassword);
+        public int SmtpPort => Get(x => x.SmtpPort) ?? 25;
+        public bool SmtpSecure => Get(x => x.SmtpSecure) ?? true;
+        public int SmtpSecureMode => Get(x => x.SmtpSecureMode) ?? 1;
+        public string? SmtpServer => Get(x => x.SmtpServer);
+        public string? SmtpUser => Get(x => x.SmtpUser);
+    }
+
+    internal class NotificationSettings
     {
         public string? SmtpServer { get; set; }
-        public int SmtpPort { get; set; }
+        public int? SmtpPort { get; set; }
         public string? SmtpUser { get; set; }
         public string? SmtpPassword { get; set; }
-        public bool SmtpSecure { get; set; }
+        public bool? SmtpSecure { get; set; }
         public int? SmtpSecureMode { get; set; }
         public string? SenderName { get; set; }
         public string? SenderAddress { get; set; }
         public List<string>? ReceiverAddresses { get; set; }
-        public bool EmailOnSuccess { get; set; }
+        public bool? EmailOnSuccess { get; set; }
         public string? ComputerName { get; set; }
     }
 }

@@ -27,11 +27,11 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <returns></returns>
         internal IEnumerable<Plugin> DefaultTypeValidationPlugins() {
-            var defaultType = settings.Validation.DefaultValidationMode?.ToLower() ?? Constants.DefaultChallengeType;
+            var defaultType = settings.Validation.DefaultValidationMode;
             return plugins.
                 GetPlugins(Steps.Validation).
                     Where(p => !p.Hidden).
-                    Where(s => GetValidationType(s) == defaultType).
+                    Where(s => string.Equals(GetValidationType(s), defaultType, StringComparison.OrdinalIgnoreCase)).
                     ToList();
         }
 

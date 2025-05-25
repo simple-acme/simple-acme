@@ -76,17 +76,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 ret.DeleteScriptArguments = await DeleteScriptArguments.Interactive(input).GetValue();
             }
 
-            if (settings.Validation.DisableMultiThreading != false)
+            if (!settings.Validation.DisableMultiThreading)
             {
                 ret.Parallelism = await input.ChooseFromMenu(
                     "Enable parallel execution?",
-                    new List<Choice<int?>>()
-                    {
+                    [
                         Choice.Create<int?>(null, "Run everything one by one", @default: true),
                         Choice.Create<int?>(1, "Allow multiple instances of the script to run at the same time"),
                         Choice.Create<int?>(2, "Allow multiple records to be validated at the same time"),
                         Choice.Create<int?>(3, "Allow both modes of parallelism")
-                    });
+                    ]);
             }
 
             return ret;

@@ -61,7 +61,7 @@ namespace PKISharp.WACS.Clients
                 _senderName = _settings.Client.ClientName;
             }
             _senderAddress = _settings.Notification.SenderAddress;
-            _receiverAddresses = _settings.Notification.ReceiverAddresses ?? new List<string>();
+            _receiverAddresses = _settings.Notification.ReceiverAddresses;
 
             // Criteria for emailing to be enabled at all
             Enabled =

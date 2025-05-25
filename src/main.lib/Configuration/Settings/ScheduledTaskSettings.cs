@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace PKISharp.WACS.Configuration.Settings
 {
@@ -42,14 +43,14 @@ namespace PKISharp.WACS.Configuration.Settings
         /// If you use an order plugin to split your renewal into 
         /// multiple orders, orders may run on different days.
         /// </summary>
-        int? RenewalDaysRange { get; }
+        int RenewalDaysRange { get; }
 
         /// <summary>
         /// By default we use ARI to manage renewal period (if available
         /// on the endpoint). This switch allows users to disable it.
         /// https://datatracker.ietf.org/doc/draft-ietf-acme-ari/
         /// </summary>
-        bool? RenewalDisableServerSchedule { get; }
+        bool RenewalDisableServerSchedule { get; }
 
         /// <summary>
         /// If a certificate is valid for less time than
@@ -62,7 +63,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// any certificate due to expire in less than 7 days will be
         /// renewed, regardless of when they were created.
         /// </summary>
-        int? RenewalMinimumValidDays { get; }
+        int RenewalMinimumValidDays { get; }
 
         /// <summary>
         /// Configures start time for the scheduled task.
@@ -70,14 +71,25 @@ namespace PKISharp.WACS.Configuration.Settings
         TimeSpan StartBoundary { get; }
     }
 
-    internal class ScheduledTaskSettings : IScheduledTaskSettings
+    internal class InheritScheduledTaskSettings(params IEnumerable<ScheduledTaskSettings?> chain) : InheritSettings<ScheduledTaskSettings>(chain), IScheduledTaskSettings
     {
-        public int RenewalDays { get; set; }
+        public TimeSpan ExecutionTimeLimit => Get(x => x.ExecutionTimeLimit) ?? TimeSpan.Zero;
+        public TimeSpan RandomDelay => Get(x => x.RandomDelay) ?? TimeSpan.Zero;
+        public int RenewalDays => Get(x => x.RenewalDays) ?? 55;
+        public int RenewalDaysRange => Get(x => x.RenewalDaysRange) ?? 0;
+        public bool RenewalDisableServerSchedule => Get(x => x.RenewalDisableServerSchedule) ?? false;
+        public int RenewalMinimumValidDays => Get(x => x.RenewalMinimumValidDays) ?? 7;
+        public TimeSpan StartBoundary => Get(x => x.StartBoundary) ?? TimeSpan.Zero;
+    }
+
+    internal class ScheduledTaskSettings
+    {
+        public int? RenewalDays { get; set; }
         public int? RenewalMinimumValidDays { get; set; }
         public int? RenewalDaysRange { get; set; }
         public bool? RenewalDisableServerSchedule { get; set; }
-        public TimeSpan RandomDelay { get; set; }
-        public TimeSpan StartBoundary { get; set; }
-        public TimeSpan ExecutionTimeLimit { get; set; }
+        public TimeSpan? RandomDelay { get; set; }
+        public TimeSpan? StartBoundary { get; set; }
+        public TimeSpan? ExecutionTimeLimit { get; set; }
     }
 }

@@ -21,34 +21,38 @@ namespace PKISharp.WACS.Configuration.Settings
     internal class InheritSettings<TData>(params IEnumerable<TData?> chain)
     {
         public IEnumerable<TData?> Chain { get; } = chain;
-        public TResult? Get<TResult>(Func<TData, TResult> x) => Chain.OfType<TData>().Select(x).FirstOrDefault(v => v != null) ?? default;
+        public TResult? Get<TResult>(Func<TData, TResult?> x) => Chain.OfType<TData>().Select(x).FirstOrDefault(v => v != null);
     }
 
-    internal class InheritSettings(params IEnumerable<Settings> settings) : InheritSettings<Settings>(settings)
+    internal class InheritSettings(params IEnumerable<Settings> settings) : InheritSettings<Settings>(settings), ISettings
     {
         private readonly IEnumerable<Settings> _settings = settings;
-        internal IUiSettings UI => new InheritUiSettings(_settings.Select(c => c.UI));
-        internal IClientSettings Client => new InheritClientSettings(_settings.Select(c => c.Client));
-        internal IAcmeSettings Acme => new InheritAcmeSettings(_settings.Select(c => c.Acme));
-        internal ICacheSettings Cache => new InheritCacheSettings(_settings.Select(c => c.Cache));
-        internal IStoreSettings Store => new InheritStoreSettings(_settings.Select(c => c.Store));
-        internal ICsrSettings Csr => new InheritCsrSettings(_settings.Select(c => c.Csr));
-        internal ISecuritySettings Security => new InheritSecuritySettings(_settings.Select(c => c.Security));
-        internal IOrderSettings Order => new InheritOrderSettings(_settings.Select(c => c.Order));
-        internal IScriptSettings Script => new InheritScriptSettings(_settings.Select(c => c.Script));
-        internal IInstallationSettings Installation => new InheritInstallationSettings(_settings.Select(c => c.Installation));
-        internal IExecutionSettings Execution => new InheritExecutionSettings(_settings.Select(c => c.Execution));
-        internal ISourceSettings Source => new InheritSourceSettings(_settings.Select(c => c.Source));
+        public IUiSettings UI => new InheritUiSettings(_settings.Select(c => c.UI));
+        public IClientSettings Client => new InheritClientSettings(this, _settings.Select(c => c.Client));
+        public IAcmeSettings Acme => new InheritAcmeSettings(_settings.Select(c => c.Acme));
+        public ICacheSettings Cache => new InheritCacheSettings(this, _settings.Select(c => c.Cache));
+        public IStoreSettings Store => new InheritStoreSettings(_settings.Select(c => c.Store));
+        public ICsrSettings Csr => new InheritCsrSettings(_settings.Select(c => c.Csr));
+        public ISecuritySettings Security => new InheritSecuritySettings(_settings.Select(c => c.Security));
+        public IOrderSettings Order => new InheritOrderSettings(_settings.Select(c => c.Order));
+        public IScriptSettings Script => new InheritScriptSettings(_settings.Select(c => c.Script));
+        public IInstallationSettings Installation => new InheritInstallationSettings(_settings.Select(c => c.Installation));
+        public IExecutionSettings Execution => new InheritExecutionSettings(_settings.Select(c => c.Execution));
+        public ISourceSettings Source => new InheritSourceSettings(_settings.Select(c => c.Source));
+        public IScheduledTaskSettings ScheduledTask => new InheritScheduledTaskSettings(_settings.Select(c => c.ScheduledTask));
+        public IProxySettings Proxy => new InheritProxySettings(_settings.Select(c => c.Proxy));
+        public ISecretsSettings Secrets => new InheritSecretsSettings(_settings.Select(c => c.Secrets));
+        public INotificationSettings Notification => new InheritNotificationSettings(_settings.Select(c => c.Notification));
+        public IValidationSettings Validation => new InheritValidationSettings(_settings.Select(c => c.Validation));
+        public bool Valid { get; set; } = false;
+        public Uri BaseUri { get; set; } = new Uri("https://localhost");
     }
 
     /// <summary>
     /// All settings
     /// </summary>
-    internal class Settings : ISettings
+    internal class Settings
     {
-        private readonly InheritSettings _internal;
-
-        public Settings() => _internal = new InheritSettings(this);
         public ClientSettings Client { get; set; } = new ClientSettings();
         public UiSettings UI { get; set; } = new UiSettings();
         public AcmeSettings Acme { get; set; } = new AcmeSettings();
@@ -67,26 +71,5 @@ namespace PKISharp.WACS.Configuration.Settings
         public StoreSettings Store { get; set; } = new StoreSettings();
         public InstallationSettings Installation { get; set; } = new InstallationSettings();
         public SecretsSettings Secrets { get; set; } = new SecretsSettings();
-        public bool Valid { get; set; } = false;
-        public Uri BaseUri { get; set; } = new Uri("https://localhost");
-
-        ICacheSettings ISettings.Cache => _internal.Cache;
-        IAcmeSettings ISettings.Acme => _internal.Acme;
-        IUiSettings ISettings.UI => _internal.UI;
-        ICsrSettings ISettings.Csr => _internal.Csr;
-        IStoreSettings ISettings.Store => _internal.Store;
-        IClientSettings ISettings.Client => _internal.Client;
-        ISecuritySettings ISettings.Security => _internal.Security;
-        IOrderSettings ISettings.Order => _internal.Order;
-        IInstallationSettings ISettings.Installation => _internal.Installation;
-        IExecutionSettings ISettings.Execution => _internal.Execution;
-        IScriptSettings ISettings.Script => _internal.Script;
-        ISourceSettings ISettings.Source => _internal.Source;
-
-        IProxySettings ISettings.Proxy => Proxy;
-        ISecretsSettings ISettings.Secrets => Secrets;
-        IScheduledTaskSettings ISettings.ScheduledTask => ScheduledTask;
-        INotificationSettings ISettings.Notification => Notification;
-        IValidationSettings ISettings.Validation => Validation;
     }
 }

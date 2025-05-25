@@ -77,7 +77,7 @@ namespace PKISharp.WACS
             addArgs(renewal.TargetPluginOptions);
             var validationPlugin = plugin.GetPlugin(renewal.ValidationPluginOptions);
             var validationName = validationPlugin.Trigger.ToLower();
-            if (!string.Equals(validationName, settings.Validation.DefaultValidation ?? "selfhosting", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(validationName, settings.Validation.DefaultValidation, StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("validation", validationName);
             }

@@ -1,10 +1,12 @@
 ﻿using Autofac;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.InstallationPlugins;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
+using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -88,11 +90,13 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
         private void TestScript(string script, bool psCore, string? parameters)
         {
             var renewal = new Renewal();
-            var settings = new Mock.Services.MockSettingsService();
-            if (psCore)
-            {
-                settings.Script.PowershellExecutablePath = "C:\\Program Files\\PowerShell\\7\\pwsh.exe";
-            }
+            var settings = new MockSettingsService(
+                new Settings() {
+                    Script = new ScriptSettings() {
+                        PowershellExecutablePath = psCore ? "C:\\Program Files\\PowerShell\\7\\pwsh.exe" : null
+                    }
+                }
+            );
             var target = new Target("", "test.local", []);
             var targetOrder = new Order(renewal, target);
             var oldCert = cs.RequestCertificate(null, targetOrder).Result;

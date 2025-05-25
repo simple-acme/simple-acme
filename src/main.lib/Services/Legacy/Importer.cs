@@ -265,11 +265,11 @@ namespace PKISharp.WACS.Services.Legacy
             }
             ret.StorePluginOptions.Add(new Store.PemFilesOptions()
             {
-                Path = settings.Cache.Path
+                Path = settings.Cache.CachePath
             });
             ret.StorePluginOptions.Add(new Store.PfxFileOptions()
             {
-                Path = settings.Cache.Path
+                Path = settings.Cache.CachePath
             });
         }
 

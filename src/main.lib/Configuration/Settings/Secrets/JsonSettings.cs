@@ -1,4 +1,7 @@
-﻿namespace PKISharp.WACS.Configuration.Settings.Secrets
+﻿using PKISharp.WACS.Configuration.Settings.Csr;
+using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings.Secrets
 {
     /// <summary>
     /// Settings for json secret store
@@ -8,7 +11,12 @@
         string? FilePath { get; }
     }
 
-    internal class JsonSettings : IJsonSettings
+    internal class InheritJsonSettings(params IEnumerable<JsonSettings?> chain) : InheritSettings<JsonSettings>(chain), IJsonSettings
+    {
+        public string? FilePath => Get(x => x.FilePath);
+    }
+
+    internal class JsonSettings 
     {
         public string? FilePath { get; set; }
     }

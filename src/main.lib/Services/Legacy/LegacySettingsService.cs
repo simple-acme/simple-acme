@@ -13,23 +13,23 @@ namespace PKISharp.WACS.Host.Services.Legacy
     {
         private readonly ILogService _log;
         private readonly ClientSettings _client = new();
-        public IClientSettings Client => new InheritClientSettings(_client);
+        public IClientSettings Client => new InheritClientSettings(this, _client);
         public IUiSettings UI { get; private set; } = new InheritUiSettings(new UiSettings());
         public IAcmeSettings Acme { get; private set; } = new InheritAcmeSettings(new AcmeSettings());
         public IExecutionSettings Execution { get; private set; } = new InheritExecutionSettings(new ExecutionSettings());
-        public IProxySettings Proxy { get; private set; } = new ProxySettings();
-        public ICacheSettings Cache { get; private set; } = new InheritCacheSettings(new CacheSettings());
-        public IScheduledTaskSettings ScheduledTask { get; private set; } = new ScheduledTaskSettings();
-        public INotificationSettings Notification { get; private set; } = new NotificationSettings();
+        public IProxySettings Proxy { get; private set; } = new InheritProxySettings(new ProxySettings());
+        public ICacheSettings Cache => new InheritCacheSettings(this, new CacheSettings());
+        public IScheduledTaskSettings ScheduledTask { get; private set; } = new InheritScheduledTaskSettings(new ScheduledTaskSettings());
+        public INotificationSettings Notification { get; private set; } = new InheritNotificationSettings(new NotificationSettings());
         public ISecuritySettings Security { get; private set; } = new InheritSecuritySettings(new SecuritySettings());
         public IScriptSettings Script { get; private set; } = new InheritScriptSettings(new ScriptSettings());
-        public ISourceSettings Source { get; private set; } = new SourceSettings();
-        public IValidationSettings Validation { get; private set; } = new ValidationSettings();
+        public ISourceSettings Source { get; private set; } = new InheritSourceSettings(new SourceSettings());
+        public IValidationSettings Validation { get; private set; } = new InheritValidationSettings(new ValidationSettings());
         public IOrderSettings Order { get; private set; } = new InheritOrderSettings(new OrderSettings());
         public ICsrSettings Csr { get; private set; } = new InheritCsrSettings(new CsrSettings());
         public IStoreSettings Store { get; private set; } = new InheritStoreSettings(new StoreSettings());
         public IInstallationSettings Installation { get; private set; } = new InheritInstallationSettings(new InstallationSettings());
-        public ISecretsSettings Secrets { get; private set; } = new SecretsSettings();
+        public ISecretsSettings Secrets { get; private set; } = new InheritSecretsSettings(new SecretsSettings()); 
         public List<string> ClientNames { get; private set; }
         public Uri BaseUri { get; private set; }
         public bool Valid => true;

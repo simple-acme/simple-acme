@@ -127,7 +127,7 @@ namespace PKISharp.WACS
             }).ToList();
 
             // Choose between parallel and serial execution
-            if (settings.Validation.DisableMultiThreading != false || plugin.Parallelism == ParallelOperations.None)
+            if (settings.Validation.DisableMultiThreading || plugin.Parallelism == ParallelOperations.None)
             {
                 await SerialValidation(contexts, validationScope, breakOnError: !multipleOrders);
             }
@@ -254,7 +254,7 @@ namespace PKISharp.WACS
         private async Task ParallelValidation(ParallelOperations level, ILifetimeScope validationScope, List<ValidationContextParameters> parameters, RunLevel runLevel)
         {
             var contexts = parameters.Select(parameter => new ValidationContext(validationScope, parameter)).ToList();
-            var batchSize = settings.Validation.ParallelBatchSize ?? 100;
+            var batchSize = settings.Validation.ParallelBatchSize;
             var batches = Math.DivRem(contexts.Count, batchSize, out var remainder);
             batches += remainder > 0 ? 1 : 0;
             for (var i = 0; i < remainder; i += 1)

@@ -9,8 +9,6 @@ namespace PKISharp.WACS.Services
         DueDateRuntimeService runtime,
         ILogService logService)
     {
-        internal const int DefaultMinValidDays = 7;
-
         public DueDate? DueDate(Renewal renewal)
         {
             var currentOrders = CurrentOrders(renewal);

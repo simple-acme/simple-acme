@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings.Validation
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings.Validation
 {
     /// <summary>
     /// Settings for FTP validation
@@ -8,10 +10,15 @@
         /// <summary>
         /// Use GnuTls library for SSL, tradeoff: https://github.com/robinrodricks/FluentFTP/wiki/FTPS-Connection-using-GnuTLS
         /// </summary>
-        bool? UseGnuTls { get; }
+        bool UseGnuTls { get; }
     }
 
-    internal class FtpSettings : IFtpSettings
+    internal class InheritFtpSettings(params IEnumerable<FtpSettings?> chain) : InheritSettings<FtpSettings>(chain), IFtpSettings
+    {
+        public bool UseGnuTls => Get(x => x.UseGnuTls) ?? false;
+    }
+
+    internal class FtpSettings
     {
         public bool? UseGnuTls { get; set; }
     }

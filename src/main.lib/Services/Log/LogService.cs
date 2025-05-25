@@ -104,7 +104,7 @@ namespace PKISharp.WACS.Services
         /// <param name="settings"></param>
         public void ApplyClientSettings(IClientSettings settings)
         {
-            CreateDiskLogger(settings.LogPath ?? settings.ConfigurationPath);
+            CreateDiskLogger(settings.LogPath);
             if (OperatingSystem.IsWindows())
             {
                 CreateEventLogger(settings.ClientName);

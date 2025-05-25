@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings.Secrets
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings.Secrets
 {
     /// <summary>
     /// Settings for script secret store
@@ -9,7 +11,14 @@
         string? GetArguments { get; }
     }
 
-    internal class ScriptSecretsSettings : IScriptSecretsSettings
+    internal class InheritScriptSecretsSettings(IEnumerable<ScriptSecretsSettings?> chain) : InheritSettings<ScriptSecretsSettings>(chain), IScriptSecretsSettings
+    {
+        public string? Get => Get(x => x.Get);
+        public string? GetArguments => Get(x => x.GetArguments);
+    }
+
+
+    internal class ScriptSecretsSettings
     {
         public string? Get { get; set; }
         public string? GetArguments { get; set; }

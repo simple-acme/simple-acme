@@ -32,16 +32,8 @@ namespace PKISharp.WACS.Services
         {
             _settings = settingsService;
             _log = log;
-            if (settingsService.Cache.Path != null)
-            {
-                _cache = new DirectoryInfo(settingsService.Cache.Path);
-                CheckStaleFiles();
-            } 
-            else
-            {
-                _cache = new DirectoryInfo("DUMMY");
-            }
-
+            _cache = new DirectoryInfo(settingsService.Cache.CachePath);
+            CheckStaleFiles();
         }
 
         /// <summary>

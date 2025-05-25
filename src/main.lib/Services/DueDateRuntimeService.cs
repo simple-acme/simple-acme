@@ -97,7 +97,7 @@ namespace PKISharp.WACS.Services
             var endSource = "rd";
 
             // Guard rail #1: certificate should at least be valid for RenewalMinimumValidDays
-            var endMinValid = validUntil.AddDays(-1 * (settings.ScheduledTask.RenewalMinimumValidDays ?? DueDateStaticService.DefaultMinValidDays));
+            var endMinValid = validUntil.AddDays(-1 * settings.ScheduledTask.RenewalMinimumValidDays);
             if (endMinValid < end)
             {
                 end = endMinValid;
@@ -106,7 +106,7 @@ namespace PKISharp.WACS.Services
 
             // Guard rail #2: server might feel the renewal should happen even earlier,
             // for example during a security incident.
-            if (settings.ScheduledTask.RenewalDisableServerSchedule != true && 
+            if (!settings.ScheduledTask.RenewalDisableServerSchedule && 
                 renewalInfo != null && 
                 renewalInfo.SuggestedWindow.End != null &&
                 renewalInfo.SuggestedWindow.End.Value < end)
@@ -116,12 +116,12 @@ namespace PKISharp.WACS.Services
             }
 
             // Basic rule for start: End - RenewalDaysRange
-            var start = end.AddDays((settings.ScheduledTask.RenewalDaysRange ?? 0) * -1);
+            var start = end.AddDays(settings.ScheduledTask.RenewalDaysRange * -1);
             var startSource = "rd";
 
             // Guard rail #3: server might feel the renewal should happen even earlier,
             // for example during a security incident.
-            if (settings.ScheduledTask.RenewalDisableServerSchedule != true &&
+            if (!settings.ScheduledTask.RenewalDisableServerSchedule &&
                 renewalInfo != null &&
                 renewalInfo.SuggestedWindow.Start != null &&
                 renewalInfo.SuggestedWindow.Start.Value < start)

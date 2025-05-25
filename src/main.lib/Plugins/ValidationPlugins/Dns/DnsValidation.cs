@@ -102,7 +102,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 _log.Debug("[{identifier}] Looking for TXT value {DnsRecordValue}...", record.Context.Label, record.Value);
                 var testClients = record.Authority.Nameservers;
-                if (_settings.Validation.PreValidateDnsLocal == true)
+                if (_settings.Validation.PreValidateDnsLocal)
                 {
                     testClients = testClients.Append(_dnsClient.GetSystemClient());
                 }

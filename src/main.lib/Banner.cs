@@ -123,7 +123,7 @@ namespace PKISharp.WACS.Host
                 BaseUri = settingsService.BaseUri,
                 ConfigurationPath = settingsService.Client.ConfigurationPath,
                 LogPath = settingsService.Client.LogPath,
-                CachePath = settingsService.Cache.Path,
+                CachePath = settingsService.Cache.CachePath,
                 SettingsPath = VersionService.SettingsPath,
                 PluginPath = VersionService.PluginPath,
                 ExecutablePath = VersionService.ExePath

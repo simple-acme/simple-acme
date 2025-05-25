@@ -127,7 +127,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IValidationPluginCapability, ValidationPluginOptions>(
                 Steps.Validation,
-                defaultParam1: arguments.Validation ?? settings.Validation.DefaultValidation ?? "selfhosting",
+                defaultParam1: arguments.Validation ?? settings.Validation.DefaultValidation,
                 defaultParam2: arguments.ValidationMode ?? settings.Validation.DefaultValidationMode,
                 defaultBackend: typeof(SelfHosting));
         }

@@ -1,4 +1,7 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using PKISharp.WACS.Configuration.Settings.Store;
+using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface IProxySettings
     {        
@@ -22,7 +25,14 @@
         string? Username { get; }
     }
 
-    internal class ProxySettings : IProxySettings
+    internal class InheritProxySettings(params IEnumerable<ProxySettings?> chain) : InheritSettings<ProxySettings>(chain), IProxySettings
+    {
+        public string? Password => Get(x => x.Password);
+        public string? Url => Get(x => x.Url);
+        public string? Username => Get(x => x.Username);
+    }
+
+    internal class ProxySettings
     {
         public string? Url { get; set; }
         public string? Username { get; set; }

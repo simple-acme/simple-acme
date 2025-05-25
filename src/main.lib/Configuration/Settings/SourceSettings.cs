@@ -10,12 +10,12 @@ namespace PKISharp.WACS.Configuration.Settings
         string? DefaultSource { get; }
     }
 
-    internal class InheritSourceSettings(IEnumerable<SourceSettings?> chain) : InheritSettings<SourceSettings>(chain), ISourceSettings
+    internal class InheritSourceSettings(params IEnumerable<SourceSettings?> chain) : InheritSettings<SourceSettings>(chain), ISourceSettings
     {
         public string? DefaultSource => Get(x => x.DefaultSource);
     }
 
-    internal class SourceSettings : ISourceSettings
+    internal class SourceSettings
     {
         public string? DefaultSource { get; set; }
 
