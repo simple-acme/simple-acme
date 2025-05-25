@@ -32,6 +32,8 @@ namespace PKISharp.WACS.Configuration.Settings
         internal IAcmeSettings Acme => new InheritAcmeSettings(_settings.Select(c => c.Acme));
         internal ICacheSettings Cache => new InheritCacheSettings(_settings.Select(c => c.Cache));
         internal IStoreSettings Store => new InheritStoreSettings(_settings.Select(c => c.Store));
+        internal ICsrSettings Csr => new InheritCsrSettings(_settings.Select(c => c.Csr));
+        internal ISecuritySettings Security => new InheritSecuritySettings(_settings.Select(c => c.Security));
     }
 
     /// <summary>
@@ -66,19 +68,20 @@ namespace PKISharp.WACS.Configuration.Settings
         ICacheSettings ISettings.Cache => _internal.Cache;
         IAcmeSettings ISettings.Acme => _internal.Acme;
         IUiSettings ISettings.UI => _internal.UI;
+        ICsrSettings ISettings.Csr => _internal.Csr;
+        IStoreSettings ISettings.Store => _internal.Store;
+        IClientSettings ISettings.Client => _internal.Client;
+        ISecuritySettings ISettings.Security => _internal.Security;
+
         IExecutionSettings ISettings.Execution => Execution;
         IProxySettings ISettings.Proxy => Proxy;
         ISecretsSettings ISettings.Secrets => Secrets;
         IScheduledTaskSettings ISettings.ScheduledTask => ScheduledTask;
         INotificationSettings ISettings.Notification => Notification;
-        ISecuritySettings ISettings.Security => Security;
         IScriptSettings ISettings.Script => Script;
-        IClientSettings ISettings.Client => _internal.Client;
         ISourceSettings ISettings.Source => Source;
         IValidationSettings ISettings.Validation => Validation;
         IOrderSettings ISettings.Order => Order;
-        ICsrSettings ISettings.Csr => Csr;
-        IStoreSettings ISettings.Store => _internal.Store;
         IInstallationSettings ISettings.Installation => Installation;
     }
 }

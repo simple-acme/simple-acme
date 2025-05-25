@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace PKISharp.WACS.Configuration.Settings
+namespace PKISharp.WACS.Configuration.Settings.Store
 {
     public interface ICertificateStoreSettings
     {       

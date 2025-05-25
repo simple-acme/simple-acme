@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using PKISharp.WACS.Configuration.Settings.Validation;
+using System.Collections.Generic;
 
 namespace PKISharp.WACS.Configuration.Settings
 {

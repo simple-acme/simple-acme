@@ -29,11 +29,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         {
             var randomGenerator = new CryptoApiRandomGenerator();
             var random = new SecureRandom(randomGenerator);
-            var keyBits = _settings.Csr?.Rsa?.KeyBits ??
-#pragma warning disable CS0618
-                _settings.Security?.RSAKeyBits ??
-#pragma warning restore CS0618
-                3072;
+            var keyBits = _settings.Csr.Rsa.KeyBits;
 
             _log.Verbose("Generating private key using {keyBits} key bits", keyBits);
             var keyGenerationParameters = new KeyGenerationParameters(random, keyBits);
@@ -43,7 +39,6 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
             return subjectKeyPair;
         }
 
-        public override string GetSignatureAlgorithm() => 
-            _settings.Csr?.Rsa?.SignatureAlgorithm ?? "SHA512withRSA";
+        public override string GetSignatureAlgorithm() => _settings.Csr.Rsa.SignatureAlgorithm;
     }
 }

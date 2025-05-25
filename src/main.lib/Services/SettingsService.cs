@@ -1,6 +1,8 @@
 ﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Configuration.Settings.Csr;
+using PKISharp.WACS.Configuration.Settings.Store;
 using PKISharp.WACS.Extensions;
 using System;
 using System.IO;
@@ -129,29 +131,42 @@ namespace PKISharp.WACS.Services
             using var fs = useFile.OpenRead();
             var newSettings = JsonSerializer.Deserialize(fs, SettingsJson.Insensitive.Settings) ?? throw new Exception($"Unable to deserialize {useFile.FullName}");
 
-            static string? Fallback(string? x, string? y) => x ?? y;
-            newSettings.Source.DefaultSource = Fallback(Settings.Source.DefaultSource, _settings.Target.DefaultTarget);
-
             // Migrate old-style settings to new-style settings
+            newSettings.Source.DefaultSource ??= _settings.Target.DefaultTarget;
             if (newSettings.Store.DefaultPemFilesPath != null)
             {
                 newSettings.Store.PemFiles ??= new PemFilesSettings();
-                newSettings.Store.PemFiles.DefaultPath = Fallback(newSettings.Store.PemFiles.DefaultPath, newSettings.Store.DefaultPemFilesPath);
+                newSettings.Store.PemFiles.DefaultPath ??= newSettings.Store.DefaultPemFilesPath;
             }
             if (newSettings.Store.DefaultCentralSslStore != null)
             {
                 newSettings.Store.CentralSsl ??= new CentralSslSettings();
-                newSettings.Store.CentralSsl.DefaultPath = Fallback(newSettings.Store.CentralSsl.DefaultPath, newSettings.Store.DefaultCentralSslStore);
+                newSettings.Store.CentralSsl.DefaultPath ??= newSettings.Store.DefaultCentralSslStore;
             }
             if (newSettings.Store.DefaultCentralSslPfxPassword != null)
             {
                 newSettings.Store.CentralSsl ??= new CentralSslSettings();
-                newSettings.Store.CentralSsl.DefaultPassword = Fallback(newSettings.Store.CentralSsl.DefaultPassword, newSettings.Store.DefaultCentralSslPfxPassword);
+                newSettings.Store.CentralSsl.DefaultPassword ??= newSettings.Store.DefaultCentralSslPfxPassword;
             }
             if (_settings.Store.DefaultCertificateStore != null)
             {
                 newSettings.Store.CertificateStore ??= new CertificateStoreSettings();
-                newSettings.Store.CertificateStore.DefaultStore = Fallback(newSettings.Store.CertificateStore.DefaultStore, newSettings.Store.DefaultCertificateStore);
+                newSettings.Store.CertificateStore.DefaultStore ??= newSettings.Store.DefaultCertificateStore;
+            }
+            if (_settings.Security.ECCurve != null)
+            {
+                newSettings.Csr.Ec ??= new EcSettings();
+                newSettings.Csr.Ec.CurveName ??= _settings.Security.ECCurve;
+            }
+            if (_settings.Security.PrivateKeyExportable != null)
+            {
+                newSettings.Store.CertificateStore ??= new CertificateStoreSettings();
+                newSettings.Store.CertificateStore.PrivateKeyExportable ??= _settings.Security.PrivateKeyExportable;
+            }
+            if (_settings.Security.RSAKeyBits != null)
+            {
+                newSettings.Csr.Rsa ??= new RsaSettings();
+                newSettings.Csr.Rsa.KeyBits ??= _settings.Security.RSAKeyBits;
             }
             return newSettings;
         }

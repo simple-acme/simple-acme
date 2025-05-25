@@ -1,4 +1,4 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿namespace PKISharp.WACS.Configuration.Settings.Secrets
 {
     /// <summary>
     /// Settings for json secret store

@@ -27,12 +27,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         public bool InstallCertificate(ICertificateInfo certificate, X509KeyStorageFlags flags)
         {
             // Determine storage flags
-#pragma warning disable CS0618 // Type or member is obsolete
-            var exportable =
-                settings.Store.CertificateStore.PrivateKeyExportable == true ||
-                (settings.Store.CertificateStore.PrivateKeyExportable == false && settings.Security.PrivateKeyExportable == true);
-#pragma warning restore CS0618 // Type or member is obsolete
-            if (exportable)
+            if (settings.Store.CertificateStore.PrivateKeyExportable)
             {
                 flags |= X509KeyStorageFlags.Exportable;
             }
@@ -51,7 +46,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             {
                 SaveWithRetry(certificate, (input) => { RegularSave(input, flags, password); return true; });
             }
-            return exportable;
+            return settings.Store.CertificateStore.PrivateKeyExportable;
         }
 
         /// <summary>

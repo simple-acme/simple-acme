@@ -1,4 +1,4 @@
-﻿using PKISharp.WACS.Plugins.Interfaces;
+﻿using PKISharp.WACS.Configuration.Settings.Store;
 using System;
 using System.Collections.Generic;
 using System.Linq;

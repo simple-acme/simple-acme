@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using PKISharp.WACS.Configuration.Settings.Secrets;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     /// <summary>
     /// Settings for secret management

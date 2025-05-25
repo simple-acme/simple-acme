@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using PKISharp.WACS.Configuration.Settings.UI;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace PKISharp.WACS.Configuration.Settings
@@ -8,7 +9,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// <summary>
         /// Which colors should be applied
         /// </summary>
-        IColorSettings? Color { get; }
+        IColorSettings Color { get; }
 
         /// <summary>
         /// A string that is used to format the date of the 
@@ -30,7 +31,7 @@ namespace PKISharp.WACS.Configuration.Settings
 
     internal class InheritUiSettings(params IEnumerable<UiSettings> chain) : InheritSettings<UiSettings>(chain), IUiSettings
     {
-        public IColorSettings? Color => new InheritColorSettings(Chain.Select(c => c?.Color));
+        public IColorSettings Color => new InheritColorSettings(Chain.Select(c => c?.Color));
         public string? DateFormat => Get(x => x.DateFormat);
         public int PageSize => Get(x => x.PageSize) ?? 50;
         public string? TextEncoding => Get(x => x.TextEncoding);

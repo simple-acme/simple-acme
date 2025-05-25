@@ -1,12 +1,9 @@
-﻿using System;
+﻿using System.Collections.Generic;
 
 namespace PKISharp.WACS.Configuration.Settings
 {
     public interface ISecuritySettings
     {
-        [Obsolete("Use Csr.Ec.CurveName")]
-        string? ECCurve { get; }
-
         /// <summary>
         /// Uses Microsoft Data Protection API to encrypt 
         /// sensitive parts of the configuration, e.g. 
@@ -19,21 +16,21 @@ namespace PKISharp.WACS.Configuration.Settings
         /// Apply a datetimestamp to the friendly name 
         /// of the generated certificates
         /// </summary>
-        bool? FriendlyNameDateTimeStamp { get; }
-
-        [Obsolete("Use Store.CertificateStore.PrivateKeyExportable")]
-        bool? PrivateKeyExportable { get; }
-
-        [Obsolete("Use Csr.Rsa.KeySize")]
-        int? RSAKeyBits { get; }
+        bool FriendlyNameDateTimeStamp { get; }
     }
 
-    internal class SecuritySettings : ISecuritySettings
+    internal class InheritSecuritySettings(params IEnumerable<SecuritySettings?> chain) : InheritSettings<SecuritySettings>(chain), ISecuritySettings
+    {
+         public bool EncryptConfig => Get(x => x.EncryptConfig) ?? true;
+         public bool FriendlyNameDateTimeStamp => Get(x => x.FriendlyNameDateTimeStamp) ?? true;
+    }
+
+    internal class SecuritySettings
     {
         public int? RSAKeyBits { get; set; }
         public string? ECCurve { get; set; }
         public bool? PrivateKeyExportable { get; set; }
-        public bool EncryptConfig { get; set; }
+        public bool? EncryptConfig { get; set; }
         public bool? FriendlyNameDateTimeStamp { get; set; }
     }
 }

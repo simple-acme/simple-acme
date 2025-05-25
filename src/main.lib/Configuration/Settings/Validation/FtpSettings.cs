@@ -1,4 +1,4 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿namespace PKISharp.WACS.Configuration.Settings.Validation
 {
     /// <summary>
     /// Settings for FTP validation

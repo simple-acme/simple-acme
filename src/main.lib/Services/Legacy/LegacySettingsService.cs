@@ -21,12 +21,12 @@ namespace PKISharp.WACS.Host.Services.Legacy
         public ICacheSettings Cache { get; private set; } = new InheritCacheSettings(new CacheSettings());
         public IScheduledTaskSettings ScheduledTask { get; private set; } = new ScheduledTaskSettings();
         public INotificationSettings Notification { get; private set; } = new NotificationSettings();
-        public ISecuritySettings Security { get; private set; } = new SecuritySettings();
+        public ISecuritySettings Security { get; private set; } = new InheritSecuritySettings(new SecuritySettings());
         public IScriptSettings Script { get; private set; } = new ScriptSettings();
         public ISourceSettings Source { get; private set; } = new SourceSettings();
         public IValidationSettings Validation { get; private set; } = new ValidationSettings();
         public IOrderSettings Order { get; private set; } = new OrderSettings();
-        public ICsrSettings Csr { get; private set; } = new CsrSettings();
+        public ICsrSettings Csr { get; private set; } = new InheritCsrSettings(new CsrSettings());
         public IStoreSettings Store { get; private set; } = new InheritStoreSettings(new StoreSettings());
         public IInstallationSettings Installation { get; private set; } = new InstallationSettings();
         public ISecretsSettings Secrets { get; private set; } = new SecretsSettings();
