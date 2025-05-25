@@ -71,7 +71,7 @@ namespace PKISharp.WACS.Configuration.Settings
         public Uri? DefaultBaseUriTest => Get(x => x.DefaultBaseUriTest);
         public int MaxDomains => Get(x => x.MaxDomains) ?? 100;
         public bool PostAsGet => Get(x => x.PostAsGet) ?? true;
-        public string? PreferredIssuer => Get(x => x.PreferredIssuer) ?? null;
+        public string? PreferredIssuer => Get(x => x.PreferredIssuer);
         public Uri? PublicSuffixListUri
         {
             get

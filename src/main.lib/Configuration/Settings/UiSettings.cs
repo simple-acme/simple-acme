@@ -28,11 +28,9 @@ namespace PKISharp.WACS.Configuration.Settings
         string? TextEncoding { get; }
     }
 
-internal class InheritUiSettings : InheritSettings<UiSettings>, IUiSettings
+    internal class InheritUiSettings(params IEnumerable<UiSettings> chain) : InheritSettings<UiSettings>(chain), IUiSettings
     {
-        private readonly IEnumerable<UiSettings> _chain;
-        public InheritUiSettings(params IEnumerable<UiSettings> chain) : base(chain) => _chain = chain;
-        public IColorSettings? Color => new InheritColorSettings(_chain.Select(c => c.Color));
+        public IColorSettings? Color => new InheritColorSettings(Chain.Select(c => c?.Color));
         public string? DateFormat => Get(x => x.DateFormat);
         public int PageSize => Get(x => x.PageSize) ?? 50;
         public string? TextEncoding => Get(x => x.TextEncoding);

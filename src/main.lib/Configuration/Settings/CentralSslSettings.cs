@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface ICentralSslSettings
     {       
@@ -28,7 +30,14 @@
         string? DefaultProtectionMode { get; }
     }
 
-    internal class CentralSslSettings : ICentralSslSettings
+    internal class InheritCentralSslSettings(params IEnumerable<CentralSslSettings?> chain) : InheritSettings<CentralSslSettings>(chain), ICentralSslSettings
+    {
+        public string? DefaultPassword => Get(x => x.DefaultPassword);
+        public string? DefaultPath => Get(x => x.DefaultPath);
+        public string? DefaultProtectionMode => Get(x => x.DefaultProtectionMode);
+    }
+
+    internal class CentralSslSettings
     {
         public string? DefaultPath { get; set; }
         public string? DefaultPassword { get; set; }

@@ -61,19 +61,7 @@ namespace PKISharp.WACS.Services
 
             try
             {
-                using var fs = useFile.OpenRead();
-                var newSettings = JsonSerializer.Deserialize(fs, SettingsJson.Insensitive.Settings);
-                if (newSettings != null)
-                {
-                    _settings = newSettings;
-                }
-
-                static string? Fallback(string? x, string? y) => x ?? y;
-                _settings.Source.DefaultSource = Fallback(Settings.Source.DefaultSource, _settings.Target.DefaultTarget);
-                _settings.Store.PemFiles.DefaultPath = Fallback(Settings.Store.PemFiles.DefaultPath, _settings.Store.DefaultPemFilesPath);
-                _settings.Store.CentralSsl.DefaultPath = Fallback(Settings.Store.CentralSsl.DefaultPath, _settings.Store.DefaultCentralSslStore);
-                _settings.Store.CentralSsl.DefaultPassword = Fallback(Settings.Store.CentralSsl.DefaultPassword, _settings.Store.DefaultCentralSslPfxPassword);
-                _settings.Store.CertificateStore.DefaultStore = Fallback(Settings.Store.CertificateStore.DefaultStore, _settings.Store.DefaultCertificateStore);
+                _settings = Load(useFile);
             }
             catch (Exception ex)
             {
@@ -131,11 +119,49 @@ namespace PKISharp.WACS.Services
         }
 
         /// <summary>
+        /// Load settings from disk
+        /// </summary>
+        /// <param name="useFile"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private Settings Load(FileInfo useFile)
+        {
+            using var fs = useFile.OpenRead();
+            var newSettings = JsonSerializer.Deserialize(fs, SettingsJson.Insensitive.Settings) ?? throw new Exception($"Unable to deserialize {useFile.FullName}");
+
+            static string? Fallback(string? x, string? y) => x ?? y;
+            newSettings.Source.DefaultSource = Fallback(Settings.Source.DefaultSource, _settings.Target.DefaultTarget);
+
+            // Migrate old-style settings to new-style settings
+            if (newSettings.Store.DefaultPemFilesPath != null)
+            {
+                newSettings.Store.PemFiles ??= new PemFilesSettings();
+                newSettings.Store.PemFiles.DefaultPath = Fallback(newSettings.Store.PemFiles.DefaultPath, newSettings.Store.DefaultPemFilesPath);
+            }
+            if (newSettings.Store.DefaultCentralSslStore != null)
+            {
+                newSettings.Store.CentralSsl ??= new CentralSslSettings();
+                newSettings.Store.CentralSsl.DefaultPath = Fallback(newSettings.Store.CentralSsl.DefaultPath, newSettings.Store.DefaultCentralSslStore);
+            }
+            if (newSettings.Store.DefaultCentralSslPfxPassword != null)
+            {
+                newSettings.Store.CentralSsl ??= new CentralSslSettings();
+                newSettings.Store.CentralSsl.DefaultPassword = Fallback(newSettings.Store.CentralSsl.DefaultPassword, newSettings.Store.DefaultCentralSslPfxPassword);
+            }
+            if (_settings.Store.DefaultCertificateStore != null)
+            {
+                newSettings.Store.CertificateStore ??= new CertificateStoreSettings();
+                newSettings.Store.CertificateStore.DefaultStore = Fallback(newSettings.Store.CertificateStore.DefaultStore, newSettings.Store.DefaultCertificateStore);
+            }
+            return newSettings;
+        }
+
+        /// <summary>
         /// Choose the base URI based on command line options and/or global settings defaults
         /// </summary>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public Uri ChooseBaseUri()
+        private Uri ChooseBaseUri()
         {
             if (!string.IsNullOrWhiteSpace(_arguments?.BaseUri))
             {

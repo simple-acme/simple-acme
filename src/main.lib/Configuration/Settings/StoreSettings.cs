@@ -1,4 +1,7 @@
-﻿using System;
+﻿using PKISharp.WACS.Plugins.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PKISharp.WACS.Configuration.Settings
 {
@@ -8,62 +11,49 @@ namespace PKISharp.WACS.Configuration.Settings
         /// Settings for the CentralSsl plugin
         /// </summary>
         ICentralSslSettings CentralSsl { get; }
-
         /// <summary>
         /// Settings for the CentralSsl plugin
         /// </summary>
         ICertificateStoreSettings CertificateStore { get; }
-
-        [Obsolete("Use CentralSsl.DefaultPassword instead")]
-        string? DefaultCentralSslPfxPassword { get; }
-
-        [Obsolete("Use CentralSsl.DefaultStore instead")]
-        string? DefaultCentralSslStore { get; }
-
-        [Obsolete("Use CertificateStore.DefaultStore instead")]
-        string? DefaultCertificateStore { get; }
-
-        [Obsolete("Use PemFiles.DefaultPath instead")]
-        string? DefaultPemFilesPath { get; }
-
         /// <summary>
         /// Default plugin(s) to select 
         /// </summary>
-        string? DefaultStore { get; }
-
+        string DefaultStore { get; }
         /// <summary>
         /// Settings for the P7bFile plugin
         /// </summary>
         IP7bFileSettings P7bFile { get; }
-
         /// <summary>
         /// Settings for the PemFiles plugin
         /// </summary>
         IPemFilesSettings PemFiles { get; }
-
         /// <summary>
         /// Settings for the PfxFile plugin
         /// </summary>
         IPfxFileSettings PfxFile { get; }
     }
 
-    internal class StoreSettings : IStoreSettings
+    internal class InheritStoreSettings(params IEnumerable<StoreSettings> chain) : InheritSettings<StoreSettings>(chain), IStoreSettings
+    {
+        public ICentralSslSettings CentralSsl => new InheritCentralSslSettings(Chain.Select(c => c?.CentralSsl));
+        public ICertificateStoreSettings CertificateStore => new InheritCertificateStoreSettings(Chain.Select(c => c?.CertificateStore));
+        public string DefaultStore => Get(x => x.DefaultStore) ?? (OperatingSystem.IsWindows() ? Plugins.StorePlugins.CertificateStore.Trigger : Plugins.StorePlugins.PemFiles.Trigger);
+        public IP7bFileSettings P7bFile => new InheritP7bFileSettings(Chain.Select(c => c?.P7bFile));
+        public IPemFilesSettings PemFiles => new InheritPemFilesSettings(Chain.Select(c => c?.PemFiles));
+        public IPfxFileSettings PfxFile => new InheritPfxFileSettings(Chain.Select(c => c?.PfxFile));
+    }
+
+    internal class StoreSettings
     {
         public string? DefaultStore { get; set; }
         public string? DefaultCertificateStore { get; set; }
         public string? DefaultCentralSslStore { get; set; }
         public string? DefaultCentralSslPfxPassword { get; set; }
         public string? DefaultPemFilesPath { get; set; }
-        public CertificateStoreSettings CertificateStore { get; set; } = new CertificateStoreSettings();
-        public CentralSslSettings CentralSsl { get; set; } = new CentralSslSettings();
-        public PemFilesSettings PemFiles { get; set; } = new PemFilesSettings();
-        public PfxFileSettings PfxFile { get; set; } = new PfxFileSettings();
-        public P7bFileSettings P7bFile { get; set; } = new P7bFileSettings();
-
-        ICentralSslSettings IStoreSettings.CentralSsl => CentralSsl;
-        ICertificateStoreSettings IStoreSettings.CertificateStore => CertificateStore;
-        IP7bFileSettings IStoreSettings.P7bFile => P7bFile;
-        IPemFilesSettings IStoreSettings.PemFiles => PemFiles;
-        IPfxFileSettings IStoreSettings.PfxFile => PfxFile;
+        public CertificateStoreSettings? CertificateStore { get; set; }
+        public CentralSslSettings? CentralSsl { get; set; }
+        public PemFilesSettings? PemFiles { get; set; }
+        public PfxFileSettings? PfxFile { get; set; }
+        public P7bFileSettings? P7bFile { get; set; }
     }
 }

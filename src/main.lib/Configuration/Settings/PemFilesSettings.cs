@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface IPemFilesSettings
     {
@@ -23,7 +25,13 @@
         string? DefaultPath { get; }
     }
 
-    internal class PemFilesSettings : IPemFilesSettings
+    internal class InheritPemFilesSettings(params IEnumerable<PemFilesSettings?> chain) : InheritSettings<PemFilesSettings>(chain), IPemFilesSettings
+    {
+        public string? DefaultPassword => Get(x => x.DefaultPassword);
+        public string? DefaultPath => Get(x => x.DefaultPath);
+    }
+
+    internal class PemFilesSettings
     {
         public string? DefaultPath { get; set; }
         public string? DefaultPassword { get; set; }

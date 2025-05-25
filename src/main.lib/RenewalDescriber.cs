@@ -101,7 +101,7 @@ namespace PKISharp.WACS
                 addArgs(renewal.CsrPluginOptions);
             }
             var storeNames = string.Join(",", renewal.StorePluginOptions.Select(plugin.GetPlugin).Select(x => x.Trigger.ToLower()));
-            if (!string.Equals(storeNames, settings.Store.DefaultStore ?? "certificatestore", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(storeNames, settings.Store.DefaultStore, StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("store", storeNames);
             }

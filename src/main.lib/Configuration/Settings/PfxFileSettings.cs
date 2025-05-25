@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface IPfxFileSettings
     {
@@ -28,7 +30,14 @@
         string? DefaultProtectionMode { get; }
     }
 
-    internal class PfxFileSettings : IPfxFileSettings
+    internal class InheritPfxFileSettings(params IEnumerable<PfxFileSettings?> chain) : InheritSettings<PfxFileSettings>(chain), IPfxFileSettings
+    {
+        public string? DefaultPassword => Get(x => x.DefaultPassword);
+        public string? DefaultPath => Get(x => x.DefaultPath);
+        public string? DefaultProtectionMode => Get(x => x.DefaultProtectionMode);
+    }
+
+    internal class PfxFileSettings
     {
         public string? DefaultPath { get; set; }
         public string? DefaultPassword { get; set; }

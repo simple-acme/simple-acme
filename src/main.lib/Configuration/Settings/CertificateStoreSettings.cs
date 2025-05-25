@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface ICertificateStoreSettings
     {       
@@ -15,7 +17,7 @@
         /// store, for example to move them to another 
         /// server.
         /// </summary>
-        bool? PrivateKeyExportable { get; }
+        bool PrivateKeyExportable { get; }
 
         /// <summary>
         /// If set to True, the program will use the "Next-Generation Crypto API" (CNG)
@@ -25,10 +27,17 @@
         /// versions of Microsoft Exchange and they won't be exportable from IIS,
         /// even if the PrivateKeyExportable setting is true.
         /// </summary>
-        bool? UseNextGenerationCryptoApi { get; }
+        bool UseNextGenerationCryptoApi { get; }
     }
 
-    internal class CertificateStoreSettings : ICertificateStoreSettings
+    internal class InheritCertificateStoreSettings(params IEnumerable<CertificateStoreSettings?> chain) : InheritSettings<CertificateStoreSettings>(chain), ICertificateStoreSettings
+    {
+        public string? DefaultStore => Get(x => x.DefaultStore);
+        public bool PrivateKeyExportable => Get(x => x.PrivateKeyExportable) ?? false;
+        public bool UseNextGenerationCryptoApi => Get(x => x.UseNextGenerationCryptoApi) ?? false;
+    }
+
+    internal class CertificateStoreSettings
     {
         public string? DefaultStore { get; set; }
         public bool? PrivateKeyExportable { get; set; }

@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface IP7bFileSettings
     {
@@ -13,7 +15,12 @@
         string? DefaultPath { get; }
     }
 
-    internal class P7bFileSettings : IP7bFileSettings
+    internal class InheritP7bFileSettings(params IEnumerable<P7bFileSettings?> chain) : InheritSettings<P7bFileSettings>(chain), IP7bFileSettings
+    {
+        public string? DefaultPath => Get(x => x.DefaultPath);
+    }
+
+    internal class P7bFileSettings
     {
         public string? DefaultPath { get; set; }
     }

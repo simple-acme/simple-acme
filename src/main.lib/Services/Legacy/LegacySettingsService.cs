@@ -27,7 +27,7 @@ namespace PKISharp.WACS.Host.Services.Legacy
         public IValidationSettings Validation { get; private set; } = new ValidationSettings();
         public IOrderSettings Order { get; private set; } = new OrderSettings();
         public ICsrSettings Csr { get; private set; } = new CsrSettings();
-        public IStoreSettings Store { get; private set; } = new StoreSettings();
+        public IStoreSettings Store { get; private set; } = new InheritStoreSettings(new StoreSettings());
         public IInstallationSettings Installation { get; private set; } = new InstallationSettings();
         public ISecretsSettings Secrets { get; private set; } = new SecretsSettings();
         public List<string> ClientNames { get; private set; }

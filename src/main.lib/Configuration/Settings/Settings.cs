@@ -20,7 +20,8 @@ namespace PKISharp.WACS.Configuration.Settings
 
     internal class InheritSettings<TData>(params IEnumerable<TData?> chain)
     {
-        public TResult? Get<TResult>(Func<TData, TResult> x) => chain.OfType<TData>().Select(x).FirstOrDefault(v => v != null) ?? default;
+        public IEnumerable<TData?> Chain { get; } = chain;
+        public TResult? Get<TResult>(Func<TData, TResult> x) => Chain.OfType<TData>().Select(x).FirstOrDefault(v => v != null) ?? default;
     }
 
     internal class InheritSettings(params IEnumerable<Settings> settings) : InheritSettings<Settings>(settings)
@@ -30,6 +31,7 @@ namespace PKISharp.WACS.Configuration.Settings
         internal IClientSettings Client => new InheritClientSettings(_settings.Select(c => c.Client));
         internal IAcmeSettings Acme => new InheritAcmeSettings(_settings.Select(c => c.Acme));
         internal ICacheSettings Cache => new InheritCacheSettings(_settings.Select(c => c.Cache));
+        internal IStoreSettings Store => new InheritStoreSettings(_settings.Select(c => c.Store));
     }
 
     /// <summary>
@@ -76,7 +78,7 @@ namespace PKISharp.WACS.Configuration.Settings
         IValidationSettings ISettings.Validation => Validation;
         IOrderSettings ISettings.Order => Order;
         ICsrSettings ISettings.Csr => Csr;
-        IStoreSettings ISettings.Store => Store;
+        IStoreSettings ISettings.Store => _internal.Store;
         IInstallationSettings ISettings.Installation => Installation;
     }
 }

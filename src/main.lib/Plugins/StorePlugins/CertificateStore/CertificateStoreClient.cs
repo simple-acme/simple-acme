@@ -30,7 +30,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 #pragma warning disable CS0618 // Type or member is obsolete
             var exportable =
                 settings.Store.CertificateStore.PrivateKeyExportable == true ||
-                (settings.Store.CertificateStore.PrivateKeyExportable == null && settings.Security.PrivateKeyExportable == true);
+                (settings.Store.CertificateStore.PrivateKeyExportable == false && settings.Security.PrivateKeyExportable == true);
 #pragma warning restore CS0618 // Type or member is obsolete
             if (exportable)
             {
@@ -39,8 +39,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             flags |= X509KeyStorageFlags.PersistKeySet;
             var password = PasswordGenerator.Generate();
             var success = false;
-            var attemptConvert = settings.Store.CertificateStore.UseNextGenerationCryptoApi != true;
-            if (attemptConvert)
+            if (!settings.Store.CertificateStore.UseNextGenerationCryptoApi)
             {
                 success = SaveWithRetry(certificate, (input) => ConvertAndSave(input, flags, password));
                 if (!success)

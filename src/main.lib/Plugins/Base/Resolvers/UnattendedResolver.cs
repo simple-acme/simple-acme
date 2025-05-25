@@ -165,12 +165,6 @@ namespace PKISharp.WACS.Plugins.Resolvers
         public async Task<PluginFrontend<IPluginCapability, StorePluginOptions>?> GetStorePlugin(IEnumerable<Plugin> chosen)
         {
             var defaultStore = arguments.Store ?? settings.Store.DefaultStore;
-            if (string.IsNullOrWhiteSpace(defaultStore))
-            {
-                defaultStore = OperatingSystem.IsWindows() ? 
-                    StorePlugins.CertificateStore.Trigger : 
-                    StorePlugins.PemFiles.Trigger;
-            }
             var parts = defaultStore.ParseCsv();
             if (parts == null)
             {
