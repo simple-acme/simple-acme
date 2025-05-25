@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     /// <summary>
     /// Options for installation and DNS scripts
@@ -9,9 +11,15 @@
         int Timeout { get; }
     }
 
-    internal class ScriptSettings : IScriptSettings
+    internal class InheritScriptSettings(params IEnumerable<ScriptSettings?> chain) : InheritSettings<ScriptSettings>(chain), IScriptSettings
     {
-        public int Timeout { get; set; } = 600;
+        public string? PowershellExecutablePath => Get(x => x.PowershellExecutablePath);
+        public int Timeout => Get(x => x.Timeout) ?? 600;
+    }
+
+    internal class ScriptSettings
+    {
+        public int? Timeout { get; set; }
         public string? PowershellExecutablePath { get; set; }
     }
 }

@@ -27,10 +27,14 @@ namespace PKISharp.WACS.Configuration.Settings
 
     internal class SecuritySettings
     {
+        public bool? PrivateKeyExportable { get; set; }
+        public bool? FriendlyNameDateTimeStamp { get; set; }
+
+        /// <summary>
+        /// Legacy options converted to their modern equivalents at load time
+        /// </summary>
         public int? RSAKeyBits { get; set; }
         public string? ECCurve { get; set; }
-        public bool? PrivateKeyExportable { get; set; }
         public bool? EncryptConfig { get; set; }
-        public bool? FriendlyNameDateTimeStamp { get; set; }
     }
 }

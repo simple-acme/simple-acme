@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface IInstallationSettings
     {
@@ -8,7 +10,12 @@
         string? DefaultInstallation { get; }
     }
 
-    internal class InstallationSettings : IInstallationSettings
+    internal class InheritInstallationSettings(params IEnumerable<InstallationSettings?> chain) : InheritSettings<InstallationSettings>(chain), IInstallationSettings
+    {
+        public string? DefaultInstallation => Get(x => x.DefaultInstallation);
+    }
+
+    internal class InstallationSettings
     {
         public string? DefaultInstallation { get; set; }
     }

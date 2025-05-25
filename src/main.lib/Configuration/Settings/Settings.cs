@@ -34,6 +34,11 @@ namespace PKISharp.WACS.Configuration.Settings
         internal IStoreSettings Store => new InheritStoreSettings(_settings.Select(c => c.Store));
         internal ICsrSettings Csr => new InheritCsrSettings(_settings.Select(c => c.Csr));
         internal ISecuritySettings Security => new InheritSecuritySettings(_settings.Select(c => c.Security));
+        internal IOrderSettings Order => new InheritOrderSettings(_settings.Select(c => c.Order));
+        internal IScriptSettings Script => new InheritScriptSettings(_settings.Select(c => c.Script));
+        internal IInstallationSettings Installation => new InheritInstallationSettings(_settings.Select(c => c.Installation));
+        internal IExecutionSettings Execution => new InheritExecutionSettings(_settings.Select(c => c.Execution));
+        internal ISourceSettings Source => new InheritSourceSettings(_settings.Select(c => c.Source));
     }
 
     /// <summary>
@@ -72,16 +77,16 @@ namespace PKISharp.WACS.Configuration.Settings
         IStoreSettings ISettings.Store => _internal.Store;
         IClientSettings ISettings.Client => _internal.Client;
         ISecuritySettings ISettings.Security => _internal.Security;
+        IOrderSettings ISettings.Order => _internal.Order;
+        IInstallationSettings ISettings.Installation => _internal.Installation;
+        IExecutionSettings ISettings.Execution => _internal.Execution;
+        IScriptSettings ISettings.Script => _internal.Script;
+        ISourceSettings ISettings.Source => _internal.Source;
 
-        IExecutionSettings ISettings.Execution => Execution;
         IProxySettings ISettings.Proxy => Proxy;
         ISecretsSettings ISettings.Secrets => Secrets;
         IScheduledTaskSettings ISettings.ScheduledTask => ScheduledTask;
         INotificationSettings ISettings.Notification => Notification;
-        IScriptSettings ISettings.Script => Script;
-        ISourceSettings ISettings.Source => Source;
         IValidationSettings ISettings.Validation => Validation;
-        IOrderSettings ISettings.Order => Order;
-        IInstallationSettings ISettings.Installation => Installation;
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace PKISharp.WACS.Configuration.Settings
+﻿using System.Collections.Generic;
+
+namespace PKISharp.WACS.Configuration.Settings
 {
     public interface IOrderSettings
     {
@@ -15,7 +17,13 @@
         int? DefaultValidDays { get; }
     }
 
-    internal class OrderSettings : IOrderSettings
+    internal class InheritOrderSettings(params IEnumerable<OrderSettings?> chain) : InheritSettings<OrderSettings>(chain), IOrderSettings
+    {
+        public string? DefaultPlugin => Get(x => x.DefaultPlugin);
+        public int? DefaultValidDays => Get(x => x.DefaultValidDays);
+    }
+
+    internal class OrderSettings
     {
         public string? DefaultPlugin { get; set; }
         public int? DefaultValidDays { get; set; } = null;
