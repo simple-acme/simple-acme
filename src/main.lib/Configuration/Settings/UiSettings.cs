@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Configuration.Settings
         string? TextEncoding { get; }
     }
 
-    internal class InheritUiSettings(params IEnumerable<UiSettings> chain) : InheritSettings<UiSettings>(chain), IUiSettings
+    internal class InheritUiSettings(params IEnumerable<UiSettings?> chain) : InheritSettings<UiSettings>(chain), IUiSettings
     {
         public IColorSettings Color => new InheritColorSettings(Chain.Select(c => c?.Color));
         public string? DateFormat => Get(x => x.DateFormat);

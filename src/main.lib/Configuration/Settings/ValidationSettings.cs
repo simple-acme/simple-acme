@@ -93,7 +93,7 @@ namespace PKISharp.WACS.Configuration.Settings
         int PreValidateDnsRetryInterval { get; }
     }
 
-    internal class InheritValidationSettings(params IEnumerable<ValidationSettings> chain) : InheritSettings<ValidationSettings>(chain), IValidationSettings
+    internal class InheritValidationSettings(params IEnumerable<ValidationSettings?> chain) : InheritSettings<ValidationSettings>(chain), IValidationSettings
     {
         public bool AllowDnsSubstitution => Get(x => x.AllowDnsSubstitution) ?? true;
         public bool CleanupFolders => Get(x => x.CleanupFolders) ?? false;

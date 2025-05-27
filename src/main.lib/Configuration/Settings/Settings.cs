@@ -53,23 +53,23 @@ namespace PKISharp.WACS.Configuration.Settings
     /// </summary>
     internal class Settings
     {
-        public ClientSettings Client { get; set; } = new ClientSettings();
-        public UiSettings UI { get; set; } = new UiSettings();
-        public AcmeSettings Acme { get; set; } = new AcmeSettings();
-        public ExecutionSettings Execution { get; set; } = new ExecutionSettings();
-        public ProxySettings Proxy { get; set; } = new ProxySettings();
-        public CacheSettings Cache { get; set; } = new CacheSettings();
-        public ScheduledTaskSettings ScheduledTask { get; set; } = new ScheduledTaskSettings();
-        public NotificationSettings Notification { get; set; } = new NotificationSettings();
-        public SecuritySettings Security { get; set; } = new SecuritySettings();
-        public ScriptSettings Script { get; set; } = new ScriptSettings();
-        public SourceSettings Target { get; set; } = new SourceSettings();
-        public SourceSettings Source { get; set; } = new SourceSettings();
-        public ValidationSettings Validation { get; set; } = new ValidationSettings();
-        public OrderSettings Order { get; set; } = new OrderSettings();
-        public CsrSettings Csr { get; set; } = new CsrSettings();
-        public StoreSettings Store { get; set; } = new StoreSettings();
-        public InstallationSettings Installation { get; set; } = new InstallationSettings();
-        public SecretsSettings Secrets { get; set; } = new SecretsSettings();
+        public ClientSettings? Client { get; set; }
+        public UiSettings? UI { get; set; } 
+        public AcmeSettings? Acme { get; set; }
+        public ExecutionSettings? Execution { get; set; }
+        public ProxySettings? Proxy { get; set; }
+        public CacheSettings? Cache { get; set; }
+        public ScheduledTaskSettings? ScheduledTask { get; set; }
+        public NotificationSettings? Notification { get; set; }
+        public SecuritySettings? Security { get; set; }
+        public ScriptSettings? Script { get; set; } 
+        public SourceSettings? Target { get; set; }
+        public SourceSettings? Source { get; set; }
+        public ValidationSettings? Validation { get; set; }
+        public OrderSettings? Order { get; set; }
+        public CsrSettings? Csr { get; set; }
+        public StoreSettings? Store { get; set; }
+        public InstallationSettings? Installation { get; set; }
+        public SecretsSettings? Secrets { get; set; }
     }
 }

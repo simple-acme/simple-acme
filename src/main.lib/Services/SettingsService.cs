@@ -138,39 +138,46 @@ namespace PKISharp.WACS.Services
             var newSettings = JsonSerializer.Deserialize(fs, SettingsJson.Insensitive.Settings) ?? throw new Exception($"Unable to deserialize {useFile.FullName}");
 
             // Migrate old-style settings to new-style settings
-            newSettings.Source.DefaultSource ??= newSettings.Target.DefaultTarget;
-            if (newSettings.Store.DefaultPemFilesPath != null)
+            if (newSettings.Target?.DefaultTarget != null)
+            {
+                newSettings.Source ??= new SourceSettings();
+                newSettings.Source.DefaultSource ??= newSettings.Target.DefaultTarget;
+            }
+            if (newSettings.Store?.DefaultPemFilesPath != null)
             {
                 newSettings.Store.PemFiles ??= new PemFilesSettings();
                 newSettings.Store.PemFiles.DefaultPath ??= newSettings.Store.DefaultPemFilesPath;
             }
-            if (newSettings.Store.DefaultCentralSslStore != null)
+            if (newSettings.Store?.DefaultCentralSslStore != null)
             {
                 newSettings.Store.CentralSsl ??= new CentralSslSettings();
                 newSettings.Store.CentralSsl.DefaultPath ??= newSettings.Store.DefaultCentralSslStore;
             }
-            if (newSettings.Store.DefaultCentralSslPfxPassword != null)
+            if (newSettings.Store?.DefaultCentralSslPfxPassword != null)
             {
                 newSettings.Store.CentralSsl ??= new CentralSslSettings();
                 newSettings.Store.CentralSsl.DefaultPassword ??= newSettings.Store.DefaultCentralSslPfxPassword;
             }
-            if (newSettings.Store.DefaultCertificateStore != null)
+            if (newSettings.Store?.DefaultCertificateStore != null)
             {
                 newSettings.Store.CertificateStore ??= new CertificateStoreSettings();
                 newSettings.Store.CertificateStore.DefaultStore ??= newSettings.Store.DefaultCertificateStore;
             }
-            if (newSettings.Security.ECCurve != null)
+            if (newSettings.Security?.ECCurve != null)
             {
+                newSettings.Csr ??= new CsrSettings();
                 newSettings.Csr.Ec ??= new EcSettings();
                 newSettings.Csr.Ec.CurveName ??= newSettings.Security.ECCurve;
             }
-            if (newSettings.Security.PrivateKeyExportable != null)
+            if (newSettings.Security?.PrivateKeyExportable != null)
             {
+                newSettings.Store ??= new StoreSettings();
                 newSettings.Store.CertificateStore ??= new CertificateStoreSettings();
                 newSettings.Store.CertificateStore.PrivateKeyExportable ??= newSettings.Security.PrivateKeyExportable;
             }
-            if (newSettings.Security.RSAKeyBits != null)
+            if (newSettings.Security?.RSAKeyBits != null)
             {
+                newSettings.Csr ??= new CsrSettings();
                 newSettings.Csr.Rsa ??= new RsaSettings();
                 newSettings.Csr.Rsa.KeyBits ??= newSettings.Security.RSAKeyBits;
             }

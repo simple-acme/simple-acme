@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Configuration.Settings
         IPfxFileSettings PfxFile { get; }
     }
 
-    internal class InheritStoreSettings(params IEnumerable<StoreSettings> chain) : InheritSettings<StoreSettings>(chain), IStoreSettings
+    internal class InheritStoreSettings(params IEnumerable<StoreSettings?> chain) : InheritSettings<StoreSettings>(chain), IStoreSettings
     {
         public ICentralSslSettings CentralSsl => new InheritCentralSslSettings(Chain.Select(c => c?.CentralSsl));
         public ICertificateStoreSettings CertificateStore => new InheritCertificateStoreSettings(Chain.Select(c => c?.CertificateStore));

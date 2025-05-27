@@ -54,7 +54,7 @@ namespace PKISharp.WACS.Configuration.Settings
         int ReuseDays { get; }
     }
 
-    internal class InheritCacheSettings(ISettings root, params IEnumerable<CacheSettings> chain) : InheritSettings<CacheSettings>(chain), ICacheSettings
+    internal class InheritCacheSettings(ISettings root, params IEnumerable<CacheSettings?> chain) : InheritSettings<CacheSettings>(chain), ICacheSettings
     {
         public bool DeleteStaleFiles => Get(x => x.DeleteStaleFiles) ?? false;
         public int DeleteStaleFilesDays => Get(x => x.DeleteStaleFilesDays) ?? 120;

@@ -63,7 +63,7 @@ namespace PKISharp.WACS.Configuration.Settings
         bool ValidateServerCertificate { get; }
     }
 
-    internal class InheritAcmeSettings(params IEnumerable<AcmeSettings> chain) : InheritSettings<AcmeSettings>(chain), IAcmeSettings
+    internal class InheritAcmeSettings(params IEnumerable<AcmeSettings?> chain) : InheritSettings<AcmeSettings>(chain), IAcmeSettings
     {
         public Uri BaseUri => throw new NotImplementedException();
         public Uri? DefaultBaseUri => Get(x => x.DefaultBaseUri);

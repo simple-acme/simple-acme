@@ -16,7 +16,7 @@ namespace PKISharp.WACS.Configuration.Settings
         bool? VersionCheck { get; }
     }
 
-    internal class InheritClientSettings(ISettings root, params IEnumerable<ClientSettings> chain) : InheritSettings<ClientSettings>(chain), IClientSettings
+    internal class InheritClientSettings(ISettings root, params IEnumerable<ClientSettings?> chain) : InheritSettings<ClientSettings>(chain), IClientSettings
     {
         /// <summary>
         /// Determine which folder to use for configuration data
