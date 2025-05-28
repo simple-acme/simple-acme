@@ -31,7 +31,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class CsrSettings
     {
+        [SettingsValue(
+            Description = "Default CSR plugin.",
+            NullBehaviour = "equivalent to <code>\"rsa\"</code>")]
         public string? DefaultCsr { get; set; }
+
         public RsaSettings? Rsa { get; set; }
         public EcSettings? Ec { get; set; }
     }

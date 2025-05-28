@@ -17,6 +17,10 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class InstallationSettings
     {
+        [SettingsValue(
+            Description = "Default installation plugin(s).",
+            Tip = "This may be a comma separated value for multiple default installation plugins.",
+            NullBehaviour = "equivalent to <code>\"none\"</code> for most unattended usage (unless <code>‑‑source iis</code> is provided) and <code>\"iis\"</code> for interactive mode")]
         public string? DefaultInstallation { get; set; }
     }
 }

@@ -25,7 +25,15 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Csr
 
     internal class RsaSettings
     {
+        [SettingsValue(
+            Default = "3072",
+            Description = "The number of bits to use for RSA private keys, ultimately determining the strength of the encryption. Minimum is 2048.")]
         public int? KeyBits { get; set; }
+
+        [SettingsValue(
+            Default = "SHA512withRSA",
+            Warning = "Note that not all servers will support all types of signatures.",
+            Description = "Algorithm to use to sign CSR with RSA public key. Full list of possible options available <a href=\"https://github.com/bcgit/bc-csharp/blob/master/crypto/src/cms/CMSSignedGenerator.cs\">here</a>.")]
         public string? SignatureAlgorithm { get; set; }
     }
 }

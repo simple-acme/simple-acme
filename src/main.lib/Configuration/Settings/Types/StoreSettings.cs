@@ -45,7 +45,12 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class StoreSettings
     {
+        [SettingsValue(
+            Description = "Default store plugin(s)", 
+            Tip = "This may be a comma separated value for multiple default store plugins.",
+            NullBehaviour = "equivalent to <code>\"certificatestore\"</code> on Windows and <code>\"pemfiles\"</code> on other platforms")]
         public string? DefaultStore { get; set; }
+
         public CertificateStoreSettings? CertificateStore { get; set; }
         public CentralSslSettings? CentralSsl { get; set; }
         public PemFilesSettings? PemFiles { get; set; }

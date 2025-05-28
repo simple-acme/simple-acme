@@ -24,7 +24,15 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Csr
 
     internal class EcSettings
     {
+        [SettingsValue(
+            Default = "secp384r1",
+            Description = "The curve to use for EC certificates. This should be one of the curves supported by your ACME provider, e.g. secp256r1, secp384r1, or secp521r1.")]
         public string? CurveName { get; set; }
+
+        [SettingsValue(
+            Default = "SHA512withECDSA",
+            Warning = "Note that not all certificate providers support all types of signatures.",
+            Description = "Algorithm to use to sign CSR with EC public key. Full list of possible options available <a href=\"https://github.com/bcgit/bc-csharp/blob/master/crypto/src/cms/CMSSignedGenerator.cs\">here</a>.")]
         public string? SignatureAlgorithm { get; set; }
     }
 }

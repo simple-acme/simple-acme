@@ -25,7 +25,14 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class OrderSettings
     {
+        [SettingsValue(Description = "Default order plugin.", NullBehaviour = "equivalent to <code>\"single\"</code>")]
         public string? DefaultOrder { get; set; }
+
+        [SettingsValue(
+            Default = "null",
+            Description = "Number of days requested certificates should remain valid.",
+            Warning = "Note that not all servers support this property. Specifically Let's Encrypt " +
+            "throws an error when using this at the time of writing.")]
         public int? DefaultValidDays { get; set; } = null;
     }
 }

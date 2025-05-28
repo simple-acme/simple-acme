@@ -39,8 +39,28 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Store
 
     internal class CentralSslSettings
     {
+        [SettingsValue(
+            SubType = "path", 
+            Description = "When using the <a href=\"/reference/plugins/store/centralssl\">CentralSsl</a> plugin this path " +
+            "is used by default, saving you the effort of providing it manually. Filling this out makes the " +
+            "<code>‑‑centralsslstore</code> argument unnecessary in most cases. Renewals created with the " +
+            "default path will automatically change to any future default value, meaning this is also a good practice " +
+            "for maintainability.")]
         public string? DefaultPath { get; set; }
+
+        [SettingsValue(
+            SubType = "secret",
+            Description = "When using the <a href=\"/reference/plugins/store/centralssl\">CentralSsl</a> plugin this " +
+            "password is used by default for the <code>.pfx</code> files, saving you the effort of providing it manually. " +
+            "Filling this out makes the <code>‑‑pfxpassword</code> argument unnecessary in most cases. Renewals created" +
+            " with the default password will automatically change to any future default value, meaning this is also a" +
+            " good practice for maintainability.")]
         public string? DefaultPassword { get; set; }
+
+        [SettingsValue(
+            Default = "\"default\"",
+            SubType = "protectionmode",
+            Description = "Determines how the <code>.pfx</code> files will be encrypted.")]
         public string? DefaultProtectionMode { get; set; }
     }
 }

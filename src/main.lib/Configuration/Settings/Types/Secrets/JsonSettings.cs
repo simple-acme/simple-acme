@@ -17,6 +17,10 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Secrets
 
     internal class JsonSettings 
     {
+        [SettingsValue(
+            SubType = "path",
+            Description = "Location of the file store secrets.",
+            NullBehaviour = "defaults to <code>{Client.ConfigurationPath}\\secrets.json</code>")]
         public string? FilePath { get; set; }
     }
 }
