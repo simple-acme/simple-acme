@@ -7,6 +7,7 @@ using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Plugins.Resolvers;
 using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
@@ -105,7 +106,7 @@ namespace PKISharp.WACS.Host
                 // Specials
                 _ = builder.RegisterType<HttpValidationParameters>().InstancePerLifetimeScope();
                 _ = builder.Register(c => c.Resolve<ArgumentsParser>().GetArguments<MainArguments>()!);
-                _ = builder.Register(c => c.Resolve<SettingsService>().Settings).As<ISettings>();
+                _ = builder.Register(c => c.Resolve<SettingsService>().Current).As<ISettings>();
                 _ = builder.Register(c => c.Resolve<ArgumentsParser>().GetArguments<AccountArguments>()!);
                 _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
             });

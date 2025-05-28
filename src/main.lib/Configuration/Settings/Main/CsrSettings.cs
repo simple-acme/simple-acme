@@ -1,5 +1,4 @@
 ﻿using PKISharp.WACS.Configuration.Settings.Csr;
-using PKISharp.WACS.Configuration.Settings.UI;
 using System.Collections.Generic;
 using System.Linq;
 
