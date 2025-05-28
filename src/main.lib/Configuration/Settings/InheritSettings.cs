@@ -1,4 +1,5 @@
-﻿using PKISharp.WACS.Services;
+﻿using PKISharp.WACS.Configuration.Settings.Types;
+using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;

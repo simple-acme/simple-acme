@@ -1,5 +1,5 @@
 ﻿using ACMESharp;
-using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Configuration.Settings.Types;
 using PKISharp.WACS.Services;
 using Serilog;
 using Serilog.Core;

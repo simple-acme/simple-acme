@@ -1,5 +1,5 @@
 ﻿using PKISharp.WACS.Configuration.Arguments;
-using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Configuration.Settings.Types;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;

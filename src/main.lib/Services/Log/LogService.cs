@@ -1,6 +1,6 @@
 ﻿using ACMESharp;
 using Microsoft.Extensions.Configuration;
-using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Configuration.Settings.Types;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;

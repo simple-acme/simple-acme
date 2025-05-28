@@ -1,10 +1,8 @@
-﻿using PKISharp.WACS.Configuration.Settings.Csr;
-using PKISharp.WACS.Configuration.Settings.Store;
-using PKISharp.WACS.Services;
+﻿using PKISharp.WACS.Configuration.Settings.Types;
+using PKISharp.WACS.Configuration.Settings.Types.Csr;
+using PKISharp.WACS.Configuration.Settings.Types.Store;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

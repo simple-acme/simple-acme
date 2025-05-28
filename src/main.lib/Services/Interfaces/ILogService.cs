@@ -1,4 +1,4 @@
-﻿using PKISharp.WACS.Configuration.Settings;
+﻿using PKISharp.WACS.Configuration.Settings.Types;
 using System;
 using System.Collections.Generic;
 
