@@ -10,6 +10,8 @@ namespace PKISharp.WACS.Configuration.Settings
         public string? SubType { get; set; }
         public string? Name { get; set; }
         public string? Default { get; set; }
+        public string? Warning { get; set; }
+        public string? Tip { get; set; }
         public bool Hidden { get; set; } = false;
     }
 }

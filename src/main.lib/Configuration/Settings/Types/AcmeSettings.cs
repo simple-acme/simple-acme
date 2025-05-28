@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace PKISharp.WACS.Configuration.Settings.Types
 {
@@ -95,15 +96,58 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class AcmeSettings
     {
+        [SettingsValue(
+            Default = "https://acme-v02.api.letsencrypt.org/",
+            Description = "Default ACME endpoint to use when none is specified with the command line. The client will attempt to get the service directory from both the literal uri provided and the <code>/directory</code> path under it (which is the convention used by Let's Encrypt, and therefor done for backwards compatibility reasons).")]
         public Uri? DefaultBaseUri { get; set; }
+
+        [SettingsValue(
+            Default = "https://acme-staging-v02.api.letsencrypt.org/",
+            Description = "Default ACME endpoint to use when none is specified with the command line and the <code>‑‑test</code> switch is activated.")]
         public Uri? DefaultBaseUriTest { get; set; }
+        
+        [SettingsValue(
+           Default = "https://acme-v01.api.letsencrypt.org/",
+           Description = "Default ACMEv1 endpoint to import renewal settings from.")]
         public Uri? DefaultBaseUriImport { get; set; }
+
+        [SettingsValue(
+            Default = "true",
+            Description = "Use POST-as-GET mode as defined in <a href=\"https://datatracker.ietf.org/doc/html/rfc8555#section-6.3\">RFC8555 section 6.3</a>, as required by Let's Encrypt since November 2020.")]
         public bool? PostAsGet { get; set; }
+        
+        [SettingsValue(
+           Default = "true",
+           Description = "Set this to <code>false</code> to disable certificate validation of the ACME endpoint.",
+           Warning = "Note that setting this to <code>false</code> is a security risk, it's only intended to connect to internal/private ACME servers with self-signed certificates.")]
         public bool? ValidateServerCertificate { get; set; }
+
+        [SettingsValue(
+            Default = "15",
+            Description = "Maximum numbers of times to refresh validation and order status, while waiting for the ACME server to complete its tasks.")]
         public int? RetryCount { get; set; }
+        
+        [SettingsValue(
+            Default = "5",
+            Description = "Amount of time in seconds to wait for each retry.")]
         public int? RetryInterval { get; set; }
+
+        [SettingsValue(
+            Description = "In some exceptional cases an ACME service will offer multiple certificates signed by different root authorities. This setting can be used to give a preference. I.e. <code>\"ISRG Root X1\"</code> can be used to prefer Let's Encrypt self-signed chain over the backwards compatible <code>\"DST Root CA X3\"</code>.",
+            Warning = "Note that this only really works for Apache and other software that uses <code>.pem</code> files to store certificates. Windows has its own opinions about how chains should be built that are difficult to influence. For maximum compatibility with legacy clients we recommend using an alternative provider like <a href=\"https://zerossl.com\">ZeroSSL</a>.")]
         public string? PreferredIssuer { get; set; }
+
+        [SettingsValue(
+            Default = "100",
+            Description = "Maximum number of host names that can be included in a single certificate.",
+            Warning = "The client cannot override limits imposed by the server. Increase this value only if you're sure that your server supports it.")]
         public int? MaxDomains { get; set; }
+
+        [SettingsValue(
+            SubType = "uri",
+            Default = "https://publicsuffix.org/list/public_suffix_list.dat",
+            Description = "Link from where the current version of the public suffix list is downloaded. This may be set to <code>\"\"</code> (empty string) to stop the program from updating the list, or to a custom location to provide your own version.",
+            Warning = "Using an out-of-date or invalid list may cause errors, only change this if you know what you're doing!")]
         public string? PublicSuffixListUri { get; set; }
     }
 }

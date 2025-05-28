@@ -399,6 +399,7 @@ namespace PKISharp.WACS.Services
                     else if (type == typeof(Uri))
                     {
                         showType = "string";
+                        subType = "uri";
                     }
                     else if (type == typeof(List<string>))
                     {
@@ -434,6 +435,16 @@ namespace PKISharp.WACS.Services
                     {
                         x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
                         x.AppendLine($"description: {meta.Description}");
+                    }
+                    if (!string.IsNullOrWhiteSpace(meta?.Tip))
+                    {
+                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
+                        x.AppendLine($"tip: {meta.Tip}");
+                    }
+                    if (!string.IsNullOrWhiteSpace(meta?.Warning))
+                    {
+                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
+                        x.AppendLine($"warning: {meta.Warning}");
                     }
                 }
             }

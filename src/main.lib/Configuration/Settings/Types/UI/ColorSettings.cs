@@ -17,6 +17,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.UI
 
     internal class ColorSettings
     {
+        [SettingsValue(Description = "When set to <code>\"black\"</code>, the background color for the UI will be forced to black using VT100 escape sequences. This only works in modern terminals, i.e. nothing before Windows 2016 / Windows 10.")]
         public string? Background { get; set; }
     }
 }
