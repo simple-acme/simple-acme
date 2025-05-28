@@ -17,7 +17,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class SourceSettings
     {
+        [SettingsValue(
+            Description = "Default source plugin. This only affects the menu in the UI.",
+            NullBehaviour = "equivalent to <code>\"iis\"</code>, with <code>\"manual\"</code> as backup and unprivileged users or systems without IIS")]
         public string? DefaultSource { get; set; }
+
         [SettingsValue(Hidden = true)]
         public string? DefaultTarget { get; set; }
     }

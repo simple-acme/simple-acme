@@ -1,4 +1,5 @@
-﻿using PKISharp.WACS.Services;
+﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.IO;
 
@@ -74,10 +75,41 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class CacheSettings
     {
+        [SettingsValue(SubType = "path",
+            NullBehaviour = "defaults to <code>{Client.ConfigurationPath}\\Certificates</code>",
+            Description = "The path where certificates, request files and private keys are cached. If you are using <a href=\"/reference/plugins/store/centralssl\">CentralSsl</a>, this can not be set to the same path.")]
         public string? Path { get; set; }
+
+        [SettingsValue(
+            Default = "1",
+            Description = "When renewing or re-creating a previously requested certificate that " +
+            "has the exact same set of domain names, the program will used a cached version for " +
+            "this many days, to prevent users from running into " +
+            "<a href=\"https://letsencrypt.org/docs/rate-limits/\">rate limits</a> while experimenting. " +
+            "Set this to a high value if you regularly re-request the same certificates, e.g. for a " +
+            "Continuous Deployment scenario. " +
+            "\n" +
+            "Setting this to <code>0</code> will not entirely disable the cache (the program also " +
+            "needs the files for different reasons), but it will prevent the files from " +
+            "being used for renewals and will also ensure that no private key material " +
+            "is stored in the cache, unless specifically requested by <code>‑‑reuse-privatekey</code>.")]
         public int? ReuseDays { get; set; }
+
+        [SettingsValue(Default = "'false'",
+            Description = "Automatically delete files older than <code>DeleteStaleFileDays</code> " +
+            "many days from the folder <code>{Cache.Path}</code>. Running with default settings, " +
+            "these should only be long-expired certificates, generated for abandoned renewals.")]
         public bool? DeleteStaleFiles { get; set; }
+
+        [SettingsValue(Default = "120",
+            Description = "This value should be increased if you are working with long-lived " +
+            "certificates and enable <code>DeleteStaleFiles</code>.")]
         public int? DeleteStaleFilesDays { get; set; }
+
+        [SettingsValue(
+            Default = "\"default\"",
+            SubType = "protectionmode",
+            Description = "Determines how the <code>.pfx</code> files in the cache are encrypted.")]
         public string? ProtectionMode { get; set; }
     }
 }

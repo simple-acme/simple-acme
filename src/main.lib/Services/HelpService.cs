@@ -426,6 +426,11 @@ namespace PKISharp.WACS.Services
                         x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
                         x.AppendLine($"default: {meta.Default}");
                     }
+                    if (!string.IsNullOrWhiteSpace(meta?.DefaultExtra))
+                    {
+                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
+                        x.AppendLine($"defaultExtra: {meta.DefaultExtra}");
+                    }
                     if (!string.IsNullOrWhiteSpace(meta?.NullBehaviour))
                     {
                         x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
@@ -434,7 +439,22 @@ namespace PKISharp.WACS.Services
                     if (!string.IsNullOrWhiteSpace(meta?.Description))
                     {
                         x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
-                        x.AppendLine($"description: {meta.Description}");
+                        x.Append($"description:");
+                        var parts = meta.Description.Split('\n');
+                        if (parts.Length == 1)
+                        {
+                            x.AppendLine($" {meta.Description}");
+                        }
+                        else
+                        {
+                            x.AppendLine();
+                            foreach (var line in meta.Description.Split('\n'))
+                            {
+                                x.AppendJoin("", Enumerable.Repeat("  ", level + 2));
+                                x.AppendLine(line);
+                                x.AppendLine();
+                            }
+                        }   
                     }
                     if (!string.IsNullOrWhiteSpace(meta?.Tip))
                     {

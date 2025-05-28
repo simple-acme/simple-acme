@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
+using System.Runtime.InteropServices;
 
 namespace PKISharp.WACS.Configuration.Settings.Types
 {
@@ -84,12 +86,53 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class ScheduledTaskSettings
     {
+        [SettingsValue(
+            Default = "55", 
+            Description = "The number of days to renew a certificate after. Let's Encrypt certificates are currently for a max of 90 days so it is advised to not increase the days much.",
+            Warning = "If you increase the days, please note that you will have less time to fix any issues if the certificate doesn't renew correctly.")]
         public int? RenewalDays { get; set; }
+
+        [SettingsValue(
+            Default = "0",
+            Description = "To spread service load, program run time and/or to minimize downtime, those managing a " +
+            "large amount of renewals may want to spread them out of the course of multiple days/weeks. The " +
+            "number of days specified here will be substracted from <code>RenewalDays</code> to create a range within " +
+            "which the renewal will e processed. E.g. if <code>RenewalDays</code> is <code>55</code> and " +
+            "<code>RenewalDaysRange</code> is <code>10</code>, the renewal will be processed between <code>45</code> " +
+            "and <code>55</code> days after issuing. " +
+            "\n" +
+            "If you use an order plugin to split your renewal into multiple " +
+            "orders, orders may run on different days.")]
         public int? RenewalDaysRange { get; set; }
+
+        [SettingsValue(
+            Default = "'false'",
+            Description = "By default, servers implementing ARI may suggest that renewals should happen earlier than the " +
+            "regularly scheduled moment. When set to <code>true</code>, ARI suggestions will be ignored (not recommended).")]
         public bool? RenewalDisableServerSchedule { get; set; }
+
+        [SettingsValue(
+            Default = "7",
+            Description = "The minimum number of days a certificate should still be valid. If the certificate is valid " +
+            "for a smaller number of days, it will be renewed regardless of the<code>RenewalDays</code> setting.")]
         public int? RenewalMinimumValidDays { get; set; }
+
+        [SettingsValue(
+            Default = "'09:00:00'",
+            DefaultExtra = "9:00 am",
+            Description = "Configures start time for the scheduled task.")]
         public TimeSpan? StartBoundary { get; set; }
+
+        [SettingsValue(
+            Default = "'02:00:00'",
+            DefaultExtra = "2 hours",
+            Description = "Configures time after which the scheduled task will be terminated if it hangs for whatever reason.")]
         public TimeSpan? ExecutionTimeLimit { get; set; }
+
+        [SettingsValue(
+            Default = "'04:00:00'",
+            DefaultExtra = "4 hours",
+            Description = "Configures random time to wait for starting the scheduled task. This spreads the load on the servers and thus prevents users from getting <code>TooManyRequests</code> errors.")]
         public TimeSpan? RandomDelay { get; set; }
     }
 }

@@ -19,7 +19,15 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class ScriptSettings
     {
+        [SettingsValue(
+            Default = "600",
+            Description = "Time in seconds to allow installation, executing and validation scripts to run before terminating them forcefully.")]
         public int? Timeout { get; set; }
+
+        [SettingsValue(
+            Default = "\"powershell.exe\"",
+            SubType = "path",
+            Description = "Customize this value to use a different version of Powershell to execute <code>.ps1</code> scripts. E.g. <code>C:\\\\Program Files\\\\PowerShell\\\\6.0.0\\\\pwsh.exe</code> for Powershell Core 6.")]
         public string? PowershellExecutablePath { get; set; }
     }
 }

@@ -112,18 +112,82 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class ValidationSettings
     {
+        [SettingsValue(
+            Description = "Default validation plugin.",
+            NullBehaviour = "equivalent to <code>\"selfhosting\"</code>, with <code>\"filesystem\"</code> as backup for unprivileged users.")]
         public string? DefaultValidation { get; set; }
+
+        [SettingsValue(
+            Description = "Default validation method.",
+            NullBehaviour = "equivalent to <code>\"http-01\"</code>")]
         public string? DefaultValidationMode { get; set; }
+
+        [SettingsValue(
+            Default = "true",
+            Description = "Disable multithreading features for validation. Inceases runtime but may help to fix bugs caused by race conditions.")]
         public bool? DisableMultiThreading { get; set; }
+        
+        [SettingsValue(
+            Default = "100",
+            Description = "Maximum number of validations to run simultaneously. We recommend limiting this to about <code>20</code> to prevent issues like overrunning the maximum size of a DNS response. The default is set to <code>100</code> for backwards compatibility reasons.")]
         public int? ParallelBatchSize { get; set; }
+        
+        [SettingsValue(
+            Default = "true",
+            Description = "If set to <code>true</code>, the program will automatically delete file it created after HTTP validation is complete. It will also cleanup the <code>./well-known/acme-challenge</code> folder, if (and only if) there are no other files present.")]
         public bool? CleanupFolders { get; set; }
-        public bool? PreValidateDns { get; set; } = true;
+
+        [SettingsValue(
+            Default = "true",
+            Description = "If set to <code>true</code>, it will wait until it can verify that the validation record has been created and is available before beginning DNS validation.")]
+        public bool? PreValidateDns { get; set; }
+
+        [SettingsValue(
+            Default = "5",
+            Description = "Maximum numbers of times to retry DNS pre-validation, while waiting for the name servers to start providing the expected answer.")]
         public int? PreValidateDnsRetryCount { get; set; }
+
+        [SettingsValue(
+            Default = "30",
+            Description = "AAmount of time in seconds to wait between each retry.")]
         public int? PreValidateDnsRetryInterval { get; set; }
+
+        [SettingsValue(
+            Default = "'false'",
+            Description = "Normally the program will verify the existence of the TXT record by querying the authoritative DNS servers for the record. Changing this to <code>true</code> will also wait until at least one of the configured <code>DnsServers</code> see the correct value, making the process potentially slower but more robust.")]
         public bool? PreValidateDnsLocal { get; set; }
+
+        [SettingsValue(
+            Default = "30",
+            Description = "Amount of time in seconds to wait for DNS propagation to complete *after* (optional) PreValidation step has been run. This is required for certain providers to synchronise their world-wide servers, even after the geographically closest ones to simple-acme have already started reflecting the desired records.")]
         public int? DnsPropagationDelay { get; set; }
+
+        [SettingsValue(
+            Default = "true",
+            Description = "If your goal is to get a certificate for <code>example.com</code> using DNS validation, " +
+            "but the DNS service for that domain does not support automation, there is no plugin available for it " +
+            "and/or your security policy doesn't allow third party tools like simple-acme to access the DNS " +
+            "configuration, then you can set up a <code>CNAME</code> from <code>_acme-challenge.example.com</code> " +
+            "to another (sub)domain under your control that doesn't have these limitations. " +
+            "\n" +
+            "<a href=\"/reference/plugins/validation/dns/acme-dns\">acme-dns</a> is based on this principle, " +
+            "but the same trick can be applied to any of the <a href=\"/reference/plugins/validation/dns/\">DNS plugins</a>. " +
+            "Set this value to <code>false</code> to disable the feature.",
+            Warning = "Note that for the program to understand your DNS setup, the <code>CNAME</code> record will " +
+            "have to visible to it. If you have a complicated DNS setup with an internal-facing \"split brain\" that " +
+            "is lacking the relevant records, you can let simple-acme use a public DNS server like <code>1.1.1.1</code> " +
+            "instead of your system server using the <code>DnsServers</code> setting.")]
         public bool? AllowDnsSubstitution { get; set; }
+
+        [SettingsValue(
+            SubType = "host",
+            Default = "\"[ \\\"[System]\\\" ]\"",
+            Description = "A list of servers to query during DNS prevalidation checksto verify whether or not the " +
+            "validation record has been properly created and is visible for the world. These servers will be used to" +
+            "locate the actual authoritative name servers for the domain. You can use the string <code>\"[System]\"</code> " +
+            "to have the program query the default name servers on your machine.")]
         public List<string>? DnsServers { get; set; }
+
         public FtpSettings? Ftp { get; set; }
     }
 }

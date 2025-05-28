@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 namespace PKISharp.WACS.Configuration.Settings.Types
 {
@@ -95,16 +96,72 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class NotificationSettings
     {
+        [SettingsValue(
+            SubType = "host", 
+            Description = "SMTP server to use for sending email notifications. Required to receive renewal failure notifications.")]
         public string? SmtpServer { get; set; }
+
+        [SettingsValue(
+            Default = "25",
+            Description = "SMTP server port number.")]
         public int? SmtpPort { get; set; }
+
+        [SettingsValue(
+            Description = "User name for the SMTP server, in case of authenticated SMTP.")]
         public string? SmtpUser { get; set; }
+
+        [SettingsValue(
+            SubType = "secret",
+            Description = "Password for the SMTP server, in case of authenticated SMTP.")]
         public string? SmtpPassword { get; set; }
+
+        [SettingsValue(
+            Default = "'false'",
+            Description = "Change to <code>true</code> to enable secure SMTP.")]
         public bool? SmtpSecure { get; set; }
+
+        [SettingsValue(
+            Default = "1",
+            Description = "Control the way the connection with the mail server is established. " +
+            "Only change this if you run into connection issues." +
+            "<div class=\"callout-block callout-block-success mt-3\">" +
+            "<div class=\"content\">" +
+            "<table class=\"table table-bordered\">" +
+            "<tr><th class=\"col-md-3\">Value</th><th>Meaning</th></tr>" +
+            "<tr><td>1</td><td>Automatic (based on port number)</td></tr>" +
+            "<tr><td>2</td><td>Implicit TLS</td></tr>" +
+            "<tr><td>3</td><td>Explicit TLS (required)</td></tr>" +
+            "<tr><td>4</td><td>Explicit TLS (when available)</td></tr>" +
+            "</table></div></div>")]
         public int? SmtpSecureMode { get; set; }
+
+        [SettingsValue(
+            Description = "Display name to use as the sender of notification emails.", 
+            NullBehaviour = "equivalent to <code>{Client.ClientName}</code>")]
         public string? SenderName { get; set; }
+
+        [SettingsValue(
+            Description = "Email address to use as the sender of notification emails. Required to receive renewal notifications.",
+            SubType = "email")]
         public string? SenderAddress { get; set; }
+
+        [SettingsValue(
+            Description = "Email address to use as the sender of notification emails. " +
+            "Required to receive renewal failure notifications. The correct format for the receiver is " +
+            "<code>[\"example@example.com\"]</code> for a single address and " +
+            "<code>[\"example1@example.com\", \"example2@example.com\"]</code> for multiple addresses.",
+            SubType = "email")]
         public List<string>? ReceiverAddresses { get; set; }
+
+        [SettingsValue(
+            Default = "'false'",
+            Description = "Send an email notification when a certificate has been successfully created or " +
+            "renewed, as opposed to the default behavior that only send failure notifications. Only works " +
+            "if at least <code>SmtpServer</code>, <code>SmtpSenderAddress</code> and<code>SmtpReceiverAddress</code> " +
+            "have been configured.")]
         public bool? EmailOnSuccess { get; set; }
+
+        [SettingsValue(Description = "This value replaces the computer machine name reported in emails.")]
         public string? ComputerName { get; set; }
     }
 }
