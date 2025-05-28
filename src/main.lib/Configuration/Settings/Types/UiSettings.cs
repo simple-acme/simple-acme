@@ -39,8 +39,8 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class UiSettings
     {
-        public int? PageSize { get; set; }
         public string? DateFormat { get; set; }
+        public int? PageSize { get; set; }
         public string? TextEncoding { get; set; }
         public ColorSettings? Color { get; set; }
     }

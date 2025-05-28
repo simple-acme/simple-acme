@@ -1,16 +1,23 @@
-﻿using PKISharp.WACS.Configuration;
+﻿using Autofac;
+using PKISharp.WACS.Configuration;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Plugins;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PKISharp.WACS.Services
 {
-    internal partial class HelpService(ILogService log, IPluginService plugins, ISettings settings, ArgumentsParser parser)
+    internal partial class HelpService(
+        ILogService log,
+        IPluginService plugins,
+        ISettings settings, 
+        ArgumentsParser parser)
     {
         /// <summary>
         /// Map arguments to plugins
@@ -301,7 +308,7 @@ namespace PKISharp.WACS.Services
         }
 
         /// <summary>
-        /// Generate plugins YAML for documentation website
+        /// Generate plugins.yml for documentation website
         /// </summary>
         internal void GeneratePluginsYaml()
         {
@@ -338,6 +345,98 @@ namespace PKISharp.WACS.Services
             }
             File.WriteAllText("plugins.yml", x.ToString());
             log.Debug("YAML written to {0}", new FileInfo("plugins.yml").FullName);
+        }
+
+        /// <summary>
+        /// Generate settings.yml for documentation website
+        /// </summary>
+        internal void GenerateSettingsYaml()
+        {
+            var x = new StringBuilder();
+            GenerateSettingsYamlForType(typeof(Settings), 0, x);
+            File.WriteAllText("settings.yml", x.ToString());
+            log.Debug("YAML written to {0}", new FileInfo("settings.yml").FullName);
+        }
+
+        internal void GenerateSettingsYamlForType(Type t, int level, StringBuilder x)
+        {
+            foreach (var member in t.GetMembers(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance).OfType<PropertyInfo>())
+            {
+                var meta = member.GetCustomAttribute<SettingsValueAttribute>();
+                if (meta?.Hidden ?? false)
+                {
+                    continue;
+                }
+                x.AppendJoin("", Enumerable.Repeat("  ", level));
+                x.Append($"{member.Name}:");
+                x.AppendLine();
+                if (member.PropertyType.IsInNamespace("PKISharp"))
+                {
+                    GenerateSettingsYamlForType(member.PropertyType, level + 1, x);
+                    x.AppendLine();
+                } 
+                else
+                {
+                    var type = member.PropertyType;
+                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        type = type.GetGenericArguments().First();
+                    }
+                    var showType = "";
+                    var subType = meta?.SubType;
+                    if (type == typeof(string))
+                    {
+                        showType = "string";
+                    }
+                    else if (type == typeof(bool))
+                    {
+                        showType = "boolean";
+                    }
+                    else if (type == typeof(int))
+                    {
+                        showType = "number";
+                    }
+                    else if (type == typeof(Uri))
+                    {
+                        showType = "string";
+                    }
+                    else if (type == typeof(List<string>))
+                    {
+                        showType = "string[]";
+                    }
+                    else if (type == typeof(TimeSpan))
+                    {
+                        showType = "string";
+                        subType = "time";
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                    x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
+                    x.AppendLine($"type: {showType}");
+                    if (!string.IsNullOrWhiteSpace(subType))
+                    {
+                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
+                        x.AppendLine($"subtype: {subType}");
+                    }
+                    if (!string.IsNullOrWhiteSpace(meta?.Default))
+                    {
+                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
+                        x.AppendLine($"default: {meta.Default}");
+                    }
+                    if (!string.IsNullOrWhiteSpace(meta?.NullBehaviour))
+                    {
+                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
+                        x.AppendLine($"nullBehaviour: {meta.NullBehaviour}");
+                    }
+                    if (!string.IsNullOrWhiteSpace(meta?.Description))
+                    {
+                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
+                        x.AppendLine($"description: {meta.Description}");
+                    }
+                }
+            }
         }
 
         /// <summary>

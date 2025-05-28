@@ -52,12 +52,13 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public PfxFileSettings? PfxFile { get; set; }
         public P7bFileSettings? P7bFile { get; set; }
 
-        /// <summary>
-        /// Legacy options converted to their modern equivalents at load time
-        /// </summary>
+        [SettingsValue(Hidden = true)]
         public string? DefaultCertificateStore { get; set; }
+        [SettingsValue(Hidden = true)]
         public string? DefaultCentralSslStore { get; set; }
+        [SettingsValue(Hidden = true)]
         public string? DefaultCentralSslPfxPassword { get; set; }
+        [SettingsValue(Hidden = true)]
         public string? DefaultPemFilesPath { get; set; }
     }
 }

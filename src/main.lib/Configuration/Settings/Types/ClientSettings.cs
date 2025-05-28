@@ -77,9 +77,30 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class ClientSettings
     {
+        [SettingsValue(
+            Default = "\"simple-acme\"", 
+            Description = "The name of the client, which comes back in several places like the " +
+            "scheduled task name, Windows event viewer, notification messages, user agent and " +
+            "the <code>ConfigurationPath</code>.")]
         public string? ClientName { get; set; }
+        
+        [SettingsValue(
+            Default = "null",
+            SubType = "path",
+            NullBehaviour = "resolves to <code>%programdata%\\{Client.ClientName}\\{ACME.DefaultBaseUri}</code>",
+            Description = "Change the location where the program stores its (temporary) files.")]
         public string? ConfigurationPath { get; set; }
+
+        [SettingsValue(
+            Default = "null",
+            SubType = "path",
+            NullBehaviour = "resolves to <code>{Client.ConfigurationPath}\\Log</code>",
+            Description = "The path where log files for the past 31 days are stored.")]
         public string? LogPath { get; set; }
+
+        [SettingsValue(
+            Default = "\"false\"",
+            Description = "Automatically check for new versions at startup.")]
         public bool? VersionCheck { get; set; }
     }
 }

@@ -8,7 +8,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         /// Default plugin to select when none is provided through the 
         /// command line
         /// </summary>
-        string? DefaultPlugin { get; }
+        string? DefaultOrder { get; }
 
         /// <summary>
         /// Amount of time (in days) that ordered 
@@ -19,13 +19,13 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class InheritOrderSettings(params IEnumerable<OrderSettings?> chain) : InheritSettings<OrderSettings>(chain), IOrderSettings
     {
-        public string? DefaultPlugin => Get(x => x.DefaultPlugin);
+        public string? DefaultOrder => Get(x => x.DefaultOrder);
         public int? DefaultValidDays => Get(x => x.DefaultValidDays);
     }
 
     internal class OrderSettings
     {
-        public string? DefaultPlugin { get; set; }
+        public string? DefaultOrder { get; set; }
         public int? DefaultValidDays { get; set; } = null;
     }
 }

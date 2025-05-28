@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace PKISharp.WACS.Configuration.Settings.Types
 {
@@ -27,14 +28,14 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class SecuritySettings
     {
-        public bool? PrivateKeyExportable { get; set; }
+        public bool? EncryptConfig { get; set; }
         public bool? FriendlyNameDateTimeStamp { get; set; }
 
-        /// <summary>
-        /// Legacy options converted to their modern equivalents at load time
-        /// </summary>
+        [SettingsValue(Hidden = true)]
+        public bool? PrivateKeyExportable { get; set; }
+        [SettingsValue(Hidden = true)]
         public int? RSAKeyBits { get; set; }
+        [SettingsValue(Hidden = true)]
         public string? ECCurve { get; set; }
-        public bool? EncryptConfig { get; set; }
     }
 }

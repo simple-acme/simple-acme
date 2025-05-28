@@ -18,10 +18,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     internal class SourceSettings
     {
         public string? DefaultSource { get; set; }
-
-        /// <summary>
-        /// Legacy options converted to their modern equivalents at load time
-        /// </summary>
+        [SettingsValue(Hidden = true)]
         public string? DefaultTarget { get; set; }
     }
 }

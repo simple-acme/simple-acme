@@ -85,11 +85,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     internal class ScheduledTaskSettings
     {
         public int? RenewalDays { get; set; }
-        public int? RenewalMinimumValidDays { get; set; }
         public int? RenewalDaysRange { get; set; }
         public bool? RenewalDisableServerSchedule { get; set; }
-        public TimeSpan? RandomDelay { get; set; }
+        public int? RenewalMinimumValidDays { get; set; }
         public TimeSpan? StartBoundary { get; set; }
         public TimeSpan? ExecutionTimeLimit { get; set; }
+        public TimeSpan? RandomDelay { get; set; }
     }
 }

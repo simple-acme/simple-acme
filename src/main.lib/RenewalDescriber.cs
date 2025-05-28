@@ -85,7 +85,7 @@ namespace PKISharp.WACS
             if (renewal.OrderPluginOptions != null)
             {
                 var orderName = plugin.GetPlugin(renewal.OrderPluginOptions).Trigger.ToLower();
-                if (!string.Equals(orderName, settings.Order.DefaultPlugin ?? "single", StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(orderName, settings.Order.DefaultOrder ?? "single", StringComparison.OrdinalIgnoreCase))
                 {
                     args.Add("order", orderName);
                 }

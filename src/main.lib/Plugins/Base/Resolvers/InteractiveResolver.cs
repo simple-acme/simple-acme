@@ -241,7 +241,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IPluginCapability, OrderPluginOptions>(
                    Steps.Order,
-                   defaultParam1: settings.Order.DefaultPlugin,
+                   defaultParam1: settings.Order.DefaultOrder,
                    defaultBackends: [typeof(Single)],
                    shortDescription: "Would you like to split this source into multiple certificates?",
                    longDescription: $"By default your source identifiers are covered by a single certificate. " +
