@@ -1,5 +1,4 @@
-﻿using PKISharp.WACS.DomainObjects;
-using PKISharp.WACS.Services;
+﻿using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.IO;
 
@@ -95,7 +94,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             "is stored in the cache, unless specifically requested by <code>‑‑reuse-privatekey</code>.")]
         public int? ReuseDays { get; set; }
 
-        [SettingsValue(Default = "'false'",
+        [SettingsValue(Default = "false",
             Description = "Automatically delete files older than <code>DeleteStaleFileDays</code> " +
             "many days from the folder <code>{Cache.Path}</code>. Running with default settings, " +
             "these should only be long-expired certificates, generated for abandoned renewals.")]
@@ -107,7 +106,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int? DeleteStaleFilesDays { get; set; }
 
         [SettingsValue(
-            Default = "\"default\"",
+            Default = "default",
             SubType = "protectionmode",
             Description = "Determines how the <code>.pfx</code> files in the cache are encrypted.")]
         public string? ProtectionMode { get; set; }

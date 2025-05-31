@@ -352,9 +352,9 @@ namespace PKISharp.WACS.Services
         /// </summary>
         internal void GenerateSettingsYaml()
         {
-            var x = new StringBuilder();
-            GenerateSettingsYamlForType(typeof(Settings), 0, x);
-            File.WriteAllText("settings.yml", x.ToString());
+            var metaBuilder = new StringBuilder();
+            GenerateSettingsYamlForType(typeof(Settings), 0, metaBuilder);
+            File.WriteAllText("settings.yml", metaBuilder.ToString());
             log.Debug("YAML written to {0}", new FileInfo("settings.yml").FullName);
         }
 
@@ -368,12 +368,10 @@ namespace PKISharp.WACS.Services
                     continue;
                 }
                 x.AppendJoin("", Enumerable.Repeat("  ", level));
-                x.Append($"{member.Name}:");
-                x.AppendLine();
+                x.AppendLine($"{member.Name}:");
                 if (member.PropertyType.IsInNamespace("PKISharp"))
                 {
                     GenerateSettingsYamlForType(member.PropertyType, level + 1, x);
-                    x.AppendLine();
                 } 
                 else
                 {
@@ -415,57 +413,123 @@ namespace PKISharp.WACS.Services
                         throw new NotImplementedException();
                     }
                     x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
-                    x.AppendLine($"type: {showType}");
+                    x.AppendLine($"type: \"{showType}\"");
                     if (!string.IsNullOrWhiteSpace(subType))
                     {
                         x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
-                        x.AppendLine($"subtype: {subType}");
+                        x.AppendLine($"subtype: \"{subType}\"");
                     }
                     if (!string.IsNullOrWhiteSpace(meta?.Default))
                     {
                         x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
-                        x.AppendLine($"default: {meta.Default}");
+                        x.AppendLine($"default: \"{EscapeYaml(meta.Default)}\"");
                     }
                     if (!string.IsNullOrWhiteSpace(meta?.DefaultExtra))
                     {
                         x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
-                        x.AppendLine($"defaultExtra: {meta.DefaultExtra}");
+                        x.AppendLine($"defaultExtra: \"{EscapeYaml(meta.DefaultExtra)}\"");
                     }
                     if (!string.IsNullOrWhiteSpace(meta?.NullBehaviour))
                     {
-                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
-                        x.AppendLine($"nullBehaviour: {meta.NullBehaviour}");
+                        RenderMultiline(level, x, "nullBehaviour", meta.NullBehaviour);
                     }
                     if (!string.IsNullOrWhiteSpace(meta?.Description))
                     {
-                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
-                        x.Append($"description:");
-                        var parts = meta.Description.Split('\n');
-                        if (parts.Length == 1)
-                        {
-                            x.AppendLine($" {meta.Description}");
-                        }
-                        else
-                        {
-                            x.AppendLine();
-                            foreach (var line in meta.Description.Split('\n'))
-                            {
-                                x.AppendJoin("", Enumerable.Repeat("  ", level + 2));
-                                x.AppendLine(line);
-                                x.AppendLine();
-                            }
-                        }   
+                        RenderMultiline(level, x, "description", meta.Description);
                     }
                     if (!string.IsNullOrWhiteSpace(meta?.Tip))
                     {
-                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
-                        x.AppendLine($"tip: {meta.Tip}");
+                        RenderMultiline(level, x, "tip", meta.Tip);
                     }
                     if (!string.IsNullOrWhiteSpace(meta?.Warning))
                     {
-                        x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
-                        x.AppendLine($"warning: {meta.Warning}");
+                        RenderMultiline(level, x, "warning", meta.Warning);
                     }
+                    x.AppendLine();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Render a multiline string in YAML format
+        /// </summary>
+        /// <param name="level"></param>
+        /// <param name="x"></param>
+        /// <param name="label"></param>
+        /// <param name="input"></param>
+        private static void RenderMultiline(int level, StringBuilder x, string label, string input)
+        {
+            x.AppendJoin("", Enumerable.Repeat("  ", level + 1));
+            x.Append($"{label}:");
+            var parts = input.Split('\n').ToList();
+            x.AppendLine();
+            x.AppendJoin("", Enumerable.Repeat("  ", level + 2));
+            x.Append($"\"{EscapeYaml(parts[0])}");
+            if (parts.Count == 1)
+            {
+                x.AppendLine("\"");
+            }
+            else
+            {
+                x.AppendLine();
+                x.AppendLine();
+                foreach (var line in parts.Skip(1))
+                {
+                    x.AppendJoin("", Enumerable.Repeat("  ", level + 2));
+                    x.Append(EscapeYaml(line));
+                    if (parts.IndexOf(line) == parts.Count - 1)
+                    {
+                        x.AppendLine("\"");
+                        x.AppendLine();
+                    }
+                    else
+                    {
+                        x.AppendLine();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Generate settings.yml for documentation website
+        /// </summary>
+        internal void GenerateSettingsYaml2()
+        {
+            var metaBuilder = new StringBuilder();
+            foreach (var member in typeof(Settings).GetMembers(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance).OfType<PropertyInfo>())
+            {
+                var meta = member.GetCustomAttribute<SettingsValueAttribute>();
+                if (meta?.Hidden ?? false)
+                {
+                    continue;
+                }
+                metaBuilder.AppendLine($"{member.Name.ToLower()}:");
+                GenerateSettingsYamlForType2(member.PropertyType, member.Name, metaBuilder);
+            }
+            File.WriteAllText("settings2.yml", metaBuilder.ToString());
+            log.Debug("YAML written to {0}", new FileInfo("settings2.yml").FullName);
+        }
+
+        internal void GenerateSettingsYamlForType2(Type t, string prefix, StringBuilder x)
+        {
+            foreach (var member in t.GetMembers(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance).OfType<PropertyInfo>())
+            {
+                var meta = member.GetCustomAttribute<SettingsValueAttribute>();
+                if (meta?.Hidden ?? false)
+                {
+                    continue;
+                }
+                if (member.PropertyType.IsInNamespace("PKISharp"))
+                {
+                    if (meta?.Split == true)
+                    {
+                        x.AppendLine($"{member.Name.ToLower()}:");
+                    }
+                    GenerateSettingsYamlForType2(member.PropertyType, $"{prefix}.{member.Name}", x);
+                } 
+                else
+                {
+                    x.AppendLine($"  - {prefix}.{member.Name}");
                 }
             }
         }
@@ -494,6 +558,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         internal static string EscapeYaml(string input)
         {
+            input = input.Replace("\\", "\\\\"); // Escape backslash
             input = input.Replace("\"", "\\\""); // Escape quote
             input = input.Replace("--", "‑‑"); // Regular hyphen to non-breaking
             input = BacktickRegex().Replace(input, "<code>$1</code>");

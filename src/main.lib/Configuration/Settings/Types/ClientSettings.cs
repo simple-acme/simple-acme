@@ -78,7 +78,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     internal class ClientSettings
     {
         [SettingsValue(
-            Default = "\"simple-acme\"", 
+            Default = "simple-acme", 
             Description = "The name of the client, which comes back in several places like the " +
             "scheduled task name, Windows event viewer, notification messages, user agent and " +
             "the <code>ConfigurationPath</code>.")]
@@ -99,7 +99,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? LogPath { get; set; }
 
         [SettingsValue(
-            Default = "\"false\"",
+            Default = "false",
             Description = "Automatically check for new versions at startup.")]
         public bool? VersionCheck { get; set; }
     }

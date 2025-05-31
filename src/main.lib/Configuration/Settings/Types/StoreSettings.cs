@@ -51,10 +51,19 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             NullBehaviour = "equivalent to <code>\"certificatestore\"</code> on Windows and <code>\"pemfiles\"</code> on other platforms")]
         public string? DefaultStore { get; set; }
 
+        [SettingsValue(Split = true)]
         public CertificateStoreSettings? CertificateStore { get; set; }
+
+        [SettingsValue(Split = true)]
         public CentralSslSettings? CentralSsl { get; set; }
+
+        [SettingsValue(Split = true)]
         public PemFilesSettings? PemFiles { get; set; }
+
+        [SettingsValue(Split = true)]
         public PfxFileSettings? PfxFile { get; set; }
+
+        [SettingsValue(Split = true)]
         public P7bFileSettings? P7bFile { get; set; }
 
         [SettingsValue(Hidden = true)]

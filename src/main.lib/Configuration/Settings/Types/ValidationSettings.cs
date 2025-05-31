@@ -153,7 +153,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int? PreValidateDnsRetryInterval { get; set; }
 
         [SettingsValue(
-            Default = "'false'",
+            Default = "false",
             Description = "Normally the program will verify the existence of the TXT record by querying the authoritative DNS servers for the record. Changing this to <code>true</code> will also wait until at least one of the configured <code>DnsServers</code> see the correct value, making the process potentially slower but more robust.")]
         public bool? PreValidateDnsLocal { get; set; }
 
@@ -181,7 +181,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
         [SettingsValue(
             SubType = "host",
-            Default = "\"[ \\\"[System]\\\" ]\"",
+            Default = "[ \"[System]\" ]",
             Description = "A list of servers to query during DNS prevalidation checksto verify whether or not the " +
             "validation record has been properly created and is visible for the world. These servers will be used to" +
             "locate the actual authoritative name servers for the domain. You can use the string <code>\"[System]\"</code> " +

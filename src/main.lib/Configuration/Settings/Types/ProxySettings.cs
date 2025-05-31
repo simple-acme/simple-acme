@@ -35,7 +35,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     {
         [SettingsValue(
             SubType = "uri",
-            Default = $"\"[system]\"",
+            Default = $"[system]",
             Description = "Configures a proxy server to use for communication with the ACME " +
             "server and other HTTP requests done by the program. " +
             "<div class=\"callout-block callout-block-success pb-1 mt-3\">" +

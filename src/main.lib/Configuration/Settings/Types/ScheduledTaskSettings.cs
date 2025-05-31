@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
-using System.Runtime.InteropServices;
 
 namespace PKISharp.WACS.Configuration.Settings.Types
 {
@@ -106,7 +104,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int? RenewalDaysRange { get; set; }
 
         [SettingsValue(
-            Default = "'false'",
+            Default = "false",
             Description = "By default, servers implementing ARI may suggest that renewals should happen earlier than the " +
             "regularly scheduled moment. When set to <code>true</code>, ARI suggestions will be ignored (not recommended).")]
         public bool? RenewalDisableServerSchedule { get; set; }

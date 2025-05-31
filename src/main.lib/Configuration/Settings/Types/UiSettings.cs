@@ -40,7 +40,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     internal class UiSettings
     {
         [SettingsValue(
-            Default = "\"yyyy/M/d H:mm:ss\"",
+            Default = "yyyy/M/d H:mm:ss",
             Description = "A string that is used to format the date of the certificates friendly name. " +
             "<a href=\"https://learn.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings\">Documentation</a> " +
             "for possibilities is available from Microsoft.")]

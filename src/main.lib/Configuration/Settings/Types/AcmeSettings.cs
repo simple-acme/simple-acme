@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 
 namespace PKISharp.WACS.Configuration.Settings.Types
 {

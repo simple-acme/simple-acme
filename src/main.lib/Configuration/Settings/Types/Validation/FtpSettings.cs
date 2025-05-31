@@ -21,7 +21,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
     internal class FtpSettings
     {
         [SettingsValue(
-            Default = "'false'",
+            Default = "false",
             Description = "If you experience connection issues with Unix FTPS servers, using the GnuTLS library instead " +
             "of Microsofts native TLS implementation might solve the problem. " +
             "<a href=\"https://github.com/robinrodricks/FluentFTP/wiki/FTPS-Connection-using-GnuTLS\">This page</a> by " +

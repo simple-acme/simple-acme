@@ -58,7 +58,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Store
         public string? DefaultPassword { get; set; }
 
         [SettingsValue(
-            Default = "\"default\"",
+            Default = "default",
             SubType = "protectionmode",
             Description = "Determines how the <code>.pfx</code> files will be encrypted.")]
         public string? DefaultProtectionMode { get; set; }

@@ -107,6 +107,7 @@ namespace PKISharp.WACS.Host
                 helpService.GenerateArgumentsYaml();
                 helpService.GeneratePluginsYaml();
                 helpService.GenerateSettingsYaml();
+                helpService.GenerateSettingsYaml2();
                 return 0;
             }
 

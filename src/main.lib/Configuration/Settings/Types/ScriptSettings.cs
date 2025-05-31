@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int? Timeout { get; set; }
 
         [SettingsValue(
-            Default = "\"powershell.exe\"",
+            Default = "powershell.exe",
             SubType = "path",
             Description = "Customize this value to use a different version of Powershell to execute <code>.ps1</code> scripts. E.g. <code>C:\\\\Program Files\\\\PowerShell\\\\6.0.0\\\\pwsh.exe</code> for Powershell Core 6.")]
         public string? PowershellExecutablePath { get; set; }

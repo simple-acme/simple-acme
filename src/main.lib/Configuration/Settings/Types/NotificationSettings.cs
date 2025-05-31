@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 namespace PKISharp.WACS.Configuration.Settings.Types
 {
@@ -116,7 +115,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? SmtpPassword { get; set; }
 
         [SettingsValue(
-            Default = "'false'",
+            Default = "false",
             Description = "Change to <code>true</code> to enable secure SMTP.")]
         public bool? SmtpSecure { get; set; }
 
@@ -154,7 +153,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public List<string>? ReceiverAddresses { get; set; }
 
         [SettingsValue(
-            Default = "'false'",
+            Default = "false",
             Description = "Send an email notification when a certificate has been successfully created or " +
             "renewed, as opposed to the default behavior that only send failure notifications. Only works " +
             "if at least <code>SmtpServer</code>, <code>SmtpSenderAddress</code> and<code>SmtpReceiverAddress</code> " +

@@ -13,6 +13,7 @@ namespace PKISharp.WACS.Configuration.Settings
         public string? DefaultExtra { get; set; }
         public string? Warning { get; set; }
         public string? Tip { get; set; }
+        public bool Split { get; set; } = false;
         public bool Hidden { get; set; } = false;
     }
 }

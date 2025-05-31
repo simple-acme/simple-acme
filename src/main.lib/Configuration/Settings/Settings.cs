@@ -35,6 +35,7 @@ namespace PKISharp.WACS.Configuration.Settings
         public NotificationSettings? Notification { get; set; }
         public SecuritySettings? Security { get; set; }
         public ScriptSettings? Script { get; set; }
+        [SettingsValue(Hidden = true)]
         public SourceSettings? Target { get; set; }
         public SourceSettings? Source { get; set; }
         public ValidationSettings? Validation { get; set; }
