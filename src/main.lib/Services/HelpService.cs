@@ -341,6 +341,8 @@ namespace PKISharp.WACS.Services
                 }
                 x.AppendLine($" description: \"{EscapeYaml(plugin.Description)}\"");
                 x.AppendLine($" type: {GetPluginType(plugin)}");
+                x.AppendLine($" options:");
+                GenerateTypeYaml(plugin.Options, 1, x);
                 x.AppendLine();
             }
             File.WriteAllText("plugins.yml", x.ToString());
@@ -353,12 +355,19 @@ namespace PKISharp.WACS.Services
         internal void GenerateSettingsYaml()
         {
             var metaBuilder = new StringBuilder();
-            GenerateSettingsYamlForType(typeof(Settings), 0, metaBuilder);
+            GenerateTypeYaml(typeof(Settings), 0, metaBuilder);
             File.WriteAllText("settings.yml", metaBuilder.ToString());
             log.Debug("YAML written to {0}", new FileInfo("settings.yml").FullName);
         }
 
-        internal void GenerateSettingsYamlForType(Type t, int level, StringBuilder x)
+        /// <summary>
+        /// YAML metadata for a specific type
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="level"></param>
+        /// <param name="x"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        internal void GenerateTypeYaml(Type t, int level, StringBuilder x)
         {
             foreach (var member in t.GetMembers(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance).OfType<PropertyInfo>())
             {
@@ -371,7 +380,7 @@ namespace PKISharp.WACS.Services
                 x.AppendLine($"{member.Name}:");
                 if (member.PropertyType.IsInNamespace("PKISharp"))
                 {
-                    GenerateSettingsYamlForType(member.PropertyType, level + 1, x);
+                    GenerateTypeYaml(member.PropertyType, level + 1, x);
                 } 
                 else
                 {
@@ -390,7 +399,7 @@ namespace PKISharp.WACS.Services
                     {
                         showType = "boolean";
                     }
-                    else if (type == typeof(int))
+                    else if (type == typeof(int) || type == typeof(long))
                     {
                         showType = "number";
                     }
@@ -402,6 +411,10 @@ namespace PKISharp.WACS.Services
                     else if (type == typeof(List<string>))
                     {
                         showType = "string[]";
+                    }
+                    else if (type == typeof(List<int>) || type == typeof(List<long>))
+                    {
+                        showType = "number[]";
                     }
                     else if (type == typeof(TimeSpan))
                     {
@@ -491,7 +504,7 @@ namespace PKISharp.WACS.Services
         }
 
         /// <summary>
-        /// Generate settings.yml for documentation website
+        /// Generate settings2.yml for documentation website
         /// </summary>
         internal void GenerateSettingsYaml2()
         {

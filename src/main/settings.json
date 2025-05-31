@@ -1,5 +1,5 @@
 {
-  "$schema": "http://localhost:4000/schema/settings.json",
+  "$schema": "https://simple-acme.com/schema/settings.json",
   "Client": {
     "ClientName": "simple-acme",
     "ConfigurationPath": null,
