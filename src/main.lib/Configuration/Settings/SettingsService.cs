@@ -34,10 +34,12 @@ namespace PKISharp.WACS.Configuration.Settings
             {
                 return;
             }
+            var configRoot = _settings.Client.ConfigRoot;
+            var configPath = _settings.Client.ConfigurationPath;
             try
             {
-                _folderHelpers.EnsureFolderExists(_settings.Client.ConfigRoot, "configuration", true);
-                _folderHelpers.EnsureFolderExists(_settings.Client.ConfigurationPath, "configuration", false);
+                _folderHelpers.EnsureFolderExists(configRoot, "global configuration", true);
+                _folderHelpers.EnsureFolderExists(configPath, "server configuration", false);
             }
             catch (Exception ex)
             {
@@ -49,15 +51,23 @@ namespace PKISharp.WACS.Configuration.Settings
             {
                 if (serverSettings)
                 {
-                    _folderHelpers.EnsureFolderExists(_settings.Client.ConfigRoot, "configuration", true);
-                    _folderHelpers.EnsureFolderExists(_settings.Client.ConfigurationPath, "configuration", false);
+                    if (configRoot != _settings.Client.ConfigRoot)
+                    {
+                        configRoot = _settings.Client.ConfigRoot;
+                        _folderHelpers.EnsureFolderExists(configRoot, "global configuration", true);
+                    }
+                    if (configPath != _settings.Client.ConfigurationPath)
+                    {
+                        configPath = _settings.Client.ConfigurationPath;
+                        _folderHelpers.EnsureFolderExists(configPath, "server configuration", true);
+                    }
                 }
                 var pathCompareMode =
                     OperatingSystem.IsWindows() ?
                     StringComparison.OrdinalIgnoreCase :
                     StringComparison.Ordinal;
-                _folderHelpers.EnsureFolderExists(_settings.Client.LogPath, "log", !_settings.Client.LogPath.StartsWith(_settings.Client.ConfigurationPath, pathCompareMode));
-                _folderHelpers.EnsureFolderExists(_settings.Cache.CachePath, "cache", !_settings.Client.LogPath.StartsWith(_settings.Client.ConfigurationPath, pathCompareMode));
+                _folderHelpers.EnsureFolderExists(_settings.Client.LogPath, "log", !_settings.Client.LogPath.StartsWith(configPath, pathCompareMode));
+                _folderHelpers.EnsureFolderExists(_settings.Cache.CachePath, "cache", !_settings.Client.LogPath.StartsWith(configPath, pathCompareMode));
 
                 // Configure disk logger
                 _log.ApplyClientSettings(Current.Client);
@@ -109,7 +119,9 @@ namespace PKISharp.WACS.Configuration.Settings
             {
                 try
                 {
-                    _settings = new InheritSettings([Settings.Load(settings), .. _settings.Settings]);
+                    var localSettings = new InheritSettings([Settings.Load(settings), .. _settings.Settings]);
+                    localSettings.BaseUri = _settings.BaseUri;
+                    _settings = localSettings;
                     return true;
                 }
                 catch (Exception ex)
