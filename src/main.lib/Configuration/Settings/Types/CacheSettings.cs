@@ -82,7 +82,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         [SettingsValue(
             Default = "1",
             Description = "When renewing or re-creating a previously requested certificate that " +
-            "has the exact same set of domain names, the program will used a cached version for " +
+            "has the exact same set of domain names, the program will use a cached version for " +
             "this many days, to prevent users from running into " +
             "<a href=\"https://letsencrypt.org/docs/rate-limits/\">rate limits</a> while experimenting. " +
             "Set this to a high value if you regularly re-request the same certificates, e.g. for a " +
