@@ -65,7 +65,6 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     internal class InheritAcmeSettings(params IEnumerable<AcmeSettings?> chain) : InheritSettings<AcmeSettings>(chain), IAcmeSettings
     {
-        public Uri BaseUri => throw new NotImplementedException();
         public Uri? DefaultBaseUri => Get(x => x.DefaultBaseUri);
         public Uri? DefaultBaseUriImport => Get(x => x.DefaultBaseUriImport);
         public Uri? DefaultBaseUriTest => Get(x => x.DefaultBaseUriTest);
