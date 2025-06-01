@@ -24,7 +24,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         ILogService log,
         IProxyService proxy,
-        ISettingsService settings,
+        ISettings settings,
         SecretServiceManager ssm,
         Route53Options options) : DnsValidation<Route53, AmazonRoute53Client>(dnsClient, log, settings, proxy)
     {

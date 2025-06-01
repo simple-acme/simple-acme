@@ -21,7 +21,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         "Aliyun", "Create verification records in ALiYun DNS",
         External = true, Provider = "Alibaba", Page = "alibaba")]
     public class ALiYun(SecretServiceManager ssm,
-        LookupClientProvider dnsClient, ILogService log, ISettingsService settings, IProxyService proxy,
+        LookupClientProvider dnsClient, ILogService log, ISettings settings, IProxyService proxy,
         ALiYunOptions options) : DnsValidation<ALiYun, Client>(dnsClient, log, settings, proxy)
     {
         protected override async Task<Client> CreateClient(HttpClient client)

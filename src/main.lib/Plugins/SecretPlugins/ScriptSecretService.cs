@@ -11,7 +11,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
     /// </summary>
     /// <param name="settings"></param>
     /// <param name="log"></param>
-    public class ScriptSecretService(ILogService log, ISettingsService settings, ScriptClient scriptClient) : ISecretProvider
+    public class ScriptSecretService(ILogService log, ISettings settings, ScriptClient scriptClient) : ISecretProvider
     {
         /// <summary>
         /// Make references to this provider unique from 

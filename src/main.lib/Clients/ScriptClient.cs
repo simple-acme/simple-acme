@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Clients
         public string? Output;
     }
 
-    public partial class ScriptClient(ILogService logService, ISettingsService settings)
+    public partial class ScriptClient(ILogService logService, ISettings settings)
     {
         /// <summary>
         /// Replace {Tokens} with values defined in the replacements dictionary

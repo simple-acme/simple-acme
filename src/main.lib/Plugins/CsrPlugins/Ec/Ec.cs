@@ -21,7 +21,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         Name = "Elliptic Curve")]
     internal class Ec(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         EcOptions options) : CsrPlugin<EcOptions>(log, settings, options)
     {
         internal override AsymmetricCipherKeyPair GenerateNewKeyPair()
@@ -45,10 +45,8 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
             var ret = "secp384r1"; // Default
             try
             {
-#pragma warning disable CS0618 // Type or member is obsolete
-                var config = _settings.Csr?.Ec?.CurveName ?? _settings.Security?.ECCurve;
-#pragma warning restore CS0618 // Type or member is obsolete
-                if (config != null)
+                var config = _settings.Csr.Ec.CurveName;
+                if (!string.IsNullOrWhiteSpace(""))
                 {
                     DerObjectIdentifier? curveOid = null;
                     try
@@ -74,6 +72,6 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
             return ret;
         }
 
-        public override string GetSignatureAlgorithm() => _settings.Csr?.Ec?.SignatureAlgorithm ?? "SHA512withECDSA";
+        public override string GetSignatureAlgorithm() => _settings.Csr.Ec.SignatureAlgorithm;
     }
 }

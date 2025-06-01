@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
     internal class InteractiveResolver(
         ILogService log,
         IInputService inputService,
-        ISettingsService settings,
+        ISettings settings,
         MainArguments arguments,
         IPluginService pluginService,
         ILifetimeScope scope,
@@ -241,11 +241,11 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IPluginCapability, OrderPluginOptions>(
                    Steps.Order,
-                   defaultParam1: settings.Order.DefaultPlugin,
+                   defaultParam1: settings.Order.DefaultOrder,
                    defaultBackends: [typeof(Single)],
                    shortDescription: "Would you like to split this source into multiple certificates?",
                    longDescription: $"By default your source identifiers are covered by a single certificate. " +
-                        $"But if you want to avoid the {settings.Acme.MaxDomains ?? 100} domain limit, want to " +
+                        $"But if you want to avoid the {settings.Acme.MaxDomains} domain limit, want to " +
                         $"prevent information disclosure via the SAN list, and/or reduce the operational impact of " +
                         $"a single validation failure, you may choose to convert one source into multiple " +
                         $"certificates, using different strategies.");

@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Services
 {
     internal class CertificateService(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         AcmeClient client,
         IInputService inputService,
         ICacheService cacheService,

@@ -16,7 +16,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class DnsExitDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         DomainParseService domainParser,
         DnsexitOptions options,
         SecretServiceManager ssm,

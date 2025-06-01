@@ -1,3 +1,4 @@
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
@@ -113,6 +114,12 @@ namespace PKISharp.WACS.DomainObjects
         /// Which ACME account is associated with the renewal (null = default)
         /// </summary>
         public string? Account { get; set; }
+
+        /// <summary>
+        /// Settings that apply specifically to this renewal, overriding
+        /// both global settings and settings defined at the server level
+        /// </summary>
+        public Settings? Settings { get; set; }
 
         /// <summary>
         /// Pretty format

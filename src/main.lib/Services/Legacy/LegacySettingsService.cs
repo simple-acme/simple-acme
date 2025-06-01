@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Configuration.Settings.Types;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
@@ -9,31 +10,32 @@ using System.Xml;
 
 namespace PKISharp.WACS.Host.Services.Legacy
 {
-    public class LegacySettingsService : ISettingsService
+    public class LegacySettingsService : ISettings
     {
         private readonly ILogService _log;
-        public ClientSettings Client { get; private set; } = new ClientSettings();
-        public UiSettings UI { get; private set; } = new UiSettings();
-        public AcmeSettings Acme { get; private set; } = new AcmeSettings();
-        public ExecutionSettings Execution { get; private set; } = new ExecutionSettings();
-        public ProxySettings Proxy { get; private set; } = new ProxySettings();
-        public CacheSettings Cache { get; private set; } = new CacheSettings();
-        public ScheduledTaskSettings ScheduledTask { get; private set; } = new ScheduledTaskSettings();
-        public NotificationSettings Notification { get; private set; } = new NotificationSettings();
-        public SecuritySettings Security { get; private set; } = new SecuritySettings();
-        public ScriptSettings Script { get; private set; } = new ScriptSettings();
-        public SourceSettings Source { get; private set; } = new SourceSettings();
-        public ValidationSettings Validation { get; private set; } = new ValidationSettings();
-        public OrderSettings Order { get; private set; } = new OrderSettings();
-        public CsrSettings Csr { get; private set; } = new CsrSettings();
-        public StoreSettings Store { get; private set; } = new StoreSettings();
-        public InstallationSettings Installation { get; private set; } = new InstallationSettings();
-        public SecretsSettings Secrets { get; private set; } = new SecretsSettings();
+        private readonly ClientSettings _client = new();
+        public IClientSettings Client => new InheritClientSettings(this, _client);
+        public IUiSettings UI { get; private set; } = new InheritUiSettings(new UiSettings());
+        public IAcmeSettings Acme { get; private set; } = new InheritAcmeSettings(new AcmeSettings());
+        public IExecutionSettings Execution { get; private set; } = new InheritExecutionSettings(new ExecutionSettings());
+        public IProxySettings Proxy { get; private set; } = new InheritProxySettings(new ProxySettings());
+        public ICacheSettings Cache => new InheritCacheSettings(this, new CacheSettings());
+        public IScheduledTaskSettings ScheduledTask { get; private set; } = new InheritScheduledTaskSettings(new ScheduledTaskSettings());
+        public INotificationSettings Notification { get; private set; } = new InheritNotificationSettings(new NotificationSettings());
+        public ISecuritySettings Security { get; private set; } = new InheritSecuritySettings(new SecuritySettings());
+        public IScriptSettings Script { get; private set; } = new InheritScriptSettings(new ScriptSettings());
+        public ISourceSettings Source { get; private set; } = new InheritSourceSettings(new SourceSettings());
+        public IValidationSettings Validation { get; private set; } = new InheritValidationSettings(new ValidationSettings());
+        public IOrderSettings Order { get; private set; } = new InheritOrderSettings(new OrderSettings());
+        public ICsrSettings Csr { get; private set; } = new InheritCsrSettings(new CsrSettings());
+        public IStoreSettings Store { get; private set; } = new InheritStoreSettings(new StoreSettings());
+        public IInstallationSettings Installation { get; private set; } = new InheritInstallationSettings(new InstallationSettings());
+        public ISecretsSettings Secrets { get; private set; } = new InheritSecretsSettings(new SecretsSettings()); 
         public List<string> ClientNames { get; private set; }
         public Uri BaseUri { get; private set; }
         public bool Valid => true;
 
-        public LegacySettingsService(ILogService log, MainArguments main, ISettingsService settings)
+        public LegacySettingsService(ILogService log, MainArguments main, ISettings settings)
         {
             _log = log;
             UI = settings.UI;
@@ -44,7 +46,7 @@ namespace PKISharp.WACS.Host.Services.Legacy
             Script = settings.Script;
             // Copy so that the "ConfigurationPath" setting is not modified
             // from outside anymore
-            Client = new ClientSettings()
+            _client = new ClientSettings()
             {
                 ClientName = settings.Client.ClientName,
                 ConfigurationPath = settings.Client.ConfigurationPath,
@@ -104,7 +106,7 @@ namespace PKISharp.WACS.Host.Services.Legacy
                     if (Directory.Exists(configRootWithClient))
                     {
                         configRoot = configRootWithClient;
-                        Client.ClientName = clientName;
+                        _client.ClientName = clientName;
                         break;
                     }
                 }
@@ -127,7 +129,7 @@ namespace PKISharp.WACS.Host.Services.Legacy
                     {
                         foreach (var clientName in ClientNames.ToArray().Reverse())
                         {
-                            Client.ClientName = clientName;
+                            _client.ClientName = clientName;
                             configRoot = Path.Combine(root, clientName);
                             if (Directory.Exists(configRoot))
                             {
@@ -139,10 +141,11 @@ namespace PKISharp.WACS.Host.Services.Legacy
                 }
             }
 
-            Client.ConfigurationPath = Path.Combine(configRoot, CleanFileName(options.BaseUri));
+            _client.ConfigurationPath = Path.Combine(configRoot, CleanFileName(options.BaseUri));
             _log.Debug("Legacy config folder: {_configPath}", Client.ConfigurationPath);
         }
 
         public static string CleanFileName(string fileName) => Path.GetInvalidFileNameChars().Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
+        public ISettings Merge(Settings settings) => this;
     }
 }

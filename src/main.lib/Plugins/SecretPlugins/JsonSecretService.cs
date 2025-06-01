@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
         private readonly FileInfo _file;
         private readonly List<CredentialEntry> _secrets;
         private readonly ILogService _log;
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
         private readonly WacsJson _wacsJson;
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
         /// </summary>
         /// <param name="settings"></param>
         /// <param name="log"></param>
-        public JsonSecretService(ISettingsService settings, ILogService log, WacsJson wacsJson)
+        public JsonSecretService(ISettings settings, ILogService log, WacsJson wacsJson)
         {
             _log = log;
             _wacsJson = wacsJson;

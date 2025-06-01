@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         HttpValidationParameters pars,
         IInputService input,
         ILogService log,
-        ISettingsService settings) : IValidationPlugin
+        ISettings settings) : IValidationPlugin
     {
         private ManualDns? _manualDns;
         private ManualHttp? _manualHttp;

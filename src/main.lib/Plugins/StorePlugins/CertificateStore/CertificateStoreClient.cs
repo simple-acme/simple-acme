@@ -11,7 +11,7 @@ using System.Security.Cryptography.X509Certificates;
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
     [SupportedOSPlatform("windows")]
-    public class CertificateStoreClient(string storeName, StoreLocation storeLocation, ILogService log, ISettingsService settings) : IDisposable
+    public class CertificateStoreClient(string storeName, StoreLocation storeLocation, ILogService log, ISettings settings) : IDisposable
     {
         private readonly X509Store _store = new(storeName, storeLocation);
         private bool disposedValue;
@@ -27,20 +27,14 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         public bool InstallCertificate(ICertificateInfo certificate, X509KeyStorageFlags flags)
         {
             // Determine storage flags
-#pragma warning disable CS0618 // Type or member is obsolete
-            var exportable =
-                settings.Store.CertificateStore.PrivateKeyExportable == true ||
-                (settings.Store.CertificateStore.PrivateKeyExportable == null && settings.Security.PrivateKeyExportable == true);
-#pragma warning restore CS0618 // Type or member is obsolete
-            if (exportable)
+            if (settings.Store.CertificateStore.PrivateKeyExportable)
             {
                 flags |= X509KeyStorageFlags.Exportable;
             }
             flags |= X509KeyStorageFlags.PersistKeySet;
             var password = PasswordGenerator.Generate();
             var success = false;
-            var attemptConvert = settings.Store.CertificateStore.UseNextGenerationCryptoApi != true;
-            if (attemptConvert)
+            if (!settings.Store.CertificateStore.UseNextGenerationCryptoApi)
             {
                 success = SaveWithRetry(certificate, (input) => ConvertAndSave(input, flags, password));
                 if (!success)
@@ -52,7 +46,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             {
                 SaveWithRetry(certificate, (input) => { RegularSave(input, flags, password); return true; });
             }
-            return exportable;
+            return settings.Store.CertificateStore.PrivateKeyExportable;
         }
 
         /// <summary>

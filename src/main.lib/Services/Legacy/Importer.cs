@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Services.Legacy
 {
     internal class Importer(
         ILogService log, ILegacyRenewalService legacyRenewal,
-        ISettingsService settings, IRenewalStore currentRenewal,
+        ISettings settings, IRenewalStore currentRenewal,
         IInputService input, MainArguments arguments,
         LegacyTaskSchedulerService legacyTaskScheduler,
         IAutoRenewService currentTaskScheduler,
@@ -265,11 +265,11 @@ namespace PKISharp.WACS.Services.Legacy
             }
             ret.StorePluginOptions.Add(new Store.PemFilesOptions()
             {
-                Path = settings.Cache.Path
+                Path = settings.Cache.CachePath
             });
             ret.StorePluginOptions.Add(new Store.PfxFileOptions()
             {
-                Path = settings.Cache.Path
+                Path = settings.Cache.CachePath
             });
         }
 

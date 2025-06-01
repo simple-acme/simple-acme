@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    internal class NetworkCheckService(IProxyService proxy, ISettingsService settings, ILogService log)
+    internal class NetworkCheckService(IProxyService proxy, ISettings settings, ILogService log)
     {
 
         /// <summary>

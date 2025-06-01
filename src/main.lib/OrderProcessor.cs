@@ -22,7 +22,7 @@ namespace PKISharp.WACS
         IAutofacBuilder scopeBuilder,
         ILogService log,
         IInputService input,
-        ISettingsService settings,
+        ISettings settings,
         ICertificateService certificateService,
         ICacheService cacheService,
         RenewalValidator validator,

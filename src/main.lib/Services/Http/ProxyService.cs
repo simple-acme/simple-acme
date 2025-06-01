@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    public partial class ProxyService(ILogService log, ISettingsService settings, SecretServiceManager secretService) : IProxyService
+    public partial class ProxyService(ILogService log, ISettings settings, SecretServiceManager secretService) : IProxyService
     {
         private IWebProxy? _proxy;
         private bool _enabled = true;

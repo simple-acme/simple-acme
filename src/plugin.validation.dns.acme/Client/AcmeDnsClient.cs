@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private readonly IInputService? _input;
 
         public AcmeDnsClient(LookupClientProvider dnsClient, IProxyService proxy, ILogService log,
-                             ISettingsService settings, IInputService? input, Uri baseUri)
+                             ISettings settings, IInputService? input, Uri baseUri)
         {
             _baseUri = baseUri;
             _proxy = proxy;

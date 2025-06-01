@@ -38,7 +38,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
         public CentralSsl(
             ILogService log,
-            ISettingsService settings,
+            ISettings settings,
             CentralSslOptions options,
             SecretServiceManager secretServiceManager)
         {

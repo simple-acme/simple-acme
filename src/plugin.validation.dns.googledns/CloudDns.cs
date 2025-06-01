@@ -26,7 +26,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         ILogService log,
         IProxyService proxy,
-        ISettingsService settings,
+        ISettings settings,
         CloudDnsOptions options) : DnsValidation<CloudDns, CloudDnsService>(dnsClient, log, settings, proxy)
     {
         private readonly CloudDnsOptions _options = options;

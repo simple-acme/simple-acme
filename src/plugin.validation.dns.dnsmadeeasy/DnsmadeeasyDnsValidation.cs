@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class DnsMadeEasyDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         DomainParseService domainParser,
         DnsMadeEasyOptions options,
         SecretServiceManager ssm,

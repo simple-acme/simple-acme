@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         ILogService log,
         IProxyService proxy,
-        ISettingsService settings,
+        ISettings settings,
         DomainParseService domainParser,
         SecretServiceManager ssm,
         TransIpOptions options) : DnsValidation<TransIp, DnsService>(dnsClient, log, settings, proxy)

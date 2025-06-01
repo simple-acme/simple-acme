@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
     [SupportedOSPlatform("windows")]
     internal class CertificateStoreOptionsFactory(
         ArgumentsInputService arguments,
-        ISettingsService settings,
+        ISettings settings,
         IIISClient iisClient) : PluginOptionsFactory<CertificateStoreOptions>
     {
         public override async Task<CertificateStoreOptions?> Aquire(IInputService inputService, RunLevel runLevel)

@@ -16,7 +16,7 @@ namespace PKISharp.WACS.Clients.Acme
     /// </summary>
     internal class AccountManager(
         ILogService log,
-        ISettingsService settings)
+        ISettings settings)
     {
         private const string SignerFileName = "Signer_v2";
         private const string RegistrationFileName = "Registration_v2";

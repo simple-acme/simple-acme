@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Clients
 
 #pragma warning disable
         // Not used, but must be initialized to create settings.json on clean install
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
 #pragma warning enable
 
         private readonly string _server;
@@ -36,7 +36,7 @@ namespace PKISharp.WACS.Clients
 
         public EmailClient(
             ILogService log, 
-            ISettingsService settings, 
+            ISettings settings, 
             SecretServiceManager secretService)
         {
             _log = log;
@@ -61,7 +61,7 @@ namespace PKISharp.WACS.Clients
                 _senderName = _settings.Client.ClientName;
             }
             _senderAddress = _settings.Notification.SenderAddress;
-            _receiverAddresses = _settings.Notification.ReceiverAddresses ?? new List<string>();
+            _receiverAddresses = _settings.Notification.ReceiverAddresses;
 
             // Criteria for emailing to be enabled at all
             Enabled =
@@ -131,7 +131,7 @@ namespace PKISharp.WACS.Clients
                     message.From.Add(sender);
                     message.To.Add(receiver);
                     var bodyBuilder = new BodyBuilder();
-                    bodyBuilder.HtmlBody = content + $"<p>Sent by simple-acme version {_version} from {_computerName}</p>";
+                    bodyBuilder.HtmlBody = content + $"<p>Sent by {_settings.Client.ClientName} version {_version} from {_computerName}</p>";
                     message.Body = bodyBuilder.ToMessageBody();
                     await client.SendAsync(message);
                 }                       

@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
 {
     internal class UnattendedResolver(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         IAutofacBuilder autofacBuilder,
         ILifetimeScope scope,
         MainArguments arguments,
@@ -127,7 +127,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IValidationPluginCapability, ValidationPluginOptions>(
                 Steps.Validation,
-                defaultParam1: arguments.Validation ?? settings.Validation.DefaultValidation ?? "selfhosting",
+                defaultParam1: arguments.Validation ?? settings.Validation.DefaultValidation,
                 defaultParam2: arguments.ValidationMode ?? settings.Validation.DefaultValidationMode,
                 defaultBackend: typeof(SelfHosting));
         }
@@ -165,12 +165,6 @@ namespace PKISharp.WACS.Plugins.Resolvers
         public async Task<PluginFrontend<IPluginCapability, StorePluginOptions>?> GetStorePlugin(IEnumerable<Plugin> chosen)
         {
             var defaultStore = arguments.Store ?? settings.Store.DefaultStore;
-            if (string.IsNullOrWhiteSpace(defaultStore))
-            {
-                defaultStore = OperatingSystem.IsWindows() ? 
-                    StorePlugins.CertificateStore.Trigger : 
-                    StorePlugins.PemFiles.Trigger;
-            }
             var parts = defaultStore.ParseCsv();
             if (parts == null)
             {

@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Services
         ILifetimeScope scope,
         ILogService log,
         IPluginService pluginService,
-        ISettingsService settings)
+        ISettings settings)
     {
         private readonly ILogService _log = log;
         private readonly IEnumerable<INotificationTarget> _targets = pluginService.

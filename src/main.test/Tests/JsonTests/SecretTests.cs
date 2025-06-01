@@ -26,7 +26,7 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             var log = new Mock.Services.LogService();
             var assembly = new AssemblyService(log);
             var plugin = new PluginService(log, assembly);
-            _ = builder.RegisterType<MockSettingsService>().As<ISettingsService>();
+            _ = builder.RegisterType<MockSettingsService>().As<ISettings>();
             _ = builder.RegisterInstance(assembly).As<AssemblyService>().SingleInstance();
             _ = builder.RegisterInstance(log).As<ILogService>();
             _ = builder.RegisterType<FtpJson>();

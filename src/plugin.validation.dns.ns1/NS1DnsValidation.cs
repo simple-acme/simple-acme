@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     internal class NS1DnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         IProxyService proxy,
         NS1Options options,
         SecretServiceManager ssm) : DnsValidation<NS1DnsValidation, DnsManagementClient>(dnsClient, logService, settings, proxy)

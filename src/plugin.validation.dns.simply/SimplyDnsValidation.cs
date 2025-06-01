@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class SimplyDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         IProxyService proxyService,
         SecretServiceManager ssm,
         SimplyOptions options) : DnsValidation<SimplyDnsValidation, SimplyDnsClient>(dnsClient, logService, settings, proxyService)

@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Host
             IAutofacBuilder scopeBuilder,
             ExceptionHandler exceptionHandler,
             ILogService log,
-            ISettingsService settings,
+            ISettings settings,
             IUserRoleService userRoleService,
             IInputService input,
             DueDateStaticService dueDateService,
@@ -91,7 +91,7 @@ namespace PKISharp.WACS.Host
                     $"Manage global validation options", "V"),
                 Choice.Create<Func<Task>>(
                     () => taskScheduler.SetupAutoRenew(RunLevel.Interactive | RunLevel.Advanced | RunLevel.ForceTaskScheduler), 
-                    OperatingSystem.IsWindows() ? "(Re)create scheduled task" : "(Re)create cronjob", "T",
+                    OperatingSystem.IsWindows() ? "(Re)create scheduled task" : "(Re)create cronjob", "TData",
                     state: !userRoleService.AllowAutoRenew ? State.DisabledState(OperatingSystem.IsWindows() ? "Run as an administrator to allow access to the task scheduler." : "Run as a superuser to allow scheduling cronjob.") : State.EnabledState()),
                 Choice.Create<Func<Task>>(
                     () => container.Resolve<NotificationService>().NotifyTest(), 

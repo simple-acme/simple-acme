@@ -24,7 +24,7 @@ internal class InfomaniakDnsValidation(
     LookupClientProvider dnsClient,
     ILogService logService,
     IProxyService proxy,
-    ISettingsService settings,
+    ISettings settings,
     DomainParseService domainParser,
     InfomaniakOptions options,
     SecretServiceManager ssm) : DnsValidation<InfomaniakDnsValidation, InfomaniakClient>(dnsClient, logService, settings, proxy)

@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         "Tencent", "Create verification records in Tencent DNS",
         Name = "Tencent Cloud", External = true)]
     public class Tencent(SecretServiceManager ssm,
-        LookupClientProvider dnsClient, ILogService log, ISettingsService settings, IProxyService proxy,
+        LookupClientProvider dnsClient, ILogService log, ISettings settings, IProxyService proxy,
         TencentOptions options) : DnsValidation<Tencent, CommonClient>(dnsClient, log, settings, proxy)
     {
         public override async Task<bool> CreateRecord(DnsValidationRecord record)

@@ -1,6 +1,6 @@
 ﻿using ACMESharp;
 using Microsoft.Extensions.Configuration;
-using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Configuration.Settings.Types;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -102,12 +102,12 @@ namespace PKISharp.WACS.Services
         /// Before that all happens we can only log to the screen.
         /// </summary>
         /// <param name="settings"></param>
-        public void ApplyClientSettings(ClientSettings settings)
+        public void ApplyClientSettings(IClientSettings settings)
         {
-            CreateDiskLogger(settings.LogPath ?? settings.ConfigurationPath);
+            CreateDiskLogger(settings.LogPath);
             if (OperatingSystem.IsWindows())
             {
-                CreateEventLogger(settings.ClientName ?? "simple-acme");
+                CreateEventLogger(settings.ClientName);
             }
             if (_logs != null)
             {

@@ -24,7 +24,7 @@ namespace PKISharp.WACS
         IAutofacBuilder scopeBuilder,
         ILogService log,
         IInputService input,
-        ISettingsService settings,
+        ISettings settings,
         TargetValidator targetValidator,
         DueDateStaticService dueDateStatic,
         DueDateRuntimeService dueDateRuntime,
@@ -262,7 +262,7 @@ namespace PKISharp.WACS
             // that we're going to do something. Actually we may
             // still be able to read all certificates from cache,
             // but that's the exception rather than the rule.
-            var preScript = settings.Execution?.DefaultPreExecutionScript;
+            var preScript = settings.Execution.DefaultPreExecutionScript;
             var scriptClient = execute.Resolve<ScriptClient>();
             if (!string.IsNullOrWhiteSpace(preScript))
             {
@@ -278,7 +278,7 @@ namespace PKISharp.WACS
             // from the script installation pluginService, which is handled
             // in the previous step. This is only meant to undo any
             // (firewall?) changes made by the pre-execution script.
-            var postScript = settings.Execution?.DefaultPostExecutionScript;
+            var postScript = settings.Execution.DefaultPostExecutionScript;
             if (!string.IsNullOrWhiteSpace(postScript))
             {
                 await scriptClient.RunScript(postScript, $"{renewal.Id}");

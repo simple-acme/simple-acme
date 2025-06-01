@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class GodaddyDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         DomainParseService domainParser,
         GodaddyOptions options,
         SecretServiceManager ssm,

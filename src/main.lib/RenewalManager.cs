@@ -41,7 +41,7 @@ namespace PKISharp.WACS
         ArgumentsParser arguments, MainArguments args,
         IRenewalStore renewalStore, ISharingLifetimeScope container,
         IInputService input, ILogService log,
-        ISettingsService settings, DueDateStaticService dueDate,
+        ISettings settings, DueDateStaticService dueDate,
         IAutofacBuilder autofacBuilder, ExceptionHandler exceptionHandler,
         RenewalCreator renewalCreator, RenewalExecutor renewalExecutor,
         AccountManager accountManager, RenewalDescriber renewalDescriber,

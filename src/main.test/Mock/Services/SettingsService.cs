@@ -1,29 +1,22 @@
 ﻿using PKISharp.WACS.Configuration.Settings;
-using PKISharp.WACS.Services;
+using PKISharp.WACS.Configuration.Settings.Types;
 using System;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
-    internal class MockSettingsService : ISettingsService
+    internal class MockSettingsService : InheritSettings
     {
-        public Uri BaseUri => new("https://www.simple-acme.com/");
-        public UiSettings UI => new();
-        public AcmeSettings Acme => new();
-        public ExecutionSettings Execution => new();
-        public ProxySettings Proxy => new();
-        public CacheSettings Cache => new();
-        public ScheduledTaskSettings ScheduledTask => new() { RenewalDays = 55, RenewalMinimumValidDays = 10 };
-        public NotificationSettings Notification => new();
-        public SecuritySettings Security => new();
-        public ClientSettings Client => new();
-        public SourceSettings Source => new();
-        public ValidationSettings Validation => new();
-        public OrderSettings Order => new();
-        public CsrSettings Csr => new();
-        public StoreSettings Store => new();
-        public InstallationSettings Installation => new();
-        public ScriptSettings Script => new();
-        public SecretsSettings Secrets => new();
-        public bool Valid => true;
+        public MockSettingsService(Settings? settings = null) : base(settings ?? new Settings()
+        {
+            ScheduledTask = new ScheduledTaskSettings
+            {
+                RenewalDays = 55,
+                RenewalMinimumValidDays = 10
+            }
+        })
+        {
+            BaseUri = new Uri("https://www.simple-acme.com/");
+            Valid = true;
+        }
     }
 }

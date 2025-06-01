@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Host
         UpdateClient updateClient,
         ILogService logService,
         IInputService inputService,
-        ISettingsService settingsService,
+        ISettings settingsService,
         IProxyService proxyService,
         ArgumentsParser argumentsParser,
         AdminService adminService,
@@ -59,7 +59,7 @@ namespace PKISharp.WACS.Host
             }
 
             // New version test
-            if (settingsService.Client.VersionCheck)
+            if (settingsService.Client.VersionCheck == true)
             {
                 inputService.CreateSpace();
                 await updateClient.CheckNewVersion();
@@ -123,7 +123,7 @@ namespace PKISharp.WACS.Host
                 BaseUri = settingsService.BaseUri,
                 ConfigurationPath = settingsService.Client.ConfigurationPath,
                 LogPath = settingsService.Client.LogPath,
-                CachePath = settingsService.Cache.Path,
+                CachePath = settingsService.Cache.CachePath,
                 SettingsPath = VersionService.SettingsPath,
                 PluginPath = VersionService.PluginPath,
                 ExecutablePath = VersionService.ExePath
