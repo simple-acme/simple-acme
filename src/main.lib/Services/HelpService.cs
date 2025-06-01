@@ -3,6 +3,7 @@ using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Plugins;
 using PKISharp.WACS.Plugins.Base.Capabilities;
+using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -378,7 +379,7 @@ namespace PKISharp.WACS.Services
                 }
                 x.AppendJoin("", Enumerable.Repeat("  ", level));
                 x.AppendLine($"{member.Name}:");
-                if (member.PropertyType.IsInNamespace("PKISharp"))
+                if (member.PropertyType.IsInNamespace("PKISharp") && member.PropertyType != typeof(ProtectedString))
                 {
                     GenerateTypeYaml(member.PropertyType, level + 1, x);
                 } 
@@ -420,6 +421,11 @@ namespace PKISharp.WACS.Services
                     {
                         showType = "string";
                         subType = "time";
+                    }
+                    else if (type == typeof(ProtectedString))
+                    {
+                        showType = "string";
+                        subType = "secret";
                     }
                     else
                     {
