@@ -8,12 +8,12 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     public interface IExecutionSettings
     {
         /// <summary>
-        /// Default script to run before executing a renewal
+        /// Default script to run after execution a renewal
         /// </summary>
         string? DefaultPostExecutionScript { get; }
 
         /// <summary>
-        /// Default script to run after execution a renewal
+        /// Default script to run before executing a renewal
         /// </summary>
         string? DefaultPreExecutionScript { get; }
     }
