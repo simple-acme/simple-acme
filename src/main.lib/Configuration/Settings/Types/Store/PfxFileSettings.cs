@@ -37,7 +37,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Store
         public string? DefaultProtectionMode => Get(x => x.DefaultProtectionMode);
     }
 
-    internal class PfxFileSettings
+    public class PfxFileSettings
     {
         [SettingsValue(
             SubType = "path",

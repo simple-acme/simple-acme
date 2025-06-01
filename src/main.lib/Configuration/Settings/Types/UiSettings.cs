@@ -37,7 +37,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? TextEncoding => Get(x => x.TextEncoding);
     }
 
-    internal class UiSettings
+    public class UiSettings
     {
         [SettingsValue(
             Default = "yyyy/M/d H:mm:ss",

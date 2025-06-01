@@ -31,7 +31,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Store
         public string? DefaultPath => Get(x => x.DefaultPath);
     }
 
-    internal class PemFilesSettings
+    public class PemFilesSettings
     {
         [SettingsValue(
             SubType = "path",

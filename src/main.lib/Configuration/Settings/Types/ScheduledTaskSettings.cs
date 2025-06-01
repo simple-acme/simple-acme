@@ -82,7 +82,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public TimeSpan StartBoundary => Get(x => x.StartBoundary) ?? TimeSpan.Zero;
     }
 
-    internal class ScheduledTaskSettings
+    public class ScheduledTaskSettings
     {
         [SettingsValue(
             Default = "55", 

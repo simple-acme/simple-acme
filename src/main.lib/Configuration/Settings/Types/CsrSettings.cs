@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public IRsaSettings Rsa => new InheritRsaSettings(Chain.Select(c => c?.Rsa));
     }
 
-    internal class CsrSettings
+    public class CsrSettings
     {
         [SettingsValue(
             Description = "Default CSR plugin.",

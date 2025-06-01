@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? DefaultInstallation => Get(x => x.DefaultInstallation);
     }
 
-    internal class InstallationSettings
+    public class InstallationSettings
     {
         [SettingsValue(
             Description = "Default installation plugin(s).",

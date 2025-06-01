@@ -37,7 +37,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Store
         public bool UseNextGenerationCryptoApi => Get(x => x.UseNextGenerationCryptoApi) ?? false;
     }
 
-    internal class CertificateStoreSettings
+    public class CertificateStoreSettings
     {
         [SettingsValue(
             Description = "The name of the certificate store to save the certificates in.", 

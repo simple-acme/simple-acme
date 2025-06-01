@@ -75,7 +75,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public bool? VersionCheck => Get(x => x.VersionCheck) ?? false;
     }
 
-    internal class ClientSettings
+    public class ClientSettings
     {
         [SettingsValue(
             Default = "simple-acme", 

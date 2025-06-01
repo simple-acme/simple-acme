@@ -93,7 +93,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? SmtpUser => Get(x => x.SmtpUser);
     }
 
-    internal class NotificationSettings
+    public class NotificationSettings
     {
         [SettingsValue(
             SubType = "host", 

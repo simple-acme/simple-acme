@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Configuration.Settings
     /// <summary>
     /// All settings
     /// </summary>
-    internal class Settings
+    public class Settings
     {
         public ClientSettings? Client { get; set; }
         public UiSettings? UI { get; set; }

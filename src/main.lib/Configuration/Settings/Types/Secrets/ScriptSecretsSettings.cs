@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Secrets
         public string? GetArguments => Get(x => x.GetArguments);
     }
 
-    internal class ScriptSecretsSettings
+    public class ScriptSecretsSettings
     {
         [SettingsValue(
             SubType = "path",

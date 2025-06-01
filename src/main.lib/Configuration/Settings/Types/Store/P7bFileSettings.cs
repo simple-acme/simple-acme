@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Store
         public string? DefaultPath => Get(x => x.DefaultPath);
     }
 
-    internal class P7bFileSettings
+    public class P7bFileSettings
     {
         [SettingsValue(
             SubType = "path",

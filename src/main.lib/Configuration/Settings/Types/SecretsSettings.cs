@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public IScriptSecretsSettings Script => new InheritScriptSecretsSettings(Chain.Select(c => c?.Script));
     }
 
-    internal class SecretsSettings
+    public class SecretsSettings
     {
         public JsonSettings? Json { get; set; }
         public ScriptSecretsSettings? Script { get; set; }

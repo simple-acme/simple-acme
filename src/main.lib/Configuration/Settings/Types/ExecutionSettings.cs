@@ -24,7 +24,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? DefaultPreExecutionScript => Get(x => x.DefaultPreExecutionScript);
     }
 
-    internal class ExecutionSettings
+    public class ExecutionSettings
     {
         [SettingsValue(
             SubType = "path",

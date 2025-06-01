@@ -1,10 +1,13 @@
-﻿using PKISharp.WACS.Configuration.Settings.Types;
+﻿using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Configuration.Settings.Types;
 using System;
 
 namespace PKISharp.WACS.Services
 {
     public interface ISettings
-    { 
+    {
+        ISettings Merge(Settings settings);
+
         IUiSettings UI { get; }
         IAcmeSettings Acme { get; }
         IExecutionSettings Execution { get; }

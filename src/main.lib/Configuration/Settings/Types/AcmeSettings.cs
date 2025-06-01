@@ -93,7 +93,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public bool ValidateServerCertificate => Get(x => x.ValidateServerCertificate) ?? true;
     }
 
-    internal class AcmeSettings
+    public class AcmeSettings
     {
         [SettingsValue(
             Default = "https://acme-v02.api.letsencrypt.org/",

@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
          public bool FriendlyNameDateTimeStamp => Get(x => x.FriendlyNameDateTimeStamp) ?? true;
     }
 
-    internal class SecuritySettings
+    public class SecuritySettings
     {
         [SettingsValue(
             Default = "true",

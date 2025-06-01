@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? DefaultSource => Get(x => x.DefaultSource);
     }
 
-    internal class SourceSettings
+    public class SourceSettings
     {
         [SettingsValue(
             Description = "Default source plugin. This only affects the menu in the UI.",

@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
         public bool UseGnuTls => Get(x => x.UseGnuTls) ?? false;
     }
 
-    internal class FtpSettings
+    public class FtpSettings
     {
         [SettingsValue(
             Default = "false",

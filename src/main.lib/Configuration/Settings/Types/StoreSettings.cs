@@ -43,7 +43,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public IPfxFileSettings PfxFile => new InheritPfxFileSettings(Chain.Select(c => c?.PfxFile));
     }
 
-    internal class StoreSettings
+    public class StoreSettings
     {
         [SettingsValue(
             Description = "Default store plugin(s)", 

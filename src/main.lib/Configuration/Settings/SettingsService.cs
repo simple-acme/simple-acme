@@ -119,9 +119,7 @@ namespace PKISharp.WACS.Configuration.Settings
             {
                 try
                 {
-                    var localSettings = new InheritSettings([Settings.Load(settings), .. _settings.Settings]);
-                    localSettings.BaseUri = _settings.BaseUri;
-                    _settings = localSettings;
+                    _settings = _settings.MergeTyped(Settings.Load(settings));
                     return true;
                 }
                 catch (Exception ex)

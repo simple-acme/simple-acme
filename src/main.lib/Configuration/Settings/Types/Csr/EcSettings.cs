@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Csr
         public string SignatureAlgorithm => Get(x => x.SignatureAlgorithm) ?? "SHA512withECDSA";
     }
 
-    internal class EcSettings
+    public class EcSettings
     {
         [SettingsValue(
             Default = "secp384r1",

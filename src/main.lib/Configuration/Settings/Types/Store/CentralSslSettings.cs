@@ -37,7 +37,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Store
         public string? DefaultProtectionMode => Get(x => x.DefaultProtectionMode);
     }
 
-    internal class CentralSslSettings
+    public class CentralSslSettings
     {
         [SettingsValue(
             SubType = "path", 

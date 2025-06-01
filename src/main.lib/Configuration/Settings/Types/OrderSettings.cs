@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int? DefaultValidDays => Get(x => x.DefaultValidDays);
     }
 
-    internal class OrderSettings
+    public class OrderSettings
     {
         [SettingsValue(Description = "Default order plugin.", NullBehaviour = "equivalent to <code>\"single\"</code>")]
         public string? DefaultOrder { get; set; }

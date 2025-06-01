@@ -100,6 +100,12 @@ namespace PKISharp.WACS.Services
             //log.Verbose("Autofac: creating {name} scope with parent {tag}", nameof(Execution), main.Tag);
             var ret = main.BeginLifetimeScope(nameof(Execution), builder =>
             {
+                if (renewal.Settings != null)
+                {
+                    var currentSettings = main.Resolve<ISettings>();
+                    var renewalSettings = currentSettings.Merge(renewal.Settings);
+                    builder.Register(c => renewalSettings).As<ISettings>().SingleInstance();
+                }
                 builder.Register(c => runLevel).As<RunLevel>();
                 builder.RegisterType<FindPrivateKey>().SingleInstance();
                 builder.RegisterType<OrderProcessor>().SingleInstance();

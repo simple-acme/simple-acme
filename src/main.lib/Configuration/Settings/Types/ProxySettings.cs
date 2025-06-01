@@ -31,7 +31,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? Username => Get(x => x.UserName);
     }
 
-    internal class ProxySettings
+    public class ProxySettings
     {
         [SettingsValue(
             SubType = "uri",

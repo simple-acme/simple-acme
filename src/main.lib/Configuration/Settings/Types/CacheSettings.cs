@@ -72,7 +72,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int ReuseDays => Get(x => x.ReuseDays) ?? 1;
     }
 
-    internal class CacheSettings
+    public class CacheSettings
     {
         [SettingsValue(SubType = "path",
             NullBehaviour = "defaults to <code>{Client.ConfigurationPath}\\Certificates</code>",

@@ -110,7 +110,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int PreValidateDnsRetryInterval => Get(x => x.PreValidateDnsRetryInterval) ?? 30;
     }
 
-    internal class ValidationSettings
+    public class ValidationSettings
     {
         [SettingsValue(
             Description = "Default validation plugin.",

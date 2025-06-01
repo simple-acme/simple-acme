@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int Timeout => Get(x => x.Timeout) ?? 600;
     }
 
-    internal class ScriptSettings
+    public class ScriptSettings
     {
         [SettingsValue(
             Default = "600",

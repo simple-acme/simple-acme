@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Csr
         public string SignatureAlgorithm => Get(x => x.SignatureAlgorithm) ?? "SHA512withRSA";
     }
 
-    internal class RsaSettings
+    public class RsaSettings
     {
         [SettingsValue(
             Default = "3072",

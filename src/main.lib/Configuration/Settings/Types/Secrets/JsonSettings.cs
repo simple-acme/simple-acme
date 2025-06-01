@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Secrets
         public string? FilePath => Get(x => x.FilePath);
     }
 
-    internal class JsonSettings 
+    public class JsonSettings 
     {
         [SettingsValue(
             SubType = "path",
