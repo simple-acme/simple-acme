@@ -3,6 +3,7 @@ using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Plugins;
 using PKISharp.WACS.Plugins.Base.Capabilities;
+using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +17,7 @@ namespace PKISharp.WACS.Services
     internal partial class HelpService(
         ILogService log,
         IPluginService plugins,
-        ISettings settings, 
+        ISettings settings,
         ArgumentsParser parser)
     {
         /// <summary>
@@ -33,7 +34,8 @@ namespace PKISharp.WACS.Services
         /// Map arguments to plugins
         /// </summary>
         /// <returns></returns>
-        internal IEnumerable<Plugin> DefaultTypeValidationPlugins() {
+        internal IEnumerable<Plugin> DefaultTypeValidationPlugins()
+        {
             var defaultType = settings.Validation.DefaultValidationMode;
             return plugins.
                 GetPlugins(Steps.Validation).
@@ -378,10 +380,10 @@ namespace PKISharp.WACS.Services
                 }
                 x.AppendJoin("", Enumerable.Repeat("  ", level));
                 x.AppendLine($"{member.Name}:");
-                if (member.PropertyType.IsInNamespace("PKISharp"))
+                if (member.PropertyType.IsInNamespace("PKISharp") && member.PropertyType != typeof(ProtectedString))
                 {
                     GenerateTypeYaml(member.PropertyType, level + 1, x);
-                } 
+                }
                 else
                 {
                     var type = member.PropertyType;
@@ -420,6 +422,11 @@ namespace PKISharp.WACS.Services
                     {
                         showType = "string";
                         subType = "time";
+                    }
+                    else if (type == typeof(ProtectedString))
+                    {
+                        showType = "string";
+                        subType = "secret";
                     }
                     else
                     {
@@ -539,7 +546,7 @@ namespace PKISharp.WACS.Services
                         x.AppendLine($"{member.Name.ToLower()}:");
                     }
                     GenerateSettingsYamlForType2(member.PropertyType, $"{prefix}.{member.Name}", x);
-                } 
+                }
                 else
                 {
                     x.AppendLine($"  - {prefix}.{member.Name}");
@@ -554,7 +561,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         internal static string? EscapeConsole(string? input)
         {
-            if (input == null) { return null; };
+            if (input == null) { return null; }
             var replace = "$1";
             if (InputService.SupportsVT100())
             {
