@@ -1,6 +1,7 @@
 ﻿using ACMESharp.Protocol;
 using ACMESharp.Protocol.Resources;
 using PKISharp.WACS.Configuration.Arguments;
+using PKISharp.WACS.Context;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Services;
@@ -34,13 +35,14 @@ namespace PKISharp.WACS.Clients.Acme
         /// <param name="renewal"></param>
         /// <param name="target"></param>
         /// <returns></returns>
-        private static string CacheKey(Order order, string accountId)
+        private static string CacheKey(Order order, OrderParameters orderParameters, string accountId)
         {
             // Check if we can reuse a cached order based on currently
             // active set of parameters and shape of 
             // the target.
             var cacheKeyBuilder = new StringBuilder();
             cacheKeyBuilder.Append(accountId);
+            cacheKeyBuilder.Append(orderParameters.Profile);
             cacheKeyBuilder.Append(order.Target.CommonName);
             cacheKeyBuilder.Append(string.Join(',', order.Target.GetIdentifiers(true).OrderBy(x => x).Select(x => x.Value.ToLower())));
             _ = order.Target.UserCsrBytes != null ?
@@ -61,7 +63,10 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         public async Task<AcmeOrderDetails?> GetOrCreate(Order order, AcmeClient client, ICertificateInfo? replaces, RunLevel runLevel)
         {
-            var cacheKey = CacheKey(order, client.Account.Details.Kid);
+            var orderParameters = CreateParameters(client);
+            orderParameters.Replaces = replaces;
+
+            var cacheKey = CacheKey(order, orderParameters, client.Account.Details.Kid);
             if (settings.Cache.ReuseDays > 0)
             {
                 // Above conditional not only prevents us from reading a cached
@@ -78,10 +83,9 @@ namespace PKISharp.WACS.Clients.Acme
                     var keyFile = new FileInfo(order.KeyPath);
                     if (keyFile.Exists)
                     {
-                        log.Warning("Using cache. To force a new order within {days} days, " +
-                              "run with --{switch}. Beware that you might run into rate limits.",
-                              settings.Cache.ReuseDays,
-                              nameof(MainArguments.NoCache).ToLower());
+                        log.Warning("Using cache. To force a new order within {days} days, run with --{switch}. Beware that you might run into rate limits.", 
+                            settings.Cache.ReuseDays, 
+                            nameof(MainArguments.NoCache).ToLower());
                         return orderDetails;
                     }
                     else
@@ -90,7 +94,57 @@ namespace PKISharp.WACS.Clients.Acme
                     }
                 }
             }
-            return await CreateOrder(cacheKey, client, replaces, order.Target);
+            return await CreateOrder(cacheKey, client, orderParameters, order.Target);
+        }
+
+        /// <summary>
+        /// Create order parameters object to select order specific settings
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="replaces"></param>
+        /// <returns></returns>
+        private OrderParameters CreateParameters(AcmeClient client)
+        {
+            var orderParameters = new OrderParameters();
+            if (settings.Order.DefaultValidDays > 0)
+            {
+                // Determine notAfter value (unsupported by Let's
+                // Encrypt at this time, but should work at Sectigo
+                // and possibly others
+
+                // Certificates use UTC 
+                var utcNow = DateTime.UtcNow;
+
+                // We don't want milliseconds/ticks
+                var nowRound = new DateTime(utcNow.Year, utcNow.Month, utcNow.Day, utcNow.Hour, 0, 0, utcNow.Kind);
+
+                // Compute date to ask for
+                orderParameters.NotAfter = nowRound.AddDays(settings.Order.DefaultValidDays.Value);
+            }
+
+            // Choose certificate profile to use
+            var profile = settings.Acme.CertificateProfile;
+            if (!string.IsNullOrWhiteSpace(profile))
+            {
+                if (!(client.Directory.Meta?.Profiles?.ContainsKey(profile) ?? false))
+                {
+                    if (client.Directory.Meta?.Profiles?.Count > 0)
+                    {
+                        log.Warning("Profile {profile} is not supported by the server (supported values: {profiles})", profile, client.Directory.Meta.Profiles.Keys);
+                    }
+                    else
+                    {
+                        log.Warning("Certificate profiles are not supported by the server, profile {profile} not applied", profile);
+                    }
+                }
+                else
+                {
+                    orderParameters.Profile = profile;
+                    log.Debug("Selected certificate profile {profile}", profile);
+                }
+            }
+
+            return orderParameters;
         }
 
         /// <summary>
@@ -209,34 +263,22 @@ namespace PKISharp.WACS.Clients.Acme
         /// <param name="privateKeyFile"></param>
         /// <param name="target"></param>
         /// <returns></returns>
-        private async Task<AcmeOrderDetails?> CreateOrder(string cacheKey, AcmeClient client, ICertificateInfo? previous, Target target)
+        private async Task<AcmeOrderDetails?> CreateOrder(string cacheKey, AcmeClient client, OrderParameters orderParameters, Target target)
         {
             try
             {
                 // Determine final shape of the certificate
                 var identifiers = target.GetIdentifiers(false);
 
-                // Determine notAfter value (unsupported by Let's
-                // Encrypt at this time, but should work at Sectigo
-                // and possibly others
-                var validDays = settings.Order.DefaultValidDays;
-                // Certificates use UTC 
-                var now = DateTime.UtcNow; 
-                // We don't want milliseconds/ticks
-                var nowRound = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, now.Kind);
-                var notAfter = validDays != null ?
-                    nowRound.AddDays(validDays.Value) : 
-                    (DateTime?)null;
-
                 // Create the order
                 var order = default(AcmeOrderDetails?);
                 try
                 {
-                    order = await client.CreateOrder(identifiers, previous, notAfter);
+                    order = await client.CreateOrder(identifiers, orderParameters);
                 }
                 catch (AcmeProtocolException ex)
                 {
-                    if (previous != null)
+                    if (orderParameters.Profile != null)
                     {
                         if (ex.ProblemType == ProblemType.AlreadyReplaced || 
                             ex.ProblemType == ProblemType.Conflict)
@@ -248,7 +290,8 @@ namespace PKISharp.WACS.Clients.Acme
                             log.Warning(ex, "This order failed, possibly due to the server not properly processing information about the previous certificate.");
                         }
                         log.Information("Retrying without providing the server with replacement info...");
-                        order = await client.CreateOrder(identifiers, null, notAfter);
+                        orderParameters.Replaces = null;
+                        order = await client.CreateOrder(identifiers, orderParameters);
                     }
                     else
                     {

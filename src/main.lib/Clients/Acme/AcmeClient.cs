@@ -4,6 +4,7 @@ using ACMESharp.Crypto;
 using ACMESharp.Protocol;
 using ACMESharp.Protocol.Resources;
 using Org.BouncyCastle.Asn1.X509;
+using PKISharp.WACS.Context;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Services;
 using System;
@@ -44,6 +45,11 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         public Account Account { get; private set; }
 
+        /// <summary>
+        /// Service directory for this client
+        /// </summary>
+        public ServiceDirectory Directory => _client.Directory;
+
         public AcmeClient(
             HttpClient httpClient,
             ILogService log,
@@ -70,12 +76,14 @@ namespace PKISharp.WACS.Clients.Acme
         /// <param name="identifiers"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal async Task<AcmeOrderDetails> CreateOrder(IEnumerable<Identifier> identifiers, ICertificateInfo? previous, DateTime? notAfter)
+        internal async Task<AcmeOrderDetails> CreateOrder(IEnumerable<Identifier> identifiers, OrderParameters parameters)
         {
-            _log.Verbose("Creating order for identifiers: {identifiers} (notAfter: {notAfter}, previous: {previous})",
+            _log.Verbose("Creating order for identifiers: {identifiers} (notAfter: {notAfter}, previous: {previous}, profile: {profile})",
                 identifiers.Select(x => x.Value),
-                notAfter,
-                previous?.Thumbprint ?? "[none]");
+                parameters.NotAfter,
+                parameters.Replaces?.Thumbprint ?? "[none]",
+                parameters.Profile ?? "[default]");
+
             var acmeIdentifiers = identifiers.Select(i => new AcmeIdentifier()
             {
                 Type = i.Type switch
@@ -89,11 +97,11 @@ namespace PKISharp.WACS.Clients.Acme
             // Only include the "replaces" field on the order
             // when the server indicates that it supports ARI.
             var replaces = default(string?);
-            if (_client.Directory.RenewalInfo != null && previous != null)
+            if (_client.Directory.RenewalInfo != null && parameters.Replaces != null)
             {
-                replaces = CertificateId(previous);
+                replaces = CertificateId(parameters.Replaces);
             }
-            return await _client.Retry(() => _client.CreateOrderAsync(acmeIdentifiers, replaces, notAfter: notAfter), _log);
+            return await _client.Retry(() => _client.CreateOrderAsync(acmeIdentifiers, replaces, parameters.NotAfter, profile: parameters.Profile), _log);
         }
 
         /// <summary>
