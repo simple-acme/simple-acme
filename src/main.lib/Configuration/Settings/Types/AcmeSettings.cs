@@ -40,6 +40,12 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         string? PreferredIssuer { get; }
 
         /// <summary>
+        /// Preferred ACME profile to use for the order.
+        /// https://letsencrypt.org/2025/01/09/acme-profiles/
+        /// </summary>
+        string? CertificateProfile { get; }
+
+        /// <summary>
         /// Location of the public suffix list
         /// </summary>
         Uri? PublicSuffixListUri { get; }
@@ -71,6 +77,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int MaxDomains => Get(x => x.MaxDomains) ?? 100;
         public bool PostAsGet => Get(x => x.PostAsGet) ?? true;
         public string? PreferredIssuer => Get(x => x.PreferredIssuer);
+        public string? CertificateProfile => Get(x => x.PreferredProfile);
         public Uri? PublicSuffixListUri
         {
             get
@@ -134,6 +141,10 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             Description = "In some exceptional cases an ACME service will offer multiple certificates signed by different root authorities. This setting can be used to give a preference. I.e. <code>\"ISRG Root X1\"</code> can be used to prefer Let's Encrypt self-signed chain over the backwards compatible <code>\"DST Root CA X3\"</code>.",
             Warning = "Note that this only really works for Apache and other software that uses <code>.pem</code> files to store certificates. Windows has its own opinions about how chains should be built that are difficult to influence. For maximum compatibility with legacy clients we recommend using an alternative provider like <a href=\"https://zerossl.com\">ZeroSSL</a>.")]
         public string? PreferredIssuer { get; set; }
+
+        [SettingsValue(
+            Description = "Choose which <a href=\"https://letsencrypt.org/2025/01/09/acme-profiles/\">Certificate Profile</a> should be chosen if the server offers more than one of them.")]
+        public string? PreferredProfile { get; set; }
 
         [SettingsValue(
             Default = "100",

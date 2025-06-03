@@ -137,9 +137,7 @@ namespace PKISharp.WACS.Services
                         validationCapability = typeof(TlsValidationCapability);
                         break;
                 }
-                plugins = plugins.
-                    Where(x => x.Capability.IsAssignableTo(validationCapability)).
-                    ToList();
+                plugins = [.. plugins.Where(x => x.Capability.IsAssignableTo(validationCapability) || x.Capability.IsAssignableTo(typeof(AnyValidationCapability)))];
             }
             return plugins.FirstOrDefault();
         }

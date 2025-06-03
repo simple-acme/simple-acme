@@ -23,6 +23,7 @@
     "RetryCount": 15,
     "RetryInterval": 5,
     "PreferredIssuer": null,
+    "CertificateProfile": null,
     "MaxDomains": 100,
     "PublicSuffixListUri": "https://publicsuffix.org/list/public_suffix_list.dat"
   },
