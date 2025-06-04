@@ -199,7 +199,7 @@ namespace PKISharp.WACS.Services
             // legacy format.
             if (!Enum.TryParse<PfxProtectionMode>(settings.Cache.ProtectionMode, true, out var protectionMode))
             {
-                protectionMode = PfxProtectionMode.Default;
+                protectionMode = PfxProtectionMode.Legacy;
             }
 
             var pfxWrapper = PfxService.GetPfx(protectionMode);
