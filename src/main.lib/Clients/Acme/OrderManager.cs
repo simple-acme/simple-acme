@@ -130,11 +130,11 @@ namespace PKISharp.WACS.Clients.Acme
                 {
                     if (client.Directory.Meta?.Profiles?.Count > 0)
                     {
-                        log.Warning("Profile {profile} is not supported by the server (supported values: {profiles})", profile, client.Directory.Meta.Profiles.Keys);
+                        log.Error("Certificate profile {profile} not supported by the server (valid values: {profiles})", profile, client.Directory.Meta.Profiles.Keys);
                     }
                     else
                     {
-                        log.Warning("Certificate profiles are not supported by the server, profile {profile} not applied", profile);
+                        log.Error("Certificate profile {profile} not applied, profiles are not supported by the server", profile);
                     }
                 }
                 else

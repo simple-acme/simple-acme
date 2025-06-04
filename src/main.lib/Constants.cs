@@ -34,6 +34,7 @@ namespace PKISharp.WACS
         Store = 16,
         Installation = 32,
         Account = 64,
+        Profile = 128,
         All = int.MaxValue
     }
 

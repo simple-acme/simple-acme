@@ -77,7 +77,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int MaxDomains => Get(x => x.MaxDomains) ?? 100;
         public bool PostAsGet => Get(x => x.PostAsGet) ?? true;
         public string? PreferredIssuer => Get(x => x.PreferredIssuer);
-        public string? CertificateProfile => Get(x => x.PreferredProfile);
+        public string? CertificateProfile => Get(x => x.CertificateProfile);
         public Uri? PublicSuffixListUri
         {
             get
@@ -144,7 +144,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
         [SettingsValue(
             Description = "Choose which <a href=\"https://letsencrypt.org/2025/01/09/acme-profiles/\">Certificate Profile</a> should be chosen if the server offers more than one of them.")]
-        public string? PreferredProfile { get; set; }
+        public string? CertificateProfile { get; set; }
 
         [SettingsValue(
             Default = "100",
