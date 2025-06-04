@@ -2,6 +2,8 @@
 using Autofac.Core;
 using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.Configuration.Arguments;
+using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Configuration.Settings.Types;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins;
@@ -25,7 +27,8 @@ namespace PKISharp.WACS
         IPluginService plugin, IAutofacBuilder autofacBuilder,
         IValidationOptionsService validationOptions, AccountManager accountManager,
         NotificationService notification, DueDateStaticService dueDateService,
-        ExceptionHandler exceptionHandler, RenewalExecutor renewalExecutor)
+        ExceptionHandler exceptionHandler, RenewalExecutor renewalExecutor,
+        AcmeClientManager acmeClientManager, ISettings settings)
     {
         private readonly IValidationOptionsService _validation = validationOptions;
 
@@ -167,7 +170,7 @@ namespace PKISharp.WACS
                         {
                             log.Warning("Global validation {name} disabled: {state}", pluginFrontend.Meta.Name, state.Reason);
                         }
-                    } 
+                    }
                     else
                     {
                         log.Verbose("Global validation option not found for {identifier}", identifier.Value);
@@ -191,9 +194,9 @@ namespace PKISharp.WACS
                         $"identifiers found in the source are covered by usable global validation options. " +
                         $"Any validation settings configured for the renewal will only apply to the " +
                         $"remainder.");
-                    await input.WritePagedList(allIdentifiers.Select(identifier => 
+                    await input.WritePagedList(allIdentifiers.Select(identifier =>
                         Choice.Create(
-                            identifier, 
+                            identifier,
                             $"{identifier.Value}: {mapping[identifier]?.Meta.Name ?? "-"}{(mapping[identifier]?.Capability.State.Disabled ?? false ? " (disabled)" : "")}")));
                     input.CreateSpace();
                 }
@@ -209,7 +212,7 @@ namespace PKISharp.WACS
                     var filteredTarget = new Target(withoutGlobalOptions);
                     var filteredScope = autofacBuilder.Target(targetPluginScope, filteredTarget);
                     validationResolver = CreateResolver(filteredScope, runLevel);
-                } 
+                }
                 else if (withoutGlobalOptions.Count == 0)
                 {
                     // If all source identifiers are already covered by the global
@@ -241,15 +244,15 @@ namespace PKISharp.WACS
                     return;
                 }
             }
-            
+
             // Choose store plugin(s)
             if (steps.HasFlag(Steps.Store))
             {
-                var store = await SetupStore(resolver, runLevel); 
+                var store = await SetupStore(resolver, runLevel);
                 if (store != null)
                 {
                     tempRenewal.StorePluginOptions = store;
-                } 
+                }
                 else
                 {
                     return;
@@ -276,6 +279,22 @@ namespace PKISharp.WACS
                 tempRenewal.Account = await SetupAccount(runLevel);
             }
 
+            // Setup certificate profile
+            if (steps.HasFlag(Steps.Profile))
+            {
+                try
+                {
+                    var profile = await SetupCertificateProfile(runLevel);
+                    tempRenewal.Settings ??= new Settings();
+                    tempRenewal.Settings.Acme ??= new AcmeSettings();
+                    tempRenewal.Settings.Acme.CertificateProfile = profile;
+                }
+                catch
+                {
+                    return;
+                }
+            }
+
             // Try to run for the first time
             var renewal = await CreateRenewal(tempRenewal, runLevel);
             var retry = true;
@@ -283,6 +302,57 @@ namespace PKISharp.WACS
             {
                 retry = await FirstRun(renewal, runLevel);
             }
+        }
+
+        /// <summary>
+        /// Choose certificate profile
+        /// </summary>
+        /// <param name="runLevel"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private async Task<string?> SetupCertificateProfile(RunLevel runLevel)
+        {
+            var meta = await acmeClientManager.GetMetaData();
+            if (meta?.Profiles != null && runLevel.HasFlag(RunLevel.Advanced | RunLevel.Interactive))
+            {
+                var clone = meta.Profiles.ToList();
+                clone.Insert(0, new KeyValuePair<string, string>("", "Unspecified (fallback to default in setting)"));
+                var defaultProfile = mainArgs.Profile ?? settings.Acme.CertificateProfile ?? "";
+                var chosen = await input.ChooseRequired(
+                    "Certificate profile to use",
+                    clone,
+                    x => new Choice<string>(x.Key)
+                    {
+                        Description = $"{x.Key}{(x.Key == "" ? "" : ": ")}{x.Value}",
+                        Default = x.Key == defaultProfile
+                    });
+                if (string.IsNullOrWhiteSpace(chosen))
+                {
+                    return null;
+                }
+                return chosen;
+            }
+            else if (runLevel.HasFlag(RunLevel.Unattended))
+            {
+                if (mainArgs.Profile == null)
+                {
+                    return null;
+                }
+                if (meta?.Profiles?.ContainsKey(mainArgs.Profile) ?? false)
+                {
+                    return mainArgs.Profile;
+                }
+                if (meta?.Profiles?.Count == null)
+                {
+                    log.Error("Certificate profiles not available on this server", mainArgs.Profile);
+                } 
+                else
+                {
+                    log.Error("Certificate profile {profile} not available (valid: {profiles})", mainArgs.Profile, meta?.Profiles?.Keys);
+                }
+                throw new Exception();
+            }
+            return null;
         }
 
         /// <summary>

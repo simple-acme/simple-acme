@@ -45,7 +45,7 @@ namespace PKISharp.WACS
         IAutofacBuilder autofacBuilder, ExceptionHandler exceptionHandler,
         RenewalCreator renewalCreator, RenewalExecutor renewalExecutor,
         AccountManager accountManager, RenewalDescriber renewalDescriber,
-        IRenewalRevoker renewalRevoker)
+        IRenewalRevoker renewalRevoker, AcmeClientManager acmeClient)
     {
 
         /// <summary>
@@ -573,6 +573,7 @@ namespace PKISharp.WACS
         /// </summary>
         private async Task EditRenewal(Renewal renewal)
         {
+            var certProfileCount = (await acmeClient.GetMetaData())?.Profiles?.Keys.Count;
             var options = new List<Choice<Steps>>
             {
                 Choice.Create(Steps.All, "All"),
@@ -583,6 +584,10 @@ namespace PKISharp.WACS
                 Choice.Create(Steps.Store, "Store"),
                 Choice.Create(Steps.Installation, "Installation"),
                 Choice.Create(Steps.Account, "Account", state: accountManager.ListAccounts().Count() > 1 ? State.EnabledState() : State.DisabledState("Only one account is registered.")),
+                Choice.Create(Steps.Profile, "Certificate profile", state: 
+                    certProfileCount > 1 ? State.EnabledState() : 
+                    certProfileCount == 0 ? State.DisabledState("Certificate profiles not supported.") : 
+                    State.DisabledState("Only one certificate profile available.")),
                 Choice.Create(Steps.None, "Cancel")
             };
             var chosen = await input.ChooseFromMenu("Which step do you want to edit?", options);

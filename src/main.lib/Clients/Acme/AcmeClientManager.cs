@@ -73,7 +73,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// to setup new accounts using anonymous context (or EAB)
         /// </summary>
         /// <returns></returns>
-        internal async Task<AcmeProtocolClient> CreateAnonymousClient()
+        private async Task<AcmeProtocolClient> CreateAnonymousClient()
         {
             var httpClient = await _proxyService.GetHttpClient();
             httpClient.BaseAddress = _settings.BaseUri;
@@ -81,6 +81,17 @@ namespace PKISharp.WACS.Clients.Acme
             var client = new AcmeProtocolClient(httpClient, _acmeLogger, usePostAsGet: _settings.Acme.PostAsGet);
             client.Directory = await EnsureServiceDirectory(client);
             return client;
+        }
+
+        /// <summary>
+        /// Get server metadata
+        /// </summary>
+        /// <returns></returns>
+        internal async Task<DirectoryMeta?> GetMetaData()
+        {
+            // Create anonymous client if we need it
+            _anonymousClient ??= await CreateAnonymousClient();
+            return _anonymousClient.Directory.Meta;
         }
 
         /// <summary>

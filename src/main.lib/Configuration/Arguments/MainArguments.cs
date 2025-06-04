@@ -110,6 +110,9 @@ namespace PKISharp.WACS.Configuration.Arguments
         [CommandLine(Description = "Specify which installation plugins to use (if any). This may be a comma-separated list.")]
         public string? Installation { get; set; }
 
+        [CommandLine(Description = "Specify which certificate profile to use.")]
+        public string? Profile { get; set; }
+
         // Vault manipulation
 
         [CommandLine(Description = "Store a new value in the secret vault, or overwrite an existing one.")]
