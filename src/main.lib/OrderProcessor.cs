@@ -323,9 +323,9 @@ namespace PKISharp.WACS
 
             // Place the order
             var orderManager = context.OrderScope.Resolve<OrderManager>();
-            context.Order.KeyPath = 
-                context.Order.Renewal.CsrPluginOptions?.ReusePrivateKey == true ?
-                cacheService.Key(context.Order).FullName : null;
+            context.Order.KeyPath = context.Order.Renewal.CsrPluginOptions?.ReusePrivateKey == true
+                ? cacheService.Key(context.Order).FullName
+                : null;
             context.Order.Details = await orderManager.GetOrCreate(context.Order, clientManager, context.PreviousCertificate, context.RunLevel);
 
             // Sanity checks
