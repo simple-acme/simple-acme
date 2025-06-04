@@ -197,9 +197,16 @@ namespace PKISharp.WACS.Services
             // the cache file is exposed to users in installation
             // scripts and therefore people might depend on the older
             // legacy format.
-            if (!Enum.TryParse<PfxProtectionMode>(settings.Cache.ProtectionMode, true, out var protectionMode))
+
+            // Fallback to Legacy if null/emtpy value is provided
+            // (backwards compatibility)
+            var protectionMode = PfxProtectionMode.Legacy;
+
+            if (!string.IsNullOrWhiteSpace(settings.Cache.ProtectionMode) && !Enum.TryParse(settings.Cache.ProtectionMode, true, out protectionMode))
             {
-                protectionMode = PfxProtectionMode.Legacy;
+                // Fallback to Default when an invalid, non-emtpy 
+                // value is provided.
+                protectionMode = PfxProtectionMode.Default;
             }
 
             var pfxWrapper = PfxService.GetPfx(protectionMode);
