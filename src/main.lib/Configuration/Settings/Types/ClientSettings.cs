@@ -87,7 +87,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         [SettingsValue(
             Default = "null",
             SubType = "path",
-            NullBehaviour = "resolves to <code>%programdata%\\{Client.ClientName}\\{ACME.DefaultBaseUri}</code>",
+            NullBehaviour = "resolves to <code>%programdata%\\{Client.ClientName}\\{Acme.DefaultBaseUri}</code>",
             Description = "Change the location where the program stores its (temporary) files.")]
         public string? ConfigurationPath { get; set; }
 

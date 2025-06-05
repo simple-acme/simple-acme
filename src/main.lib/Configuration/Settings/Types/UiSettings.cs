@@ -41,9 +41,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     {
         [SettingsValue(
             Default = "yyyy/M/d H:mm:ss",
-            Description = "A string that is used to format the date of the certificates friendly name. " +
+            Description = "A string that is used to format dates in the user interface. " +
             "<a href=\"https://learn.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings\">Documentation</a> " +
-            "for possibilities is available from Microsoft.")]
+            "for possibilities is available from Microsoft.",
+            Tip = "A date in this format is also appended to the friendly name of generated certificates. " +
+            "You can disable that using <code>{Security.FriendlyNameDateTimeStamp}</code>.")]
         public string? DateFormat { get; set; }
 
         [SettingsValue(
