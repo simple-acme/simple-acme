@@ -61,7 +61,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         protected override async Task<AmazonRoute53Client> CreateClient(HttpClient httpClient)
         {
             var credential = await GetCredentials();
-            var regionName = options.Region ?? DefaultRegion;
+            var regionName = string.IsNullOrWhiteSpace(options.Region) ? DefaultRegion : options.Region;
             var region = RegionEndpoint.GetBySystemName(regionName); 
             _log.Information("Using AWS region {region}", region.DisplayName);
             var config = new AmazonRoute53Config() { RegionEndpoint = region };
