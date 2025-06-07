@@ -163,16 +163,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                     _log.Warning(ex, "[{identifier}] Error deleting record {value}", record.Context.Label, record.Value);
                 }
             }
-            try
-            {
-                await Finalize();
-                _recordsCreated.Clear();
-                _log.Debug("DNS record cleanup finalized");
-            }
-            catch (Exception ex)
-            {
-                _log.Warning(ex, "Error finalizing cleanup: {Message}");
-            }
+            await Finalize();
+            _recordsCreated.Clear();
+            _log.Debug("DNS records cleaned up");
         }
 
         /// <summary>

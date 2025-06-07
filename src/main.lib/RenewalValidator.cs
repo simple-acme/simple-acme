@@ -642,11 +642,11 @@ namespace PKISharp.WACS
             {
                 log.Verbose("Starting post-validation cleanup");
                 await validationPlugin.CleanUp();
-                log.Verbose("Post-validation cleanup was successful");
+                log.Verbose("Post-validation cleanup complete");
             }
             catch (Exception ex)
             {
-                log.Warning(ex, "An error occured during post-validation cleanup");
+                log.Warning(ex, "An error occurred during post-validation cleanup: {message}", ex.Message);
             }
         }
     }

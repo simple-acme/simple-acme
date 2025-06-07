@@ -14,6 +14,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private ArgumentResult<ProtectedString?> AccessKey => arguments.
             GetProtectedString<Route53Arguments>(a => a.Route53SecretAccessKey);
 
+        private ArgumentResult<string?> Region => arguments.
+            GetString<Route53Arguments>(a => a.Route53Region);
+
         private ArgumentResult<string?> AccessKeyId => arguments.
             GetString<Route53Arguments>(a => a.Route53AccessKeyId);
 
@@ -52,7 +55,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 default:
                     throw new InvalidOperationException();
             }
-            ret.ARNRole = await ArnRole.Interactive(input, "Assume STS role? (provide ARN or leave blank to skip)").GetValue();
+            ret.ARNRole = await ArnRole.Interactive(input, "Assume STS role? (provide ARN or press enter to skip)").GetValue();
+            ret.Region = await Region.Interactive(input, "AWS region to connect to (press enter for default 'us-east-1')").GetValue();
             return ret;
         }
 
@@ -62,7 +66,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 IAMRole = await IamRole.GetValue(),
                 ARNRole = await ArnRole.GetValue(),
-                AccessKeyId = await AccessKeyId.GetValue()
+                AccessKeyId = await AccessKeyId.GetValue(),
+                Region = await Region.GetValue()
             };
             if (options.AccessKeyId != null)
             {
@@ -77,6 +82,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             yield return (ArnRole.Meta, options.ARNRole);
             yield return (AccessKeyId.Meta, options.AccessKeyId);
             yield return (AccessKey.Meta, options.SecretAccessKey);
+            yield return (Region.Meta, options.Region);
         }
 
         [GeneratedRegex("^[A-Za-z0-9+=,.@_-]+$")]

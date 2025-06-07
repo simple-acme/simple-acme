@@ -13,6 +13,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     internal sealed class Route53Options : ValidationPluginOptions
     {
         /// <summary>
+        /// AWS region to use for authentication
+        /// </summary>
+        public string? Region { get; set; }
+
+        /// <summary>
         /// Role on the local machine
         /// </summary>
         public string? IAMRole { get; set; }
