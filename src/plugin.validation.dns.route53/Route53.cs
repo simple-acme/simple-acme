@@ -28,6 +28,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         SecretServiceManager ssm,
         Route53Options options) : DnsValidation<Route53, AmazonRoute53Client>(dnsClient, log, settings, proxy)
     {
+        internal const string DefaultRegion = "us-east-1";
+
         private readonly Dictionary<string, List<ResourceRecordSet>> _pendingZoneUpdates = [];
         public override ParallelOperations Parallelism => ParallelOperations.Answer;
 
@@ -59,7 +61,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         protected override async Task<AmazonRoute53Client> CreateClient(HttpClient httpClient)
         {
             var credential = await GetCredentials();
-            var region = RegionEndpoint.USEast1;
+            var regionName = options.Region ?? DefaultRegion;
+            var region = RegionEndpoint.GetBySystemName(regionName); 
+            _log.Information("Using AWS region {region}", region.DisplayName);
             var config = new AmazonRoute53Config() { RegionEndpoint = region };
             config.SetWebProxy(await _proxy.GetWebProxy());
             return new AmazonRoute53Client(credential, config);

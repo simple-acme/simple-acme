@@ -325,7 +325,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
             catch (Exception ex)
             {
-                log.Error(ex, "Error occured while deleting folder structure");
+                log.Warning(ex, "Error occured while deleting folder structure");
             }
         }
     }

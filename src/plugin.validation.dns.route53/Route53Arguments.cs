@@ -5,6 +5,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     public sealed class Route53Arguments : BaseArguments
     {
+        [CommandLine(Description = "AWS region to use for authentication (default: us-east-1)")]
+        public string? Route53Region { get; set; }
+
         [CommandLine(Description = "AWS IAM role for the current EC2 instance to login. Note that you should provide the IAM name instead of the ARN.")]
         public string? Route53IAMRole { get; set; }
 
