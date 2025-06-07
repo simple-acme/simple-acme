@@ -126,7 +126,7 @@ namespace PKISharp.WACS.Services
             {
                 if (level > 0)
                 {
-                    label = string.Join("", Enumerable.Repeat(" ", (level * 2) + 1)) + $"- {label}";
+                    label = new string(' ', (level * 2) + 1) + $"- {label}";
                 }
                 offset = Math.Max(20, label!.Length + 1);
                 Write(label, ConsoleColor.White);
