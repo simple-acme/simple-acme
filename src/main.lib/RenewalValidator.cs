@@ -646,7 +646,7 @@ namespace PKISharp.WACS
             }
             catch (Exception ex)
             {
-                log.Warning(ex, "An error occured during post-validation cleanup: {message}", ex.Message);
+                log.Warning(ex, "An error occurred during post-validation cleanup: {message}", ex.Message);
             }
         }
     }
