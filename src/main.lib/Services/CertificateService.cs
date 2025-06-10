@@ -236,7 +236,7 @@ namespace PKISharp.WACS.Services
                     var bcCertAlias = bcCertificateEntry.Certificate.SubjectDN.CommonName(true);
                     log.Verbose("Certificate {name} parsed", bcCertAlias);
 
-                    var bcCertificateAlias = startIndex == 0 ?
+                    var bcCertificateAlias = pfx.Count == 0 ?
                         friendlyName :
                         bcCertAlias;
                     pfx.SetCertificateEntry(bcCertificateAlias, bcCertificateEntry);
