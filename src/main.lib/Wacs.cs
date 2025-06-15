@@ -57,6 +57,12 @@ namespace PKISharp.WACS.Host
             {
                 return -1;
             }
+            // Validate command line and ensure main arguments
+            // are loaded, because those influence the BaseUri
+            if (!argumentsParser.Validate())
+            {
+                return -1;
+            }
             if (!versionService.Init())
             {
                 return -1;

@@ -19,12 +19,11 @@ namespace PKISharp.WACS.Configuration.Settings
             _log = log;
             _folderHelpers = new FolderHelpers(log);
 
-            // Validate command line and ensure main arguments
-            // are loaded, because those influence the BaseUri
-            if (!parser.Validate())
+            if (!parser.ValidateMain())
             {
                 return;
             }
+
             _arguments = parser.GetArguments<MainArguments>();
             if (_arguments == null)
             {

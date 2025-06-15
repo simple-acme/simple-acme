@@ -33,7 +33,10 @@ namespace PKISharp.WACS.Services
             _settings = settingsService;
             _log = log;
             _cache = new DirectoryInfo(settingsService.Cache.CachePath);
-            CheckStaleFiles();
+            if (settingsService.Valid)
+            {
+                CheckStaleFiles();
+            }
         }
 
         /// <summary>

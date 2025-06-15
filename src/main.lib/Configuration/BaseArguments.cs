@@ -12,9 +12,11 @@ namespace PKISharp.WACS.Configuration.Arguments
         public virtual string Group => "";
         public virtual bool Active(string[] args) 
         {
+            var lower = args.Select(x => x.ToLower()).ToList();
             foreach (var (meta, _, _) in GetType().CommandLineProperties())
             {
-                if (args.Select(x => x.ToLower()).Contains(meta.ArgumentName.ToLower()))
+                var argumentName = meta.ArgumentName.ToLower();
+                if (lower.Any(x => x == $"--{argumentName}" || x == $"/{argumentName}"))
                 {
                     return true;
                 }
