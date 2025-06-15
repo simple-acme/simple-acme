@@ -20,18 +20,23 @@ namespace PKISharp.WACS.Services
         private readonly List<BasePlugin> _notificationTargets;
         internal readonly ILogService _log;
 
-        public PluginService(ILogService logger, AssemblyService assemblyService, SettingsService settings)
+        public PluginService(ILogService logger, AssemblyService assemblyService, SettingsService? settings = null)
         {
             _log = logger;
             _assemblyService = assemblyService;
             _plugins = [];
-            if (!settings.Current.Valid)
+            if (settings != null)
             {
-                _secretServices = [];
-                _notificationTargets = [];
-                return;
+                // Settings are optional, not provided during unit testing
+                if (!settings.Current.Valid)
+                {
+                    _secretServices = [];
+                    _notificationTargets = [];
+                    return;
+                }
+                assemblyService.LoadFromPath(settings.Current.Client.PluginPath);
             }
-            assemblyService.LoadFromPath(settings.Current.Client.PluginPath);
+
             AddPluginType<ITargetPlugin>(Steps.Source);
             AddPluginType<IValidationPlugin>(Steps.Validation);
             AddPluginType<IOrderPlugin>(Steps.Order);

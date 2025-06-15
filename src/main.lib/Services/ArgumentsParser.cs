@@ -120,7 +120,7 @@ namespace PKISharp.WACS.Configuration
             // Validate the others (main provider is checked earlier)
             var others = Providers.Except([MainProvider]);
             var main = GetArguments<MainArguments>();
-            foreach (var other in Providers)
+            foreach (var other in others)
             {
                 if (!ValidateProvider(other, main))
                 {
