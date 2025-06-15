@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Services
         }
 
         /// <summary>
-        /// Hard-coded list of built-in built-in plugins, these are always loaded
+        /// Hard-coded list of built-in plugins, these are always loaded
         /// and this is done to avoid requiring reflection in the trimmed build
         /// </summary>
         /// <returns></returns>
