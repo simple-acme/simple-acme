@@ -16,7 +16,6 @@ namespace PKISharp.WACS.Host
         IInputService inputService,
         ISettings settingsService,
         HelpService helpService,
-        VersionService versionService,
         ArgumentsParser argumentsParser,
         RenewalCreator renewalCreator,
         DomainParseService domainParseService,
@@ -57,7 +56,13 @@ namespace PKISharp.WACS.Host
             {
                 return -1;
             }
-            if (!versionService.Init())
+            // Validate command line and ensure main arguments
+            // are loaded, because those influence the BaseUri
+            if (!argumentsParser.Validate())
+            {
+                return -1;
+            }
+            if (!VersionService.Valid)
             {
                 return -1;
             }

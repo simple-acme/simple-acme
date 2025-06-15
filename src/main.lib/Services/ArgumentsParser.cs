@@ -9,17 +9,22 @@ namespace PKISharp.WACS.Configuration
 {
     public class ArgumentsParser(ILogService log, AssemblyService assemblyService, string[] args)
     {
+        private int _cacheVersion = -1;
         private IEnumerable<IArgumentsProvider>? _providers;
         private IEnumerable<CommandLineAttribute>? _arguments;
+        private IArgumentsProvider? _mainProvider;
 
-        public IEnumerable<IArgumentsProvider> Providers
+        /// <summary>
+        /// List of all classes that define command line arguments
+        /// </summary>
+        internal IEnumerable<IArgumentsProvider> Providers
         {
             get
             {
-                if (_providers == null)
+                if (_providers == null || _cacheVersion != assemblyService.Count)
                 {
                     var argumentGroups = assemblyService.GetResolvable<IArguments>();
-                    _providers = argumentGroups.Select(x => {
+                    _providers = [.. argumentGroups.Select(x => {
                         var type = typeof(BaseArgumentsProvider<>).MakeGenericType(x.Type);
                         var constr = type.GetConstructor([]) ?? throw new Exception("IArgumentsProvider should have parameterless constructor");
                         try
@@ -38,21 +43,28 @@ namespace PKISharp.WACS.Configuration
                             return null;
                         }
                     }).
-                    OfType<IArgumentsProvider>().
-                    ToList();
+                    OfType<IArgumentsProvider>()];
+
+                    _arguments = [.. _providers.SelectMany(x => x.Configuration)];
+                    _cacheVersion = assemblyService.Count;
                 }
                 return _providers;
             }
         }
 
-        public IEnumerable<CommandLineAttribute> Arguments
+        /// <summary>
+        /// Cached shortcut to main arguments provider
+        /// </summary>
+        private IArgumentsProvider MainProvider
         {
             get
             {
-                _arguments ??= Providers.SelectMany(x => x.Configuration).ToList();
-                return _arguments;
+                _mainProvider ??= Providers.OfType<IArgumentsProvider<MainArguments>>().First();
+                return _mainProvider;
             }
         }
+ 
+        public IEnumerable<CommandLineAttribute> Arguments => _arguments ?? [];
 
         public T? GetArguments<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>() where T : class, new()
         {
@@ -64,6 +76,28 @@ namespace PKISharp.WACS.Configuration
                 }
             }
             throw new InvalidOperationException($"Unable to find class that implements IArgumentsProvider<{typeof(T).Name}>");
+        }
+
+        /// <summary>
+        /// Validate main arguments only
+        /// </summary>
+        /// <returns></returns>
+        internal bool ValidateMain() => ValidateProvider(MainProvider, GetArguments<MainArguments>());
+
+        /// <summary>
+        /// General function to validate an argument set
+        /// </summary>
+        /// <param name="provider"></param>
+        /// <param name="main"></param>
+        /// <returns></returns>
+        private bool ValidateProvider(IArgumentsProvider provider, MainArguments? main)
+        {
+            var opt = provider.GetResult(args);
+            if (opt == null || main == null)
+            {
+                return false;
+            }
+            return provider.Validate(opt, main, args);
         }
 
         /// <summary>
@@ -83,33 +117,15 @@ namespace PKISharp.WACS.Configuration
                 }
             }
 
-            // Run indivual result validations
+            // Validate the others (main provider is checked earlier)
+            var others = Providers.Except([MainProvider]);
             var main = GetArguments<MainArguments>();
-            if (main == null)
+            foreach (var other in others)
             {
-                return false;
-            }
-            var mainProvider = Providers.OfType<IArgumentsProvider<MainArguments>>().First();
-            if (mainProvider.Validate(main, main, args))
-            {
-                // Validate the others
-                var others = Providers.Except(new[] { mainProvider });
-                foreach (var other in others)
+                if (!ValidateProvider(other, main))
                 {
-                    var opt = other.GetResult(args);
-                    if (opt == null)
-                    {
-                        return false;
-                    }
-                    if (!other.Validate(opt, main, args))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
-            }
-            else
-            {
-                return false;
             }
             return true;
         }
@@ -121,8 +137,7 @@ namespace PKISharp.WACS.Configuration
         /// <returns></returns>
         public bool Active()
         {
-            var mainProvider = Providers.OfType<IArgumentsProvider<MainArguments>>().First();
-            var others = Providers.Except(new[] { mainProvider });
+            var others = Providers.Except([MainProvider]);
             foreach (var other in others)
             {
                 var opt = other.GetResult(args);

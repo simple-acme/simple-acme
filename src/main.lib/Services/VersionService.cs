@@ -8,9 +8,9 @@ using System.Reflection;
 
 namespace PKISharp.WACS.Services
 {
-    public class VersionService(ILogService log)
+    public class VersionService
     {
-        public bool Init()
+        internal static bool Init(ILogService log)
         {
             if (ExePath == null)
             {
@@ -39,30 +39,32 @@ namespace PKISharp.WACS.Services
             log.Verbose("ExePath: {ex}", ExePath);
             log.Verbose("ResourcePath: {ex}", ResourcePath);
             log.Verbose("PluginPath: {ex}", PluginPath);
+            Valid = true;
             return true;
         }
 
-        public static bool DotNetTool { get; private set; } = false;
-        public static string SettingsPath { get; private set; } = AppContext.BaseDirectory;
-        public static string BasePath { get; private set; } = AppContext.BaseDirectory;
-        public static string PluginPath { get; private set; } = AppContext.BaseDirectory;
-        public static string ExePath { get; private set; } = Environment.GetCommandLineArgs().First();
-        public static string ResourcePath { get; private set; } = AppContext.BaseDirectory;
-        public static string Bitness => Environment.Is64BitProcess ? "64-bit" : "32-bit";
-        public static bool Pluggable =>
+        internal static bool Valid { get; private set; } = false;
+        internal static bool DotNetTool { get; private set; } = false;
+        internal static string SettingsPath { get; private set; } = AppContext.BaseDirectory;
+        internal static string BasePath { get; private set; } = AppContext.BaseDirectory;
+        internal static string PluginPath { get; private set; } = AppContext.BaseDirectory;
+        internal static string ExePath { get; private set; } = Environment.GetCommandLineArgs().First();
+        internal static string ResourcePath { get; private set; } = AppContext.BaseDirectory;
+        internal static string Bitness => Environment.Is64BitProcess ? "64-bit" : "32-bit";
+        internal static bool Pluggable =>
 #if PLUGGABLE
                 true;
 #else
                 false;
 #endif
-        public static bool Debug =>
+        internal static bool Debug =>
 #if DEBUG
                 true;
 #else
                 false;
 #endif
 
-        public static string BuildType 
+        internal static string BuildType 
         { 
             get
             {

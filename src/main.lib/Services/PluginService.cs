@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Plugins;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -19,11 +20,23 @@ namespace PKISharp.WACS.Services
         private readonly List<BasePlugin> _notificationTargets;
         internal readonly ILogService _log;
 
-        public PluginService(ILogService logger, AssemblyService assemblyService)
+        public PluginService(ILogService logger, AssemblyService assemblyService, SettingsService? settings = null)
         {
             _log = logger;
             _assemblyService = assemblyService;
             _plugins = [];
+            if (settings != null)
+            {
+                // Settings are optional, not provided during unit testing
+                if (!settings.Current.Valid)
+                {
+                    _secretServices = [];
+                    _notificationTargets = [];
+                    return;
+                }
+                assemblyService.LoadFromPath(settings.Current.Client.PluginPath);
+            }
+
             AddPluginType<ITargetPlugin>(Steps.Source);
             AddPluginType<IValidationPlugin>(Steps.Validation);
             AddPluginType<IOrderPlugin>(Steps.Order);

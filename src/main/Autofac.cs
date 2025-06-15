@@ -51,7 +51,6 @@ namespace PKISharp.WACS.Host
 
                 // Single instance types
                 _ = builder.RegisterType<AdminService>().SingleInstance();
-                _ = builder.RegisterType<VersionService>().SingleInstance();
                 _ = builder.RegisterType<HelpService>().SingleInstance();
                 _ = builder.RegisterType<UserRoleService>().As<IUserRoleService>().SingleInstance();
                 _ = builder.RegisterType<ValidationOptionsService>().As<IValidationOptionsService>().As<ValidationOptionsService>().SingleInstance();
