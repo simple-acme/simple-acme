@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         [SettingsValue(
             SubType = "path",
             Description = "Path to a script that is executed before attempting to renew any certificate.",
-            Tip = "This may be useful to temporarely relax security measures, e.g. opening port 80 on the firewall. Click <a href=\"https://github.com/simple-acme/reference-scripts/tree/main/Execution\">here</a> for examples."
+            Tip = "This may be useful to temporarily relax security measures, e.g. opening port 80 on the firewall. Click <a href=\"https://github.com/simple-acme/reference-scripts/tree/main/Execution\">here</a> for examples."
         )]
         public string? DefaultPreExecutionScript { get; set; }
 
