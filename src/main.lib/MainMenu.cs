@@ -83,36 +83,40 @@ namespace PKISharp.WACS.Host
         {
             var options = new List<Choice<Func<Task>>>
             {
-                Choice.Create(
-                    secretServiceManager.ManageSecrets,
+                Choice.Create(secretServiceManager.ManageSecrets,
                     $"Manage secrets", "S"),
-                Choice.Create<Func<Task>>(
-                    () => validationOptionsService.Manage(container),
+
+                Choice.Create(() => validationOptionsService.Manage(container),
                     $"Manage global validation options", "V"),
-                Choice.Create<Func<Task>>(
-                    () => taskScheduler.SetupAutoRenew(RunLevel.Interactive | RunLevel.Advanced | RunLevel.ForceTaskScheduler), 
-                    OperatingSystem.IsWindows() ? "(Re)create scheduled task" : "(Re)create cronjob", "TData",
-                    state: !userRoleService.AllowAutoRenew ? State.DisabledState(OperatingSystem.IsWindows() ? "Run as an administrator to allow access to the task scheduler." : "Run as a superuser to allow scheduling cronjob.") : State.EnabledState()),
-                Choice.Create<Func<Task>>(
-                    () => container.Resolve<NotificationService>().NotifyTest(), 
+
+                Choice.Create(() => taskScheduler.SetupAutoRenew(RunLevel.Interactive | RunLevel.Advanced | RunLevel.ForceTaskScheduler), 
+                    OperatingSystem.IsWindows() ? "(Re)create scheduled task" : "(Re)create cronjob", "T",
+                    state: !userRoleService.AllowAutoRenew ? 
+                        State.DisabledState(OperatingSystem.IsWindows() ?
+                            "Run as an administrator to allow access to the task scheduler." : 
+                            "Run as a superuser to allow scheduling cronjob.") : 
+                        State.EnabledState()),
+
+                Choice.Create(() => container.Resolve<NotificationService>().NotifyTest(), 
                     "Test notification", "E"),
-                Choice.Create<Func<Task>>(
-                    () => UpdateAccount(RunLevel.Interactive),
+
+                Choice.Create(() => UpdateAccount(RunLevel.Interactive),
                     accountManager.ListAccounts().Any() ? "ACME account details" : "Create ACME account", "A"),
-                Choice.Create<Func<Task>>(
-                    () => Import(RunLevel.Interactive | RunLevel.Advanced), 
+
+                Choice.Create(() => Import(RunLevel.Interactive | RunLevel.Advanced), 
                     "Import scheduled renewals from WACS/LEWS 1.9.x", "I",
-                    state: !adminService.IsAdmin ? State.DisabledState("Run as an administrator to allow search for legacy renewals.") : State.EnabledState()),
-                Choice.Create<Func<Task>>(
-                    () => Encrypt(RunLevel.Interactive), 
+                    state: !adminService.IsAdmin ? 
+                        State.DisabledState("Run as an administrator to allow search for legacy renewals.") : 
+                        State.EnabledState()),
+
+                Choice.Create(() => Encrypt(RunLevel.Interactive), 
                     "Encrypt/decrypt configuration", "M"),
-                Choice.Create<Func<Task>>(
-                    () => container.Resolve<UpdateClient>().CheckNewVersion(),
+
+                Choice.Create(() => container.Resolve<UpdateClient>().CheckNewVersion(),
                     "Check for updates", "U"),
-                Choice.Create<Func<Task>>(
-                    () => Task.CompletedTask, 
-                    "Back", "Q",
-                    @default: true)
+
+                Choice.Create(() => Task.CompletedTask, 
+                    "Back", "Q", @default: true)
             };
             var chosen = await input.ChooseFromMenu("Please choose from the menu", options);
             await chosen.Invoke();

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -27,7 +28,8 @@ namespace PKISharp.WACS.Services
         WacsJson wacsJson) : IValidationOptionsService
     {
         private readonly IInputService _input = input;
-        private List<GlobalValidationPluginOptions>? _options;
+        private GlobalValidationPluginOptionsCollection _data = new();
+        private bool _loaded = false;
 
         /// <summary>
         /// File where the validation information is stored
@@ -39,11 +41,11 @@ namespace PKISharp.WACS.Services
         /// </summary>
         private async Task<IEnumerable<GlobalValidationPluginOptions>> GlobalOptions()
         {
-            if (_options == null)
+            if (!_loaded)
             {
                 await Load();
             }
-            return _options?.OrderBy(o => o.Priority).ToList() ?? [];
+            return _data.Options?.OrderBy(o => o.Priority).ToList() ?? [];
         }
 
         /// <summary>
@@ -62,7 +64,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         private async Task Save()
         {
-            if (_options == null)
+            if (_data == null)
             {
                 if (Store.Exists)
                 {
@@ -70,7 +72,7 @@ namespace PKISharp.WACS.Services
                 }
                 return;
             }
-            var rawJson = JsonSerializer.Serialize(_options, wacsJson.ListGlobalValidationPluginOptions);
+            var rawJson = JsonSerializer.Serialize(_data, wacsJson.GlobalValidationPluginOptionsCollection);
             if (!string.IsNullOrWhiteSpace(rawJson))
             {
                 await Store.SafeWrite(rawJson);
@@ -83,21 +85,34 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         private async Task Load()
         {
-            if (Store.Exists)
+            if (!Store.Exists)
             {
+                return;
+            }
+            try
+            {
+                var rawJson = await File.ReadAllTextAsync(Store.FullName);
+                var data = default(GlobalValidationPluginOptionsCollection);
                 try
                 {
-                    var rawJson = await File.ReadAllTextAsync(Store.FullName);
-                    _options = JsonSerializer.Deserialize(rawJson, wacsJson.ListGlobalValidationPluginOptions);
-                    if (_options == null)
-                    {
-                        throw new Exception();
-                    }
-                }
+                    // Modern format with schema
+                    data = JsonSerializer.Deserialize(rawJson, wacsJson.GlobalValidationPluginOptionsCollection) ?? throw new Exception("invalid data");
+                } 
                 catch
                 {
-                    log.Error("Unable to read global validation options from {path}", Store.FullName);
+                    // Backwards compatible format
+                    var list = JsonSerializer.Deserialize(rawJson, wacsJson.ListGlobalValidationPluginOptions) ?? throw new Exception("invalid data");
+                    data = new GlobalValidationPluginOptionsCollection() { Options = list };
                 }
+                if (data != null)
+                {
+                    _data = data;
+                    _loaded = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex, "Unable to read global validation options from {path}", Store.FullName);
             }
         }
 
@@ -118,18 +133,19 @@ namespace PKISharp.WACS.Services
                     "(e.g. when rotating credentials or switching DNS providers), but it also enables you " +
                     "to create certificates where different domains have different validation requirements. " +
                     "If you are not sure why you might need this, just go back and stick with regular renewals.");
+
                 var options = await GlobalOptions();
+
                 var menu = options.
-                    Select(o => Choice.Create(
-                        () => Edit(scope, o),
-                        $"Manage validation settings for {o.Pattern} (priority {o.Priority})")).ToList();
-                menu.Add(Choice.Create<Func<Task>>(
-                        () => Add(scope),
+                    Select(o => Choice.Create(() => Edit(scope, o),
+                        $"Manage validation settings for {o.Pattern ?? o.Regex} (priority {o.Priority})")).ToList();
+
+                menu.Add(Choice.Create(() => Add(scope),
                         "Add new global validation setting", command: "A"));
-                menu.Add(Choice.Create<Func<Task>>(
-                        () => { exit = true; return Task.CompletedTask; },
-                        "Back",
-                        @default: true, command: "Q"));
+
+                menu.Add(Choice.Create(() => { exit = true; return Task.CompletedTask; },
+                        "Back", @default: true, command: "Q"));
+
                 var chosen = await _input.ChooseFromMenu("Choose menu option", menu);
                 await chosen.Invoke();
             }
@@ -150,26 +166,12 @@ namespace PKISharp.WACS.Services
             {
                 var menu = new List<Choice<Func<Task>>>
                 {
-                    Choice.Create<Func<Task>>(
-                        () => UpdatePriority(options),
-                        "Change priority"),
-                    Choice.Create<Func<Task>>(
-                        () => UpdatePattern(options),
-                        "Change pattern"),
-                    Choice.Create<Func<Task>>(
-                        () => UpdateOptions(scope, options),
-                        "Change settings"),
-                    Choice.Create<Func<Task>>(
-                        () => { exit = true; save = false; return Delete(options); },
-                        "Delete"),
-                    Choice.Create<Func<Task>>(
-                        () => { exit = true; save = false; return Task.CompletedTask; },
-                        "Cancel",
-                        command: "C"),
-                    Choice.Create<Func<Task>>(
-                        () => { exit = true; save = true; return Task.CompletedTask; },
-                        "Save and quit",
-                        @default: true, command: "Q")
+                    Choice.Create(() => UpdatePriority(options), "Change priority"),
+                    Choice.Create(() => UpdatePattern(options), "Change pattern"),
+                    Choice.Create(() => UpdateOptions(scope, options), "Change settings"),
+                    Choice.Create(() => { exit = true; save = false; return Delete(options); }, "Delete"),
+                    Choice.Create(() => { exit = true; save = false; return Task.CompletedTask; }, "Cancel", command: "C"),
+                    Choice.Create(() => { exit = true; save = true; return Task.CompletedTask; }, "Save and quit", @default: true, command: "Q")
                 };
                 var chosen = await _input.ChooseFromMenu("Choose menu option", menu);
                 await chosen.Invoke();
@@ -238,7 +240,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         private async Task Delete(GlobalValidationPluginOptions input)
         {
-            _options = _options?.Except(new List<GlobalValidationPluginOptions>() { input }).ToList();
+            _data.Options = _data.Options?.Except([input]).ToList();
             await Save();
         }
 
@@ -253,8 +255,8 @@ namespace PKISharp.WACS.Services
             await UpdatePattern(global);
             await UpdateOptions(scope, global);
             await UpdatePriority(global);
-            _options ??= [];
-            _options.Add(global);
+            _data.Options ??= [];
+            _data.Options.Add(global);
             await Save();
         }
 
@@ -270,6 +272,13 @@ namespace PKISharp.WACS.Services
                 Where(o => o.Match(identifier)).
                 FirstOrDefault()?.
                 ValidationPluginOptions;
+        }
+
+        public class GlobalValidationPluginOptionsCollection
+        {
+            [JsonPropertyName("$schema")]
+            public string Schema { get; set; } = "https://simple-acme.com/schema/validation.json";
+            public List<GlobalValidationPluginOptions>? Options { get; set; }
         }
 
         /// <summary>
