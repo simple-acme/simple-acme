@@ -64,7 +64,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         private async Task Save()
         {
-            if (_data == null)
+            if (_data.Options == null || _data.Options.Count == 0)
             {
                 if (Store.Exists)
                 {
