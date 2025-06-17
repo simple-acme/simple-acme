@@ -326,7 +326,7 @@ namespace PKISharp.WACS
             context.Order.KeyPath = context.Order.Renewal.CsrPluginOptions?.ReusePrivateKey == true
                 ? cacheService.Key(context.Order).FullName
                 : null;
-            context.Order.Details = await orderManager.GetOrCreate(context.Order, clientManager, context.PreviousCertificate, context.RunLevel);
+            context.Order.Details = await orderManager.GetOrCreate(context.Order, clientManager, context.CachedCertificate, context.RunLevel);
 
             // Sanity checks
             if (context.Order.Details == null)
