@@ -14,7 +14,8 @@ namespace PKISharp.WACS.Configuration.Arguments
                 !string.IsNullOrEmpty(Csr) ||
                 !string.IsNullOrEmpty(Target) ||
                 !string.IsNullOrEmpty(Source) ||
-                !string.IsNullOrEmpty(Validation);
+                !string.IsNullOrEmpty(Validation) ||
+                !string.IsNullOrEmpty(VaultKey);
         }
 
         public bool HasFilter =>
@@ -123,6 +124,17 @@ namespace PKISharp.WACS.Configuration.Arguments
 
         [CommandLine(Description = "Secret to save in the vault.", Secret = true)]
         public string? VaultSecret { get; set; }
+
+        // Global validation options management
+
+        [CommandLine(Description = "Create a new global validation option to store in the validation.json file. This will override any other validation options specified at the renewal level.")]
+        public bool GlobalValidation { get; set; }
+
+        [CommandLine(Description = "Set priority for the new/updated global validation setting.")]
+        public int? GlobalValidationPriority { get; set; }
+
+        [CommandLine(Description = "Set pattern for a new global validation setting, or repeat a previously input pattern to replace/update the validation settings.")]
+        public string? GlobalValidationPattern { get; set; }
 
         // Misc
 
