@@ -37,6 +37,7 @@ namespace PKISharp.WACS.Host
     {
 
         private readonly MainArguments _args = argumentsParser.GetArguments<MainArguments>() ?? new MainArguments();
+        
         /// <summary>
         /// Main user experience
         /// </summary>
@@ -251,5 +252,11 @@ namespace PKISharp.WACS.Host
                 }
             }
         }
+
+        /// <summary>
+        /// Add a new global validation option from the command line
+        /// </summary>
+        /// <returns></returns>
+        internal async Task AddGlobalValidationOption() => await validationOptionsService.Add(container, _args.GlobalValidationPattern, _args.GlobalValidationPriority);
     }
 }

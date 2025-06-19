@@ -197,6 +197,11 @@ namespace PKISharp.WACS.Host
                         await secretServiceManager.StoreSecret(_args.VaultKey, _args.VaultSecret);
                         await CloseDefault();
                     }
+                    else if (_args.GlobalValidation)
+                    {
+                        await mainMenu.AddGlobalValidationOption();
+                        await CloseDefault();
+                    }
                     else
                     {
                         await mainMenu.MainMenuEntry(interactiveRunLevel);
