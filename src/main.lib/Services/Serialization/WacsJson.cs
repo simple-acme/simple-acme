@@ -23,6 +23,7 @@ namespace PKISharp.WACS.Services.Serialization
     [JsonSerializable(typeof(VersionCheckData))]
     [JsonSerializable(typeof(GlobalValidationPluginOptions))]
     [JsonSerializable(typeof(List<GlobalValidationPluginOptions>))]
+    [JsonSerializable(typeof(GlobalValidationPluginOptionsCollection))]
     [JsonSerializable(typeof(ZeroSslEabCredential))]
     [JsonSerializable(typeof(LegacyScheduledRenewal))]
     [JsonSerializable(typeof(List<JsonSecretService.CredentialEntry>))]
