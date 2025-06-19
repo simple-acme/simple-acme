@@ -5,13 +5,3 @@ updates:
     directory: "/src"
     schedule:
       interval: "daily"
-    groups:
-      microsoft:
-        patterns:
-          - "System.*"
-          - "MSTest.*"
-          - "Microsoft.*"
-  - package-ecosystem: "gitsubmodule"
-    directory: "/"
-    schedule:
-      interval: "daily"
