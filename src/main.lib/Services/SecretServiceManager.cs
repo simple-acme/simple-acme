@@ -201,7 +201,8 @@ namespace PKISharp.WACS.Services
             {
                 key = await input.RequestString("Please provide a unique name to reference this secret", false);
                 key = key.Trim().ToLower().Replace(" ", "-");
-                if (backend.ListKeys().Contains(key))
+                var keys = await backend.ListKeys();
+                if (keys.Contains(key))
                 {
                     var overwrite = await input.PromptYesNo($"Key {key} already exists in vault, overwrite?", true);
                     if (!overwrite)
@@ -227,9 +228,10 @@ namespace PKISharp.WACS.Services
         private async Task<string?> FindSecret()
         {
             var backend = await ChooseBackend();
+            var keys = await backend.ListKeys();
             var chosenKey = await input.ChooseOptional(
                 "Which vault secret do you want to use?",
-                backend.ListKeys(),
+                keys,
                 (key) => Choice.Create<string?>(key, description: FormatKey(backend, key)),
                 "Cancel");
             if (chosenKey == null)
@@ -279,14 +281,15 @@ namespace PKISharp.WACS.Services
             var exit = false;
             while (!exit)
             {
-                var choices = _services.
-                    SelectMany(backend => 
-                        backend.
-                            ListKeys().
-                            Select(key => Choice.Create(
-                                () => EditSecret(backend, key), 
-                                description: FormatKey(backend, key)))).
-                            ToList();
+                var choices = new List<Choice<Func<Task>>>();
+                foreach (var backend in _services)
+                {
+                    var keys = await backend.ListKeys();
+                    choices.AddRange(keys.Select(key => Choice.Create(
+                        () => EditSecret(backend, key),
+                        description: FormatKey(backend, key))));
+                }   
+
                 choices.Add(Choice.Create<Func<Task>>(AddSecret, "Add secret", command: "A"));
                 choices.Add(Choice.Create(() => { 
                     exit = true; 

@@ -93,16 +93,16 @@ namespace PKISharp.WACS.Services
             {
                 var rawJson = await File.ReadAllTextAsync(Store.FullName);
                 var data = default(GlobalValidationPluginOptionsCollection);
-                try
+                if (rawJson.StartsWith('['))
+                {
+                    // Backwards compatible format with a list
+                    var list = JsonSerializer.Deserialize(rawJson, wacsJson.ListGlobalValidationPluginOptions) ?? throw new Exception("invalid data");
+                    data = new GlobalValidationPluginOptionsCollection() { Options = list };
+                }
+                else
                 {
                     // Modern format with schema
                     data = JsonSerializer.Deserialize(rawJson, wacsJson.GlobalValidationPluginOptionsCollection) ?? throw new Exception("invalid data");
-                } 
-                catch
-                {
-                    // Backwards compatible format
-                    var list = JsonSerializer.Deserialize(rawJson, wacsJson.ListGlobalValidationPluginOptions) ?? throw new Exception("invalid data");
-                    data = new GlobalValidationPluginOptionsCollection() { Options = list };
                 }
                 if (data != null)
                 {

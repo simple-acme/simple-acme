@@ -14,13 +14,15 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
     /// <summary>
     /// Save secrets to a JSON file in the configuration folder, protected by ProtectedStrings
     /// </summary>
-    internal class JsonSecretService : ISecretService
+    /// <remarks>
+    /// Initial parsing of the file
+    /// </remarks>
+    /// <param name="settings"></param>
+    /// <param name="log"></param>
+    internal class JsonSecretService(ISettings settings, ILogService log, WacsJson wacsJson) : ISecretService
     {
-        private readonly FileInfo _file;
-        private readonly List<CredentialEntry> _secrets;
-        private readonly ILogService _log;
-        private readonly ISettings _settings;
-        private readonly WacsJson _wacsJson;
+        private FileInfo? _file;
+        private CredentialEntryCollection? _secrets;
 
         /// <summary>
         /// Make references to this provider unique from 
@@ -28,45 +30,46 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
         /// </summary>
         public string Prefix => "json";
 
-        /// <summary>
-        /// Initial parsing of the file
-        /// </summary>
-        /// <param name="settings"></param>
-        /// <param name="log"></param>
-        public JsonSecretService(ISettings settings, ILogService log, WacsJson wacsJson)
+        private async Task<CredentialEntryCollection?> Init()
         {
-            _log = log;
-            _wacsJson = wacsJson;
-            _settings = settings;
-            var path = _settings.Secrets?.Json?.FilePath;
+            if (_secrets != null)
+            {
+                return _secrets;
+            }
+            var path = settings.Secrets?.Json?.FilePath;
             if (string.IsNullOrWhiteSpace(path))
             {
                 path = Path.Join(settings.Client.ConfigurationPath, "secrets.json");
             }
             _file = new FileInfo(path);
-            _secrets = [];
-            if (_file.Exists)
+            CredentialEntryCollection? parsed;
+            try
             {
-                var options = new JsonSerializerOptions
+                if (_file.Exists)
                 {
-                    PropertyNameCaseInsensitive = true
-                };
-                options.Converters.Add(new ProtectedStringConverter(_log, _settings));
-                var parsed = JsonSerializer.Deserialize(File.ReadAllText(_file.FullName), _wacsJson.ListCredentialEntry);
-                if (parsed == null)
-                {
-                    _log.Error("Unable to parse {filename}", _file.Name);
+                    var raw = await File.ReadAllTextAsync(_file.FullName);
+                    parsed = raw.StartsWith('[') ?
+                        new CredentialEntryCollection()
+                        {
+                            Entries = JsonSerializer.Deserialize(raw, wacsJson.ListCredentialEntry) ?? []
+                        } :
+                        JsonSerializer.Deserialize(raw, wacsJson.CredentialEntryCollection);
+                    if (parsed != null)
+                    {
+                        log.Debug("Found {x} secrets in {filename}", parsed.Entries?.Count ?? 0, _file.Name);
+                        _secrets = parsed;
+                    }
                 }
                 else
                 {
-                    _secrets = parsed;
-                    _log.Debug("Found {x} secrets in {filename}", parsed.Count, _file.Name);
+                    log.Debug("{filename} not found", _file.Name);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                _log.Debug("{filename} not found", _file.Name);
+                log.Error("Unable to read {filename}: {message}", _file.Name, ex.Message);
             }
+            return _secrets;
         }
 
         /// <summary>
@@ -74,8 +77,8 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
         /// </summary>
         /// <param name="identifier"></param>
         /// <returns></returns>
-        public Task<string?> GetSecret(string? identifier) => 
-            Task.FromResult(_secrets.FirstOrDefault(x => string.Equals(x.Key, identifier, StringComparison.OrdinalIgnoreCase))?.Secret?.Value);
+        public async Task<string?> GetSecret(string? identifier) => 
+            (await Init())?.Entries?.FirstOrDefault(x => string.Equals(x.Key, identifier, StringComparison.OrdinalIgnoreCase))?.Secret?.Value;
 
         /// <summary>
         /// Add or overwrite secret, return the key to store
@@ -84,14 +87,17 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
         /// <param name="secret"></param>
         public async Task PutSecret(string identifier, string secret)
         {
-            var existing = _secrets.FirstOrDefault(x => x.Key == identifier);
+            var data = await Init();
+            var existing = data?.Entries?.FirstOrDefault(x => x.Key == identifier);
             if (existing != null)
             {
                 existing.Secret = new ProtectedString(secret);
             } 
             else
             {
-                _secrets.Add(new CredentialEntry()
+                _secrets ??= new CredentialEntryCollection();
+                _secrets.Entries ??= [];
+                _secrets.Entries.Add(new CredentialEntry()
                 {
                     Key = identifier,
                     Secret = new ProtectedString(secret)
@@ -105,42 +111,52 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
         /// </summary>
         private async Task Save()
         {
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new ProtectedStringConverter(_log, _settings));
-            options.WriteIndented = true;
-            options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-            var newData = JsonSerializer.Serialize(_secrets, _wacsJson.ListCredentialEntry);
+            if (_file == null || _secrets == null)
+            {
+                throw new InvalidOperationException();
+            }
+            var newData = JsonSerializer.Serialize(_secrets, wacsJson.CredentialEntryCollection);
             if (newData != null)
             {
                 await _file.SafeWrite(newData);
             }
         }
 
-        public IEnumerable<string> ListKeys() => 
-            _secrets.
+        public async Task<IEnumerable<string>> ListKeys() =>
+            (await Init())?.Entries?.
                 Select(x => x.Key).
                 Where(x => !string.IsNullOrEmpty(x)).
-                OfType<string>();
+                OfType<string>() ?? [];
 
         public async Task DeleteSecret(string key)
         {
-            var item = _secrets.Where(x => x.Key == key).FirstOrDefault();
+            var item = _secrets?.Entries?.Where(x => x.Key == key).FirstOrDefault();
             if (item != null)
             {
-                _ = _secrets.Remove(item);
+                _ = _secrets?.Entries?.Remove(item);
                 await Save();
             }
         }
 
         public async Task Encrypt() => await Save();
+    }
 
-        /// <summary>
-        /// Interal data storage format
-        /// </summary>
-        internal class CredentialEntry
-        {
-            public string? Key { get; set; }
-            public ProtectedString? Secret { get; set; }
-        }
+    /// <summary>
+    /// Interal data storage format
+    /// </summary>
+    internal class CredentialEntryCollection
+    {
+        [JsonPropertyName("$schema")]
+        public string Schema { get; set; } = "https://simple-acme.com/schema/secrets.json";
+        public List<CredentialEntry>? Entries { get; set; }
+    }
+
+    /// <summary>
+    /// Interal data storage format
+    /// </summary>
+    internal class CredentialEntry
+    {
+        public string? Key { get; set; }
+        public ProtectedString? Secret { get; set; }
     }
 }

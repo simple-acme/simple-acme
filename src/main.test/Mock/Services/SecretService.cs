@@ -22,7 +22,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
         public string Prefix => "mock";
         public Task DeleteSecret(string key) { _secrets.RemoveAll(x => x.Item1 == key); return Task.CompletedTask; }
         public Task<string?> GetSecret(string? identifier) => Task.FromResult(_secrets.FirstOrDefault(x => x.Item1 == identifier)?.Item2);
-        public IEnumerable<string> ListKeys() => _secrets.Select(x => x.Item1);
+        public Task<IEnumerable<string>> ListKeys() => Task.FromResult(_secrets.Select(x => x.Item1));
         public Task PutSecret(string identifier, string secret)
         {
             var existing = _secrets.FirstOrDefault(x => x.Item1 == identifier);
