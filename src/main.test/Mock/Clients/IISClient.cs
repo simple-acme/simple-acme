@@ -94,18 +94,31 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         public bool HasFtpSites => Sites.Any(x => x.Type == IISSiteType.Ftp);
         public bool HasWebSites => Sites.Any(x => x.Type == IISSiteType.Web);
 
-        public void UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null)
+        public void UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null, ReplaceMode replaceMode = ReplaceMode.Default)
         {
             var updater = new IISHttpBindingUpdater<MockSite, MockBinding>(this, _log);
-            var updated = updater.AddOrUpdateBindings(identifiers, bindingOptions, allIdentifiers, oldCertificate);
+            var updated = updater.AddOrUpdateBindings(identifiers, bindingOptions, allIdentifiers, oldCertificate, replaceMode);
             if (updated > 0)
             {
-                _log.Information("Committing {count} {type} binding changes to IIS while updating site {site}", updated, "https", bindingOptions.SiteId);
-
+                if (bindingOptions.SiteId == null)
+                {
+                    _log.Information("Committing {count} {type} binding changes to IIS", updated, "https");
+                }
+                else
+                {
+                    _log.Information("Committing {count} {type} binding changes to IIS while updating site {site}", updated, "https", bindingOptions.SiteId);
+                }
             }
             else
             {
-                _log.Information("No bindings have been changed while updating site {site}", bindingOptions.SiteId);
+                if (bindingOptions.SiteId == null)
+                {
+                    _log.Information("No bindings have been changed in IIS");
+                }
+                else
+                {
+                    _log.Information("No bindings have been changed while updating site {site}", bindingOptions.SiteId);
+                }
             }
         }
         public MockSite GetSite(long id, IISSiteType? type = null) => Sites.First(x => id == x.Id && (type == null || x.Type == type));
@@ -125,7 +138,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
                 .WithHost(binding.Host)
                 .WithIP(binding.IP)
                 .WithPort(binding.Port);
-            site.Bindings.Add(new MockBinding(updateOptions));
+            site.Bindings.Add(new MockBinding(updateOptions) { Id = binding.Id });
         }
 
         public void Refresh()
@@ -162,6 +175,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
             SSLFlags = options.Flags;
         }
 
+        public int Id { get; set; }
         public string Host { get; set; } = "";
         public string Protocol { get; set; } = "";
         public int Port { get; set; }

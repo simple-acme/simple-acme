@@ -32,7 +32,8 @@ namespace PKISharp.WACS.Clients.IIS
             IEnumerable<Identifier> identifiers,
             BindingOptions bindingOptions,
             IEnumerable<Identifier>? allIdentifiers, 
-            byte[]? oldCertificate)
+            byte[]? oldCertificate,
+            ReplaceMode replaceMode)
         {
             // Helper function to get updated sites
             IEnumerable<(TSite site, TBinding binding)> GetAllSites() => client.Sites.
@@ -59,44 +60,64 @@ namespace PKISharp.WACS.Clients.IIS
                     OfType<IIISBinding>().
                     ToList();
 
-                if (oldCertificate != null)
+                // Choose which pre-existing https bindings
+                // should be replaced with the new certificate
+                var replaceBindings = new List<(TSite, TBinding)>();
+                if (replaceMode.HasFlag(ReplaceMode.Thumbprint) && oldCertificate != null)
                 {
-                    var siteBindings = allBindings.
-                        Where(sb => StructuralComparisons.StructuralEqualityComparer.Equals(sb.binding.CertificateHash, oldCertificate)).
-                        ToList();
-
-                    // Update all bindings created using the previous certificate
-                    foreach (var (site, binding) in siteBindings)
+                    var thumbMatches = allBindings.Where(sb => StructuralComparisons.StructuralEqualityComparer.Equals(sb.binding.CertificateHash, oldCertificate));
+                    foreach (var sb in thumbMatches)
                     {
-                        try
+                        if ((allIdentifiers ?? identifiers).Any(i => Fits(sb.binding, i, SSLFlags.None) > 0))
                         {
-                            // Only update if the old binding actually matches
-                            // with the new certificate
-                            if ((allIdentifiers ?? identifiers).Any(i => Fits(binding, i, SSLFlags.None) > 0))
-                            {
-                                found.Add(binding);
-                                if (UpdateBinding(site, binding, bindingOptions))
-                                {
-                                    bindingsUpdated += 1;
-                                }
-                            } 
-                            else
-                            {
-                                log.Warning(
-                                    "Existing https binding {host}:{port}{ip} not updated because it doesn't seem to match the new certificate!",
-                                    binding.Host,
-                                    binding.Port,
-                                    string.IsNullOrEmpty(binding.IP) ? "" : $":{binding.IP}");
-                            }
+                            replaceBindings.Add(sb);
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            log.Error(ex, "Error updating binding {host}", binding.BindingInformation);
-                            throw;
+                            log.Warning(
+                                "Existing https binding {host}:{port}{ip} not updated because it doesn't seem to match the new certificate!",
+                                sb.binding.Host,
+                                sb.binding.Port,
+                                string.IsNullOrEmpty(sb.binding.IP) ? "" : $":{sb.binding.IP}");
                         }
                     }
                 }
+                foreach (var identifier in identifiers)
+                {
+                    var filteredBindings = allBindings;
+                    if (bindingOptions.SiteId != null)
+                    {
+                        filteredBindings = filteredBindings.Where(sb => sb.site.Id == bindingOptions.SiteId.Value);
+                    }
+                    if (replaceMode.HasFlag(ReplaceMode.ExactMatch))
+                    {
+                        replaceBindings.AddRange(filteredBindings.Where(sb => sb.binding.Host == identifier.Value));
+                    }
+                    if (replaceMode.HasFlag(ReplaceMode.WildcardMatch))
+                    {
+                        replaceBindings.AddRange(filteredBindings.Where(sb => Fits(sb.binding, identifier, SSLFlags.None) > 50));
+                    }
+                }
+                replaceBindings = [.. replaceBindings.Distinct()];
 
+                // Update all bindings that we've chosen to replace
+                foreach (var (site, binding) in replaceBindings)
+                {
+                    try
+                    {
+                        found.Add(binding);
+                        if (UpdateBinding(site, binding, bindingOptions))
+                        {
+                            bindingsUpdated += 1;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error(ex, "Error updating binding {host}", binding.BindingInformation);
+                        throw;
+                    }
+                }
+    
                 if (bindingOptions.SiteId == null)
                 {
                     return bindingsUpdated;

@@ -11,6 +11,16 @@ namespace PKISharp.WACS.Clients.IIS
         Unknown
     }
 
+    [Flags]
+    public enum ReplaceMode
+    {
+        None = 0,
+        Thumbprint = 1,
+        ExactMatch = 2,
+        WildcardMatch = 4,
+        Default = Thumbprint
+    }
+
     public interface IIISClient
     {
         void Refresh();
@@ -19,7 +29,7 @@ namespace PKISharp.WACS.Clients.IIS
         bool HasFtpSites { get; }
         bool HasWebSites { get; }
         Version Version { get; }
-        void UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null);
+        void UpdateHttpSite(IEnumerable<Identifier> partIdentifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null, ReplaceMode replaceMode = ReplaceMode.Default);
         void UpdateFtpSite(long? id, string? store, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate);
     }
 

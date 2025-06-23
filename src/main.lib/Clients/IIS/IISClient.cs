@@ -152,10 +152,15 @@ namespace PKISharp.WACS.Clients.IIS
 
         #region _ Https Install _
 
-        public void UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate, IEnumerable<Identifier>? allIdentifiers)
+        public void UpdateHttpSite(
+            IEnumerable<Identifier> identifiers, 
+            BindingOptions bindingOptions,
+            byte[]? oldCertificate,
+            IEnumerable<Identifier>? allIdentifiers,
+            ReplaceMode replaceMode)
         {
             var updater = new IISHttpBindingUpdater<IISSiteWrapper, IISBindingWrapper>(this, _log);
-            var updated = updater.AddOrUpdateBindings(identifiers, bindingOptions, allIdentifiers, oldCertificate);
+            var updated = updater.AddOrUpdateBindings(identifiers, bindingOptions, allIdentifiers, oldCertificate, replaceMode);
             if (updated > 0)
             {
                 _log.Information("Committing {count} {type} binding changes to IIS", updated, "https");
