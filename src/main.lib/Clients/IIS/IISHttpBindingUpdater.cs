@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace PKISharp.WACS.Clients.IIS
 {
@@ -14,7 +15,7 @@ namespace PKISharp.WACS.Clients.IIS
     /// Constructore
     /// </remarks>
     /// <param name="client"></param>
-    internal class IISHttpBindingUpdater<TSite, TBinding>(
+    internal partial class IISHttpBindingUpdater<TSite, TBinding>(
         IIISClient<TSite, TBinding> client,
         ILogService log)
         where TSite : IIISSite<TBinding>
@@ -31,155 +32,155 @@ namespace PKISharp.WACS.Clients.IIS
         public int AddOrUpdateBindings(
             IEnumerable<Identifier> identifiers,
             BindingOptions bindingOptions,
-            IEnumerable<Identifier>? allIdentifiers, 
+            IEnumerable<Identifier>? allIdentifiers,
             byte[]? oldCertificate,
-            ReplaceMode replaceMode)
+            ReplaceMode replaceMode,
+            AddMode addMode)
         {
-            // Helper function to get updated sites
-            IEnumerable<(TSite site, TBinding binding)> GetAllSites() => client.Sites.
-                SelectMany(site => site.Bindings, (site, binding) => (site, binding)).
+            var allBindings = GetAllSites();
+            var updateCount = 0;
+            var found = allBindings.
+                Where(sb =>
+                {
+                    if (sb.binding.CertificateHash == null)
+                    {
+                        return sb.binding.SSLFlags.HasFlag(SSLFlags.CentralSsl);
+                    }
+                    else
+                    {
+                        return StructuralComparisons.StructuralEqualityComparer.Equals(sb.binding.CertificateHash, bindingOptions.Thumbprint);
+                    }
+                }).
+                Select(sb => sb.binding).
+                OfType<IIISBinding>().
                 ToList();
 
-            try
+            // Choose which pre-existing https bindings
+            // should be replaced with the new certificate
+            var replaceBindings = new List<(TSite, TBinding)>();
+            if (replaceMode.HasFlag(ReplaceMode.Thumbprint) && oldCertificate != null)
             {
-                var allBindings = GetAllSites();
-                var bindingsUpdated = 0;
-                var found = allBindings.
-                    Where(sb =>
-                    {
-                        if (sb.binding.CertificateHash == null)
-                        {
-                            return sb.binding.SSLFlags.HasFlag(SSLFlags.CentralSsl);
-                        } 
-                        else
-                        {
-                            return StructuralComparisons.StructuralEqualityComparer.Equals(sb.binding.CertificateHash, bindingOptions.Thumbprint);
-                        }
-                    }).
-                    Select(sb => sb.binding).
-                    OfType<IIISBinding>().
-                    ToList();
-
-                // Choose which pre-existing https bindings
-                // should be replaced with the new certificate
-                var replaceBindings = new List<(TSite, TBinding)>();
-                if (replaceMode.HasFlag(ReplaceMode.Thumbprint) && oldCertificate != null)
+                var thumbMatches = allBindings.Where(sb => StructuralComparisons.StructuralEqualityComparer.Equals(sb.binding.CertificateHash, oldCertificate));
+                foreach (var sb in thumbMatches)
                 {
-                    var thumbMatches = allBindings.Where(sb => StructuralComparisons.StructuralEqualityComparer.Equals(sb.binding.CertificateHash, oldCertificate));
-                    foreach (var sb in thumbMatches)
+                    if ((allIdentifiers ?? identifiers).Any(i => Fits(sb.binding, i, SSLFlags.None) > 0))
                     {
-                        if ((allIdentifiers ?? identifiers).Any(i => Fits(sb.binding, i, SSLFlags.None) > 0))
-                        {
-                            replaceBindings.Add(sb);
-                        }
-                        else
-                        {
-                            log.Warning(
-                                "Existing https binding {host}:{port}{ip} not updated because it doesn't seem to match the new certificate!",
-                                sb.binding.Host,
-                                sb.binding.Port,
-                                string.IsNullOrEmpty(sb.binding.IP) ? "" : $":{sb.binding.IP}");
-                        }
+                        replaceBindings.Add(sb);
+                    }
+                    else
+                    {
+                        log.Warning(
+                            "Existing https binding {host}:{port}{ip} not updated because it doesn't seem to match the new certificate!",
+                            sb.binding.Host,
+                            sb.binding.Port,
+                            string.IsNullOrEmpty(sb.binding.IP) ? "" : $":{sb.binding.IP}");
                     }
                 }
-                foreach (var identifier in identifiers)
+            }
+            foreach (var identifier in identifiers)
+            {
+                var filteredBindings = allBindings.Where(b => b.binding.Protocol == "https");
+                if (bindingOptions.SiteId != null)
                 {
-                    var filteredBindings = allBindings;
-                    if (bindingOptions.SiteId != null)
+                    filteredBindings = filteredBindings.Where(sb => sb.site.Id == bindingOptions.SiteId.Value);
+                }
+                if (replaceMode.HasFlag(ReplaceMode.ExactMatch))
+                {
+                    replaceBindings.AddRange(filteredBindings.Where(sb => sb.binding.Host == identifier.Value));
+                }
+                if (replaceMode.HasFlag(ReplaceMode.WildcardMatch))
+                {
+                    replaceBindings.AddRange(filteredBindings.Where(sb => Fits(sb.binding, identifier, SSLFlags.None) > 50));
+                }
+            }
+            replaceBindings = [.. replaceBindings.Distinct()];
+
+            // Update all bindings that we've chosen to replace
+            foreach (var (site, binding) in replaceBindings)
+            {
+                try
+                {
+                    if (UpdateExistingBindingFlags(bindingOptions.Flags, binding, [..allBindings.Select(v => v.binding)], out var updateFlags))
                     {
-                        filteredBindings = filteredBindings.Where(sb => sb.site.Id == bindingOptions.SiteId.Value);
-                    }
-                    if (replaceMode.HasFlag(ReplaceMode.ExactMatch))
-                    {
-                        replaceBindings.AddRange(filteredBindings.Where(sb => sb.binding.Host == identifier.Value));
-                    }
-                    if (replaceMode.HasFlag(ReplaceMode.WildcardMatch))
-                    {
-                        replaceBindings.AddRange(filteredBindings.Where(sb => Fits(sb.binding, identifier, SSLFlags.None) > 50));
+                        var updateOptions = bindingOptions.WithFlags(updateFlags);
+                        if (UpdateBinding(site, binding, updateOptions))
+                        {
+                            updateCount++;
+                            found.Add(binding);
+                        }
+                        allBindings = GetAllSites(); // Refresh bindings after update
                     }
                 }
-                replaceBindings = [.. replaceBindings.Distinct()];
-
-                // Update all bindings that we've chosen to replace
-                foreach (var (site, binding) in replaceBindings)
+                catch (Exception ex)
                 {
-                    try
-                    {
-                        found.Add(binding);
-                        if (UpdateBinding(site, binding, bindingOptions))
-                        {
-                            bindingsUpdated += 1;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error(ex, "Error updating binding {host}", binding.BindingInformation);
-                        throw;
-                    }
+                    log.Error(ex, "Error updating binding {host}", binding.BindingInformation);
+                    throw;
                 }
-    
-                if (bindingOptions.SiteId == null)
+            }
+
+            if (addMode == AddMode.None)
+            {
+                // If we are not adding any new bindings, we can stop here
+                return updateCount;
+            }
+            if (bindingOptions.SiteId == null)
+            {
+                // If no installation site has been specified, we cannot add
+                // any new bindings.
+                return updateCount;
+            }
+
+            // Find all hostnames which are not covered by any of the already updated
+            // bindings yet, because we will want to make sure that those are accessable
+            // in the target site
+            var targetSite = client.GetSite(bindingOptions.SiteId.Value, IISSiteType.Web);
+            var todo = identifiers;
+            while (todo.Any())
+            {
+                // Filter by previously matched bindings
+                todo = todo.Where(cert => !found.Any(iis => Fits(iis, cert, bindingOptions.Flags) > 0));
+                if (!todo.Any())
                 {
-                    return bindingsUpdated;
+                    break;
                 }
 
-                // Find all hostnames which are not covered by any of the already updated
-                // bindings yet, because we will want to make sure that those are accessable
-                // in the target site
-                var targetSite = client.GetSite(bindingOptions.SiteId.Value, IISSiteType.Web);
-                var todo = identifiers;
-                while (todo.Any())
+                allBindings = GetAllSites();
+                var current = todo.First();
+                try
                 {
-                    // Filter by previously matched bindings
-                    todo = todo.Where(cert => !found.Any(iis => Fits(iis, cert, bindingOptions.Flags) > 0));
-                    if (!todo.Any())
-                    {
-                        break;
-                    }
+                    var (hostFound, bindings) = AddOrUpdateBindings(
+                        [.. allBindings.Select(x => x.binding)],
+                        targetSite,
+                        bindingOptions.WithHost(current.Value));
 
-                    allBindings = GetAllSites();
-                    var current = todo.First();
-                    try
+                    // Allow a single newly created binding to match with 
+                    // multiple hostnames on the todo list, e.g. the *.example.com binding
+                    // matches with both a.example.com and b.example.com
+                    if (hostFound == null)
                     {
-                        var (hostFound, bindings) = AddOrUpdateBindings(
-                            allBindings.Select(x => x.binding).ToArray(),
-                            targetSite,
-                            bindingOptions.WithHost(current.Value));
-
-                        // Allow a single newly created binding to match with 
-                        // multiple hostnames on the todo list, e.g. the *.example.com binding
-                        // matches with both a.example.com and b.example.com
-                        if (hostFound == null)
-                        {
-                            // We were unable to create the binding because it would
-                            // lead to a duplicate. Pretend that we did add it to 
-                            // still be able to get out of the loop;
-                            found.Add(new DummyBinding(current));
-                        }
-                        else
-                        {
-                            found.Add(hostFound);
-                            bindingsUpdated += bindings;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error(ex, "Error creating binding {host}", current);
-
-                        // Prevent infinite retry loop, we just skip the domain when
-                        // an error happens creating a new binding for it. User can
-                        // always change/add the bindings manually after all.
+                        // We were unable to create the binding because it would
+                        // lead to a duplicate. Pretend that we did add it to 
+                        // still be able to get out of the loop;
                         found.Add(new DummyBinding(current));
                     }
-
+                    else
+                    {
+                        found.Add(hostFound);
+                        updateCount += bindings;
+                    }
                 }
-                return bindingsUpdated;
+                catch (Exception ex)
+                {
+                    log.Error(ex, "Error creating binding {host}", current);
+
+                    // Prevent infinite retry loop, we just skip the domain when
+                    // an error happens creating a new binding for it. User can
+                    // always change/add the bindings manually after all.
+                    found.Add(new DummyBinding(current));
+                }
+
             }
-            catch (Exception ex)
-            {
-                log.Error(ex, "Error installing");
-                throw;
-            }
+            return updateCount;
         }
 
         /// <summary>
@@ -236,7 +237,7 @@ namespace PKISharp.WACS.Clients.IIS
                                     commit++;
                                 }
                             }
-                        } 
+                        }
                         else
                         {
                             var addOptions = bindingOptions.WithHost(match.binding.Host);
@@ -334,6 +335,7 @@ namespace PKISharp.WACS.Clients.IIS
                 if (allBindings
                     .Except([match])
                     .Where(x => x.Port == match.Port)
+                    .Where(x => x.IP == match.IP)
                     .Where(x => StructuralComparisons.StructuralEqualityComparer.Equals(match.CertificateHash, x.CertificateHash))
                     .Where(x => !x.SSLFlags.HasFlag(SSLFlags.SNI))
                     .Any())
@@ -373,7 +375,7 @@ namespace PKISharp.WACS.Clients.IIS
 
             // Add SNI on Windows Server 2012+ for new bindings
             if (newBinding &&
-                !string.IsNullOrEmpty(host) && 
+                !string.IsNullOrEmpty(host) &&
                 client.Version.Major >= 8)
             {
                 flags |= SSLFlags.SNI;
@@ -426,6 +428,13 @@ namespace PKISharp.WACS.Clients.IIS
             return client.AddBinding(site, options);
         }
 
+        /// <summary>
+        /// Update an existing https binding, if needed
+        /// </summary>
+        /// <param name="site"></param>
+        /// <param name="existingBinding"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
         private bool UpdateBinding(TSite site, TBinding existingBinding, BindingOptions options)
         {
             // Check flags
@@ -530,38 +539,10 @@ namespace PKISharp.WACS.Clients.IIS
             return string.Equals(iis.Host, certificate.Value, StringComparison.CurrentCultureIgnoreCase) ? 100 : 0;
         }
 
-
-
-        private class DummyBinding : IIISBinding
-        {
-            private readonly string _host;
-            private readonly string _ip;
-            public DummyBinding(Identifier identifier)
-            {
-                if (identifier is DnsIdentifier dns)
-                {
-                    _ip = "";
-                    _host = dns.Value;
-                }
-                else if (identifier is IpIdentifier ip)
-                {
-                    _ip = ip.Value;
-                    _host = "";
-                }
-                else
-                {
-                    throw new InvalidOperationException();
-                }
-            }
-            public bool Secure => throw new NotImplementedException();
-            string IIISBinding.Host => _host;
-            string IIISBinding.Protocol => throw new NotImplementedException();
-            IEnumerable<byte>? IIISBinding.CertificateHash => throw new NotImplementedException();
-            string IIISBinding.CertificateStoreName => throw new NotImplementedException();
-            string IIISBinding.BindingInformation => throw new NotImplementedException();
-            string? IIISBinding.IP => _ip;
-            SSLFlags IIISBinding.SSLFlags => throw new NotImplementedException();
-            int IIISBinding.Port => throw new NotImplementedException();
-        }
+        /// <summary>
+        /// Get all sites and their bindings
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerable<(TSite site, TBinding binding)> GetAllSites() => [.. client.Sites.SelectMany(site => site.Bindings, (site, binding) => (site, binding))];
     }
 }

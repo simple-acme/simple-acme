@@ -157,10 +157,11 @@ namespace PKISharp.WACS.Clients.IIS
             BindingOptions bindingOptions,
             byte[]? oldCertificate,
             IEnumerable<Identifier>? allIdentifiers,
-            ReplaceMode replaceMode)
+            ReplaceMode replaceMode,
+            AddMode addMode)
         {
             var updater = new IISHttpBindingUpdater<IISSiteWrapper, IISBindingWrapper>(this, _log);
-            var updated = updater.AddOrUpdateBindings(identifiers, bindingOptions, allIdentifiers, oldCertificate, replaceMode);
+            var updated = updater.AddOrUpdateBindings(identifiers, bindingOptions, allIdentifiers, oldCertificate, replaceMode, addMode);
             if (updated > 0)
             {
                 _log.Information("Committing {count} {type} binding changes to IIS", updated, "https");

@@ -121,6 +121,11 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             new[] { 1, 2, 3 }, 
             null,
             DisplayName = "Unneeded wildcardMatch - all sites")]
+        public void RegularHost(ReplaceMode mode, string[] identifiers, int[] matchesExpected, long? siteId)
+        {
+            RunTest(mode, identifiers, matchesExpected, siteId);
+        }
+
         [DataRow(
             ReplaceMode.Thumbprint | ReplaceMode.ExactMatch | ReplaceMode.WildcardMatch,
             new[] { "*.tinus.online" },
@@ -133,18 +138,24 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             new[] { 1, 2, 3, 4, 6 },
             null,
             DisplayName = "WildcardMatch - specific site")]
-        public void RegularHost(ReplaceMode mode, string[] identifiers, int[] matchesExpected, long? siteId)
+        [TestMethod]
+        public void Wildcard(ReplaceMode mode, string[] identifiers, int[] matchesExpected, long? siteId)
+        {
+            RunTest(mode, identifiers, matchesExpected, siteId);
+        }
+
+        public void RunTest(ReplaceMode mode, string[] identifiers, int[] matchesExpected, long? siteId)
         {
             var iis = IIS;
             var bindingOptions = new BindingOptions();
             bindingOptions = bindingOptions.WithThumbprint(newCert).WithSiteId(siteId);
-            
+
             iis.UpdateHttpSite(identifiers.Select(i => new DnsIdentifier(i)), bindingOptions, oldCert1, replaceMode: mode);
-            
+
             var allBindings = iis.Sites.SelectMany(x => x.Bindings).ToList();
             var shouldBeUpdated = allBindings.Where(b => matchesExpected.Contains(b.Id)).ToList();
             CollectionAssert.AreEquivalent(matchesExpected, shouldBeUpdated.Select(x => x.Id).ToList(), "Not all expected bindings found in mock IIS");
-    
+
             var shouldNotBeUpdated = allBindings.Except(shouldBeUpdated).ToList();
             var updated = allBindings.Where(x => StructuralComparisons.StructuralEqualityComparer.Equals(x.CertificateHash, newCert));
             var notUpdated = allBindings.Where(x => !StructuralComparisons.StructuralEqualityComparer.Equals(x.CertificateHash, newCert));
@@ -153,7 +164,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var notUpdatedFormat = string.Join(",", notUpdated.Select(x => x.Id).Order());
             var shouldBeUpdatedFormat = string.Join(",", shouldBeUpdated.Select(x => x.Id).Order());
             var shouldNotBeUpdatedFormat = string.Join(",", shouldNotBeUpdated.Select(x => x.Id).Order());
-           
+
             Assert.AreEqual(shouldBeUpdatedFormat, updatedFormat, "Updated bindings do not match expected");
             Assert.AreEqual(shouldNotBeUpdatedFormat, notUpdatedFormat, "Not updated bindings do not match expected");
         }
