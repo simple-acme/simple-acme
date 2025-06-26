@@ -38,7 +38,7 @@ namespace PKISharp.WACS.Clients.IIS
         bool HasFtpSites { get; }
         bool HasWebSites { get; }
         Version Version { get; }
-        void UpdateHttpSite(
+        IISHttpBindingUpdaterContext UpdateHttpSite(
             IEnumerable<Identifier> partIdentifiers, 
             BindingOptions bindingOptions, 
             byte[]? oldCertificate = null, 

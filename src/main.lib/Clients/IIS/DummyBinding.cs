@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace PKISharp.WACS.Clients.IIS
 {
-internal partial class IISHttpBindingUpdater<TSite, TBinding> where TSite : IIISSite<TBinding>
+    internal partial class IISHttpBindingUpdater<TSite, TBinding> 
+        where TSite : IIISSite<TBinding>
         where TBinding : IIISBinding
     {
         /// <summary>

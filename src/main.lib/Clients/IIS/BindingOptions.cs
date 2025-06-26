@@ -88,7 +88,9 @@ namespace PKISharp.WACS.Clients.IIS
                 return $"{formattedIP}:{Port}:{Host}";
             }
         }
-      
+
+        public string Debug => $"{Binding} (site:{SiteId ?? 0}, flags:{Flags})";
+
         public override string ToString() => Binding;
 
         public BindingOptions WithFlags(SSLFlags flags) => new(flags, Port, IP, Thumbprint, Store, Host, SiteId);

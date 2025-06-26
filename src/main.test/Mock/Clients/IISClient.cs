@@ -3,6 +3,7 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace PKISharp.WACS.UnitTests.Mock.Clients
@@ -94,19 +95,28 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         public bool HasFtpSites => Sites.Any(x => x.Type == IISSiteType.Ftp);
         public bool HasWebSites => Sites.Any(x => x.Type == IISSiteType.Web);
 
-        public void UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null, ReplaceMode replaceMode = ReplaceMode.Default, AddMode addMode = AddMode.Default)
+        public IISHttpBindingUpdaterContext UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null, ReplaceMode replaceMode = ReplaceMode.Default, AddMode addMode = AddMode.Default)
         {
             var updater = new IISHttpBindingUpdater<MockSite, MockBinding>(this, _log);
-            var updated = updater.AddOrUpdateBindings(identifiers, bindingOptions, allIdentifiers, oldCertificate, replaceMode, addMode);
-            if (updated > 0)
+            var context = new IISHttpBindingUpdaterContext()
+            {
+                PartIdentifiers = identifiers,
+                BindingOptions = bindingOptions,
+                AllIdentifiers = allIdentifiers,
+                PreviousCertificate = oldCertificate,
+                ReplaceMode = replaceMode,
+                AddMode = addMode
+            };
+            updater.AddOrUpdateBindings(context);
+            if (context.TouchedBindings > 0)
             {
                 if (bindingOptions.SiteId == null)
                 {
-                    _log.Information("Committing {count} {type} binding changes to IIS", updated, "https");
+                    _log.Information("Committing {count} {type} binding changes to IIS", context.TouchedBindings, "https");
                 }
                 else
                 {
-                    _log.Information("Committing {count} {type} binding changes to IIS while updating site {site}", updated, "https", bindingOptions.SiteId);
+                    _log.Information("Committing {count} {type} binding changes to IIS while updating site {site}", context.TouchedBindings, "https", bindingOptions.SiteId);
                 }
             }
             else
@@ -120,6 +130,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
                     _log.Information("No bindings have been changed while updating site {site}", bindingOptions.SiteId);
                 }
             }
+            return context;
         }
         public MockSite GetSite(long id, IISSiteType? type = null) => Sites.First(x => id == x.Id && (type == null || x.Type == type));
         public void UpdateFtpSite(long? FtpSiteId, string? store, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate) { }
@@ -150,6 +161,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         }
     }
 
+    [DebuggerDisplay("{Id}: {Name}")]
     internal class MockSite : IIISSite<MockBinding>
     {
         IEnumerable<IIISBinding> IIISSite.Bindings => Bindings;
@@ -161,6 +173,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         public IISSiteType Type => IISSiteType.Web;
     }
 
+    [DebuggerDisplay("{Id}: {BindingInformation}")]
     internal class MockBinding : IIISBinding
     {
         public MockBinding() { }
