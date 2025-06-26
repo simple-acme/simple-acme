@@ -142,7 +142,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
     }
 
     /// <summary>
-    /// Interal data storage format
+    /// Internal data storage format
     /// </summary>
     internal class CredentialEntryCollection
     {
