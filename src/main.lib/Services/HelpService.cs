@@ -380,17 +380,17 @@ namespace PKISharp.WACS.Services
                 }
                 x.AppendJoin("", Enumerable.Repeat("  ", level));
                 x.AppendLine($"{member.Name}:");
-                if (member.PropertyType.IsInNamespace("PKISharp") && member.PropertyType != typeof(ProtectedString))
+                var type = member.PropertyType;
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
-                    GenerateTypeYaml(member.PropertyType, level + 1, x);
+                    type = type.GetGenericArguments().First();
+                }
+                if (type.IsInNamespace("PKISharp") && member.PropertyType != typeof(ProtectedString))
+                {
+                    GenerateTypeYaml(type, level + 1, x);
                 }
                 else
                 {
-                    var type = member.PropertyType;
-                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-                    {
-                        type = type.GetGenericArguments().First();
-                    }
                     var showType = "";
                     var subType = meta?.SubType;
                     if (type == typeof(string))

@@ -35,7 +35,7 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// List available keys in the system
         /// </summary>
-        IEnumerable<string> ListKeys();
+        Task<IEnumerable<string>> ListKeys();
 
         /// <summary>
         /// Put a secret in the vault

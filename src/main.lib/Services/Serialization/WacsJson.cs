@@ -4,7 +4,6 @@ using PKISharp.WACS.Host;
 using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Plugins.SecretPlugins;
 using PKISharp.WACS.Services.Legacy;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using static PKISharp.WACS.Clients.Acme.ZeroSsl;
@@ -22,11 +21,10 @@ namespace PKISharp.WACS.Services.Serialization
     [JsonSerializable(typeof(BannerData))]
     [JsonSerializable(typeof(VersionCheckData))]
     [JsonSerializable(typeof(GlobalValidationPluginOptions))]
-    [JsonSerializable(typeof(List<GlobalValidationPluginOptions>))]
     [JsonSerializable(typeof(GlobalValidationPluginOptionsCollection))]
     [JsonSerializable(typeof(ZeroSslEabCredential))]
     [JsonSerializable(typeof(LegacyScheduledRenewal))]
-    [JsonSerializable(typeof(List<JsonSecretService.CredentialEntry>))]
+    [JsonSerializable(typeof(CredentialEntryCollection))]
     internal partial class WacsJson : JsonSerializerContext 
     {
         public WacsJson(WacsJsonOptionsFactory optionsFactory) : base(optionsFactory.Options) {}

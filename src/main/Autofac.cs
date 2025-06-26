@@ -42,10 +42,10 @@ namespace PKISharp.WACS.Host
                     _ = builder.RegisterType(plugin.OptionsJson);
                 }                
                 foreach (var plugin in pluginService.GetSecretServices()) {
-                    _ = builder.RegisterType(plugin.Backend);
+                    _ = builder.RegisterType(plugin.Backend).SingleInstance();
                 }
                 foreach (var plugin in pluginService.GetNotificationTargets()) {
-                    _ = builder.RegisterType(plugin.Backend);
+                    _ = builder.RegisterType(plugin.Backend).SingleInstance();
                 }
                 WacsJson.Configure(builder);
 
