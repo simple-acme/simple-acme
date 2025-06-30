@@ -95,7 +95,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         public bool HasFtpSites => Sites.Any(x => x.Type == IISSiteType.Ftp);
         public bool HasWebSites => Sites.Any(x => x.Type == IISSiteType.Web);
 
-        public IISHttpBindingUpdaterContext UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null, ReplaceMode replaceMode = ReplaceMode.Default, AddMode addMode = AddMode.Default)
+        public IISHttpBindingUpdaterContext UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null)
         {
             var updater = new IISHttpBindingUpdater<MockSite, MockBinding>(this, _log);
             var context = new IISHttpBindingUpdaterContext()
@@ -103,9 +103,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
                 PartIdentifiers = identifiers,
                 BindingOptions = bindingOptions,
                 AllIdentifiers = allIdentifiers,
-                PreviousCertificate = oldCertificate,
-                ReplaceMode = replaceMode,
-                AddMode = addMode
+                PreviousCertificate = oldCertificate
             };
             updater.AddOrUpdateBindings(context);
             if (context.TouchedBindings > 0)

@@ -42,9 +42,7 @@ namespace PKISharp.WACS.Clients.IIS
             IEnumerable<Identifier> partIdentifiers, 
             BindingOptions bindingOptions, 
             byte[]? oldCertificate = null, 
-            IEnumerable<Identifier>? allIdentifiers = null, 
-            ReplaceMode replaceMode = ReplaceMode.Default, 
-            AddMode addMode = AddMode.Default);
+            IEnumerable<Identifier>? allIdentifiers = null);
         void UpdateFtpSite(long? id, string? store, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate);
     }
 

@@ -82,7 +82,7 @@ namespace PKISharp.WACS.Clients.IIS
                 }
             }
 
-            if (ctx.AddMode == AddMode.None || ctx.BindingOptions.SiteId == null)
+            if (ctx.BindingOptions.SiteId == null)
             {
                 // If we are not adding any new bindings, we can stop here
                 // If no installation site has been specified, we cannot add
@@ -98,16 +98,7 @@ namespace PKISharp.WACS.Clients.IIS
             while (todo.Any())
             {
                 // Filter by previously matched bindings
-                if (ctx.AddMode == AddMode.Single)
-                {
-                    // ...on any site
-                    todo = todo.Where(cert => !matchedBindings.Any(iis => Fits(iis.binding, cert, ctx.BindingOptions.Flags) > 0));
-                }
-                else if (ctx.AddMode == AddMode.Multiple)
-                {
-                    // ...on the target site only
-                    todo = todo.Where(cert => !matchedBindings.Any(iis => Fits(iis.binding, cert, ctx.BindingOptions.Flags) > 0 && iis.site.Id == ctx.BindingOptions.SiteId));
-                }
+                todo = todo.Where(cert => !matchedBindings.Any(iis => Fits(iis.binding, cert, ctx.BindingOptions.Flags) > 0 && iis.site.Id == ctx.BindingOptions.SiteId));
                 if (!todo.Any())
                 {
                     break;

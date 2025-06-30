@@ -325,19 +325,19 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         }
 
         [DataRow(
-             new[] { "adder.tinus.online" },
-             new int[] { },
-             (long)3,
-             new string[] { "adder.tinus.online" },
-             null,
-             DisplayName = "Simple add")]
+            new[] { "adder.tinus.online" },
+            new int[] { },
+            (long)3,
+            new string[] { "adder.tinus.online" },
+            null,
+            DisplayName = "Simple add")]
         [DataRow(
             new[] { "duplicate.tinus.com" },
             new int[] { },
             (long)3,
             new string[] { },
             null,
-         DisplayName = "Duplicate add")]
+            DisplayName = "Duplicate add")]
         [TestMethod]
         public void Add(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[] oldCert)
         {
@@ -355,7 +355,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             var bindingOptions = new BindingOptions();
             bindingOptions = bindingOptions.WithThumbprint(newCert).WithSiteId(siteId);
-            var ctx = iis.UpdateHttpSite(identifiers.Select(Identifier.Parse), bindingOptions, oldCert, replaceMode: ReplaceMode.Default, addMode: AddMode.Default);
+            var ctx = iis.UpdateHttpSite(identifiers.Select(Identifier.Parse), bindingOptions, oldCert);
 
             allBindings = iis.Sites.SelectMany(x => x.Bindings).ToList();
             var matching = allBindings.Where(x => StructuralComparisons.StructuralEqualityComparer.Equals(x.CertificateHash, newCert)).ToList();

@@ -156,9 +156,7 @@ namespace PKISharp.WACS.Clients.IIS
             IEnumerable<Identifier> identifiers, 
             BindingOptions bindingOptions,
             byte[]? oldCertificate,
-            IEnumerable<Identifier>? allIdentifiers,
-            ReplaceMode replaceMode,
-            AddMode addMode)
+            IEnumerable<Identifier>? allIdentifiers)
         {
             var updater = new IISHttpBindingUpdater<IISSiteWrapper, IISBindingWrapper>(this, _log);
             var context = new IISHttpBindingUpdaterContext()
@@ -167,8 +165,6 @@ namespace PKISharp.WACS.Clients.IIS
                 BindingOptions = bindingOptions,
                 AllIdentifiers = allIdentifiers,
                 PreviousCertificate = oldCertificate,
-                ReplaceMode = replaceMode,
-                AddMode = addMode
             };
             updater.AddOrUpdateBindings(context);
             if (context.TouchedBindings > 0)
