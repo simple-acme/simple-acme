@@ -11,25 +11,6 @@ namespace PKISharp.WACS.Clients.IIS
         Unknown
     }
 
-    [Flags]
-    public enum ReplaceMode
-    {
-        None = 0,
-        Thumbprint = 1,
-        ExactMatch = 2,
-        WildcardMatch = 4,
-        Default = Thumbprint
-    }
-
-    [Flags]
-    public enum AddMode
-    {
-        None = 0,
-        Single = 1,
-        Multiple = 2,
-        Default = Single
-    }
-
     public interface IIISClient
     {
         void Refresh();
