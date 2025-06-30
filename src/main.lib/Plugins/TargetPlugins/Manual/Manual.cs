@@ -23,17 +23,8 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                     $"[{nameof(Manual)}] {options.CommonName ?? options.AlternativeNames.First()}",
                     options.CommonName,
                     [
-                        new(options.AlternativeNames.Select(ParseIdentifier))
+                        new(options.AlternativeNames.Select(Identifier.Parse))
                     ]));
-        }
-
-        internal static Identifier ParseIdentifier(string identifier)
-        {
-            if (IPAddress.TryParse(identifier, out var address))
-            {
-                return new IpIdentifier(address);
-            }
-            return new DnsIdentifier(identifier);
         }
     }
 }

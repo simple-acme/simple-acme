@@ -21,6 +21,7 @@ namespace PKISharp.WACS.DomainObjects
     [DebuggerDisplay("{Type}: {Value}")]
     public abstract class Identifier(string value, IdentifierType identifierType = IdentifierType.Unknown) : IEquatable<Identifier>, IComparable, IComparable<Identifier>
     {
+
         public static Identifier Parse(AcmeIdentifier identifier, bool? wildcard = null)
         {
             return identifier.Type switch
@@ -30,6 +31,7 @@ namespace PKISharp.WACS.DomainObjects
                 _ => new UnknownIdentifier(identifier.Value)
             };
         }
+
         public static Identifier Parse(AcmeAuthorization authorization)
         {
             if (authorization.Identifier == null)
@@ -38,7 +40,15 @@ namespace PKISharp.WACS.DomainObjects
             }
             return Parse(authorization.Identifier, authorization.Wildcard);
         }
-           
+
+        public static Identifier Parse(string identifier)
+        {
+            if (IPAddress.TryParse(identifier, out var address))
+            {
+                return new IpIdentifier(address);
+            }
+            return new DnsIdentifier(identifier);
+        }
 
         public virtual Identifier Unicode(bool unicode) => this;
 
