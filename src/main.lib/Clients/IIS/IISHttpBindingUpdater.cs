@@ -216,6 +216,8 @@ namespace PKISharp.WACS.Clients.IIS
                     return false;
                 }));
             }
+            // Create a new list from the distinct elements of replaceBindings.
+            // The spread operator ([..]) ensures that a new list is created, avoiding modifications to the original list.
             replaceBindings = [.. replaceBindings.Distinct()];
             return replaceBindings;
         }
