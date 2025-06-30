@@ -48,7 +48,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             var sanList = input.
                 ParseCsv()?.
                 Select(x => x.ConvertPunycode()).
-                Select(Manual.ParseIdentifier);
+                Select(Identifier.Parse);
             if (sanList != null)
             {
                 var commonName = sanList.

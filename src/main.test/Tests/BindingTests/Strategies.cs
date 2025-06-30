@@ -3,10 +3,8 @@ using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.UnitTests.Mock.Clients;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 {
@@ -15,8 +13,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
     public class BindingStrategyTests
     {
         private readonly Mock.Services.LogService log;
-        private readonly byte[] newCert = [0x2];
-        private readonly byte[] oldCert1 = [0x1];
+        private static readonly byte[] newCert = [0x2];
+        private const byte oldCertByte = 0x1;
+        private static readonly byte[] oldCert1 = [oldCertByte];
         public BindingStrategyTests() => log = new Mock.Services.LogService(false);
 
         private MockIISClient IIS => new(log, 10)
@@ -116,124 +115,239 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             Protocol = "http"
                         }
                     ]
+                },
+                new MockSite() {
+                    Id = 4,
+                    Bindings = [
+                        new() {
+                            Id = 12,
+                            IP = "192.168.100.200",
+                            CertificateHash = oldCert1,
+                            Port = 443,
+                            Protocol = "https"
+                        },                        
+                        new() {
+                            Id = 13,
+                            IP = "*",
+                            Port = 4443,
+                            Protocol = "https"
+                        },
+                    ]
                 }
             ]
         };
 
         [TestMethod]
-        [DataRow(
-            ReplaceMode.Thumbprint, 
-            new[] { "wouter.tinus.online" }, 
-            new[] { 1 }, 
-            null,
+        [DataRow(new[] { "wouter.tinus.online" }, new[] { 1, 12 }, null,
             new string[] { },
-            DisplayName = "Thumbprint - basic")]
+            new byte[] { oldCertByte },
+            DisplayName = "All sites")]
         [DataRow(
-            ReplaceMode.Thumbprint, 
-            new[] { "wouter.tinus.online" }, 
-            new[] { 1 }, 
+            new[] { "wouter.tinus.online" },
+            new[] { 1, 12 },
             (long)2,
             new string[] { },
-            DisplayName = "Thumbprint - other site")]
-        [DataRow(ReplaceMode.Thumbprint | ReplaceMode.ExactMatch, 
-            new[] { "wouter.tinus.online" }, 
-            new[] { 1, 2 }, 
-            (long)1,
-            new string[] { },
-            DisplayName = "ExactMatch - specific site exact")]
+            new byte[] { oldCertByte },
+            DisplayName = "Other site")]
         [DataRow(
-            ReplaceMode.Thumbprint | ReplaceMode.ExactMatch, 
             new[] { "wouter.tinus.online" },
-            new[] { 1, 2, 3 }, 
-            null,
-            new string[] { },
-            DisplayName = "ExactMatch - all sites")]
-        [DataRow(
-            ReplaceMode.Thumbprint | ReplaceMode.ExactMatch | ReplaceMode.WildcardMatch, 
-            new[] { "wouter.tinus.online" }, 
-            new[] { 1, 2 }, 
+            new[] { 1, 12 },
             (long)1,
             new string[] { },
-            DisplayName = "Unneeded wildcardMatch - specific site")]
+            new byte[] { oldCertByte },
+            DisplayName = "Specific site")]
+        public void RegularHostReplace(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[] oldCert)
+        {
+            RunTest(identifiers, matchesExpected, siteId, newBindingsExpected, oldCert);
+        }
+
+        [TestMethod]
         [DataRow(
-            ReplaceMode.Thumbprint | ReplaceMode.ExactMatch | ReplaceMode.WildcardMatch, 
-            new[] { "wouter.tinus.online" }, 
-            new[] { 1, 2, 3 }, 
+            new[] { "wouter.tinus.online" },
+            new[] { 1, 2, 3 },
             null,
             new string[] { },
-            DisplayName = "Unneeded wildcardMatch - all sites")]
-        public void RegularHost(ReplaceMode mode, string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected)
+            null,
+            DisplayName = "All sites")]
+        [DataRow(
+            new[] { "wouter.tinus.online" },
+            new[] { 3 },
+            (long)2,
+            new string[] { },
+            null,
+            DisplayName = "Other site")]
+        [DataRow(
+            new[] { "wouter.tinus.online" },
+            new[] { 1, 2 },
+            (long)1,
+            new string[] { },
+            null,
+            DisplayName = "Specific site")]
+        public void RegularHostNew(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[] oldCert)
         {
-            RunTest(mode, AddMode.Default, identifiers, matchesExpected, siteId, newBindingsExpected);
+            RunTest(identifiers, matchesExpected, siteId, newBindingsExpected, oldCert);
         }
 
         [DataRow(
-           ReplaceMode.Thumbprint | ReplaceMode.ExactMatch,
            new[] { "*.tinus.online" },
-           new[] { 1,4,6 },
+           new[] { 1, 4, 12 },
            null,
            new string[] { },
-           DisplayName = "ExactMatch - with old cert")]
+           new byte[] { oldCertByte },
+           DisplayName = "All sites")]
         [DataRow(
-           ReplaceMode.Thumbprint | ReplaceMode.ExactMatch,
            new[] { "*.example.com" },
-           new int[] { },
+           new[] { 12 },
            null,
            new string[] { },
+           new byte[] { oldCertByte },
            DisplayName = "No match")]
         [DataRow(
-           ReplaceMode.Thumbprint | ReplaceMode.ExactMatch,
            new[] { "*.wildcard.example.com" },
-           new int[] { 7 },
+           new int[] { 7, 8, 12 },
            null,
            new string[] { },
-           DisplayName = "Single match")]
+           new byte[] { oldCertByte },
+           DisplayName = "Subdomain match")]
         [DataRow(
-            ReplaceMode.Thumbprint | ReplaceMode.ExactMatch | ReplaceMode.WildcardMatch,
             new[] { "*.tinus.online" },
             new[] { 1, 2, 4 },
             (long)1,
             new string[] { },
-            DisplayName = "WildcardMatch - all sites")]
-        [DataRow(
-            ReplaceMode.Thumbprint | ReplaceMode.ExactMatch | ReplaceMode.WildcardMatch,
-            new[] { "*.tinus.online" },
-            new[] { 1, 2, 3, 4, 6 },
             null,
+            DisplayName = "Specific site")]
+        [DataRow(
+            new[] { "*.tinus.online" },
+            new[] { 1, 4, 12 },
+            (long)2,
             new string[] { },
-            DisplayName = "WildcardMatch - specific site")]
+            new byte[] { oldCertByte },
+            DisplayName = "Other site")]
         [TestMethod]
-        public void Wildcard(ReplaceMode mode, string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected)
+        public void WildcardReplace(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[] oldCert)
         {
-            RunTest(mode, AddMode.Default, identifiers, matchesExpected, siteId, newBindingsExpected);
+            RunTest(identifiers, matchesExpected, siteId, newBindingsExpected, oldCert);
         }
 
         [DataRow(
-             ReplaceMode.Default,
-             AddMode.Default,
+           new[] { "*.tinus.online" },
+           new[] { 1, 2, 3, 4, 6 },
+           null,
+           new string[] { },
+           null,
+           DisplayName = "All sites")]
+        [DataRow(
+           new[] { "*.example.com" },
+           new int[] { },
+           null,
+           new string[] { },
+           null,
+           DisplayName = "No match")]
+        [DataRow(
+           new[] { "*.wildcard.example.com" },
+           new int[] { 7, 8 },
+           null,
+           new string[] { },
+           null,
+           DisplayName = "Subdomain match")]
+        [DataRow(
+            new[] { "*.tinus.online" },
+            new[] { 1, 2, 4 },
+            (long)1,
+            new string[] { },
+            null,
+            DisplayName = "Specific site")]
+        [DataRow(
+            new[] { "*.tinus.online" },
+            new[] { 3, 6 },
+            (long)2,
+            new string[] { },
+            null,
+            DisplayName = "Other site")]
+        [TestMethod]
+        public void WildcardNew(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[] oldCert)
+        {
+            RunTest(identifiers, matchesExpected, siteId, newBindingsExpected, oldCert);
+        }
+
+        [DataRow(
+           new[] { "192.168.100.200" },
+           new[] { 12 },
+           null,
+           new string[] { },
+           new byte[] { oldCertByte },
+           DisplayName = "All sites")]
+        [DataRow(
+           new[] { "192.168.100.200" },
+            new[] { 12 },
+            (long)1,
+            new string[] { },
+            new byte[] { oldCertByte },
+            DisplayName = "Specific site")]
+        [DataRow(
+            new[] { "192.168.100.200" },
+            new[] { 12 },
+            (long)2,
+            new string[] { },
+            new byte[] { oldCertByte },
+            DisplayName = "Other site")]
+        [TestMethod]
+        public void IpReplace(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[] oldCert)
+        {
+            RunTest(identifiers, matchesExpected, siteId, newBindingsExpected, oldCert);
+        }
+
+        [DataRow(
+           new[] { "192.168.100.200" },
+           new[] { 12 },
+           null,
+           new string[] { },
+           null,
+           DisplayName = "All sites")]
+        [DataRow(
+            new[] { "192.168.100.200" },
+            new int[] { 12 },
+            (long)4,
+            new string[] { },
+            null,
+            DisplayName = "Specific site")]
+        [DataRow(
+            new[] { "192.168.100.200" },
+            new int[] { },
+            (long)2,
+            new string[] { },
+            null,
+            DisplayName = "Other site")]
+        [TestMethod]
+        public void IpNew(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[] oldCert)
+        {
+            RunTest(identifiers, matchesExpected, siteId, newBindingsExpected, oldCert);
+        }
+
+        [DataRow(
              new[] { "adder.tinus.online" },
              new int[] { },
              (long)3,
              new string[] { "adder.tinus.online" },
+             null,
              DisplayName = "Simple add")]
         [DataRow(
-            ReplaceMode.Default,
-            AddMode.Default,
             new[] { "duplicate.tinus.com" },
             new int[] { },
             (long)3,
             new string[] { },
+            null,
          DisplayName = "Duplicate add")]
         [TestMethod]
-        public void Add(ReplaceMode replaceMode, AddMode addMode, string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected)
+        public void Add(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[] oldCert)
         {
-            RunTest(replaceMode, addMode, identifiers, matchesExpected, siteId, newBindingsExpected);
+            RunTest(identifiers, matchesExpected, siteId, newBindingsExpected, oldCert);
         }
 
-        public void RunTest(ReplaceMode replaceMode, AddMode addMode, string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected)
+        public void RunTest(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[]? oldCert)
         {
             var iis = IIS;
-   
+
             var allBindings = iis.Sites.SelectMany(x => x.Bindings).ToList();
             var shouldBeUpdated = allBindings.Where(b => matchesExpected.Contains(b.Id)).ToList();
             var shouldNotBeUpdated = allBindings.Except(shouldBeUpdated).ToList();
@@ -241,7 +355,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             var bindingOptions = new BindingOptions();
             bindingOptions = bindingOptions.WithThumbprint(newCert).WithSiteId(siteId);
-            var ctx = iis.UpdateHttpSite(identifiers.Select(i => new DnsIdentifier(i)), bindingOptions, oldCert1, replaceMode: replaceMode, addMode: addMode);
+            var ctx = iis.UpdateHttpSite(identifiers.Select(Identifier.Parse), bindingOptions, oldCert, replaceMode: ReplaceMode.Default, addMode: AddMode.Default);
 
             allBindings = iis.Sites.SelectMany(x => x.Bindings).ToList();
             var matching = allBindings.Where(x => StructuralComparisons.StructuralEqualityComparer.Equals(x.CertificateHash, newCert)).ToList();
@@ -256,9 +370,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             Assert.AreEqual(shouldBeUpdatedFormat, updatedFormat, "Updated bindings do not match expected");
             Assert.AreEqual(shouldNotBeUpdatedFormat, notUpdatedFormat, "Not updated bindings do not match expected");
-           
-            Assert.AreEqual(newBindingsExpected.Count(), created.Count());
-            Assert.AreEqual(newBindingsExpected.Count(), ctx.AddedBindings.Count);
+
+            Assert.AreEqual(newBindingsExpected.Count(), created.Count(), "Mismatch in new bindings created");
+            Assert.AreEqual(newBindingsExpected.Count(), ctx.AddedBindings.Count, "Mismatch in new bindings created");
         }
     }
 }
