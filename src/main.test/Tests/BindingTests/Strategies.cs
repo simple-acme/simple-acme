@@ -133,6 +133,17 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             Protocol = "https"
                         },
                     ]
+                },
+                new MockSite() {
+                    Id = 5,
+                    Bindings = [
+                        new() {
+                            Id = 14,
+                            IP = "11.11.11.11",
+                            Port = 80,
+                            Protocol = "http"
+                        }
+                    ]
                 }
             ]
         };
@@ -328,7 +339,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             new[] { "adder.tinus.online" },
             new int[] { },
             (long)3,
-            new string[] { "adder.tinus.online" },
+            new string[] { "*:443:adder.tinus.online (site:3, flags:SNI)" },
             null,
             DisplayName = "Simple add")]
         [DataRow(
@@ -338,6 +349,13 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             new string[] { },
             null,
             DisplayName = "Duplicate add")]
+        [DataRow(
+            new[] { "11.11.11.11" },
+            new int[] { },
+            (long)5,
+            new string[] { "11.11.11.11:443: (site:5, flags:None)" },
+            null,
+            DisplayName = "IP add")]
         [TestMethod]
         public void Add(string[] identifiers, int[] matchesExpected, long? siteId, string[] newBindingsExpected, byte[] oldCert)
         {
@@ -371,8 +389,9 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             Assert.AreEqual(shouldBeUpdatedFormat, updatedFormat, "Updated bindings do not match expected");
             Assert.AreEqual(shouldNotBeUpdatedFormat, notUpdatedFormat, "Not updated bindings do not match expected");
 
-            Assert.AreEqual(newBindingsExpected.Count(), created.Count(), "Mismatch in new bindings created");
-            Assert.AreEqual(newBindingsExpected.Count(), ctx.AddedBindings.Count, "Mismatch in new bindings created");
+            Assert.AreEqual(newBindingsExpected.Length, created.Count(), "Mismatch in new bindings created");
+            Assert.AreEqual(newBindingsExpected.Length, ctx.AddedBindings.Count, "Mismatch in new bindings created");
+            CollectionAssert.AreEquivalent(newBindingsExpected, ctx.AddedBindings, "Not all expected bindings found in mock IIS");
         }
     }
 }

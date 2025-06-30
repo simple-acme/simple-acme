@@ -63,7 +63,11 @@ namespace PKISharp.WACS.Clients.IIS
             {
                 try
                 {
-                    if (UpdateExistingBindingFlags(ctx.BindingOptions.Flags, binding, [.. ctx.AllBindings.Select(v => v.binding)], out var updateFlags))
+                    if (UpdateExistingBindingFlags(
+                            ctx.BindingOptions.Flags, 
+                            binding, 
+                            [.. ctx.AllBindings.Select(v => v.binding)], 
+                            out var updateFlags))
                     {
                         var updateOptions = ctx.BindingOptions.WithFlags(updateFlags);
                         var update = UpdateBinding((TSite)site, (TBinding)binding, updateOptions);
@@ -111,7 +115,7 @@ namespace PKISharp.WACS.Clients.IIS
                     _ => throw new InvalidOperationException($"Unsupported identifier type {current.GetType().Name} for IIS binding update")
                 };
 
-                var newBindings = ChooseBindingsToAdd(ctx, targetSite, addOptions);
+                var newBindings = ChooseBindingsToAdd(current, targetSite, addOptions);
                 if (newBindings.Count == 0)
                 {
                     // We were unable to create a new binding for this host
@@ -224,18 +228,13 @@ namespace PKISharp.WACS.Clients.IIS
         /// <param name="bindingOptions"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        private static List<(TSite, BindingOptions)> ChooseBindingsToAdd(IISHttpBindingUpdaterContext ctx, TSite site, BindingOptions bindingOptions)
+        private static List<(TSite, BindingOptions)> ChooseBindingsToAdd(Identifier identifier, TSite site, BindingOptions bindingOptions)
         {
-            if (bindingOptions.Host == null)
-            {
-                throw new InvalidOperationException("bindingOptions.Host is null");
-            }
-
             var ret = new List<(TSite, BindingOptions)>();
 
             // Get all http bindings which could map to the host
             var matchingBindings = site.Bindings.
-                Select(x => new { binding = x, fit = Fits(x, new DnsIdentifier(bindingOptions.Host), bindingOptions.Flags) }).
+                Select(x => new { binding = x, fit = Fits(x, identifier, bindingOptions.Flags) }).
                 Where(x => x.fit > 0 && x.binding.Protocol == "http").
                 OrderByDescending(x => x.fit).
                 ToList();
