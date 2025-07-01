@@ -9,7 +9,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         [CommandLine(Description = "Domeneshop ClientID (token).")]
         public string? ClientId { get; set; }
 
-        [CommandLine(Description = "Domeneshop Client Secret.")]
+        [CommandLine(Description = "Domeneshop Client Secret.", Secret = true)]
         public string? ClientSecret { get; set; }
     }
 }
