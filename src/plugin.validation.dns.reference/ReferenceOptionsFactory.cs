@@ -9,7 +9,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     /// <summary>
     /// This class is responsible for creating an options object, 
-    /// eiter interactively or from the command line
+    /// either interactively or from the command line
     /// </summary>
     internal class ReferenceOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<ReferenceOptions>
     {
