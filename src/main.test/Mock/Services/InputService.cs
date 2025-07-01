@@ -15,7 +15,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
             string what,
             IEnumerable<TSource> options,
             Func<TSource, Choice<TResult?>> creator,
-            string nullChoiceLabel) where TResult : class
+            string nullChoiceLabel)
         {
             var input = GetNextInput();
             var choices = options.Select(o => creator(o)).ToList();
@@ -26,9 +26,12 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
             }
             else
             {
-                return Task.FromResult(choices.
-                    FirstOrDefault(c => string.Equals(c.Command, input, StringComparison.InvariantCultureIgnoreCase))?.
-                    Item);
+                var x = choices.FirstOrDefault(c => string.Equals(c.Command, input, StringComparison.InvariantCultureIgnoreCase));
+                if (x != null)
+                {
+                    return Task.FromResult(x.Item);
+                }
+                return Task.FromResult(default(TResult));
             }
         }
         public Task<TResult> ChooseRequired<TSource, TResult>(

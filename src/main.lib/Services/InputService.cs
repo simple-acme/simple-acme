@@ -354,7 +354,7 @@ namespace PKISharp.WACS.Services
         public async Task<TResult?> ChooseOptional<TSource, TResult>(
             string what, IEnumerable<TSource> options,
             Func<TSource, Choice<TResult?>> creator,
-            string nullLabel) where TResult : class
+            string nullLabel)
         {
             var baseChoices = options.Select(creator).ToList();
             if (!baseChoices.Any(x => !x.Disabled))

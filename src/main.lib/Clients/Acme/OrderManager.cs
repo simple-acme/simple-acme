@@ -278,7 +278,7 @@ namespace PKISharp.WACS.Clients.Acme
                 }
                 catch (AcmeProtocolException ex)
                 {
-                    if (orderParameters.Profile != null)
+                    if (orderParameters.Replaces != null)
                     {
                         if (ex.ProblemType == ProblemType.AlreadyReplaced || 
                             ex.ProblemType == ProblemType.Conflict)
