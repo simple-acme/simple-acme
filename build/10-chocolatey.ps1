@@ -94,7 +94,7 @@ Replace-Stuff ".\simple-acme\tools\chocolateyinstall.ps1"
 Replace-Stuff ".\simple-acme\tools\chocolateyuninstall.ps1"
 Replace-Stuff ".\simple-acme\tools\VERIFICATION.txt"
 Replace-Stuff ".\simple-acme\simple-acme.nuspec"
-# Publish-Package ".\simple-acme\simple-acme.nuspec"
+Publish-Package ".\simple-acme\simple-acme.nuspec"
 
 $templateFolder = ".\simple-acme-plugin-template"
 $pluginsYml = Get-Content "$Final\plugins.yml" -Raw
@@ -150,7 +150,6 @@ foreach ($plugin in $matches) {
 	}
 	Copy-Item $sourcePath $binFolder
 	Publish-Package "$packageFolder\$($data.packageId).nuspec"
-	break;
 }
 
 git add .
