@@ -66,6 +66,7 @@ if ($BuildPlugins) {
 	$pluginFolders = (Get-ChildItem $Root\src\ plugin.*).Name
 	$plugins = $pluginFolders | `
 		Where-Object { -not ($_ -like "*.common.*") } | `
+		Where-Object { -not ($_ -like "*.reference") } | `
 		ForEach-Object { @{ Name = $_; Files = @(); Folder = "" } } | `
 		Select-Object -First $BuildPluginsCount
 
