@@ -71,7 +71,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             using var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Unable {log}: {response.ReasonPhrase}");
+                throw new Exception($"Unable to {log}: {response.ReasonPhrase}");
             }
             await using var stream = await response.Content.ReadAsStreamAsync();
             var zones = await JsonSerializer.DeserializeAsync<T>(stream);
