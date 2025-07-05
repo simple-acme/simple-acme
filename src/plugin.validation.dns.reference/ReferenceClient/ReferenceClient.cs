@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -40,14 +41,41 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <returns></returns>
         internal async Task<IEnumerable<ReferenceZone>> GetZones()
         {
-            using var response = await _httpClient.GetAsync("https://example.com/api/dns/zones");
+            return await GetRequest<List<ReferenceZone>>("https://example.com/api/dns/zones", "retrieve zones");
+        }
+
+        /// <summary>
+        /// Get a single zone
+        /// </summary>
+        /// <param name="domain"></param>
+        /// <returns></returns>
+        internal async Task<ReferenceZone> GetZone(string domain)
+        {
+            return await GetRequest<ReferenceZone>($"https://example.com/api/dns/zone/{WebUtility.UrlEncode(domain)}", "retrieve zone");
+        }
+
+        /// <summary>
+        /// Common handler for GET requests to the Reference API
+        /// Note that the custom HttpClient already handles 
+        /// request and response logging, so we don't need to do 
+        /// that here, we only catch errors and throw exceptions if
+        /// needed.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="url"></param>
+        /// <param name="log"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private async Task<T> GetRequest<T>(string url, string log)
+        {
+            using var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Unable to retrieve zones: {response.ReasonPhrase}");
+                throw new Exception($"Unable to {log}: {response.ReasonPhrase}");
             }
             await using var stream = await response.Content.ReadAsStreamAsync();
-            var zones = await JsonSerializer.DeserializeAsync<List<ReferenceZone>>(stream);
-            return zones ?? throw new Exception("Unable to retrieve zones");
+            var zones = await JsonSerializer.DeserializeAsync<T>(stream);
+            return zones ?? throw new Exception($"Unable to {log}");
         }
 
         /// <summary>
