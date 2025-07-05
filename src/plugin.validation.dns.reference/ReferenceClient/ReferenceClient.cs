@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Web;
 
 // TODO: REMOVE THESE DIRECTIVES - the final code should be without any warnings
 #pragma warning disable CS1998
@@ -51,7 +51,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <returns></returns>
         internal async Task<ReferenceZone> GetZone(string domain)
         {
-            return await GetRequest<ReferenceZone>($"https://example.com/api/dns/zone/{HttpUtility.UrlEncode(domain)}", "retrieve zone");
+            return await GetRequest<ReferenceZone>($"https://example.com/api/dns/zone/{WebUtility.UrlEncode(domain)}", "retrieve zone");
         }
 
         /// <summary>
