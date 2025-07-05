@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     /// Designed as an example for developers to create their own.
     /// 
     /// This class is the heart of the plugin, it implements the functions
-    /// required to create and delete DNS records for domain validation.
+    /// required to create and delete DNS records for challengeDomain validation.
     /// 
     /// This IPlugin.Plugin1 decorator registers the plugin with the WACS 
     /// framework, Its generic parameters are:
@@ -58,7 +58,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         ILogService log,
         ISettings settings,
         IProxyService proxy,
-        SecretServiceManager ssm) : DnsValidation<Reference, ReferenceClient>(dnsClient, log, settings, proxy)
+        SecretServiceManager ssm,
+        DomainParseService domainParser) : DnsValidation<Reference, ReferenceClient>(dnsClient, log, settings, proxy)
     {
         /// <summary>
         /// Create a new instance of your DNS accessor
@@ -90,7 +91,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 var zone = await GetHostZone(record.Authority.Domain);
                 if (zone == null)
                 {
-                    _log.Error("Unable to find zone for {domain}", record.Authority.Domain);
+                    _log.Error("Unable to find zone for {challengeDomain}", record.Authority.Domain);
                     return false;
                 }
 
@@ -123,7 +124,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 var zone = await GetHostZone(record.Authority.Domain);
                 if (zone == null)
                 {
-                    _log.Warning("Unable to find zone for {domain}", record.Authority.Domain);
+                    _log.Warning("Unable to find zone for {challengeDomain}", record.Authority.Domain);
                     return;
                 }
                 var client = await GetClient();
@@ -140,21 +141,25 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <summary>
         /// Select the best matching zone for the given host name
         /// </summary>
-        /// <param name="domain"></param>
+        /// <param name="challengeDomain"></param>
         /// <returns></returns>
-        private async Task<ReferenceZone?> GetHostZone(string domain)
+        private async Task<ReferenceZone?> GetHostZone(string challengeDomain)
         {
             // Get the client
             var client = await GetClient();
 
-            // Get all zones
-            var zones = await client.GetZones();
+            // Scenario A: If there is only one zone per registered challengeDomain,
+            // get the zone directly from the client, our challengeDomain is
+            // application.example.com, so we need the zone for example.com
+            var registeredDomain = domainParser.GetRegisterableDomain(challengeDomain);
+            var zone = await client.GetZone(registeredDomain);
+            // return zone;
 
-            // Find the best matching zone for the record. If two zones exist, e.g.
-            // example.com and sub.example.com, and the program has determined that
-            // a TXT record for _acme-challenge.sub.example.com is required, this 
-            // will select the sub.example.com zone, as it is the most specific.
-            return FindBestMatch(zones.ToDictionary(x => x.Name), domain);
+            // Scenario B: If it is possible to create multiple zones, e.g.
+            // example.com and sub.example.com, get all of them and choose
+            // the best match. 
+            var zones = await client.GetZones();
+            return FindBestMatch(zones.ToDictionary(x => x.Name), challengeDomain);
         }
     }
 }
