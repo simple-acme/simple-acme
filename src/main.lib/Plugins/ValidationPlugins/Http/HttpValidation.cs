@@ -64,7 +64,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         /// but overridden to be a hardcoded / for (S)FTP and WebDav 
         /// protocols
         /// </summary>
-        protected virtual char PathSeparator => Path.PathSeparator;
+        protected virtual char PathSeparator => Path.DirectorySeparatorChar;
 
         /// <summary>
         /// Handle http challenge
