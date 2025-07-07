@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         /// <summary>
         /// Default plugin type, e.g. HTTP-01 (default), DNS-01, etc.
         /// </summary>
-        string DefaultValidationMode { get; }
+        string? DefaultValidationMode { get; }
 
         /// <summary>
         /// Disable multithreading for validation
@@ -98,7 +98,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public bool AllowDnsSubstitution => Get(x => x.AllowDnsSubstitution) ?? true;
         public bool CleanupFolders => Get(x => x.CleanupFolders) ?? false;
         public string DefaultValidation => Get(x => x.DefaultValidation) ?? "selfhosting";
-        public string DefaultValidationMode => Get(x => x.DefaultValidationMode) ?? Constants.DefaultChallengeType;
+        public string? DefaultValidationMode => Get(x => x.DefaultValidationMode);
         public bool DisableMultiThreading => Get(x => x.DisableMultiThreading) ?? true;
         public int DnsPropagationDelay => Get(x => x.DnsPropagationDelay) ?? 0;
         public IEnumerable<string> DnsServers => Get(x => x.DnsServers) ?? [];
