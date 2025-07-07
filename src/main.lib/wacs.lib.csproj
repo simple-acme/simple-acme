@@ -36,10 +36,10 @@
 		<PackageReference Include="Autofac" Version="8.3.0" />
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.6.1" />
 		<PackageReference Include="DnsClient" Version="1.8.0" />
-		<PackageReference Include="MailKit" Version="4.12.1" />
-		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.5" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.5" />
+		<PackageReference Include="MailKit" Version="4.13.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.6" />
 		<PackageReference Include="Microsoft.Web.Administration" Version="11.1.0" />
 		<PackageReference Include="MorseCode.ITask" Version="2.0.3" />
 		<PackageReference Include="Nager.PublicSuffix" Version="3.5.0" />
@@ -49,9 +49,9 @@
 		<PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
 		<PackageReference Include="Serilog.Sinks.EventLog" Version="4.0.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.5" />
-		<PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.5" />
-		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.5" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.6" />
+		<PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.6" />
+		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.6" />
 		<PackageReference Include="TaskScheduler" Version="2.12.1" />
 	</ItemGroup>
 
