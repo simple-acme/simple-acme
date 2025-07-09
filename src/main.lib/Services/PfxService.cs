@@ -36,6 +36,15 @@ namespace PKISharp.WACS.Services
         public static PfxWrapper GetPfx(PfxProtectionMode protectionMode)
         {
             var outputBuilder = new Pkcs12StoreBuilder();
+
+            // Prevent later warnings about RejectDuplicateAttributes
+            // pending either
+            // https://github.com/dotnet/runtime/issues/113726
+            // or
+            // https://github.com/bcgit/bc-csharp/issues/605
+            // to be resolved
+            outputBuilder.SetEnableOracleTrustedKeyUsage(false);
+
             if (protectionMode == PfxProtectionMode.Default) 
             {
                 if (OperatingSystem.IsWindows())

@@ -5,7 +5,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
     public abstract class HttpValidationArguments : BaseArguments
     {
-        [CommandLine(Obsolete = true)]
+        [CommandLine(Description = "Path for the website.", Obsolete = true)]
         public string? Root { get; set; }
 
         [CommandLine(Description = "Root path of the website. Note that /.well-known/acme-challenge/ will be appended automatically. Use --challengeroot instead if you do not want this to happen, e.g. to use a credential with limited access.")]
