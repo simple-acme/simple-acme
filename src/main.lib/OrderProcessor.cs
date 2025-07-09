@@ -354,7 +354,7 @@ namespace PKISharp.WACS
                 var state = csrPlugin.Capability.ExecutionState;
                 if (state.Disabled)
                 {
-                    context.OrderResult.AddErrorMessage($"CSR plugin is not available. {state.Disabled}");
+                    context.OrderResult.AddErrorMessage($"CSR plugin is not available. Reason: {state.Reason}");
                     return null;
                 }
             }
