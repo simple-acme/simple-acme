@@ -8,7 +8,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
 {
     internal class IISCapability(IUserRoleService userRole, IIISClient iisClient) : DefaultCapability
     {
-        public override State State
+        public override State ExecutionState
         {
             get
             {

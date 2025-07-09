@@ -161,7 +161,7 @@ namespace PKISharp.WACS
                     {
                         var pluginFrontend = autofacBuilder.ValidationFrontend(targetPluginScope, options, identifier);
                         log.Debug("Global validation option {name} found for {identifier}", pluginFrontend.Meta.Name, identifier.Value);
-                        var state = pluginFrontend.Capability.State;
+                        var state = pluginFrontend.Capability.ExecutionState;
                         if (!state.Disabled)
                         {
                             mapping[identifier] = pluginFrontend;
@@ -197,7 +197,7 @@ namespace PKISharp.WACS
                     await input.WritePagedList(allIdentifiers.Select(identifier =>
                         Choice.Create(
                             identifier,
-                            $"{identifier.Value}: {mapping[identifier]?.Meta.Name ?? "-"}{(mapping[identifier]?.Capability.State.Disabled ?? false ? " (disabled)" : "")}")));
+                            $"{identifier.Value}: {mapping[identifier]?.Meta.Name ?? "-"}{(mapping[identifier]?.Capability.ExecutionState.Disabled ?? false ? " (disabled)" : "")}")));
                     input.CreateSpace();
                 }
 

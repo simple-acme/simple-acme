@@ -228,7 +228,7 @@ namespace PKISharp.WACS.Clients.Acme
             if (existingOrder.Payload.Status != AcmeClient.OrderValid &&
                 existingOrder.Payload.Status != AcmeClient.OrderReady)
             {
-                log.Warning("Cached order has status {status}, discarding", existingOrder.Payload.Status);
+                log.Debug("Cached order has status {status}, discarding", existingOrder.Payload.Status);
                 DeleteFromCache(cacheKey);
                 return null;
             }

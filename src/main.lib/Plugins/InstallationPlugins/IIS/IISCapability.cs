@@ -11,7 +11,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
 {
     internal class IISCapability(IUserRoleService userRole, IIISClient iisClient) : InstallationCapability
     {
-        public override State State
+        public override State ExecutionState
         {
             get
             {
