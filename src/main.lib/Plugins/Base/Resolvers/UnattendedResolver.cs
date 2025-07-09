@@ -49,7 +49,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             // renewal (e.g. cannot validate wildcards using http-01)
             State combinedState(PluginFrontend<TCapability, TOptions> plugin)
             {
-                var baseState = plugin.Capability.State;
+                var baseState = plugin.Capability.ExecutionState;
                 if (baseState.Disabled)
                 {
                     return baseState;

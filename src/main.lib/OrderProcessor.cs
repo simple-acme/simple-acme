@@ -351,7 +351,7 @@ namespace PKISharp.WACS
             var csrPlugin = context.Target.UserCsrBytes == null ? context.OrderScope.Resolve<PluginBackend<ICsrPlugin, IPluginCapability, CsrPluginOptions>>() : null;
             if (csrPlugin != null)
             {
-                var state = csrPlugin.Capability.State;
+                var state = csrPlugin.Capability.ExecutionState;
                 if (state.Disabled)
                 {
                     context.OrderResult.AddErrorMessage($"CSR plugin is not available. {state.Disabled}");
@@ -398,7 +398,7 @@ namespace PKISharp.WACS
                     {
                         log.Information("Store with {name}...", store.Meta.Name);
                     }
-                    var state = store.Capability.State;
+                    var state = store.Capability.ExecutionState;
                     if (state.Disabled)
                     {
                         context.OrderResult.AddErrorMessage($"Store plugin is not available. {state.Reason}");
@@ -489,7 +489,7 @@ namespace PKISharp.WACS
                     {
                         log.Information("Installing with {name}...", installationPlugin.Meta.Name);
                     }
-                    var state = installationPlugin.Capability.State;
+                    var state = installationPlugin.Capability.ExecutionState;
                     if (state.Disabled)
                     {
                         context.OrderResult.AddErrorMessage($"Installation plugin is not available. {state.Reason}");

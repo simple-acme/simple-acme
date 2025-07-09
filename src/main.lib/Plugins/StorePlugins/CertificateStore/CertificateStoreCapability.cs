@@ -7,7 +7,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 {
     internal class CertificateStoreCapability(IUserRoleService userRoleService) : DefaultCapability
     {
-        public override State State
+        public override State ExecutionState
         {
             get
             {

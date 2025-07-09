@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
     {
         protected readonly Target Target = target;
         public override IEnumerable<string> ChallengeTypes => [Constants.Http01ChallengeType];
-        public override State State => 
+        public override State ExecutionState => 
             Target.GetIdentifiers(false).Any(x => x.Value.StartsWith("*.")) ? 
             State.DisabledState("HTTP validation cannot be used for wildcard identifiers (e.g. *.example.com)") : 
             State.EnabledState();
@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
     {
         protected readonly Target Target = target;
         public override IEnumerable<string> ChallengeTypes => [Constants.Dns01ChallengeType];
-        public override State State =>
+        public override State ExecutionState =>
             !Target.Parts.SelectMany(x => x.Identifiers).All(x => x.Type == IdentifierType.DnsName) ?
             State.DisabledState("DNS validation can only be used for DNS identifiers") :
             State.EnabledState();
@@ -35,7 +35,7 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
     {
         protected readonly Target Target = target;
         public override IEnumerable<string> ChallengeTypes => [Constants.TlsAlpn01ChallengeType];
-        public override State State =>
+        public override State ExecutionState =>
             Target.GetIdentifiers(false).Any(x => x.Value.StartsWith("*.")) ?
             State.DisabledState("TLS-ALPN validation cannot be used for wildcard identifiers (e.g. *.example.com)") :
             State.EnabledState();
@@ -45,6 +45,6 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
     {
         protected readonly Target Target = target;
         public override IEnumerable<string> ChallengeTypes => [Constants.Dns01ChallengeType, Constants.Http01ChallengeType, Constants.TlsAlpn01ChallengeType];
-        public override State State => State.EnabledState();
+        public override State ExecutionState => State.EnabledState();
     }
 }

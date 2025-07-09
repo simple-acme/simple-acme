@@ -9,7 +9,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
         /// Indicates whether the plugin is usable in the current context.
         /// </summary>
         /// <returns></returns>
-        State State { get; }
+        State ExecutionState { get; }
     }
 
     /// <summary>

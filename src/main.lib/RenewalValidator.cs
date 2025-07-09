@@ -227,7 +227,7 @@ namespace PKISharp.WACS
             }
             var identifier = Identifier.Parse(context.Authorization.Identifier);
             var pluginFrontend = scopeBuilder.ValidationFrontend(context.Order.OrderScope, options, identifier);
-            var state = pluginFrontend.Capability.State;
+            var state = pluginFrontend.Capability.ExecutionState;
             if (state.Disabled)
             {
                 log.Warning("Validation plugin {name} is not available. {disabledReason}", pluginFrontend.Meta.Name, state.Reason);
