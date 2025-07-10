@@ -95,6 +95,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                     log.Warning("Preliminary validation failed, the server answered '{value}' instead of '{expected}'. The ACME server might have a different perspective",
                         foundValue ?? "(null)",
                         challenge.HttpResourceValue);
+                    return true;
                 }
             }
             catch (HttpRequestException hrex)
