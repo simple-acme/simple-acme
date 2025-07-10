@@ -69,7 +69,7 @@ internal class Webnames(
     {
         var clientId = options.APIUsername ?? "";
         var clientSecret = await ssm.EvaluateSecret(options.APIKey) ?? "";
-        return new WebnamesClient(httpClient, clientId, clientSecret);
+        return new WebnamesClient(httpClient, clientId, clientSecret, options.APIOverrideBaseURL);
     }
 
     /// <summary>

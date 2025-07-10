@@ -17,6 +17,6 @@ public sealed class WebnamesArguments : BaseArguments
     [CommandLine(Description = "Webnames API Key", Secret = true)]
     public string? APIKey { get; set; }
 
-    [CommandLine(Description = "Webnames API Base URL Override (only use for testing)", Default = null)]
+    [CommandLine(Description = "Webnames API Base URL Override (leave blank except for testing/debugging)", Default = null)]
     public string? APIOverrideBaseURL { get; set; }
 }
