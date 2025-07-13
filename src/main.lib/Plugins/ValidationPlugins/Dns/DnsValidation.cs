@@ -272,6 +272,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
 
         /// <summary>
         /// Translate full host name to zone relative name
+        /// 
+        /// recordName: _acme-challenge.sub.domain.com
+        /// zone: domain.com
+        /// return: _acme-challenge.sub
+        /// 
+        /// recordName: domain.com
+        /// zone: domain.com
+        /// return: @
         /// </summary>
         /// <param name="zone"></param>
         /// <param name="recordName"></param>

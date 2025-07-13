@@ -1,6 +1,6 @@
 ﻿using PKISharp.WACS.Plugins.Base.Options;
 
-namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
+namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 {
     internal class ScriptOptions : ValidationPluginOptions
     {

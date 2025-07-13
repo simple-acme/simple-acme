@@ -1,7 +1,7 @@
 ﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 
-namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
+namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 {
     internal class ScriptArguments : BaseArguments
     {
