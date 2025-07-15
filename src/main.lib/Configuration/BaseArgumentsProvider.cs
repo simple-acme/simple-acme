@@ -35,7 +35,7 @@ namespace PKISharp.WACS.Configuration
             _typedThis = this;
             _parser = new FluentCommandLineParser<T>
             {
-                IsCaseSensitive = false
+                IsCaseSensitive = false,
             };
             BaseArgumentsProvider<T>.Configure(_parser);
         }
@@ -46,22 +46,28 @@ namespace PKISharp.WACS.Configuration
         /// <param name="parser"></param>
         private static void Configure(FluentCommandLineParser<T> parser)
         {
+            if (!OperatingSystem.IsWindows())
+            {  
+                // Don't use / as option prefix on non-Windows systems
+                // allowing their paths to be used without escaping
+                parser.UseOwnOptionPrefix("--", "-");
+            }
             foreach (var (commandLineInfo, property, propertyType) in typeof(T).CommandLineProperties())
             {
                 var setupMethod = typeof(FluentCommandLineParser<T>).GetMethod(nameof(parser.Setup), [typeof(PropertyInfo)]) ?? throw new InvalidOperationException();
                 var typedMethod = setupMethod.MakeGenericMethod(propertyType.Type);
-                var result = typedMethod.Invoke(parser, new[] { property });
+                var result = typedMethod.Invoke(parser, [property]);
 
                 var clob = typeof(ICommandLineOptionBuilderFluent<>).MakeGenericType(property.PropertyType);
                 var @as = clob.GetMethod(nameof(ICommandLineOptionBuilderFluent<object>.As), [typeof(string)]) ?? throw new InvalidOperationException();
-                var asResult = @as.Invoke(result, new[] { (commandLineInfo.Name ?? property.Name).ToLower() });
+                var asResult = @as.Invoke(result, [(commandLineInfo.Name ?? property.Name).ToLower()]);
 
                 // Add description when available
                 if (!string.IsNullOrWhiteSpace(commandLineInfo?.Description))
                 {
                     var clo = typeof(ICommandLineOptionFluent<>).MakeGenericType(property.PropertyType);
                     var withDescription = clo.GetMethod(nameof(ICommandLineOptionFluent<object>.WithDescription), [typeof(string)]) ?? throw new InvalidOperationException();
-                    withDescription.Invoke(asResult, new[] { commandLineInfo?.Description });
+                    withDescription.Invoke(asResult, [commandLineInfo?.Description]);
                 }
 
                 // Add default when available
@@ -69,7 +75,7 @@ namespace PKISharp.WACS.Configuration
                 {
                     var clo = typeof(ICommandLineOptionFluent<>).MakeGenericType(property.PropertyType);
                     var setDefault = clo.GetMethod(nameof(ICommandLineOptionFluent<object>.SetDefault), [property.PropertyType]) ?? throw new InvalidOperationException();
-                    setDefault.Invoke(asResult, new[] { commandLineInfo?.Default });
+                    setDefault.Invoke(asResult, [commandLineInfo?.Default]);
                 }
             }
         }
