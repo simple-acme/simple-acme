@@ -5,25 +5,25 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 {
     internal class ScriptArguments : BaseArguments
     {
-        [CommandLine(Description = "Path to script that creates and deletes validation records, depending on its parameters. If this parameter is provided then --dnscreatescript and --dnsdeletescript are ignored.")]
+        [CommandLine(Description = "Path to script that handles both preparation and cleanup, depending on its parameters. If this parameter is provided then --dnscreatescript and --dnsdeletescript are ignored.")]
         public string? DnsScript { get; set; }
 
-        [CommandLine(Description = "Path to script that creates the validation TXT record.")]
+        [CommandLine(Description = "Script that prepares to handle the validation challenge.")]
         public string? DnsCreateScript { get; set; }
 
-        [CommandLine(Description = "Default parameters passed to the script are \"" + Script.DefaultCreateArguments + "\", but that can be customized using this argument.")]
+        [CommandLine(Description = $"Arguments passed to the preparation script. If not specified these will be \"{ScriptDns.DefaultCreateArguments}\" for DNS challenges or \"{ScriptHttp.DefaultCreateArguments}\" for HTTP challenges.")]
         public string? DnsCreateScriptArguments { get; set; }
 
-        [CommandLine(Description = "Path to script to remove TXT record.")]
+        [CommandLine(Description = "Script that cleans up after validation has completed.")]
         public string? DnsDeleteScript { get; set; }
 
-        [CommandLine(Description = "Default parameters passed to the script are \"" + Script.DefaultDeleteArguments + "\", but that can be customized using this argument.")]
+        [CommandLine(Description = $"Arguments passed to the cleanup script. If not specified these will be \"{ScriptDns.DefaultDeleteArguments} \" for DNS challenges or \" {ScriptHttp.DefaultDeleteArguments}\" for HTTP challenges.")]
         public string? DnsDeleteScriptArguments { get; set; }
 
         [CommandLine(Description = "Configure parallelism mode. " +
             "0 is fully serial (default), " +
-            "1 allows multiple records to be created simultaneously, " +
-            "2 allows multiple records to be validated simultaneously and " +
+            "1 allows multiple preparations to run simultaneously, " +
+            "2 allows multiple validations to run simultaneously and " +
             "3 is a combination of both forms of parallelism.")]
         public int? DnsScriptParallelism { get; set; }
     }

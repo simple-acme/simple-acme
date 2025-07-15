@@ -9,8 +9,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 {
     internal class ManualHttp(
         HttpValidationParameters pars,
-        RunLevel runLevel,
-        IInputService input) : HttpValidation<ManualOptions>(new ManualOptions(), runLevel, pars)
+        IInputService input) : HttpValidation<ManualOptions>(new ManualOptions(), pars)
     {
         private ValidationContext? context = null;
         protected override Task DeleteFolder(string path) => Task.CompletedTask;

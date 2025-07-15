@@ -27,8 +27,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
         public override async Task<CentralSslOptions?> Aquire(IInputService input, RunLevel runLevel)
         {
-            var path = await Path.Interactive(input, "Store path").GetValue();
-            var password = await PfxPassword.Interactive(input, "Password for the .pfx file").GetValue();
+            var path = await Path.Interactive(input).WithLabel("Store path").GetValue();
+            var password = await PfxPassword.Interactive(input).WithLabel("Password for the .pfx file").GetValue();
             return Create(path, password);
         }
 

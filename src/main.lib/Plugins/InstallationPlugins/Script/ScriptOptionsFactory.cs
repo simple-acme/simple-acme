@@ -35,7 +35,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
         {
             var ret = new ScriptOptions
             {
-                Script = await Script.Interactive(inputService, "File").GetValue(),
+                Script = await Script.Interactive(inputService).WithLabel("File").GetValue(),
             };
             inputService.CreateSpace();
             inputService.Show("{CertCommonName}", "Common name (primary domain name)");
@@ -56,9 +56,9 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             inputService.Show("{OldCertCommonName}", "Common name (primary domain name) of the previously issued certificate");
             inputService.Show("{OldCertFriendlyName}", "Friendly name of the previously issued certificate");
             inputService.Show("{OldCertThumbprint}", "Thumbprint of the previously issued certificate");
-            inputService.Show("{vault://json/mysecret}", "Secret from the vault");
+            inputService.Show("{vault://json/key}", "Secret from the vault");
             inputService.CreateSpace();
-            ret.ScriptParameters = await Parameters.Interactive(inputService, "Parameters").GetValue();
+            ret.ScriptParameters = await Parameters.Interactive(inputService).WithLabel("Arguments").GetValue();
             return ret;
         }
 

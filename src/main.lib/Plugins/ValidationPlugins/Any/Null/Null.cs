@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         NullOptions, PluginOptionsFactory<NullOptions>,
         AnyValidationCapability, WacsJsonPlugins>
         ("a37b41dc-b45a-42fe-8d81-82ca409a5491",
-        "none", "Domain(s) are pre-authorized outside of simple-acme",
+        "none", "Certificate(s) are pre-authorized outside of simple-acme",
         Name = "None")]
     class Null : IValidationPlugin
     {

@@ -18,20 +18,26 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 
         private ArgumentResult<string?> CreateScript => arguments.
             GetString<ScriptArguments>(x => x.DnsCreateScript).
+            WithLabel("Preparation script").
             Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
-        private ArgumentResult<string?> CreateScriptArguments => arguments.
+        private ArgumentResult<string?> CreateScriptArguments(bool http) => arguments.
             GetString<ScriptArguments>(x => x.DnsCreateScriptArguments).
-            WithDefault(Script.DefaultCreateArguments).
+            WithDefault(http ? ScriptHttp.DefaultCreateArguments : ScriptDns.DefaultCreateArguments).
+            WithLabel("Arguments").
+            WithDescription("Arguments passed to the preparation script.").
             DefaultAsNull();
 
         private ArgumentResult<string?> DeleteScript => arguments.
             GetString<ScriptArguments>(x => x.DnsDeleteScript).
+            WithLabel("Cleanup script").
             Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
-        private ArgumentResult<string?> DeleteScriptArguments => arguments.
-            GetString<ScriptArguments>(x => x.DnsDeleteScriptArguments).            
-            WithDefault(Script.DefaultDeleteArguments).
+        private ArgumentResult<string?> DeleteScriptArguments(bool http) => arguments.
+            GetString<ScriptArguments>(x => x.DnsDeleteScriptArguments).
+            WithDefault(http ? ScriptHttp.DefaultCreateArguments : ScriptDns.DefaultCreateArguments).
+            WithLabel("Arguments").
+            WithDescription("Arguments passed to the cleanup script.").
             DefaultAsNull();
 
         private ArgumentResult<int?> Parallelism => arguments.
@@ -40,42 +46,52 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             Validate(x => Task.FromResult(x!.Value is >= 0 and <= 3), "invalid value").
             DefaultAsNull();
 
+        /// <summary>
+        /// Interactive
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="runLevel"></param>
+        /// <returns></returns>
         public override async Task<ScriptOptions?> Aquire(IInputService input, RunLevel runLevel)
         {
-            var ret = new ScriptOptions();
+            var ret = new ScriptOptions
+            {
+                ChallengeType =
+                    await input.ChooseFromMenu(
+                        "Which type of challenge does your script handle?",
+                        [
+                            Choice.Create(Constants.Http01ChallengeType, "HTTP challenge (serve file with specific name and content)"),
+                            Choice.Create(Constants.Dns01ChallengeType, "DNS challenge (create TXT record with specific value)", @default: true)
+                        ])
+            };
+
+            var http = ret.ChallengeType == Constants.Http01ChallengeType;
             var createScript = await CreateScript.Interactive(input).GetValue();
             string? deleteScript = null;
             var chosen = await input.ChooseFromMenu(
-                "How to delete records after validation",
-                new List<Choice<Func<Task>>>()
-                {
-                    Choice.Create(() => {
-                        deleteScript = createScript;
-                        return Task.CompletedTask;
-                    }, "Using the same script"),
-                    Choice.Create<Func<Task>>(async () => 
-                        deleteScript = await DeleteScript.Interactive(input).Required().GetValue()
-                    , "Using a different script"),
-                    Choice.Create(() => Task.CompletedTask, "Do not delete")
-                });
+                "How to clean up after validation",
+                [
+                    Choice.Create(() => { deleteScript = createScript; return Task.CompletedTask; }, "Using the same script"),
+                    Choice.Create<Func<Task>>(async () => deleteScript = await DeleteScript.Interactive(input).GetValue(), "Using a different script"),
+                    Choice.Create(() => Task.CompletedTask, "Do not clean up")
+                ]);
             await chosen.Invoke();
 
             ProcessScripts(ret, null, createScript, deleteScript);
 
             input.CreateSpace();
-            input.Show("{Identifier}", "Domain that's being validated, e.g. sub.example.com");
-            input.Show("{RecordName}", "Full name of the TXT record that is required, e.g. _acme-challenge.sub.example.com");
-            input.Show("{ZoneName}", "Registerable domain, e.g. example.com");
-            input.Show("{NodeName}", "Full subdomain, e.g. _acme-challenge.sub");
-            input.Show("{Token}", "Token that should be the content of the TXT record");
-            input.Show("{vault://json/mysecret}", "Secret from the vault");
+            if (http) {
+                ScriptHttp.ExplainReplacements(input);
+            } else { 
+                ScriptDns.ExplainReplacements(input); 
+            }
             input.CreateSpace();
-            ret.CreateScriptArguments = await CreateScriptArguments.Interactive(input).GetValue();
+          
+            ret.CreateScriptArguments = await CreateScriptArguments(http).Interactive(input).GetValue();
             if (!string.IsNullOrWhiteSpace(ret.DeleteScript) || !string.IsNullOrWhiteSpace(ret.Script))
             {
-                ret.DeleteScriptArguments = await DeleteScriptArguments.Interactive(input).GetValue();
+                ret.DeleteScriptArguments = await DeleteScriptArguments(http).Interactive(input).GetValue();
             }
-
             if (!settings.Validation.DisableMultiThreading)
             {
                 ret.Parallelism = await input.ChooseFromMenu(
@@ -101,8 +117,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             {
                 return null;
             }
-            ret.DeleteScriptArguments = await DeleteScriptArguments.GetValue();
-            ret.CreateScriptArguments = await CreateScriptArguments.GetValue();
+            ret.DeleteScriptArguments = await DeleteScriptArguments(false).GetValue();
+            ret.CreateScriptArguments = await CreateScriptArguments(false).GetValue();
             ret.Parallelism = await Parallelism.GetValue();
             return ret;
         }
@@ -151,10 +167,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(ScriptOptions options)
         {
+            var http = options.ChallengeType == Constants.Http01ChallengeType;
+            yield return (CommonScript.Meta, options.Script);
             yield return (CreateScript.Meta, options.CreateScript);
-            yield return (CreateScriptArguments.Meta, options.CreateScriptArguments);
+            yield return (CreateScriptArguments(http).Meta, options.CreateScriptArguments);
             yield return (DeleteScript.Meta, options.DeleteScript);
-            yield return (DeleteScriptArguments.Meta, options.DeleteScriptArguments);
+            yield return (DeleteScriptArguments(http).Meta, options.DeleteScriptArguments);
             yield return (Parallelism.Meta, options.Parallelism);
         }
     }

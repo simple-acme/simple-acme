@@ -24,7 +24,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
         public override async Task<P7bFileOptions?> Aquire(IInputService input, RunLevel runLevel)
         {
-            var path = await Path.Interactive(input, "File path").GetValue();
+            var path = await Path.Interactive(input).WithLabel("File path").GetValue();
             var name = await Name.GetValue();
             return Create(path, name);
         }

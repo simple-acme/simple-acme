@@ -18,10 +18,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         public WebDav(
             WebDavOptions options, 
             HttpValidationParameters pars,
-            RunLevel runLevel, 
             IProxyService proxy,
             SecretServiceManager secretService) :
-            base(options, runLevel, pars) => 
+            base(options, pars) => 
             _webdavClient = new WebDavClientWrapper(
                 _options.Credential, 
                 pars.LogService, 

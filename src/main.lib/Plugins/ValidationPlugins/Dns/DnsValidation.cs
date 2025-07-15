@@ -284,7 +284,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <param name="zone"></param>
         /// <param name="recordName"></param>
         /// <returns></returns>
-        public string RelativeRecordName(string zone, string recordName)
+        public static string RelativeRecordName(string zone, string recordName)
         {
             var index = recordName.LastIndexOf(zone);
             if (index == -1) {

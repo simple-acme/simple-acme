@@ -56,8 +56,8 @@ namespace PKISharp.WACS.Configuration
             where T : class, INetworkCredentialArguments, new()
         {
             return new NetworkCredentialOptions(
-                await arguments.GetString<T>(x => x.UserName).Interactive(input, purpose + " username").GetValue(),
-                await arguments.GetProtectedString<T>(x => x.Password).Interactive(input, purpose + "password").GetValue()
+                await arguments.GetString<T>(x => x.UserName).Interactive(input).WithLabel(purpose + " username").GetValue(),
+                await arguments.GetProtectedString<T>(x => x.Password).Interactive(input).WithLabel(purpose + "password").GetValue()
             );
         }
 

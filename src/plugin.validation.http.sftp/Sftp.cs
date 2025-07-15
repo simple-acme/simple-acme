@@ -15,8 +15,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
     public class Sftp(
         SftpOptions options,
         HttpValidationParameters pars,
-        RunLevel runLevel,
-        SecretServiceManager secretService) : HttpValidation<SftpOptions>(options, runLevel, pars)
+        SecretServiceManager secretService) : HttpValidation<SftpOptions>(options, pars)
     {
         private SshFtpClient? _sshFtpClient;
         private async Task<SshFtpClient> GetClient()

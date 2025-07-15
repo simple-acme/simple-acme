@@ -491,7 +491,19 @@ namespace PKISharp.WACS.Services
                     Take(settings.UI.PageSize);
                 foreach (var target in page)
                 {
-                    target.Command ??= (currentIndex + 1).ToString();
+                    if (target.Command == null)
+                    {
+                        var prefix = "";
+                        if (listItems.Count() >= 100 && currentIndex < 99)
+                        {
+                            prefix = "  ";
+                        } 
+                        else if (listItems.Count() >= 10 && currentIndex < 9)
+                        {
+                            prefix = " ";
+                        }
+                        target.Command = $"{prefix}{currentIndex + 1}";
+                    }
 
                     if (!string.IsNullOrEmpty(target.Command))
                     {

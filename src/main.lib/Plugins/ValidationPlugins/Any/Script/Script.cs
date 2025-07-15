@@ -3,42 +3,41 @@ using ACMESharp.Protocol.Resources;
 using PKISharp.WACS.Clients;
 using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Context;
-using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
+using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 {
     [IPlugin.Plugin<
         ScriptOptions, ScriptOptionsFactory,
-        DnsValidationCapability, WacsJsonPlugins>
+        ScriptValidationCapability, WacsJsonPlugins>
         ("8f1da72e-f727-49f0-8546-ef69e5ecec32",
-        "DnsScript", "Create verification records with your own script",
+        "DnsScript", "Perform validation challenge with your own script",
         Hidden = true)]
     [IPlugin.Plugin1<
         ScriptOptions, ScriptOptionsFactory,
-        DnsValidationCapability, WacsJsonPlugins, ScriptArguments>
+        ScriptValidationCapability, WacsJsonPlugins, ScriptArguments>
         ("8f1da72e-f727-49f0-8546-ef69e5ecec32",
-        "Script", "Create verification records with your own script",
+        "Script", "Perform validation challenge with your own script",
         Name = "Custom script")]
     internal class Script(
         ScriptOptions options,
         LookupClientProvider dnsClient,
-        IInputService input,
         ILogService log,
         ScriptClient client,
         SecretServiceManager secretServiceManager,
         DomainParseService domainParseService,
+        HttpValidationParameters pars,
         ISettings settings) : IValidationPlugin
     {
-        internal const string DefaultCreateArguments = "create {Identifier} {RecordName} {Token}";
-        internal const string DefaultDeleteArguments = "delete {Identifier} {RecordName} {Token}";
-
         private ScriptDns? _scriptDns;
+        private ScriptHttp? _scriptHttp;
 
         /// <summary>
         /// User can prepare multiple challenges before proceeding to validation
@@ -46,26 +45,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         public ParallelOperations Parallelism => (ParallelOperations)(options.Parallelism ?? 0);
 
         /// <summary>
-        /// Have the user choose the challenge type that they want to handle
+        /// Pick challenge type based on user input or configuration
         /// </summary>
         /// <param name="supportedChallenges"></param>
         /// <returns></returns>
-        public async Task<AcmeChallenge?> SelectChallenge(List<AcmeChallenge> supportedChallenges)
-        {
-            if (supportedChallenges.Count == 1)
-            {
-                return supportedChallenges[0];
-            }
-            return await input.ChooseRequired(
-                "How would you like to prove that you own the domain?",
-                supportedChallenges, c => Choice.Create(c,
-                   c.Type switch
-                   {
-                       Constants.Dns01ChallengeType => "Create a DNS record",
-                       Constants.Http01ChallengeType => "Upload a file",
-                       _ => "Unknown (bug?)"
-                   }));
-        }
+        public Task<AcmeChallenge?> SelectChallenge(List<AcmeChallenge> supportedChallenges) => 
+            Task.FromResult(supportedChallenges.FirstOrDefault(c => c.Type == options.ChallengeType));
 
         /// <summary>
         /// Prepare a single challenge for validation
@@ -77,19 +62,112 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         {
             if (context.ChallengeDetails is Dns01ChallengeValidationDetails dnsChallenge)
             {
-                _scriptDns = new ScriptDns(options, dnsClient, client, log, secretServiceManager, domainParseService, settings);
+                _scriptDns = new ScriptDns(this, dnsClient, domainParseService, log, settings);
                 return await _scriptDns.PrepareChallenge(context, dnsChallenge);
             }
-            else if (context.ChallengeDetails is Http01ChallengeValidationDetails)
+            else if (context.ChallengeDetails is Http01ChallengeValidationDetails httpChallenge)
             {
-                throw new NotImplementedException();
+                _scriptHttp = new ScriptHttp(this, context, pars, httpChallenge);
+                return await _scriptHttp.PrepareChallenge(context, httpChallenge);
             }
             return false;
         }
 
+        /// <summary>
+        /// Common create for DNS/HTTP challenges
+        /// </summary>
+        /// <param name="identifier"></param>
+        /// <param name="domain"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal async Task<bool> Create(string identifier, string domain, string value)
+        {
+            var script = options.Script ?? options.CreateScript;
+            if (!string.IsNullOrWhiteSpace(script))
+            {
+                var args = options.ChallengeType == Constants.Http01ChallengeType ?
+                    ScriptHttp.DefaultCreateArguments :
+                    ScriptDns.DefaultCreateArguments;
+                if (!string.IsNullOrWhiteSpace(options.CreateScriptArguments))
+                {
+                    args = options.CreateScriptArguments;
+                }
+                var escapeToken = script.EndsWith(".ps1");
+                var actualArguments = await ProcessArguments(identifier, domain, value, args, escapeToken, false);
+                var censoredArguments = await ProcessArguments(identifier, domain, value, args, escapeToken, true);
+                var result = await client.RunScript(script, actualArguments, censoredArguments);
+                return result.Success;
+            }
+            else
+            {
+                log.Error("No create script configured");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Common delete for DNS/HTTP challenges
+        /// </summary>
+        /// <param name="identifier"></param>
+        /// <param name="domain"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal async Task Delete(string identifier, string domain, string value)
+        {
+            var script = options.Script ?? options.DeleteScript;
+            if (!string.IsNullOrWhiteSpace(script))
+            {
+                var args = options.ChallengeType == Constants.Http01ChallengeType ? 
+                    ScriptHttp.DefaultDeleteArguments : 
+                    ScriptDns.DefaultDeleteArguments;
+                if (!string.IsNullOrWhiteSpace(options.DeleteScriptArguments))
+                {
+                    args = options.DeleteScriptArguments;
+                }
+                var escapeToken = script.EndsWith(".ps1");
+                var actualArguments = await ProcessArguments(identifier, domain, value, args, escapeToken, false);
+                var censoredArguments = await ProcessArguments(identifier, domain, value, args, escapeToken, true);
+                await client.RunScript(script, actualArguments, censoredArguments);
+            }
+            else
+            {
+                log.Warning("No delete script configured, validation record remains");
+            }
+        }
+
+        /// <summary>
+        /// Run argument replacements
+        /// </summary>
+        /// <param name="identifier"></param>
+        /// <param name="recordName"></param>
+        /// <param name="token"></param>
+        /// <param name="args"></param>
+        /// <param name="escapeToken"></param>
+        /// <param name="censor"></param>
+        /// <returns></returns>
+        private async Task<string> ProcessArguments(string identifier, string path, string token, string args, bool escapeToken, bool censor)
+        {
+            // Some tokens start with - which confuses Powershell. We did not want to 
+            // make a breaking change for .bat or .exe files, so instead escape the 
+            // token with double quotes, as Powershell discards the quotes anyway and 
+            // thus it's functionally equivalant.
+            if (escapeToken && (args.Contains(" {Token} ") || args.EndsWith(" {Token}")))
+            {
+                args = args.Replace("{Token}", "\"{Token}\"");
+            }
+
+            // Replace tokens in the script
+            var replacements = options.ChallengeType == Constants.Http01ChallengeType
+                ? ScriptHttp.ReplaceTokens(identifier, path, censor, token)
+                : _scriptDns?.ReplaceTokens(identifier, path, censor, token) ?? [];
+
+            return await ScriptClient.ReplaceTokens(args, replacements, secretServiceManager, censor);
+        }
+
         public async Task CleanUp() =>
             await (
-                _scriptDns?.CleanUp() ??
+                _scriptDns?.CleanUp() ?? 
+                _scriptHttp?.CleanUp() ??
                 Task.CompletedTask);
 
         public Task Commit() => Task.CompletedTask;
