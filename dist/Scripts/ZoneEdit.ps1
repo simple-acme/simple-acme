@@ -39,11 +39,11 @@ delete {RecordName} {Token} {vault://json/zeuser} {vault://json/zeauthtoken}
 #>
 
 param(
-	[string]$Task,
-	[string]$RecordName,
-	[string]$TxtValue,
-	[string]$ZEUser,
-	[string]$ZEKey
+    [string]$Task,
+    [string]$RecordName,
+    [string]$TxtValue,
+    [string]$ZEUser,
+    [string]$ZEKey
 )
 
 <#
@@ -95,10 +95,31 @@ Function Add-DnsTxt {
     $encodedCreds = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$($ZEUser):$($ZEKey)"))
     $Headers = @{ Authorization = "Basic $encodedCreds" }
 
-    # send the delete request
+    # send the create request
     Write-Output "Adding a TXT record for $RecordName with value $TxtValue"
-    Invoke-RestMethod "$apiBase/txt-create.php?host=$RecordName&rdata=$TxtValue" -Headers $Headers
+    $response = Invoke-RestMethod "$apiBase/txt-create.php?host=$RecordName&rdata=$TxtValue" -Headers $Headers
 
+    # Determine success / failure from malformed XML returned by Zone Edit
+    if ($response -match '<(SUCCESS|ERROR)') {
+        $tagName = $matches[1]
+
+        # Close the malformed tag and wrap in a root element
+        $wrappedXml = "<root>$response</$tagName></root>"
+
+        [xml]$xml = $wrappedXml
+        $node = $xml.root.$tagName
+
+        $code = $node.CODE
+        $text = $node.TEXT
+
+        if ($tagName -eq "SUCCESS") {
+            Write-Output ("Success: {0}" -f $response)
+        } else {
+            Write-Output ("Failed to create DNS record. Status Code: {0} Message: {1}" -f $code, $text)
+        }
+    } else {
+        Write-Output ("Response does not match expected format: {0}" -f $response)
+    }
 }
 
 <#
@@ -152,13 +173,35 @@ Function Remove-DnsTxt {
 
     # send the delete request
     Write-Output "Removing TXT record for $RecordName with value $TxtValue"
-    Invoke-RestMethod "$apiBase/txt-delete.php?host=$RecordName&rdata=$TxtValue" -Headers $Headers
+    $response = Invoke-RestMethod "$apiBase/txt-delete.php?host=$RecordName&rdata=$TxtValue" -Headers $Headers
+
+    # Determine success / failure from malformed XML returned by Zone Edit
+    if ($response -match '<(SUCCESS|ERROR)') {
+        $tagName = $matches[1]
+
+        # Close the malformed tag and wrap in a root element
+        $wrappedXml = "<root>$response</$tagName></root>"
+
+        [xml]$xml = $wrappedXml
+        $node = $xml.root.$tagName
+
+        $code = $node.CODE
+        $text = $node.TEXT
+
+        if ($tagName -eq "SUCCESS") {
+            Write-Output ("Success: {0}" -f $response)
+        } else {
+            Write-Output ("Failed to remove DNS record. Status Code: {0} Message: {1}" -f $code, $text)
+        }
+    } else {
+        Write-Output ("Response does not match expected format: {0}" -f $response)
+    }
 }
 
 if ($Task -eq 'create'){
-	Add-DnsTxt $RecordName $TxtValue $ZEUser $ZEKey
+    Add-DnsTxt $RecordName $TxtValue $ZEUser $ZEKey
 }
 
 if ($Task -eq 'delete'){
-	Remove-DnsTxt $RecordName $TxtValue $ZEUser $ZEKey
+    Remove-DnsTxt $RecordName $TxtValue $ZEUser $ZEKey
 }
