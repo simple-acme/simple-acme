@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     public class Acme(
         LookupClientProvider dnsClient,
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         IInputService input,
         IProxyService proxy,
         AcmeOptions options) : DnsValidation<Acme>(dnsClient, log, settings)

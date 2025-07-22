@@ -4,12 +4,13 @@ using Azure.Identity;
 using Azure.ResourceManager;
 using PKISharp.WACS.Services;
 using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.Azure.Common
 {
     public class AzureHelpers(
         IAzureOptionsCommon options,
-        IProxyService proxy,
         SecretServiceManager ssm)
     {
 
@@ -64,36 +65,32 @@ namespace PKISharp.WACS.Plugins.Azure.Common
         /// <summary>
         /// Create the right type of TokenCredential based on user preferences
         /// </summary>
-        public TokenCredential TokenCredential
+        public async Task<TokenCredential> GetTokenCredential()
         {
-            get
+            var tokenOptions = new TokenCredentialOptions() { AuthorityHost = AzureAuthorityHost };
+            if (options.UseMsi && string.IsNullOrEmpty(options.ClientId))
             {
-                var tokenOptions = new TokenCredentialOptions() { AuthorityHost = AzureAuthorityHost };
-                if (options.UseMsi && string.IsNullOrEmpty(options.ClientId))
-                {
-                    return new ManagedIdentityCredential(options: tokenOptions);
-                }
-                if (options.UseMsi && !string.IsNullOrEmpty(options.ClientId))
-                {
-                    return new ManagedIdentityCredential(options.ClientId, options: tokenOptions);
-                }
-                return new ClientSecretCredential(
-                        options.TenantId,
-                        options.ClientId,
-                        ssm.EvaluateSecret(options.Secret?.Value),
-                        options: tokenOptions);
+                return new ManagedIdentityCredential(options: tokenOptions);
             }
+            if (options.UseMsi && !string.IsNullOrEmpty(options.ClientId))
+            {
+                return new ManagedIdentityCredential(options.ClientId, options: tokenOptions);
+            }
+            var clientSecret = await ssm.EvaluateSecret(options.Secret?.Value);
+            return new ClientSecretCredential(
+                    options.TenantId,
+                    options.ClientId,
+                    clientSecret,
+                    options: tokenOptions);
         }
 
-        public ArmClientOptions ArmOptions
+        public ArmClientOptions ArmOptions(HttpClient client)
         {
-            get 
+            return new ArmClientOptions()
             {
-                return new ArmClientOptions() { 
-                    Environment = ArmEnvironment,
-                    Transport = new HttpClientTransport(proxy.GetHttpClient())
-                };
-            }
+                Environment = ArmEnvironment,
+                Transport = new HttpClientTransport(client)
+            };
         }
     }
 }

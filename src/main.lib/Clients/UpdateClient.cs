@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Clients
         {
             try
             {
-                var httpClient = proxy.GetHttpClient();
+                var httpClient = await proxy.GetHttpClient();
                 var json = await httpClient.GetStringAsync("https://www.simple-acme.com/version.json");
                 if (string.IsNullOrEmpty(json))
                 {

@@ -1,6 +1,6 @@
 ﻿using PKISharp.WACS.Clients.Acme;
 using System.Diagnostics;
-using Protocol = ACMESharp.Protocol;
+using ACMESharp.Protocol;
 
 namespace PKISharp.WACS.DomainObjects
 {
@@ -11,12 +11,12 @@ namespace PKISharp.WACS.DomainObjects
         string? cacheKeyPart = null,
         string? friendlyNamePart = null)
     {
-        public string? CacheKeyPart { get; set; } = cacheKeyPart;
-        public string? FriendlyNamePart { get; set; } = friendlyNamePart;
+        public string? CacheKeyPart { get; } = cacheKeyPart;
+        public string? FriendlyNamePart { get; } = friendlyNamePart;
         public string? KeyPath { get; set; }
-        public Target Target { get; set; } = target;
-        public Renewal Renewal { get; set; } = renewal;
-        public Protocol.AcmeOrderDetails? Details { get; set; } = null;
+        public Target Target { get; } = target;
+        public Renewal Renewal { get; } = renewal;
+        public AcmeOrderDetails? Details { get; set; } = null;
 
         public bool? Valid => Details == null ? 
             null : 

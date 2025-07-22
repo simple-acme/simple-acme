@@ -3,10 +3,11 @@ using System.Net;
 using System.Net.Http;
 using System.Runtime.Versioning;
 using System.Security.Authentication;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    public partial class ProxyService(ILogService log, ISettingsService settings, SecretServiceManager secretService) : IProxyService
+    public partial class ProxyService(ILogService log, ISettings settings, SecretServiceManager secretService) : IProxyService
     {
         private IWebProxy? _proxy;
         private bool _enabled = true;
@@ -41,8 +42,8 @@ namespace PKISharp.WACS.Services
                 _ => true
             };
 
-        public HttpMessageHandler GetHttpMessageHandler() => GetHttpMessageHandler(true);
-        private HttpMessageHandler GetHttpMessageHandler(bool checkSsl = true)
+        public async Task<HttpMessageHandler> GetHttpMessageHandler() => await GetHttpMessageHandler(true);
+        private async Task<HttpMessageHandler> GetHttpMessageHandler(bool checkSsl = true)
         {
             var logger = new RequestLogger(log);
             var handler = default(HttpMessageHandler);
@@ -50,7 +51,7 @@ namespace PKISharp.WACS.Services
             {
                 var winHandler = new WindowsHandler(logger)
                 {
-                    Proxy = GetWebProxy(),
+                    Proxy = await GetWebProxy(),
                     SslProtocols = SslProtocols,
                 };
                 if (!checkSsl)
@@ -68,7 +69,7 @@ namespace PKISharp.WACS.Services
             {
                 var basicHandler = new BasicHandler(logger)
                 {
-                    Proxy = GetWebProxy(),
+                    Proxy = await GetWebProxy(),
                     SslProtocols = SslProtocols
                 }; 
                 if (!checkSsl)
@@ -84,9 +85,9 @@ namespace PKISharp.WACS.Services
         /// Get prepared HttpClient with correct system proxy settings
         /// </summary>
         /// <returns></returns>
-        public HttpClient GetHttpClient(bool checkSsl = true)
+        public async Task<HttpClient> GetHttpClient(bool checkSsl = true)
         {
-            var httpClientHandler = GetHttpMessageHandler(checkSsl);
+            var httpClientHandler = await GetHttpMessageHandler(checkSsl);
             var httpClient = new HttpClient(httpClientHandler);
             httpClient.DefaultRequestHeaders.Add("User-Agent", $"simple-acme/{VersionService.SoftwareVersion} (+https://github.com/simple-acme/simple-acme)");
             return httpClient;
@@ -98,7 +99,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <returns></returns>
         
-        public IWebProxy? GetWebProxy()
+        public async Task<IWebProxy?> GetWebProxy()
         {
             if (!_enabled)
             {
@@ -111,7 +112,7 @@ namespace PKISharp.WACS.Services
                 {
                     if (!string.IsNullOrWhiteSpace(settings.Proxy.Username))
                     {
-                        var password = secretService.EvaluateSecret(settings.Proxy.Password);
+                        var password = await secretService.EvaluateSecret(settings.Proxy.Password);
                         proxy.Credentials = new NetworkCredential(settings.Proxy.Username, password);
                     }
                     log.Warning("Proxying via {proxy}:{port}", proxy.Address?.Host, proxy.Address?.Port);

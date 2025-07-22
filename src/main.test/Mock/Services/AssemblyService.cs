@@ -7,7 +7,8 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
     {
         public override List<TypeDescriptor> GetResolvable<T>()
         {
-            if (typeof(T) == typeof(ISecretService))
+            // Fake that only a single ISecretProvider exists
+            if (typeof(T) == typeof(ISecretProvider))
             {
                 return [new(typeof(SecretService))];
             }

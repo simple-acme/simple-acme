@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace PKISharp.WACS.Services.AutoRenew
 {
     [SupportedOSPlatform("linux")]
-    internal class CronJobService(ILogService log, ISettingsService settings) : IAutoRenewService
+    internal class CronJobService(ILogService log, ISettings settings) : IAutoRenewService
     {
         private string CronFileName => $"{settings.Client.ClientName.CleanPath()}-{settings.BaseUri.CleanUri()}";
         private FileInfo CronFile => new($"/etc/cron.daily/{CronFileName}");
@@ -43,7 +43,7 @@ cd {Path.GetDirectoryName(VersionService.ExePath)}
         /// <returns></returns>
         public async Task EnsureAutoRenew(RunLevel runLevel)
         {
-            var create = runLevel.HasFlag(RunLevel.Force) || !CronFile.Exists;
+            var create = runLevel.HasFlag(RunLevel.ForceTaskScheduler) || !CronFile.Exists;
             if (create)
             {
                 await SetupAutoRenew(runLevel);

@@ -22,7 +22,7 @@ namespace PKISharp.WACS
         IAutofacBuilder scopeBuilder,
         ILogService log,
         IInputService input,
-        ISettingsService settings,
+        ISettings settings,
         ICertificateService certificateService,
         ICacheService cacheService,
         RenewalValidator validator,
@@ -173,6 +173,7 @@ namespace PKISharp.WACS
                 var orderResult = order.OrderResult;
                 if (order.NewCertificate == null)
                 {
+                    log.Error("No certificate generated");
                     orderResult.AddErrorMessage("No certificate generated");
                     continue;
                 }
@@ -323,8 +324,9 @@ namespace PKISharp.WACS
             // Place the order
             var orderManager = context.OrderScope.Resolve<OrderManager>();
             context.Order.KeyPath = context.Order.Renewal.CsrPluginOptions?.ReusePrivateKey == true
-                ? cacheService.Key(context.Order).FullName : null;
-            context.Order.Details = await orderManager.GetOrCreate(context.Order, clientManager, context.PreviousCertificate, context.RunLevel);
+                ? cacheService.Key(context.Order).FullName
+                : null;
+            context.Order.Details = await orderManager.GetOrCreate(context.Order, clientManager, context.CachedCertificate, context.RunLevel);
 
             // Sanity checks
             if (context.Order.Details == null)
@@ -349,10 +351,10 @@ namespace PKISharp.WACS
             var csrPlugin = context.Target.UserCsrBytes == null ? context.OrderScope.Resolve<PluginBackend<ICsrPlugin, IPluginCapability, CsrPluginOptions>>() : null;
             if (csrPlugin != null)
             {
-                var state = csrPlugin.Capability.State;
+                var state = csrPlugin.Capability.ExecutionState;
                 if (state.Disabled)
                 {
-                    context.OrderResult.AddErrorMessage($"CSR plugin is not available. {state.Disabled}");
+                    context.OrderResult.AddErrorMessage($"CSR plugin is not available. Reason: {state.Reason}");
                     return null;
                 }
             }
@@ -396,7 +398,7 @@ namespace PKISharp.WACS
                     {
                         log.Information("Store with {name}...", store.Meta.Name);
                     }
-                    var state = store.Capability.State;
+                    var state = store.Capability.ExecutionState;
                     if (state.Disabled)
                     {
                         context.OrderResult.AddErrorMessage($"Store plugin is not available. {state.Reason}");
@@ -487,7 +489,7 @@ namespace PKISharp.WACS
                     {
                         log.Information("Installing with {name}...", installationPlugin.Meta.Name);
                     }
-                    var state = installationPlugin.Capability.State;
+                    var state = installationPlugin.Capability.ExecutionState;
                     if (state.Disabled)
                     {
                         context.OrderResult.AddErrorMessage($"Installation plugin is not available. {state.Reason}");

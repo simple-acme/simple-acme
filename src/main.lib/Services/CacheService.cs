@@ -25,23 +25,18 @@ namespace PKISharp.WACS.Services
         private const string PfxPostFixLegacy = "-cache.pfx";
 
         private readonly ILogService _log;
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
         private readonly DirectoryInfo _cache;
 
-        public CacheService(ILogService log, ISettingsService settingsService)
+        public CacheService(ILogService log, ISettings settingsService)
         {
             _settings = settingsService;
             _log = log;
-            if (settingsService.Cache.Path != null)
+            _cache = new DirectoryInfo(settingsService.Cache.CachePath);
+            if (settingsService.Valid)
             {
-                _cache = new DirectoryInfo(settingsService.Cache.Path);
                 CheckStaleFiles();
-            } 
-            else
-            {
-                _cache = new DirectoryInfo("DUMMY");
             }
-
         }
 
         /// <summary>
@@ -52,7 +47,7 @@ namespace PKISharp.WACS.Services
         private void CheckStaleFiles()
         {
             var days = Math.Max(
-                _settings.Cache.DeleteStaleFilesDays ?? 120, 
+                _settings.Cache.DeleteStaleFilesDays, 
                 _settings.ScheduledTask.RenewalDays + 30);
             var files = _cache.
                 GetFiles().
@@ -142,13 +137,13 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// Encrypt or decrypt the cached private keys
         /// </summary>
-        public void Encrypt()
+        public async Task Encrypt()
         {
             foreach (var f in _cache.EnumerateFiles($"*{KeysPostfix}"))
             {
                 var x = new ProtectedString(File.ReadAllText(f.FullName), _log);
                 _log.Information("Rewriting {x}", f.Name);
-                File.WriteAllText(f.FullName, x.DiskValue(_settings.Security.EncryptConfig));
+                await f.SafeWrite(x.DiskValue(_settings.Security.EncryptConfig));
             }
         }
 
@@ -365,7 +360,7 @@ namespace PKISharp.WACS.Services
         {
             ClearCache(order, CsrPostFix);
             var csrPath = new FileInfo(GetPath(order.Renewal, $"-{CacheKey(order)}{CsrPostFix}"));
-            await File.WriteAllTextAsync(csrPath.FullName, csr);
+            await csrPath.SafeWrite(csr);
             _log.Debug("CSR stored at {path} in certificate cache folder {folder}",
                 csrPath.Name,
                 csrPath.Directory?.FullName);

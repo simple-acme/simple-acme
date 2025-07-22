@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    public class InputService(MainArguments arguments, ISettingsService settings, ILogService log) : IInputService
+    public class InputService(MainArguments arguments, ISettings settings, ILogService log) : IInputService
     {
         private const string _cancelCommand = "C";
         private bool _dirty;
@@ -126,7 +126,7 @@ namespace PKISharp.WACS.Services
             {
                 if (level > 0)
                 {
-                    label = string.Join("", Enumerable.Repeat("  ", level)) + $"- {label}";
+                    label = new string(' ', (level * 2) + 1) + $"- {label}";
                 }
                 offset = Math.Max(20, label!.Length + 1);
                 Write(label, ConsoleColor.White);
@@ -354,7 +354,7 @@ namespace PKISharp.WACS.Services
         public async Task<TResult?> ChooseOptional<TSource, TResult>(
             string what, IEnumerable<TSource> options,
             Func<TSource, Choice<TResult?>> creator,
-            string nullLabel) where TResult : class
+            string nullLabel)
         {
             var baseChoices = options.Select(creator).ToList();
             if (!baseChoices.Any(x => !x.Disabled))

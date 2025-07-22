@@ -19,7 +19,11 @@ namespace PKISharp.WACS.Clients.IIS
         bool HasFtpSites { get; }
         bool HasWebSites { get; }
         Version Version { get; }
-        void UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null);
+        IISHttpBindingUpdaterContext UpdateHttpSite(
+            IEnumerable<Identifier> partIdentifiers, 
+            BindingOptions bindingOptions, 
+            byte[]? oldCertificate = null, 
+            IEnumerable<Identifier>? allIdentifiers = null);
         void UpdateFtpSite(long? id, string? store, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate);
     }
 

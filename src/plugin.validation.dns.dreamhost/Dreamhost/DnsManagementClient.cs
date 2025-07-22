@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dreamhost
 {
-    public class DnsManagementClient(string apiKey, ILogService logService)
+    public class DnsManagementClient(string apiKey, ILogService logService, HttpClient httpClient)
     {
         private readonly string uri = "https://api.dreamhost.com/";
 
@@ -44,21 +44,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dreamhost
 
         private async Task<HttpResponseMessage> SendRequest(string command, IEnumerable<KeyValuePair<string, string>> args)
         {
-            using (var client = new HttpClient { BaseAddress = new Uri(uri) })
+            httpClient.BaseAddress = new Uri(uri);
+            var queryString = new Dictionary<string, string>
             {
-                var queryString = new Dictionary<string, string>
-                {
-                    { "key", apiKey },
-                    { "unique_id", Guid.NewGuid().ToString() },
-                    { "format", "json" },
-                    { "cmd", command }
-                };
-                foreach (var arg in args)
-                {
-                    queryString.Add(arg.Key, arg.Value);
-                }
-                return await client.GetAsync("?" + string.Join("&", queryString.Select(kvp => $"{WebUtility.UrlEncode(kvp.Key)}={WebUtility.UrlEncode(kvp.Value)}")));
+                { "key", apiKey },
+                { "unique_id", Guid.NewGuid().ToString() },
+                { "format", "json" },
+                { "cmd", command }
             };
+            foreach (var arg in args)
+            {
+                queryString.Add(arg.Key, arg.Value);
+            }
+            return await httpClient.GetAsync("?" + string.Join("&", queryString.Select(kvp => $"{WebUtility.UrlEncode(kvp.Key)}={WebUtility.UrlEncode(kvp.Value)}")));
         }
     }
 }

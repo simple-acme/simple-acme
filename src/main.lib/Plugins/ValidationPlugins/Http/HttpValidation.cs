@@ -6,7 +6,6 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -34,9 +33,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         protected TOptions _options = options;
         protected IInputService _input = pars.InputService;
-        protected ISettingsService _settings = pars.Settings;
+        protected ISettings _settings = pars.Settings;
         protected Renewal _renewal = pars.Renewal;
         protected RunLevel _runLevel = runLevel;
+        protected ILogService _log = pars.LogService;
 
         /// <summary>
         /// Multiple http-01 validation challenges can be answered at the same time
@@ -60,14 +60,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         protected static string TemplateWebConfig => Path.Combine(VersionService.ResourcePath, "web_config.xml");
 
         /// <summary>
-        /// Character to separate folders, different for FTP 
+        /// Character to separate folders, OS specific in the general case
+        /// but overridden to be a hardcoded / for (S)FTP and WebDav 
+        /// protocols
         /// </summary>
-        protected virtual char PathSeparator => '\\';
+        protected virtual char PathSeparator => Path.DirectorySeparatorChar;
 
         /// <summary>
         /// Handle http challenge
         /// </summary>
-        public async override Task PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
+        public async override Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
             // Should always have a value, confirmed by RenewalExecutor
             // check only to satifiy the compiler
@@ -76,7 +78,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 Refresh(context.TargetPart);
             }
             await WriteAuthorizationFile(challenge);
-            await WriteWebConfig(challenge);
+            await WriteWebConfig();
             await TestChallenge(challenge);
 
             string? foundValue = null;
@@ -86,12 +88,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 if (Equals(value, challenge.HttpResourceValue))
                 {
                     log.Information("Preliminary validation looks good, but the ACME server will be more thorough");
+                    return true;
                 }
                 else
                 {
                     log.Warning("Preliminary validation failed, the server answered '{value}' instead of '{expected}'. The ACME server might have a different perspective",
                         foundValue ?? "(null)",
                         challenge.HttpResourceValue);
+                    return true;
                 }
             }
             catch (HttpRequestException hrex)
@@ -102,6 +106,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             {
                 log.Error(ex, "Preliminary validation failed");
             }
+            return false;
         }
 
         /// <summary>
@@ -119,7 +124,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         /// <param name="uri"></param>
         private async Task<string> WarmupSite(Http01ChallengeValidationDetails challenge)
         {
-            using var client = _proxy.GetHttpClient(false);
+            using var client = await _proxy.GetHttpClient(false);
             var response = await client.GetAsync(challenge.HttpResourceUrl);
             return await response.Content.ReadAsStringAsync();
         }
@@ -131,11 +136,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         /// <param name="fileContents">the contents of the file to write</param>
         private async Task WriteAuthorizationFile(Http01ChallengeValidationDetails challenge)
         {
-            if (_path == null)
-            {
-                throw new InvalidOperationException("No path specified for HttpValidation");
-            }
-            var path = CombinePath(_path, challenge.HttpResourcePath);
+            // Create full path from the base path
+            var path = CreatePath(challenge.HttpResourceName);
             await WriteFile(path, challenge.HttpResourceValue);
             if (!_filesWritten.Contains(path))
             {
@@ -144,12 +146,34 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         }
 
         /// <summary>
+        /// Create the full path for the file to be written
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        private string CreatePath(string name)
+        {
+            if (_path == null)
+            {
+                throw new InvalidOperationException("No path specified for HttpValidation");
+            }
+
+            // Create full path from the base path
+            var path = _path;
+            if (_options.IsRootPath != false)
+            {
+                path = CombinePath(path, Http01ChallengeValidationDetails.HttpPathPrefix);
+            }
+            return CombinePath(path, name);
+        }
+
+        /// <summary>
         /// Can be used to write out server specific configuration, to handle extensionless files etc.
         /// </summary>
         /// <param name="target"></param>
         /// <param name="answerPath"></param>
         /// <param name="token"></param>
-        private async Task WriteWebConfig(Http01ChallengeValidationDetails challenge)
+        private async Task WriteWebConfig()
         {
             if (_path == null)
             {
@@ -159,8 +183,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             {
                 try
                 {
-                    var partialPath = challenge.HttpResourcePath.Split('/').Last();
-                    var destination = CombinePath(_path, challenge.HttpResourcePath.Replace(partialPath, "web.config"));
+                    var destination = CreatePath("web.config");
                     if (!_filesWritten.Contains(destination))
                     {
                         var content = HttpValidation<TOptions>.GetWebConfig().Value;
@@ -170,7 +193,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                             await WriteFile(destination, content);
                             _filesWritten.Add(destination);
                         }
-
                     }
                 }
                 catch (Exception ex)
@@ -187,7 +209,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         private static Lazy<string?> GetWebConfig() => new(() => {
             try
             {
-                return File.ReadAllText(HttpValidation<TOptions>.TemplateWebConfig);
+                return File.ReadAllText(TemplateWebConfig);
             } 
             catch 
             {
@@ -306,7 +328,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
             catch (Exception ex)
             {
-                log.Error(ex, "Error occured while deleting folder structure");
+                log.Warning(ex, "Error occurred while deleting folder structure");
             }
         }
     }

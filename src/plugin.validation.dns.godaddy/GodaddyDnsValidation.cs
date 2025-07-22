@@ -5,6 +5,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Plugins.ValidationPlugins.Godaddy;
 using PKISharp.WACS.Services;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
@@ -18,16 +19,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class GodaddyDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         DomainParseService domainParser,
         GodaddyOptions options,
         SecretServiceManager ssm,
-        IProxyService proxyService) : DnsValidation<GodaddyDnsValidation>(dnsClient, logService, settings)
+        IProxyService proxyService) : DnsValidation<GodaddyDnsValidation, DnsManagementClient>(dnsClient, logService, settings, proxyService)
     {
-        private readonly DnsManagementClient _client = new(
-                ssm.EvaluateSecret(options.ApiKey) ?? "",
-                ssm.EvaluateSecret(options.ApiSecret) ?? "",
-                logService, proxyService);
+        protected override async Task<DnsManagementClient> CreateClient(HttpClient httpClient)
+        {
+            return new(
+                await ssm.EvaluateSecret(options.ApiKey) ?? "",
+                await ssm.EvaluateSecret(options.ApiSecret) ?? "",
+                httpClient);
+        }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
@@ -35,7 +39,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
-                await _client.CreateRecord(domain, recordName, RecordType.TXT, record.Value);
+                var client = await GetClient();
+                await client.CreateRecord(domain, recordName, RecordType.TXT, record.Value);
                 return true;
             }
             catch (Exception ex)
@@ -51,7 +56,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
-                await _client.DeleteRecord(domain, recordName, RecordType.TXT);
+                var client = await GetClient();
+                await client.DeleteRecord(domain, recordName, RecordType.TXT);
             }
             catch (Exception ex)
             {

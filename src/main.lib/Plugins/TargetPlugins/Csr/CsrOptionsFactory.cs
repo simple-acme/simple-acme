@@ -2,6 +2,7 @@
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -13,7 +14,10 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
 
         private ArgumentResult<string?> CsrFile => arguments.
             GetString<CsrArguments>(x => x.CsrFile).
-            Required().
+            Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
+
+        private ArgumentResult<string?> CsrScript => arguments.
+            GetString<CsrArguments>(x => x.CsrScript).
             Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
         private ArgumentResult<string?> PkFile => arguments.
@@ -22,25 +26,48 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
 
         public override async Task<CsrOptions?> Aquire(IInputService inputService, RunLevel runLevel)
         {
-            return new CsrOptions()
+            var options = new List<Choice<string>>
             {
-                PkFile = await PkFile.Interactive(inputService).GetValue(),
-                CsrFile = await CsrFile.Interactive(inputService).GetValue()
+                Choice.Create("file", "Static file"),
+                Choice.Create("script", "Dynamic script")
             };
+            var chosen = await inputService.ChooseFromMenu("Where will the CSR come from?", options);
+            if (chosen == "file")
+            {
+                return new CsrOptions()
+                {
+                    PkFile = await PkFile.Interactive(inputService).GetValue(),
+                    CsrFile = await CsrFile.Interactive(inputService).Required().GetValue()
+                };
+            }
+            else
+            {
+                return new CsrOptions()
+                {
+                    CsrScript = await CsrScript.Interactive(inputService).Required().GetValue()
+                };
+            }
         }
 
         public override async Task<CsrOptions?> Default()
         {
-            return new CsrOptions()
+            var ret = new CsrOptions()
             {
                 PkFile = await PkFile.GetValue(),
-                CsrFile = await CsrFile.GetValue()
+                CsrFile = await CsrFile.GetValue(),
+                CsrScript = await CsrScript.GetValue()
             };
+            if (string.IsNullOrWhiteSpace(ret.CsrFile) && string.IsNullOrEmpty(ret.CsrScript))
+            {
+                throw new InvalidOperationException("You must specify either --csrfile or --csrscript");
+            }
+            return ret;
         }
 
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(CsrOptions options)
         {
             yield return (CsrFile.Meta, options.CsrFile);
+            yield return (CsrScript.Meta, options.CsrScript);
             yield return (PkFile.Meta, options.PkFile);
         }
     }

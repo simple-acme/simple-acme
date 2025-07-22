@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
 
         public async Task CreateRecord(string domain, string identifier, RecordType type, string value)
         {
-            using (var client = proxyService.GetHttpClient())
+            using (var client = await proxyService.GetHttpClient())
             {
                 client.BaseAddress = new Uri(uri);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -53,7 +53,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
 
         public async Task DeleteRecord(string domain, string identifier, RecordType type)
         {
-            using (var client = proxyService.GetHttpClient())
+            using (var client = await proxyService.GetHttpClient())
             {
                 client.BaseAddress = new Uri(uri);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

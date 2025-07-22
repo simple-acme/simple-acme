@@ -1,5 +1,6 @@
 ﻿using Org.BouncyCastle.Security;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Services;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -53,16 +54,32 @@ namespace PKISharp.WACS.Extensions
         /// </summary>
         /// <param name="ci"></param>
         /// <returns></returns>
-        public static X509Certificate2Collection AsCollection(this ICertificateInfo ci, X509KeyStorageFlags flags, string? password = null)
+        public static X509Certificate2Collection AsCollection(this ICertificateInfo ci, X509KeyStorageFlags flags, ILogService log, string? password = null)
         {
-            using var pfxStream = ci.PfxStream(password);
-            using var pfxStreamReader = new BinaryReader(pfxStream);
-            var tempPfx = new X509Certificate2Collection();
-            tempPfx.Import(
-                pfxStreamReader.ReadBytes((int)pfxStream.Length),
-                password,
-                flags);
-            return tempPfx;
+            try
+            {
+                return X509CertificateLoader.LoadPkcs12Collection(ci.PfxBytes(password), password, flags,
+                    new Pkcs12LoaderLimits()
+                    {
+                        PreserveKeyName = true,
+                        PreserveCertificateAlias = true,
+                        PreserveUnknownAttributes = true,
+                        PreserveStorageProvider = false
+                    });
+            } 
+            catch (Pkcs12LoadLimitExceededException ex)
+            {
+                log.Warning(ex, "Reparsing certificate");
+                return X509CertificateLoader.LoadPkcs12Collection(ci.PfxBytes(password), password, flags, 
+                    new Pkcs12LoaderLimits(Pkcs12LoaderLimits.DangerousNoLimits)
+                    {
+                        PreserveKeyName = true,
+                        PreserveCertificateAlias = true,
+                        PreserveUnknownAttributes = true,
+                        PreserveStorageProvider = false 
+                    });
+            }
         }
+
     }
 }

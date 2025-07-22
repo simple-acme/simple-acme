@@ -8,7 +8,7 @@ namespace PKISharp.WACS.Services.Serialization
     /// forces a re-calculation of the protected data according to current machine setting in EncryptConfig when
     /// writing the json for renewals and options for plugins
     /// </summary>
-    public class ProtectedStringConverter(ILogService log, ISettingsService settings) : JsonConverter<ProtectedString>
+    public class ProtectedStringConverter(ILogService log, ISettings settings) : JsonConverter<ProtectedString>
     {
         public override ProtectedString? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => 
             new(reader.GetString() ?? "", log);

@@ -1,5 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
-using PKISharp.WACS.Configuration.Settings;
+﻿using ACMESharp;
+using Microsoft.Extensions.Configuration;
+using PKISharp.WACS.Configuration.Settings.Types;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -7,13 +8,14 @@ using Serilog.Settings.Configuration;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.Services
 {
-    public class LogService : ILogService
+    public class LogService : ILogService, IAcmeLogger
     {
         private readonly Logger? _screenLogger;
         private readonly Logger? _debugScreenLogger;
@@ -100,12 +102,12 @@ namespace PKISharp.WACS.Services
         /// Before that all happens we can only log to the screen.
         /// </summary>
         /// <param name="settings"></param>
-        public void ApplyClientSettings(ClientSettings settings)
+        public void ApplyClientSettings(IClientSettings settings)
         {
-            CreateDiskLogger(settings.LogPath ?? settings.ConfigurationPath);
+            CreateDiskLogger(settings.LogPath);
             if (OperatingSystem.IsWindows())
             {
-                CreateEventLogger(settings.ClientName ?? "simple-acme");
+                CreateEventLogger(settings.ClientName);
             }
             if (_logs != null)
             {
@@ -125,6 +127,7 @@ namespace PKISharp.WACS.Services
         /// Set up the disk logger
         /// </summary>
         /// <param name="logPath"></param>
+        [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Primitive type (string) used")]
         private void CreateDiskLogger(string logPath)
         {
             try

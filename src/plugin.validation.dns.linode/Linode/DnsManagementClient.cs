@@ -11,10 +11,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Linode
         private readonly HttpClient _httpClient;
         private readonly string uri = "https://api.linode.com/";
 
-        public DnsManagementClient(string apiToken, ILogService logService, IProxyService proxyService)
+        public DnsManagementClient(string apiToken, ILogService logService, HttpClient httpClient)
         {
             _log = logService;
-            _httpClient = proxyService.GetHttpClient();
+            _httpClient = httpClient;
             _httpClient.BaseAddress = new Uri(uri);
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiToken}");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

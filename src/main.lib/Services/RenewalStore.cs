@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
@@ -13,7 +14,7 @@ namespace PKISharp.WACS.Services
     /// </summary>
     internal class RenewalStore : IRenewalStore
     {
-        internal ISettingsService _settings;
+        internal ISettings _settings;
         internal ILogService _log;
         internal IInputService _inputService;
         internal DueDateStaticService _dueDateService;
@@ -21,7 +22,7 @@ namespace PKISharp.WACS.Services
 
         public RenewalStore(
             IRenewalStoreBackend backend,
-            ISettingsService settings,
+            ISettings settings,
             ILogService log,
             IInputService input,
             DueDateStaticService dueDateService)
@@ -37,10 +38,10 @@ namespace PKISharp.WACS.Services
             }
         }
 
-        public IEnumerable<Renewal> FindByArguments(string? id, string? friendlyName)
+        public async Task<IEnumerable<Renewal>> FindByArguments(string? id, string? friendlyName)
         {
             // AND filtering by input parameters
-            var ret = Renewals;
+            var ret = await _backend.Read();
             if (!string.IsNullOrEmpty(friendlyName))
             {
                 var regex = new Regex(friendlyName.ToLower().PatternToRegex());
@@ -53,13 +54,14 @@ namespace PKISharp.WACS.Services
             return ret;
         }
 
-        public void Save(Renewal renewal, RenewResult result)
+        public async Task Save(Renewal renewal, RenewResult result)
         {
-            var renewals = Renewals.ToList();
+            var renewals = await _backend.Read();
+            var renewalList = renewals.ToList();
             if (renewal.New)
             {
                 renewal.History = [];
-                renewals.Add(renewal);
+                renewalList.Add(renewal);
                 _log.Information(LogType.All, "Adding renewal for {friendlyName}", renewal.LastFriendlyName);
             }
 
@@ -74,55 +76,70 @@ namespace PKISharp.WACS.Services
                 }
             }
             renewal.Updated = true;
-            Renewals = renewals;
+            await _backend.Write(renewalList);
         }
 
-        public void Import(Renewal renewal)
+        /// <summary>
+        /// Import from v1.9.x (obsolete)
+        /// </summary>
+        /// <param name="renewal"></param>
+        /// <returns></returns>
+        public async Task Import(Renewal renewal)
         {
-            var renewals = Renewals.ToList();
-            renewals.Add(renewal);
-            _log.Information(LogType.All, "Importing renewal for {friendlyName}", renewal.LastFriendlyName);
-            Renewals = renewals;
+            var renewals = await _backend.Read();
+            var renewalList = renewals.ToList();
+            renewalList.Add(renewal);
+            _log.Information(LogType.All, "Importing renewal {renewal}", renewal);
+            await _backend.Write(renewalList);
         }
 
-        public void Encrypt()
+        /// <summary>
+        /// Re-save everything to apply new encrption setting
+        /// </summary>
+        /// <returns></returns>
+        public async Task Encrypt()
         {
             _log.Information("Updating files in: {settings}", _settings.Client.ConfigurationPath);
-            var renewals = Renewals.ToList();
+            var renewals = await _backend.Read();
             foreach (var r in renewals)
             {
                 r.Updated = true;
-                _log.Information("Re-writing password information for {friendlyName}", r.LastFriendlyName);
+                _log.Information("Re-writing secrets for {renewal}", r);
             }
-            _backend.Write(renewals);
+            await _backend.Write(renewals);
         }
 
-        public IEnumerable<Renewal> Renewals
-        {
-            get => _backend.Read();
-            private set => _backend.Write(value);
-        }
+        /// <summary>
+        /// Get a list of current renewals
+        /// </summary>
+        public async Task<List<Renewal>> List() => [.. await _backend.Read()];
 
         /// <summary>
         /// Cancel specific renewal
         /// </summary>
         /// <param name="renewal"></param>
-        public void Cancel(Renewal renewal)
+        public async Task Cancel(Renewal renewal)
         {
-            renewal.Deleted = true;
-            var renewals = Renewals;
-            Renewals = renewals;
-            _log.Warning("Renewal {target} cancelled", renewal);
+            var renewals = await _backend.Read();
+            var found = renewals.FirstOrDefault(x => x.Id == renewal.Id);
+            if (found == null)
+            {
+                _log.Warning("Renewal {renewal} not found", renewal.Id);
+                return;
+            }
+            found.Deleted = true;
+            await _backend.Write(renewals);
+            _log.Warning("Renewal {renewal} cancelled", renewal);
         }
 
         /// <summary>
         /// Cancel everything
         /// </summary>
-        public void Clear()
+        public async Task Clear()
         {
-            var renewals = Renewals;
+            var renewals = await _backend.Read();
             _ = renewals.All(x => x.Deleted = true);
-            Renewals = renewals;
+            await _backend.Write(renewals);
             _log.Warning("All renewals cancelled");
         }
     }

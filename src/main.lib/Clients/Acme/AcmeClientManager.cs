@@ -1,4 +1,5 @@
-﻿using ACMESharp.Protocol;
+﻿using ACMESharp;
+using ACMESharp.Protocol;
 using ACMESharp.Protocol.Resources;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
@@ -31,8 +32,9 @@ namespace PKISharp.WACS.Clients.Acme
     internal class AcmeClientManager
     {
         private readonly ILogService _log;
+        private readonly IAcmeLogger _acmeLogger;
         private readonly IInputService _input;
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
         private readonly ArgumentsParser _arguments;
         private readonly IProxyService _proxyService;
         private readonly ZeroSsl _zeroSsl;
@@ -46,14 +48,16 @@ namespace PKISharp.WACS.Clients.Acme
         public AcmeClientManager(
             IInputService inputService,
             ArgumentsParser arguments,
-            ILogService log,
-            ISettingsService settings,
+            ILogService log, 
+            IAcmeLogger acmeLogger,
+            ISettings settings,
             AccountManager accountManager,
             IProxyService proxy,
             SecretServiceManager secretServiceManager,
             ZeroSsl zeroSsl)
         {
             _log = log;
+            _acmeLogger = acmeLogger;
             _settings = settings;
             _arguments = arguments;
             _accountArguments = _arguments.GetArguments<AccountArguments>() ?? new AccountArguments();
@@ -69,14 +73,25 @@ namespace PKISharp.WACS.Clients.Acme
         /// to setup new accounts using anonymous context (or EAB)
         /// </summary>
         /// <returns></returns>
-        internal async Task<AcmeProtocolClient> CreateAnonymousClient()
+        private async Task<AcmeProtocolClient> CreateAnonymousClient()
         {
-            var httpClient = _proxyService.GetHttpClient();
+            var httpClient = await _proxyService.GetHttpClient();
             httpClient.BaseAddress = _settings.BaseUri;
             _log.Verbose("Constructing ACME protocol client...");
-            var client = new AcmeProtocolClient(httpClient, usePostAsGet: _settings.Acme.PostAsGet);
+            var client = new AcmeProtocolClient(httpClient, _acmeLogger, usePostAsGet: _settings.Acme.PostAsGet);
             client.Directory = await EnsureServiceDirectory(client);
             return client;
+        }
+
+        /// <summary>
+        /// Get server metadata
+        /// </summary>
+        /// <returns></returns>
+        internal async Task<DirectoryMeta?> GetMetaData()
+        {
+            // Create anonymous client if we need it
+            _anonymousClient ??= await CreateAnonymousClient();
+            return _anonymousClient.Directory.Meta;
         }
 
         /// <summary>
@@ -105,11 +120,12 @@ namespace PKISharp.WACS.Clients.Acme
                     throw new Exception("AcmeClient was unable to find or create an account");
                 }
                 // Save newly created account to disk
-                _accountManager.StoreAccount(account, name);
+                await _accountManager.StoreAccount(account, name);
             }
 
             // Create authorized account
-            var ret = new AcmeClient(_log, _settings, _proxyService, _anonymousClient.Directory, account);
+            var httpClient = await _proxyService.GetHttpClient(_settings.Acme.ValidateServerCertificate);
+            var ret = new AcmeClient(httpClient, _log, _acmeLogger, _settings, _anonymousClient.Directory, account);
             if (!string.IsNullOrWhiteSpace(name))
             {
                 _log.Debug("Using named account {name}...", name);
@@ -210,7 +226,7 @@ namespace PKISharp.WACS.Clients.Acme
             var contacts = default(string[]);
 
             var eabKid = _accountArguments.EabKeyIdentifier;
-            var eabKey = _secretServiceManager.EvaluateSecret(_accountArguments.EabKey);
+            var eabKey = await _secretServiceManager.EvaluateSecret(_accountArguments.EabKey);
             var eabAlg = _accountArguments.EabAlgorithm ?? "HS256";
             var eabFlow = client.Directory?.Meta?.ExternalAccountRequired ?? false;
             var zeroSslFlow = _settings.BaseUri.Host.Contains("zerossl.com");
@@ -470,7 +486,7 @@ namespace PKISharp.WACS.Clients.Acme
             if (newDetails.Payload != null)
             {
                 client.Account.Details = newDetails;
-                _accountManager.StoreAccount(client.Account, name);
+                await _accountManager.StoreAccount(client.Account, name);
             }
         }
     }

@@ -16,7 +16,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
         "Domain", "Separate certificate for each registerable domain (e.g. *.example.com)")]
     internal class Domain(DomainParseService domainParseService, ILogService log) : IOrderPlugin
     {
-        public IEnumerable<Order> Split(Renewal renewal, Target target) 
+        public List<Order> Split(Renewal renewal, Target target) 
         {
             var ret = new Dictionary<string, Order>();
             var parts = new Dictionary<string, List<TargetPart>>();
@@ -76,7 +76,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
                     } 
                 }
             }
-            return ret.Values;
+            return [.. ret.Values];
         }
     }
 }

@@ -11,7 +11,7 @@ using System.Security.Cryptography.X509Certificates;
 namespace PKISharp.WACS.Plugins.StorePlugins
 {
     [SupportedOSPlatform("windows")]
-    public class CertificateStoreClient(string storeName, StoreLocation storeLocation, ILogService log, ISettingsService settings) : IDisposable
+    public class CertificateStoreClient(string storeName, StoreLocation storeLocation, ILogService log, ISettings settings) : IDisposable
     {
         private readonly X509Store _store = new(storeName, storeLocation);
         private bool disposedValue;
@@ -27,20 +27,14 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         public bool InstallCertificate(ICertificateInfo certificate, X509KeyStorageFlags flags)
         {
             // Determine storage flags
-#pragma warning disable CS0618 // Type or member is obsolete
-            var exportable =
-                settings.Store.CertificateStore.PrivateKeyExportable == true ||
-                (settings.Store.CertificateStore.PrivateKeyExportable == null && settings.Security.PrivateKeyExportable == true);
-#pragma warning restore CS0618 // Type or member is obsolete
-            if (exportable)
+            if (settings.Store.CertificateStore.PrivateKeyExportable)
             {
                 flags |= X509KeyStorageFlags.Exportable;
             }
             flags |= X509KeyStorageFlags.PersistKeySet;
             var password = PasswordGenerator.Generate();
             var success = false;
-            var attemptConvert = settings.Store.CertificateStore.UseNextGenerationCryptoApi != true;
-            if (attemptConvert)
+            if (!settings.Store.CertificateStore.UseNextGenerationCryptoApi)
             {
                 success = SaveWithRetry(certificate, (input) => ConvertAndSave(input, flags, password));
                 if (!success)
@@ -52,7 +46,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             {
                 SaveWithRetry(certificate, (input) => { RegularSave(input, flags, password); return true; });
             }
-            return exportable;
+            return settings.Store.CertificateStore.PrivateKeyExportable;
         }
 
         /// <summary>
@@ -100,7 +94,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
             try
             {
-                var collection = certificate.AsCollection(tempFlags, password);
+                var collection = certificate.AsCollection(tempFlags, log, password);
                 dotnet = collection.OfType<X509Certificate2>().FirstOrDefault(x => x.HasPrivateKey);
             }
             catch (Exception ex)
@@ -155,11 +149,14 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             // using a key protection mechasims that is not supported
             // by the operating system, causing the caller to retry
             // using a different protection
-            var collection = certificate.AsCollection(X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.Exportable, password).OfType<X509Certificate2>().ToList();
+            var collection = certificate.
+                AsCollection(X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.Exportable, log, password).
+                OfType<X509Certificate2>().
+                ToList();
             
             // If we don't trip on the above, repeat the same 
             // with the actual flags that we want to use.
-            collection = certificate.AsCollection(flags, password).OfType<X509Certificate2>().ToList();
+            collection = certificate.AsCollection(flags, log, password).OfType<X509Certificate2>().ToList();
             var dotnet = collection.FirstOrDefault(x => x.HasPrivateKey);
             if (dotnet == null)
             {
@@ -215,6 +212,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 log.Debug("Close store {name}", store.Name);
                 store.Close();
             }
+            // Release native resources
+            dotnet.Dispose();
         }
 
         /// <summary>
@@ -240,7 +239,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             foreach (var bcCert in certificate.Chain)
             {
-                var cert = new X509Certificate2(bcCert.GetEncoded());
+                var cert = X509CertificateLoader.LoadCertificate(bcCert.GetEncoded());
                 try
                 {
                     SaveToStore(store, cert, false);
@@ -332,6 +331,10 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             {
                 cspFlags |= CspProviderFlags.UseNonExportableKey;
             }
+            // Documentation for CspParameters:
+            // https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.cspparameters?view=net-9.0
+            // Enumeration of possible provider types: 
+            // HKEY_LOCAL_MACHINE\Software\Microsoft\Cryptography\Defaults\Provider Types
             var cspParameters = new CspParameters
             {
                 KeyContainerName = Guid.NewGuid().ToString(),
@@ -343,7 +346,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             var parameters = tempRsa.ExportParameters(true);
             rsaProvider.ImportParameters(parameters);
 
-            var tempPfx = new X509Certificate2(original.Export(X509ContentType.Cert, password), password, flags);
+            var tempPfx = X509CertificateLoader.LoadCertificate(original.Export(X509ContentType.Cert));
             tempPfx = tempPfx.CopyWithPrivateKey(rsaProvider);
             tempPfx.FriendlyName = original.FriendlyName;
             return tempPfx;

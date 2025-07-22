@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
         "Host", "Separate certificate for each host (e.g. sub.example.com)")]
     internal class Host : IOrderPlugin
     {
-        public IEnumerable<Order> Split(Renewal renewal, Target target) 
+        public List<Order> Split(Renewal renewal, Target target) 
         {
             var ret = new List<Order>();
             var seen = new List<Identifier>();

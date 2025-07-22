@@ -3,7 +3,6 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
-using PKISharp.WACS.Services;
 using System;
 using System.IO;
 using System.Linq;
@@ -21,7 +20,7 @@ namespace TransIp.Library
         private readonly string _login;
         private readonly ICipherParameters? _key;
 
-        public AuthenticationService(string? login, string? privateKey, IProxyService proxyService) : base(proxyService)
+        public AuthenticationService(string? login, string? privateKey, HttpClient httpClient) : base(httpClient)
         {
             if (string.IsNullOrWhiteSpace(login))
             {

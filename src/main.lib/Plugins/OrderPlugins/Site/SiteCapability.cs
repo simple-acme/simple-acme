@@ -9,7 +9,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
     {
         protected readonly Target Target = target;
 
-        public override State State
+        public override State ExecutionState
         {
             get
             {

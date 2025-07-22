@@ -14,7 +14,8 @@ namespace PKISharp.WACS.Configuration.Arguments
                 !string.IsNullOrEmpty(Csr) ||
                 !string.IsNullOrEmpty(Target) ||
                 !string.IsNullOrEmpty(Source) ||
-                !string.IsNullOrEmpty(Validation);
+                !string.IsNullOrEmpty(Validation) ||
+                !string.IsNullOrEmpty(VaultKey);
         }
 
         public bool HasFilter =>
@@ -109,6 +110,31 @@ namespace PKISharp.WACS.Configuration.Arguments
 
         [CommandLine(Description = "Specify which installation plugins to use (if any). This may be a comma-separated list.")]
         public string? Installation { get; set; }
+
+        [CommandLine(Description = "Specify which certificate profile to use.")]
+        public string? Profile { get; set; }
+
+        // Vault manipulation
+
+        [CommandLine(Description = "Store a new value in the secret vault, or overwrite an existing one.")]
+        public bool VaultStore { get; set; }
+
+        [CommandLine(Description = "Key to target for vault commands. This should be in the format like vault://json/mysecret.")]
+        public string? VaultKey { get; set; }
+
+        [CommandLine(Description = "Secret to save in the vault.", Secret = true)]
+        public string? VaultSecret { get; set; }
+
+        // Global validation options management
+
+        [CommandLine(Description = "Create a new global validation option to store in the validation.json file. This will override any other validation options specified at the renewal level.")]
+        public bool GlobalValidation { get; set; }
+
+        [CommandLine(Description = "Set priority for the new/updated global validation setting.")]
+        public int? GlobalValidationPriority { get; set; }
+
+        [CommandLine(Description = "Set pattern for a new global validation setting, or repeat a previously input pattern to replace/update the validation settings.")]
+        public string? GlobalValidationPattern { get; set; }
 
         // Misc
 

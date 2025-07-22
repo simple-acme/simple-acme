@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using PKISharp.WACS.Services;
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -12,10 +11,10 @@ namespace TransIp.Library
         private readonly HttpClient _client;
         private readonly DateTime _epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0).ToLocalTime();
 
-        public BaseService(IProxyService proxyService)
+        public BaseService(HttpClient httpClient)
         {
-            _client = proxyService.GetHttpClient();
-            _client.BaseAddress = new Uri("https://api.transip.nl/v6/");
+            _client = httpClient;
+            httpClient.BaseAddress = new Uri("https://api.transip.nl/v6/");
         }
 
         protected internal virtual Task<HttpClient> GetClient() => Task.FromResult(_client);

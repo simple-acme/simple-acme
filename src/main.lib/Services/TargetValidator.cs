@@ -3,14 +3,14 @@ using PKISharp.WACS.Extensions;
 
 namespace PKISharp.WACS.Services
 {
-    internal class TargetValidator(ILogService log, ISettingsService settings)
+    internal class TargetValidator(ILogService log, ISettings settings)
     {
         public bool IsValid(Target target, bool validateMax = true)
         {
             var ret = target.GetIdentifiers(true);
             if (validateMax)
             {
-                var max = settings.Acme.MaxDomains ?? 100;
+                var max = settings.Acme.MaxDomains;
                 if (ret.Count > max)
                 {
                     log.Error($"Too many identifiers in a single certificate. The maximum is {max} identifiers.", max);

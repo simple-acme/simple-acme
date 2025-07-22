@@ -6,12 +6,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
     public class HttpValidationParameters(
         ILogService log,
         IInputService input,
-        ISettingsService settings,
+        ISettings settings,
         IProxyService proxy,
         Renewal renewal,
         RunLevel runLevel)
     {
-        public ISettingsService Settings { get; private set; } = settings;
+        public ISettings Settings { get; private set; } = settings;
         public Renewal Renewal { get; private set; } = renewal;
         public RunLevel RunLevel { get; private set; } = runLevel;
         public ILogService LogService { get; private set; } = log;

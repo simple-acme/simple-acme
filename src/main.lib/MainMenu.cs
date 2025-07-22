@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Host
             IAutofacBuilder scopeBuilder,
             ExceptionHandler exceptionHandler,
             ILogService log,
-            ISettingsService settings,
+            ISettings settings,
             IUserRoleService userRoleService,
             IInputService input,
             DueDateStaticService dueDateService,
@@ -37,37 +37,39 @@ namespace PKISharp.WACS.Host
     {
 
         private readonly MainArguments _args = argumentsParser.GetArguments<MainArguments>() ?? new MainArguments();
+        
         /// <summary>
         /// Main user experience
         /// </summary>
         public async Task MainMenuEntry(RunLevel runLevel)
         {
-            var total = renewalStore.Renewals.Count();
-            var due = renewalStore.Renewals.Count(dueDateService.IsDue);
-            var error = renewalStore.Renewals.Count(x => !x.History.LastOrDefault()?.Success ?? false);
+            var renewals = await renewalStore.List();
+            var total = renewals.Count;
+            var due = renewals.Count(dueDateService.IsDue);
+            var error = renewals.Count(x => !x.History.LastOrDefault()?.Success ?? false);
             var options = new List<Choice<Func<Task>>>
             {
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => renewalCreator.SetupRenewal(runLevel | RunLevel.Simple), 
                     "Create certificate (default settings)", "N", 
                     @default: true),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => renewalCreator.SetupRenewal(runLevel | RunLevel.Advanced),
                     "Create certificate (full options)", "M"),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => renewalManager.CheckRenewals(runLevel),
                     $"Run renewals ({due} currently due)", "R",
                     color: due == 0 ? null : ConsoleColor.Yellow,
                     state: total == 0 ? State.DisabledState("No renewals have been created yet.") : State.EnabledState()),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => renewalManager.ManageRenewals(),
                     $"Manage renewals ({total} total{(error == 0 ? "" : $", {error} in error")})", "A",
                     color: error == 0 ? null : ConsoleColor.Red,
                     state: total == 0 ? State.DisabledState("No renewals have been created yet.") : State.EnabledState()),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => ExtraMenu(), 
                     "More options...", "O"),
-                Choice.Create<Func<Task>>(
+                Choice.Create(
                     () => { _args.CloseOnFinish = true; _args.Test = false; return Task.CompletedTask; }, 
                     "Quit", "Q")
             };
@@ -82,36 +84,40 @@ namespace PKISharp.WACS.Host
         {
             var options = new List<Choice<Func<Task>>>
             {
-                Choice.Create(
-                    secretServiceManager.ManageSecrets,
+                Choice.Create(secretServiceManager.ManageSecrets,
                     $"Manage secrets", "S"),
-                Choice.Create<Func<Task>>(
-                    () => validationOptionsService.Manage(container),
+
+                Choice.Create(() => validationOptionsService.Manage(container),
                     $"Manage global validation options", "V"),
-                Choice.Create<Func<Task>>(
-                    () => taskScheduler.SetupAutoRenew(RunLevel.Interactive | RunLevel.Advanced), 
+
+                Choice.Create(() => taskScheduler.SetupAutoRenew(RunLevel.Interactive | RunLevel.Advanced | RunLevel.ForceTaskScheduler), 
                     OperatingSystem.IsWindows() ? "(Re)create scheduled task" : "(Re)create cronjob", "T",
-                    state: !userRoleService.AllowAutoRenew ? State.DisabledState(OperatingSystem.IsWindows() ? "Run as an administrator to allow access to the task scheduler." : "Run as a superuser to allow scheduling cronjob.") : State.EnabledState()),
-                Choice.Create<Func<Task>>(
-                    () => container.Resolve<NotificationService>().NotifyTest(), 
+                    state: !userRoleService.AllowAutoRenew ? 
+                        State.DisabledState(OperatingSystem.IsWindows() ?
+                            "Run as an administrator to allow access to the task scheduler." : 
+                            "Run as a superuser to allow scheduling cronjob.") : 
+                        State.EnabledState()),
+
+                Choice.Create(() => container.Resolve<NotificationService>().NotifyTest(), 
                     "Test notification", "E"),
-                Choice.Create<Func<Task>>(
-                    () => UpdateAccount(RunLevel.Interactive),
+
+                Choice.Create(() => UpdateAccount(RunLevel.Interactive),
                     accountManager.ListAccounts().Any() ? "ACME account details" : "Create ACME account", "A"),
-                Choice.Create<Func<Task>>(
-                    () => Import(RunLevel.Interactive | RunLevel.Advanced), 
+
+                Choice.Create(() => Import(RunLevel.Interactive | RunLevel.Advanced), 
                     "Import scheduled renewals from WACS/LEWS 1.9.x", "I",
-                    state: !adminService.IsAdmin ? State.DisabledState("Run as an administrator to allow search for legacy renewals.") : State.EnabledState()),
-                Choice.Create<Func<Task>>(
-                    () => Encrypt(RunLevel.Interactive), 
+                    state: !adminService.IsAdmin ? 
+                        State.DisabledState("Run as an administrator to allow search for legacy renewals.") : 
+                        State.EnabledState()),
+
+                Choice.Create(() => Encrypt(RunLevel.Interactive), 
                     "Encrypt/decrypt configuration", "M"),
-                Choice.Create<Func<Task>>(
-                    () => container.Resolve<UpdateClient>().CheckNewVersion(),
+
+                Choice.Create(() => container.Resolve<UpdateClient>().CheckNewVersion(),
                     "Check for updates", "U"),
-                Choice.Create<Func<Task>>(
-                    () => Task.CompletedTask, 
-                    "Back", "Q",
-                    @default: true)
+
+                Choice.Create(() => Task.CompletedTask, 
+                    "Back", "Q", @default: true)
             };
             var chosen = await input.ChooseFromMenu("Please choose from the menu", options);
             await chosen.Invoke();
@@ -171,19 +177,19 @@ namespace PKISharp.WACS.Host
             }
             if (userApproved)
             {
-                renewalStore.Encrypt(); //re-saves all renewals, forcing re-write of all protected strings 
+                await renewalStore.Encrypt(); //re-saves all renewals, forcing re-write of all protected strings 
 
                 var accountManager = container.Resolve<AccountManager>();
-                accountManager.Encrypt(); //re-writes the signer file
+                await accountManager.Encrypt(); //re-writes the signer file
 
                 var cacheService = container.Resolve<ICacheService>();
-                cacheService.Encrypt(); //re-saves all cached private keys
+                await cacheService.Encrypt(); //re-saves all cached private keys
 
                 var secretService = container.Resolve<SecretServiceManager>();
-                secretService.Encrypt(); //re-writes the secrets file
+                await secretService.Encrypt(); //re-writes the secrets file
 
                 var orderManager = container.Resolve<OrderManager>();
-                orderManager.Encrypt(); //re-writes the cached order files
+                await orderManager.Encrypt(); //re-writes the cached order files
 
                 var validationOptionsService = container.Resolve<IValidationOptionsService>();
                 await validationOptionsService.Encrypt(); //re-saves all global validation options
@@ -198,7 +204,7 @@ namespace PKISharp.WACS.Host
         /// <param name="runLevel"></param>
         private async Task UpdateAccount(RunLevel runLevel)
         {
-            var renewals = renewalStore.Renewals;
+            var renewals = await renewalStore.List();
             var accounts = accountManager.ListAccounts();
             var account = accounts.FirstOrDefault();
             if (accounts.Count() > 1)
@@ -246,5 +252,11 @@ namespace PKISharp.WACS.Host
                 }
             }
         }
+
+        /// <summary>
+        /// Add a new global validation option from the command line
+        /// </summary>
+        /// <returns></returns>
+        internal async Task AddGlobalValidationOption() => await validationOptionsService.Add(container, _args.GlobalValidationPattern, _args.GlobalValidationPriority);
     }
 }

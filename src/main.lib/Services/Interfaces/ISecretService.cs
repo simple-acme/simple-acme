@@ -1,8 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    public interface ISecretService
+    /// <summary>
+    /// Read only
+    /// </summary>
+    public interface ISecretProvider
     {
         /// <summary>
         /// Make references to this provider unique from 
@@ -11,33 +15,39 @@ namespace PKISharp.WACS.Services
         string Prefix { get; }
 
         /// <summary>
-        /// (Re)save to disk to support encrypt/decrypt operations
-        /// </summary>
-        void Encrypt();
-
-        /// <summary>
-        /// List available keys in the system
-        /// </summary>
-        IEnumerable<string> ListKeys();
-
-        /// <summary>
         /// Get a secret from the vault
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        string? GetSecret(string? key);
+        Task<string?> GetSecret(string? key);
+    }
+
+    /// <summary>
+    /// Read-write
+    /// </summary>
+    public interface ISecretService : ISecretProvider
+    {
+        /// <summary>
+        /// (Re)save to disk to support encrypt/decrypt operations
+        /// </summary>
+        Task Encrypt();
+
+        /// <summary>
+        /// List available keys in the system
+        /// </summary>
+        Task<IEnumerable<string>> ListKeys();
 
         /// <summary>
         /// Put a secret in the vault
         /// </summary>
         /// <param name="key"></param>
         /// <param name="secret"></param>
-        void PutSecret(string key, string secret);
+        Task PutSecret(string key, string secret);
 
         /// <summary>
         /// Delete secret from the store
         /// </summary>
         /// <param name="key"></param>
-        void DeleteSecret(string key);
+        Task DeleteSecret(string key);
     }
 }

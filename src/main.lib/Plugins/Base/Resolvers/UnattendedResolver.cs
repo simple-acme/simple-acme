@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
 {
     internal class UnattendedResolver(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         IAutofacBuilder autofacBuilder,
         ILifetimeScope scope,
         MainArguments arguments,
@@ -29,7 +29,8 @@ namespace PKISharp.WACS.Plugins.Resolvers
         private record PluginChoice<TCapability, TOptions>(
             Plugin Meta,
             PluginFrontend<TCapability, TOptions> Frontend,
-            State State)
+            State ConfigurationState,
+            State ExecutionState)
             where TOptions : PluginOptions, new()
             where TCapability : IPluginCapability;
 
@@ -39,7 +40,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 Type defaultBackend,
                 string? defaultParam1 = null,
                 string? defaultParam2 = null,
-                Func<TCapability, State>? state = null)
+                Func<TCapability, State>? configState = null)
                 where TOptions : PluginOptions, new()
                 where TCapability : IPluginCapability
         {
@@ -47,16 +48,16 @@ namespace PKISharp.WACS.Plugins.Resolvers
             // combination of plugin being enabled (e.g. due to missing
             // administrator rights) and being a right fit for the current
             // renewal (e.g. cannot validate wildcards using http-01)
-            State combinedState(PluginFrontend<TCapability, TOptions> plugin)
+            State combinedConfigState(PluginFrontend<TCapability, TOptions> plugin)
             {
-                var baseState = plugin.Capability.State;
+                var baseState = plugin.Capability.ConfigurationState;
                 if (baseState.Disabled)
                 {
                     return baseState;
                 }
-                else if (state != null)
+                else if (configState != null)
                 {
-                    return state(plugin.Capability);
+                    return configState(plugin.Capability);
                 }
                 return State.EnabledState();
             };
@@ -66,12 +67,12 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 GetPlugins(step).
                 Select(x => autofacBuilder.PluginFrontend<TCapability, TOptions>(scope, x)).
                 Select(x => x.Resolve<PluginFrontend<TCapability, TOptions>>()).
-                Select(x => new PluginChoice<TCapability, TOptions>(x.Meta, x, combinedState(x))).
+                Select(x => new PluginChoice<TCapability, TOptions>(x.Meta, x, combinedConfigState(x), x.Capability.ExecutionState)).
                 ToList();
 
             // Default out when there are no reasonable plugins to pick
             var nullRet = Task.FromResult<PluginFrontend<TCapability, TOptions>?>(null);
-            if (options.Count == 0 || options.All(x => x.State.Disabled))
+            if (options.Count == 0 || options.All(x => x.ConfigurationState.Disabled))
             {
                 return nullRet;
             }
@@ -92,12 +93,15 @@ namespace PKISharp.WACS.Plugins.Resolvers
             }
 
             var defaultOption = options.OrderBy(x => x.Meta.Hidden).First(x => x.Meta.Backend == defaultBackend);
-            if (defaultOption.State.Disabled)
+            if (defaultOption.ConfigurationState.Disabled)
             {
-                log.Error("{n} plugin {x} not available: {m}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultOption.Frontend.Meta.Name ?? "Unknown", defaultOption.State.Reason?.TrimEnd('.'), $"--{className}");
+                log.Error("{n} plugin {x} not available: {m}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultOption.Frontend.Meta.Name ?? "Unknown", defaultOption.ConfigurationState.Reason?.TrimEnd('.'), $"--{className}");
                 return nullRet;
             }
-
+            if (defaultOption.ExecutionState.Disabled)
+            {
+                log.Warning("{n} plugin {x} might not work: {m}. If this leads to an error, choose another plugin using the {className} switch or change the default in settings.json", step, defaultOption.Frontend.Meta.Name ?? "Unknown", defaultOption.ExecutionState.Reason?.TrimEnd('.'), $"--{className}");
+            }
             return Task.FromResult<PluginFrontend<TCapability, TOptions>?>(defaultOption.Frontend);
         }
 
@@ -127,7 +131,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IValidationPluginCapability, ValidationPluginOptions>(
                 Steps.Validation,
-                defaultParam1: arguments.Validation ?? settings.Validation.DefaultValidation ?? "selfhosting",
+                defaultParam1: arguments.Validation ?? settings.Validation.DefaultValidation,
                 defaultParam2: arguments.ValidationMode ?? settings.Validation.DefaultValidationMode,
                 defaultBackend: typeof(SelfHosting));
         }
@@ -165,12 +169,6 @@ namespace PKISharp.WACS.Plugins.Resolvers
         public async Task<PluginFrontend<IPluginCapability, StorePluginOptions>?> GetStorePlugin(IEnumerable<Plugin> chosen)
         {
             var defaultStore = arguments.Store ?? settings.Store.DefaultStore;
-            if (string.IsNullOrWhiteSpace(defaultStore))
-            {
-                defaultStore = OperatingSystem.IsWindows() ? 
-                    StorePlugins.CertificateStore.Trigger : 
-                    StorePlugins.PemFiles.Trigger;
-            }
             var parts = defaultStore.ParseCsv();
             if (parts == null)
             {
@@ -211,7 +209,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             }
             return await GetPlugin<IInstallationPluginCapability, InstallationPluginOptions>(
                 Steps.Installation,
-                state: x => x.CanInstall(stores.Select(x => x.Backend), installation.Select(x => x.Backend)),
+                configState: x => x.CanInstall(stores.Select(x => x.Backend), installation.Select(x => x.Backend)),
                 defaultParam1: defaultInstallation,
                 defaultBackend: typeof(InstallationPlugins.Null));
         }

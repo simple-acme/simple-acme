@@ -55,11 +55,10 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                 inputService.Show(null,
                        "This plugin will update *all* binding using the previous certificate in both Web and " +
                        "FTP sites, regardless of whether those bindings were created manually or by the program " +
-                       "itself. Therefor you'll never need to run this installation step twice.");
+                       "itself. Therefore, you'll never need to run this installation step twice.");
                 inputService.CreateSpace();
                 inputService.Show(null,
-                    "During initial setup, it will try to make as few changes as possible to IIS to cover " +
-                    "the source identifiers. If new bindings are needed, by default it will create those at " +
+                    "If new bindings are needed, by default it will create those at " +
                     "the same site where the HTTP binding for that host was found.");
                 explained = true;
             }
@@ -69,13 +68,13 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             {
                 explain();
                 askSite = await inputService.PromptYesNo("Create new bindings in a different site?", false);
-            } 
+            }
             if (askSite)
             {
                 explain();
-                var chosen = await inputService.ChooseRequired("Choose site to create new bindings",
+                var chosen = await inputService.ChooseOptional("Choose site to create new https bindings",
                    iisClient.Sites,
-                   x => Choice.Create(x.Id, x.Name, x.Id.ToString()));
+                   x => Choice.Create<long?>(x.Id, x.Name, x.Id.ToString()), "Do not create new bindings (only update existing ones)");
                 ret.SiteId = chosen;
             }
             return ret;
@@ -84,7 +83,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
         public override async Task<TOptions?> Default()
         {
             var siteId = await FtpSite.GetValue();
-            siteId ??= await InstallationSite.Required(!target.IIS).GetValue();
+            siteId ??= await InstallationSite.GetValue();
             var ret = new TOptions()
             {
                 NewBindingPort = await NewBindingPort.GetValue(),

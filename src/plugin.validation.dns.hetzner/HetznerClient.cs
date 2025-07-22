@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 
-internal sealed class HetznerClient : IDisposable
+public sealed class HetznerClient : IDisposable
 {
     private static readonly Uri BASE_ADDRESS = new("https://dns.hetzner.com/api/v1/");
 
@@ -22,14 +22,13 @@ internal sealed class HetznerClient : IDisposable
 
     private readonly HttpClient _httpClient;
 
-    public HetznerClient(string apiToken, ILogService logService, IProxyService proxyService)
+    public HetznerClient(HttpClient client, string apiToken, ILogService logService)
     {
         _log = logService;
-
-        _httpClient = proxyService.GetHttpClient();
-        _httpClient.BaseAddress = BASE_ADDRESS;
-        _httpClient.DefaultRequestHeaders.Add("Auth-API-Token", apiToken);
-        _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
+        client.BaseAddress = BASE_ADDRESS;
+        client.DefaultRequestHeaders.Add("Auth-API-Token", apiToken);
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
+        _httpClient = client;
     }
 
     public void Dispose()

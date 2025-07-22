@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Clients
 
 #pragma warning disable
         // Not used, but must be initialized to create settings.json on clean install
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
 #pragma warning enable
 
         private readonly string _server;
@@ -32,10 +32,11 @@ namespace PKISharp.WACS.Clients
         private readonly string _computerName;
         private readonly string _version;
         private readonly IEnumerable<string> _receiverAddresses;
+        private readonly SecretServiceManager _secretService;
 
         public EmailClient(
             ILogService log, 
-            ISettingsService settings, 
+            ISettings settings, 
             SecretServiceManager secretService)
         {
             _log = log;
@@ -43,11 +44,13 @@ namespace PKISharp.WACS.Clients
             _server = _settings.Notification.SmtpServer;
             _port = _settings.Notification.SmtpPort;
             _user = _settings.Notification.SmtpUser;
-            _password = secretService.EvaluateSecret(_settings.Notification.SmtpPassword);
+            _password = _settings.Notification.SmtpPassword;
             _secure = _settings.Notification.SmtpSecure;
             _secureMode = _settings.Notification.SmtpSecureMode;
             _senderName = _settings.Notification.SenderName;
             _computerName = _settings.Notification.ComputerName;
+            _secretService = secretService;
+
             if (string.IsNullOrEmpty(_computerName)) {
                 _computerName = Environment.MachineName;
             }
@@ -58,7 +61,7 @@ namespace PKISharp.WACS.Clients
                 _senderName = _settings.Client.ClientName;
             }
             _senderAddress = _settings.Notification.SenderAddress;
-            _receiverAddresses = _settings.Notification.ReceiverAddresses ?? new List<string>();
+            _receiverAddresses = _settings.Notification.ReceiverAddresses;
 
             // Criteria for emailing to be enabled at all
             Enabled =
@@ -110,7 +113,8 @@ namespace PKISharp.WACS.Clients
                 await client.ConnectAsync(_server, _port, options);
                 if (!string.IsNullOrEmpty(_user))
                 {
-                    await client.AuthenticateAsync(new NetworkCredential(_user, _password));
+                    var evaluatedPassword = await _secretService.EvaluateSecret(_password);
+                    await client.AuthenticateAsync(new NetworkCredential(_user, evaluatedPassword));
                 }
                 foreach (var receiverAddress in _receiverAddresses)
                 {
@@ -127,7 +131,7 @@ namespace PKISharp.WACS.Clients
                     message.From.Add(sender);
                     message.To.Add(receiver);
                     var bodyBuilder = new BodyBuilder();
-                    bodyBuilder.HtmlBody = content + $"<p>Sent by simple-acme version {_version} from {_computerName}</p>";
+                    bodyBuilder.HtmlBody = content + $"<p>Sent by {_settings.Client.ClientName} version {_version} from {_computerName}</p>";
                     message.Body = bodyBuilder.ToMessageBody();
                     await client.SendAsync(message);
                 }                       

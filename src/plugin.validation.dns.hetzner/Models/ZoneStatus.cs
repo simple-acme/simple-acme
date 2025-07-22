@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.Models;
 
 [JsonConverter(typeof(JsonStringEnumConverter<ZoneStatus>))]
-internal enum ZoneStatus
+public enum ZoneStatus
 {
     Verified,
     Failed,

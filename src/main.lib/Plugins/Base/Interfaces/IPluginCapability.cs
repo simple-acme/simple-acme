@@ -6,10 +6,20 @@ namespace PKISharp.WACS.Plugins.Interfaces
     public interface IPluginCapability
     {
         /// <summary>
-        /// Indicates whether the plugin is usable in the current context.
+        /// Indicates whether the plugin can be configured in the current context.
+        /// This is a more relaxed version of ExecutionState, enabling users to 
+        /// setup renewals that cannot be executed yet, but will be runnable by
+        /// the scheduled task (with more access rights) or when the pre execution 
+        /// scripts has run (e.g. to free port 80).
         /// </summary>
         /// <returns></returns>
-        State State { get; }
+        State ConfigurationState { get; }
+
+        /// <summary>
+        /// Indicates whether the plugin can run in the current context.
+        /// </summary>
+        /// <returns></returns>
+        State ExecutionState { get; }
     }
 
     /// <summary>
@@ -31,8 +41,8 @@ namespace PKISharp.WACS.Plugins.Interfaces
     public interface IValidationPluginCapability : IPluginCapability
     {
         /// <summary>
-        /// Which type of challenge can this plugin handle
+        /// Which type(s) of challenge can this plugin handle
         /// </summary>
-        string ChallengeType { get; }
+        IEnumerable<string> ChallengeTypes { get; }
     }
 }

@@ -2,6 +2,7 @@
 using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
+using PKISharp.WACS.Clients;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -21,38 +22,38 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         ("5C3DB0FB-840B-469F-B5A7-0635D8E9A93D", 
         CsrOptions.Trigger, "CSR created by another program", 
         Name = "Custom CSR")]
-    internal class Csr(ILogService logService, CsrOptions options) : ITargetPlugin
+    internal class Csr(ILogService logService, CsrOptions options, ScriptClient scriptClient) : ITargetPlugin
     {
-        public Task<Target?> Generate()
+        /// <summary>
+        /// Generate a Target based on a CSR created by a third party program
+        /// either as a static file, or dynamically using a script
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Target?> Generate()
         {
-            // Read CSR
-            string csrString;
-            if (string.IsNullOrEmpty(options.CsrFile))
-            {
-                logService.Error("No CsrFile specified in options");
-                return Task.FromResult<Target?>(null);
-            }
+            // Get raw CSR data
+            var csrString = "";
             try
             {
-                csrString = File.ReadAllText(options.CsrFile);
-            }
+                csrString = await GetCsrString();
+            } 
             catch (Exception ex)
             {
-                logService.Error(ex, "Unable to read CSR from {CsrFile}", options.CsrFile);
-                return Task.FromResult<Target?>(null);
+                logService.Error(ex, "Unable to retrieve raw CSR");
+                return null;
             }
-
-            // Parse CSR
+ 
+            // Parse CSR data and extract identifiers
             List<Identifier> alternativeNames;
             Identifier commonName;
             byte[] csrBytes;
             try
             {
-                var pem = PemService.ParsePem<Pkcs10CertificationRequest>(csrString) ?? throw new Exception("Unable decode PEM bytes to Pkcs10CertificationRequest");
+                var pem = PemService.ParsePem<Pkcs10CertificationRequest>(csrString) ?? throw new Exception("Unable to construct Pkcs10CertificationRequest");
                 var info = pem.GetCertificationRequestInfo();
                 csrBytes = pem.GetEncoded();
                 commonName = ParseCn(info);
-                alternativeNames = ParseSan(info).ToList();
+                alternativeNames = [.. ParseSan(info)];
                 if (!alternativeNames.Contains(commonName))
                 {
                     alternativeNames.Add(commonName);
@@ -61,55 +62,90 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             catch (Exception ex)
             {
                 logService.Error(ex, "Unable to parse CSR");
-                return Task.FromResult<Target?>(null);
+                return null;
             }
 
-            AsymmetricKeyParameter? pkBytes = null;
+            // Create target
+            var ret = new Target($"[{nameof(Csr)}] {options.CsrFile}", commonName, [new(alternativeNames)])
+            {
+                UserCsrBytes = csrBytes
+            };
+
+            // Read and parse PK
             if (!string.IsNullOrWhiteSpace(options.PkFile))
             {
-                // Read PK
                 string pkString;
                 try
                 {
-                    pkString = File.ReadAllText(options.PkFile);
+                    pkString = await File.ReadAllTextAsync(options.PkFile);
                 }
                 catch (Exception ex)
                 {
                     logService.Error(ex, "Unable to read private key from {PkFile}", options.PkFile);
-                    return Task.FromResult<Target?>(null);
+                    return null;
                 }
+                ret.PrivateKey = ParsePk(pkString);
+            }
+            return ret;
+        }
 
-                // Parse PK
-                try
+        /// <summary>
+        /// Get PEM encoded CSR from either of the supported sources
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        private async Task<string> GetCsrString()
+        {
+            // Read CSR
+            if (!string.IsNullOrEmpty(options.CsrFile))
+            {
+                var ret = await File.ReadAllTextAsync(options.CsrFile);
+                if (string.IsNullOrWhiteSpace(ret))
                 {
-                    var keyPair = PemService.ParsePem<AsymmetricCipherKeyPair>(pkString);
-
-                    pkBytes = keyPair != null ? 
-                        keyPair.Private :
-                        PemService.ParsePem<AsymmetricKeyParameter>(pkString);
-
-                    if (pkBytes == null)
-                    {
-                        throw new Exception("No private key found");
-                    }
+                    throw new InvalidOperationException($"File {options.CsrFile} was empty");
                 }
-                catch (Exception ex)
-                {
-                    logService.Error(ex, "Unable to parse private key");
-                    return Task.FromResult<Target?>(null);
-                }
+                return ret;
             }
 
-            var ret = new Target($"[{nameof(Csr)}] {options.CsrFile}",
-                commonName,
-                [
-                    new(alternativeNames)
-                ])
+            // Get CSR from script
+            if (!string.IsNullOrEmpty(options.CsrScript))
             {
-                UserCsrBytes = csrBytes,
-                PrivateKey = pkBytes
-            };
-            return Task.FromResult<Target?>(ret);
+                var ret = await scriptClient.RunScript(options.CsrScript);
+                if (!ret.Success)
+                {
+                    throw new InvalidOperationException($"Script {options.CsrScript} unable to run");
+                }
+                if (string.IsNullOrWhiteSpace(ret.Output))
+                {
+                    throw new InvalidOperationException($"Script {options.CsrScript} output was empty");
+                }
+                return ret.Output;
+            }
+
+            // Misconfiguration
+            throw new InvalidOperationException($"Neither CsrFile nor CsrScript are configured");
+        }
+
+        /// <summary>
+        /// Extract private key from PEM encoded file
+        /// </summary>
+        /// <param name="pkString"></param>
+        /// <returns></returns>
+        private AsymmetricKeyParameter? ParsePk(string pkString)
+        {
+            try
+            {
+                var keyPair = PemService.ParsePem<AsymmetricCipherKeyPair>(pkString);
+                var pkBytes = keyPair != null ?
+                    keyPair.Private :
+                    PemService.ParsePem<AsymmetricKeyParameter>(pkString);
+                return pkBytes ?? throw new Exception("No private key found");
+            }
+            catch (Exception ex)
+            {
+                logService.Error(ex, "Unable to parse private key");
+                return null;
+            }
         }
 
         /// <summary>
@@ -173,6 +209,13 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             });
         }
 
+        /// <summary>
+        /// Helper method to parse ANS1
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="sequence"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
         private T? GetAsn1ObjectRecursive<T>(DerSequence sequence, string id) where T : Asn1Object
         {
             if (sequence.OfType<DerObjectIdentifier>().Any(o => o.Id == id))

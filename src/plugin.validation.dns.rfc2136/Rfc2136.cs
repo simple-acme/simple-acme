@@ -21,34 +21,17 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         "RFC2136",
         "Create verification records using dynamic updates",
         External = true)]
-    internal sealed class Rfc2136 : DnsValidation<Rfc2136>
+    internal sealed class Rfc2136(
+        LookupClientProvider dnsClient,
+        ILogService log,
+        ISettings settings,
+        SecretServiceManager ssm,
+        LookupClientProvider lcp,
+        DomainParseService domainParser,
+        Rfc2136Options options) : DnsValidation<Rfc2136>(dnsClient, log, settings)
     {
-        private readonly string _key; 
-        private readonly Rfc2136Options _options;
-        private readonly LookupClientProvider _lookupClientProvider;
-        private readonly DomainParseService _domainParser;
         private readonly Dictionary<string, string> _zoneMap = [];
         private ArDnsClient? _client;
-
-        public Rfc2136(
-            LookupClientProvider dnsClient,
-            ILogService log,
-            ISettingsService settings,
-            SecretServiceManager ssm,
-            LookupClientProvider lcp,
-            DomainParseService domainParser,
-            Rfc2136Options options): base(dnsClient, log, settings)
-        {
-            _options = options;
-            _lookupClientProvider = lcp;
-            _domainParser = domainParser;
-            var key = ssm.EvaluateSecret(options.TsigKeySecret);
-            if (string.IsNullOrEmpty(key))
-            {
-                throw new InvalidOperationException("Missing TsigKeySecret");
-            }
-            _key = key;
-        }
 
         /// <summary>
         /// Allow multiple validation at once when DisableMultiThreading = false
@@ -63,8 +46,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             var domain = record.Authority.Domain;
-            var topZone = _zoneMap.TryGetValue(domain, out string? value) ? value : 
-                _domainParser.GetRegisterableDomain(domain);
+            var topZone = _zoneMap.TryGetValue(domain, out string? value) ? value : domainParser.GetRegisterableDomain(domain);
             var subDomains = domain.
                 Split(".").
                 SkipLast(topZone.Split(".").Length).
@@ -116,8 +98,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
             var domain = record.Authority.Domain;
-            var topZone = _zoneMap.TryGetValue(domain, out string? value) ? value :
-                _domainParser.GetRegisterableDomain(domain);
+            var topZone = _zoneMap.TryGetValue(domain, out string? value) ? value : domainParser.GetRegisterableDomain(domain);
             var msg = new DnsUpdateMessage { ZoneName = DomainName.Parse(topZone) };
             var txtRecord = new TxtRecord(DomainName.Parse(domain), 0, record.Value);
             var delete = new DeleteRecordUpdate(txtRecord);
@@ -143,23 +124,23 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             if (_client == null)
             {
-                var port = _options.ServerPort ?? 53;
-                if (!IPAddress.TryParse(_options.ServerHost, out var ipAddress))
+                var port = options.ServerPort ?? 53;
+                if (!IPAddress.TryParse(options.ServerHost, out var ipAddress))
                 {
-                    if (string.IsNullOrEmpty(_options.ServerHost))
+                    if (string.IsNullOrEmpty(options.ServerHost))
                     {
                         throw new InvalidOperationException("Missing ServerHost");
                     }
-                    var lookup = await _lookupClientProvider.
+                    var lookup = await lcp.
                         GetSystemClient().
-                        GetIps(_options.ServerHost);
+                        GetIps(options.ServerHost);
                     if (!lookup.Any())
                     {
-                        throw new Exception($"Unable to find IP for {_options.ServerHost}");
+                        throw new Exception($"Unable to find IP for {options.ServerHost}");
                     }
                     ipAddress = lookup.First();
                 }
-                _log.Verbose("Connnecting to DNS server at {ipAddress}:{port} using key {key}", ipAddress, port, _options.TsigKeyName);
+                _log.Verbose("Connnecting to DNS server at {ipAddress}:{port} using key {key}", ipAddress, port, options.TsigKeyName);
                 _client = new ArDnsClient(ipAddress, port);
             }
             return _client;
@@ -173,20 +154,26 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <exception cref="Exception"></exception>
         private async Task SendUpdate(DnsUpdateMessage msg)
         {
-            if (!Enum.TryParse<TSigAlgorithm>(_options.TsigKeyAlgorithm, true, out var algorithm)) 
+            if (!Enum.TryParse<TSigAlgorithm>(options.TsigKeyAlgorithm, true, out var algorithm)) 
             {
                 algorithm = TSigAlgorithm.Md5;
             }
 
+            var key = await ssm.EvaluateSecret(options.TsigKeySecret);
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new InvalidOperationException("Missing TsigKeySecret");
+            }
+
             msg.TSigOptions = new TSigRecord(
-                DomainName.Parse(_options.TsigKeyName ?? ""),
+                DomainName.Parse(options.TsigKeyName ?? ""),
                 algorithm,
                 DateTime.Now,
                 new TimeSpan(0, 5, 0),
                 msg.TransactionID,
                 ReturnCode.NoError,
                 null,
-                Convert.FromBase64String(_key));
+                Convert.FromBase64String(key));
 
             var client = await GetClient();
             _log.Verbose("Send DNS update transaction {TransactionID}");

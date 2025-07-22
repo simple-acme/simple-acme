@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using ACMESharp;
+using Autofac;
 using Autofac.Core;
 using Autofac.Features.AttributeFilters;
 using PKISharp.WACS.Clients;
@@ -28,14 +29,14 @@ namespace PKISharp.WACS.UnitTests.Mock
             var input = new InputService(inputSequence ?? []);
 
             var builder = new ContainerBuilder();
-            _ = builder.RegisterType<Real.SecretServiceManager>();
+            _ = builder.RegisterType<Real.SecretServiceManager>().SingleInstance();
             _ = builder.RegisterType<SecretService>().As<SecretService>().As<Real.ISecretService>().SingleInstance();
             _ = builder.RegisterType<AccountManager>();
             _ = builder.RegisterType<OrderManager>();
             _ = builder.RegisterType<Real.TargetValidator>();
             _ = builder.RegisterType<ZeroSsl>();
             WacsJson.Configure(builder);
-            _ = builder.RegisterInstance(log).As<Real.ILogService>();
+            _ = builder.RegisterInstance(log).As<Real.ILogService>().As<IAcmeLogger>();
             _ = builder.RegisterInstance(argumentsParser).As<ArgumentsParser>();
             _ = builder.RegisterType<Real.ArgumentsInputService>();
             _ = builder.RegisterInstance(pluginService).As<Real.IPluginService>();
@@ -47,7 +48,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<Services.MockRenewalStore>().As<Real.IRenewalStoreBackend>().SingleInstance();
             _ = builder.RegisterType<Real.DueDateStaticService>().SingleInstance();
             _ = builder.RegisterType<Real.DueDateRuntimeService>().SingleInstance();
-            _ = builder.RegisterType<Services.MockSettingsService>().As<Real.ISettingsService>().SingleInstance();
+            _ = builder.RegisterType<Services.MockSettingsService>().As<Real.ISettings>().SingleInstance();
             _ = builder.RegisterType<Services.UserRoleService>().As<Real.IUserRoleService>().SingleInstance();
             _ = builder.RegisterType<Services.ProxyService>().As<Real.IProxyService>().SingleInstance();
             _ = builder.RegisterType<Real.PasswordGenerator>().SingleInstance();
@@ -80,7 +81,15 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<RenewalManager>().SingleInstance();
             _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
 
-            return builder.Build();
+            var ret = builder.Build();
+            return ret.BeginLifetimeScope("wacs", builder =>
+            {
+                // Plugins
+                foreach (var plugin in pluginService.GetSecretServices())
+                {
+                    _ = builder.RegisterType(plugin.Backend);
+                }
+            });
         }
     }
 }

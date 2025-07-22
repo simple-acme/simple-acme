@@ -6,6 +6,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Simply;
 using PKISharp.WACS.Services;
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
@@ -19,15 +20,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class SimplyDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         IProxyService proxyService,
         SecretServiceManager ssm,
-        SimplyOptions options) : DnsValidation<SimplyDnsValidation>(dnsClient, logService, settings)
+        SimplyOptions options) : DnsValidation<SimplyDnsValidation, SimplyDnsClient>(dnsClient, logService, settings, proxyService)
     {
-        private readonly SimplyDnsClient _client = new(
-                options.Account ?? "",
-                ssm.EvaluateSecret(options.ApiKey) ?? "",
-                proxyService.GetHttpClient());
+        protected override async Task<SimplyDnsClient> CreateClient(HttpClient httpClient) =>
+            new (options.Account ?? "",
+                await ssm.EvaluateSecret(options.ApiKey) ?? "",
+                httpClient);
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
@@ -39,7 +40,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 {
                     throw new InvalidOperationException();
                 }
-                await _client.CreateRecordAsync(product.Object, recordName, record.Value);
+                var client = await GetClient();
+                await client.CreateRecordAsync(product.Object, recordName, record.Value);
                 return true;
             }
             catch (Exception ex)
@@ -59,7 +61,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 {
                     throw new InvalidOperationException();
                 }
-                await _client.DeleteRecordAsync(product.Object, record.Authority.Domain, record.Value);
+                var client = await GetClient();
+                await client.DeleteRecordAsync(product.Object, record.Authority.Domain, record.Value);
             }
             catch (Exception ex)
             {
@@ -69,7 +72,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
 
         private async Task<Product> GetProductAsync(string recordName)
         {
-            var products = await _client.GetAllProducts();
+            var client = await GetClient();
+            var products = await client.GetAllProducts();
             var product = FindBestMatch(products.ToDictionary(x => x.Domain?.NameIdn ?? "", x => x), recordName);
             return product is null ? throw new Exception($"Unable to find product for record '{recordName}'") : product;
         }

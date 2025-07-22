@@ -25,22 +25,27 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
         private readonly ILogService _log;
         private readonly string _path;
-        private readonly string? _password;
         private readonly string? _protectionMode;
+
+        private readonly string? _passwordRaw;
+        private string? _passwordEvaluated;
+        private readonly SecretServiceManager _secretService;
+        private async Task<string?> GetPassword()
+        {
+            _passwordEvaluated ??= await _secretService.EvaluateSecret(_passwordRaw);
+            return _passwordEvaluated;
+        }
 
         public CentralSsl(
             ILogService log,
-            ISettingsService settings,
+            ISettings settings,
             CentralSslOptions options,
             SecretServiceManager secretServiceManager)
         {
             _log = log;
-
-            var passwordRaw = 
-                options.PfxPassword?.Value ?? 
-                settings.Store.CentralSsl.DefaultPassword;
-            _password = secretServiceManager.EvaluateSecret(passwordRaw);
+            _passwordRaw = options.PfxPassword?.Value ?? settings.Store.CentralSsl.DefaultPassword;
             _protectionMode = settings.Store.CentralSsl?.DefaultProtectionMode;
+            _secretService = secretServiceManager;
 
             var path = !string.IsNullOrWhiteSpace(options.Path) ?
                 options.Path :
@@ -77,7 +82,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 _log.Information("Saving certificate to CentralSsl location {dest}", dest);
                 try
                 {
-                    await converted.PfxSave(dest, _password);
+                    await converted.PfxSave(dest, await GetPassword());
                 }
                 catch (Exception ex)
                 {
@@ -90,14 +95,14 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             };
         }
 
-        public Task Delete(ICertificateInfo input)
+        public async Task Delete(ICertificateInfo input)
         {
             _log.Information("Removing certificate from the CentralSsl store");
             foreach (var identifier in input.SanNames.OfType<DnsIdentifier>())
             {
                 var dest = PathForIdentifier(identifier);
                 var fi = new FileInfo(dest);
-                var cert = LoadCertificate(fi);
+                var cert = await LoadCertificate(fi);
                 if (cert != null)
                 {
                     if (string.Equals(cert.Thumbprint, input.Thumbprint, StringComparison.InvariantCultureIgnoreCase))
@@ -108,7 +113,6 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                     cert.Dispose();
                 }               
             }
-            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -116,7 +120,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         /// </summary>
         /// <param name="fi"></param>
         /// <returns></returns>
-        private X509Certificate2? LoadCertificate(FileInfo fi)
+        private async Task<X509Certificate2?> LoadCertificate(FileInfo fi)
         {
             X509Certificate2? cert = null;
             if (!fi.Exists)
@@ -125,13 +129,13 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
             try
             {
-                cert = new X509Certificate2(fi.FullName, _password);
+                cert = X509CertificateLoader.LoadPkcs12FromFile(fi.FullName, await GetPassword(), X509KeyStorageFlags.EphemeralKeySet);
             }
             catch (CryptographicException)
             {
                 try
                 {
-                    cert = new X509Certificate2(fi.FullName, "");
+                    cert = X509CertificateLoader.LoadPkcs12FromFile(fi.FullName, null, X509KeyStorageFlags.EphemeralKeySet);
                 }
                 catch (Exception ex)
                 {

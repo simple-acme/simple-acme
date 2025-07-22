@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Clients.Acme
 {
@@ -15,7 +16,7 @@ namespace PKISharp.WACS.Clients.Acme
     /// </summary>
     internal class AccountManager(
         ILogService log,
-        ISettingsService settings)
+        ISettings settings)
     {
         private const string SignerFileName = "Signer_v2";
         private const string RegistrationFileName = "Registration_v2";
@@ -84,12 +85,12 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         /// <param name="account"></param>
         /// <param name="name"></param>
-        internal void StoreAccount(Account account, string? name = null)
+        internal async Task StoreAccount(Account account, string? name = null)
         {
             var signerPath = GetPath(SignerFileName, name);
             var detailsPath = GetPath(RegistrationFileName, name);
-            StoreDetails(account.Details, detailsPath);
-            StoreSigner(account.Signer, signerPath);
+            await StoreDetails(account.Details, detailsPath);
+            await StoreSigner(account.Signer, signerPath);
         }
 
         /// <summary>
@@ -143,13 +144,13 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         /// <param name="signer"></param>
         /// <param name="path"></param>
-        private void StoreSigner(AccountSigner? signer, string path)
+        private async Task StoreSigner(AccountSigner? signer, string path)
         {
             if (signer != null)
             {
                 log.Debug("Saving signer to {SignerPath}", path);
                 var x = new ProtectedString(JsonSerializer.Serialize(signer, AcmeClientJson.Default.AccountSigner));
-                File.WriteAllText(path, x.DiskValue(settings.Security.EncryptConfig));
+                await FileInfoExtensions.SafeWrite(path, x.DiskValue(settings.Security.EncryptConfig));
             }
         }
 
@@ -177,12 +178,12 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         /// <param name="details"></param>
         /// <param name="path"></param>
-        private void StoreDetails(AccountDetails details, string path)
+        private async Task StoreDetails(AccountDetails details, string path)
         {
             if (details != default)
             {
                 log.Debug("Saving account to {AccountPath}", path);
-                File.WriteAllText(path, JsonSerializer.Serialize(details, AcmeClientJson.Insensitive.AccountDetails));
+                await FileInfoExtensions.SafeWrite(path, JsonSerializer.Serialize(details, AcmeClientJson.Insensitive.AccountDetails));
             }
         }
 
@@ -202,7 +203,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// <summary>
         /// Encrypt/decrypt signer information
         /// </summary>
-        internal void Encrypt()
+        internal async Task Encrypt()
         {
             try
             {
@@ -211,7 +212,7 @@ namespace PKISharp.WACS.Clients.Acme
                     var account = LoadAccount(name);
                     if (account != null)
                     {
-                        StoreAccount(account, name); //forces a re-save of the signer
+                        await StoreAccount(account, name); //forces a re-save of the signer
                     } 
                     else
                     {

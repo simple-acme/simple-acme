@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using ACMESharp;
+using Autofac;
 using Autofac.Core;
 using PKISharp.WACS.Clients;
 using PKISharp.WACS.Clients.Acme;
@@ -6,6 +7,7 @@ using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Plugins.Resolvers;
 using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
@@ -25,11 +27,11 @@ namespace PKISharp.WACS.Host
         internal static ILifetimeScope Container(string[] args, bool verbose, bool config)
         {
             var builder = new ContainerBuilder();
-            _ = builder.RegisterType<LogService>().WithParameter(new NamedParameter(nameof(verbose), verbose)).WithParameter(new NamedParameter(nameof(config), config)).SingleInstance().As<ILogService>();
+            _ = builder.RegisterType<LogService>().WithParameter(new NamedParameter(nameof(verbose), verbose)).WithParameter(new NamedParameter(nameof(config), config)).SingleInstance().As<ILogService>().As<IAcmeLogger>();
             _ = builder.RegisterType<ExtendedAssemblyService>().As<AssemblyService>().SingleInstance();
             _ = builder.RegisterType<PluginService>().SingleInstance().As<IPluginService>();
             _ = builder.RegisterType<ArgumentsParser>().WithParameter(new TypedParameter(typeof(string[]), args)).SingleInstance();
-            _ = builder.RegisterType<SettingsService>().As<ISettingsService>().SingleInstance();
+            _ = builder.RegisterType<SettingsService>().SingleInstance();
             var plugin = builder.Build();
 
             var pluginService = plugin.Resolve<IPluginService>();
@@ -40,16 +42,15 @@ namespace PKISharp.WACS.Host
                     _ = builder.RegisterType(plugin.OptionsJson);
                 }                
                 foreach (var plugin in pluginService.GetSecretServices()) {
-                    _ = builder.RegisterType(plugin.Backend);
+                    _ = builder.RegisterType(plugin.Backend).SingleInstance();
                 }
                 foreach (var plugin in pluginService.GetNotificationTargets()) {
-                    _ = builder.RegisterType(plugin.Backend);
+                    _ = builder.RegisterType(plugin.Backend).SingleInstance();
                 }
                 WacsJson.Configure(builder);
 
                 // Single instance types
                 _ = builder.RegisterType<AdminService>().SingleInstance();
-                _ = builder.RegisterType<VersionService>().SingleInstance();
                 _ = builder.RegisterType<HelpService>().SingleInstance();
                 _ = builder.RegisterType<UserRoleService>().As<IUserRoleService>().SingleInstance();
                 _ = builder.RegisterType<ValidationOptionsService>().As<IValidationOptionsService>().As<ValidationOptionsService>().SingleInstance();
@@ -104,6 +105,7 @@ namespace PKISharp.WACS.Host
                 // Specials
                 _ = builder.RegisterType<HttpValidationParameters>().InstancePerLifetimeScope();
                 _ = builder.Register(c => c.Resolve<ArgumentsParser>().GetArguments<MainArguments>()!);
+                _ = builder.Register(c => c.Resolve<SettingsService>().Current).As<ISettings>();
                 _ = builder.Register(c => c.Resolve<ArgumentsParser>().GetArguments<AccountArguments>()!);
                 _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
             });

@@ -18,46 +18,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ("6ea628c3-0f74-68bb-cf17-4fdd3d53f3af",
         "Tencent", "Create verification records in Tencent DNS",
         Name = "Tencent Cloud", External = true)]
-    public class Tencent : DnsValidation<Tencent>, IDisposable
+    public class Tencent(SecretServiceManager ssm,
+        LookupClientProvider dnsClient, ILogService log, ISettings settings, IProxyService proxy,
+        TencentOptions options) : DnsValidation<Tencent, CommonClient>(dnsClient, log, settings, proxy)
     {
-        private SecretServiceManager Ssm { get; }
-        private HttpClient Hc { get; }
-        private TencentOptions Options { get; }
-        private Credential Cred { get; }
-
-        public Tencent(SecretServiceManager ssm, IProxyService proxyService,
-            LookupClientProvider dnsClient, ILogService log, ISettingsService settings,
-            TencentOptions options) : base(dnsClient, log, settings)
-        {
-            Ssm = ssm;
-            Hc = proxyService.GetHttpClient();
-            Options = options;
-            try
-            {
-                //New Credential
-                Cred = new Credential
-                {
-                    SecretId = Ssm.EvaluateSecret(Options.ApiID),
-                    SecretKey = Ssm.EvaluateSecret(Options.ApiKey),
-                };
-            }
-            catch (Exception ex)
-            {
-                _log.Error($"Configuration error: {ex.Message}");
-                throw new Exception("Configuration error");
-            }
-        }
-
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
-            await Task.Delay(0);
             try
             {
-                var identifier = GetDomain(record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
+                var identifier = await GetDomain(record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
                 var domain = record.Authority.Domain;
                 var value = record.Value;
                 //Add Record
-                return AddRecord(identifier, domain, value);
+                return await AddRecord(identifier, domain, value);
             }
             catch (Exception ex)
             {
@@ -70,13 +43,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
-            await Task.Delay(0);
             try
             {
-                var identifier = GetDomain(record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
+                var identifier = await GetDomain(record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
                 var domain = record.Authority.Domain;
                 //Delete Record
-                _ = DelRecord(identifier, domain);
+                _ = await DelRecord(identifier, domain);
             }
             catch (Exception ex)
             {
@@ -84,12 +56,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 //Out Error
                 _log.Error($"Unable to delete TencentDNS record: {ex.Message}");
             }
-        }
-
-        public void Dispose()
-        {
-            Hc.Dispose();
-            GC.SuppressFinalize(this);
         }
 
         #region PrivateLogic
@@ -101,13 +67,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <param name="subDomain">SubDomain</param>
         /// <param name="value">Value</param>
         /// <returns></returns>
-        private bool AddRecord(string domain, string subDomain, string value)
+        private async Task<bool> AddRecord(string domain, string subDomain, string value)
         {
             subDomain = subDomain.Replace($".{domain}", "");
             //Delete Record
             _ = DelRecord(domain, subDomain);
             //Add Record
-            var client = GetCommonClient();
+            var client = await GetClient();
             var param = new
             {
                 Domain = domain,
@@ -128,14 +94,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <param name="domain">Domain</param>
         /// <param name="subDomain">SubDomain</param>
         /// <returns></returns>
-        private bool DelRecord(string domain, string subDomain)
+        private async Task<bool> DelRecord(string domain, string subDomain)
         {
             subDomain = subDomain.Replace($".{domain}", "");
             //Get RecordID
             var recordId = GetRecordID(domain, subDomain);
             if (recordId == default) return false;
             //Delete Record
-            var client = GetCommonClient();
+            var client = await GetClient();
             var param = new { Domain = domain, RecordId = recordId };
             var req = new CommonRequest(param);
             var act = "DeleteRecord";
@@ -149,9 +115,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <param name="domain">Domain</param>
         /// <param name="subDomain">SubDomain</param>
         /// <returns></returns>
-        private long GetRecordID(string domain, string subDomain)
+        private async Task<long> GetRecordID(string domain, string subDomain)
         {
-            var client = GetCommonClient();
+            var client = await GetClient();
             var param = new { Domain = domain };
             var req = new CommonRequest(param);
             var act = "DescribeRecordList";
@@ -169,9 +135,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// </summary>
         /// <param name="record">DnsValidationRecord</param>
         /// <returns></returns>
-        private string? GetDomain(DnsValidationRecord record)
+        private async Task<string?> GetDomain(DnsValidationRecord record)
         {
-            var client = GetCommonClient();
+            var client = await GetClient();
             var param = new { };
             var req = new CommonRequest(param);
             var act = "DescribeDomainList";
@@ -197,19 +163,23 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <param name="regionTemp">Region</param>
         /// <param name="endpointTemp">DnsPodServer</param>
         /// <returns></returns>
-        private CommonClient GetCommonClient(string? modTemp = default, string? verTemp = default, string? regionTemp = default, string? endpointTemp = default)
+        protected override async Task<CommonClient> CreateClient(HttpClient http)
         {
-            var mod = modTemp ?? "dnspod";
-            var ver = verTemp ?? "2021-03-23";
-            var region = regionTemp ?? "";
+            var mod = "dnspod";
+            var ver = "2021-03-23";
+            var region = "";
             var hpf = new HttpProfile
             {
                 ReqMethod = "POST",
-                Endpoint = endpointTemp ?? DnsPodServer,
+                Endpoint = DnsPodServer,
             };
             var cpf = new ClientProfile(ClientProfile.SIGN_TC3SHA256, hpf);
-            var client = new CommonClient(mod, ver, Cred, region, cpf);
-            return client;
+            var cred = new Credential()
+            {
+                SecretId = await ssm.EvaluateSecret(options.ApiID),
+                SecretKey = await ssm.EvaluateSecret(options.ApiKey)
+            };
+            return new CommonClient(mod, ver, cred, region, cpf);
         }
 
         #endregion PrivateLogic

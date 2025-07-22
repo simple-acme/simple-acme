@@ -1,4 +1,5 @@
-﻿using PKISharp.WACS.Configuration;
+﻿using ACMESharp.Authorizations;
+using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
@@ -16,17 +17,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         protected readonly ArgumentsInputService _arguments = arguments;
         protected readonly Target _target = target;
 
-        private ArgumentResult<string?> Path(bool allowEmpty)
-        {
-            var pathArg = _arguments.
+        private ArgumentResult<string?> WebRoot =>
+            _arguments.
                 GetString<TArguments>(x => x.WebRoot).
                 Validate(p => Task.FromResult(PathIsValid(p!)), $"invalid path");
-            if (!allowEmpty)
-            {
-                pathArg = pathArg.Required();
-            }
-            return pathArg;
-        }
+
+        private ArgumentResult<string?> ChallengeRoot => 
+            _arguments.
+                GetString<TArguments>(x => x.ChallengeRoot).
+                Validate(p => Task.FromResult(PathIsValid(p!)), $"invalid path");
 
         private ArgumentResult<bool?> CopyWebConfig =>
             _arguments.
@@ -41,13 +40,22 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             var allowEmpty = AllowEmtpy();
             var webRootHint = WebrootHint(allowEmpty);
-            var pathGetter = Path(allowEmpty);
+            var defaultPath =
+                await _arguments.GetString<TArguments>(x => x.WebRoot).GetValue() ??
+                await _arguments.GetString<TArguments>(x => x.ChallengeRoot).GetValue();
+            var pathGetter = _arguments.
+                GetString<TArguments>(x => x.Root).
+                WithDefault(defaultPath).
+                Required(!allowEmpty);
             pathGetter = webRootHint.Length > 1
                 ? pathGetter.Interactive(input, webRootHint[0], string.Join('\n', webRootHint[1..]))
                 : pathGetter.Interactive(input, webRootHint[0]);
+            var path = await pathGetter.GetValue();
+            var isRootPath = await input.PromptYesNo($"Append \"{Http01ChallengeValidationDetails.HttpPathPrefix}\"?", true);
             return new TOptions
             {
-                Path = await pathGetter.GetValue(),
+                Path = path,
+                IsRootPath = isRootPath,
                 CopyWebConfig = _target.IIS || await CopyWebConfig.Interactive(input, "Copy default web.config before validation?").GetValue() == true
             };
         }
@@ -58,9 +66,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         public async Task<HttpValidationOptions> BaseDefault()
         {
             var allowEmpty = AllowEmtpy();
+            var isRootPath = (bool?)null;
+            var path = await ChallengeRoot.GetValue();
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                isRootPath = false;
+            }
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                path = await WebRoot.Required(!allowEmpty).GetValue();
+            }
             return new TOptions
             {
-                Path = await Path(allowEmpty).GetValue(),
+                Path = path,
+                IsRootPath = isRootPath,
                 CopyWebConfig = _target.IIS || await CopyWebConfig.GetValue() == true
             };
         }
@@ -96,7 +115,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(TOptions options)
         {
             yield return (CopyWebConfig.Meta, options.CopyWebConfig);
-            yield return (Path(false).Meta, options.Path);
+            if (options.IsRootPath == true)
+            {
+                yield return (ChallengeRoot.Meta, options.Path);
+            }
+            else
+            {
+                yield return (WebRoot.Meta, options.Path);
+            }
         }
     }
 

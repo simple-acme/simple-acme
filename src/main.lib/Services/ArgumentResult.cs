@@ -196,8 +196,8 @@ namespace PKISharp.WACS.Services
         }
 
         /// <summary>
-        /// Set a default value if not value was
-        /// specified so far
+        /// Return null if the user has provided a value 
+        /// that matches the default value
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>

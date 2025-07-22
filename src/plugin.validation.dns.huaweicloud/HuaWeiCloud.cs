@@ -19,48 +19,32 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ("ec5a5198-7224-447e-aac5-99c2ccda78a1",
         "HuaWeiCloud", "Create verification records in HuaWeiCloud DNS",
         External = true, Provider = "HuaWeiCloud", Page = "huaweicloud")]
-    public class HuaWeiCloud : DnsValidation<HuaWeiCloud>, IDisposable
+    public class HuaWeiCloud(HuaWeiCloudOptions options, SecretServiceManager ssm,
+        IProxyService proxyService, LookupClientProvider dnsClient, ILogService log,
+        ISettings settings) : DnsValidation<HuaWeiCloud, HuaweiCloud.SDK.Dns.V2.DnsClient>(dnsClient, log, settings, proxyService)
     {
-        private SecretServiceManager Ssm { get; }
-        private HttpClient Hc { get; }
-        private HuaWeiCloudOptions Options { get; }
-        private HuaweiCloud.SDK.Dns.V2.DnsClient Client { get; }
 
-        public HuaWeiCloud(HuaWeiCloudOptions options, SecretServiceManager ssm,
-            IProxyService proxyService, LookupClientProvider dnsClient, ILogService log,
-            ISettingsService settings) : base(dnsClient, log, settings)
+        protected override async Task<HuaweiCloud.SDK.Dns.V2.DnsClient> CreateClient(HttpClient httpClient)
         {
-            Options = options;
-            Ssm = ssm;
-            Hc = proxyService.GetHttpClient();
             //GetValue
-            var dnsRegion = Ssm.EvaluateSecret(Options.DnsRegion);
-            var keyID = Ssm.EvaluateSecret(Options.KeyID);
-            var keySecret = Ssm.EvaluateSecret(Options.KeySecret);
-            try
-            {
-                var auth = new BasicCredentials(Ssm.EvaluateSecret(keyID), Ssm.EvaluateSecret(keySecret));
-                var config = HttpConfig.GetDefaultConfig();
-                config.IgnoreSslVerification = true;
-                //New Client
-                Client = HuaweiCloud.SDK.Dns.V2.DnsClient.NewBuilder()
-                        .WithCredential(auth)
-                        .WithRegion(DnsRegion.ValueOf(dnsRegion))
-                        .WithHttpConfig(config)
-                        .Build();
-            }
-            catch (Exception ex)
-            {
-                _log.Error($"Configuration error: {ex.Message}");
-                throw new Exception("Configuration error");
-            }
+            var dnsRegion = await ssm.EvaluateSecret(options.DnsRegion);
+            var keyID = await ssm.EvaluateSecret(options.KeyID);
+            var keySecret = await ssm.EvaluateSecret(options.KeySecret);
+            var auth = new BasicCredentials(keyID, keySecret);
+            var config = HttpConfig.GetDefaultConfig();
+            config.IgnoreSslVerification = false;
+            return HuaweiCloud.SDK.Dns.V2.DnsClient.NewBuilder()
+                    .WithCredential(auth)
+                    .WithRegion(DnsRegion.ValueOf(dnsRegion))
+                    .WithHttpConfig(config)
+                    .Build();
         }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             try
             {
-                var identifier = GetDomain(record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
+                var identifier = await GetDomain(record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
                 var domain = record.Authority.Domain;
                 var value = record.Value;
                 //Add Record
@@ -79,7 +63,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             try
             {
-                var identifier = GetDomain(record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
+                var identifier = await GetDomain(record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
                 var domain = record.Authority.Domain;
                 //Delete Record
                 await DelRecord(identifier, domain);
@@ -90,12 +74,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 //Out Error
                 _log.Error($"Unable to delete HuaWeiCloudDNS record: {ex.Message}");
             }
-        }
-
-        public void Dispose()
-        {
-            Hc.Dispose();
-            GC.SuppressFinalize(this);
         }
 
         #region PrivateLogic
@@ -110,9 +88,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private async Task<bool> AddRecord(string domain, string subDomain, string value)
         {
             //Delete Record
+            var client = await GetClient();
             var delRecord = await DelRecord(domain, subDomain);
             //Add Record
-            Client.CreateRecordSetWithLine(new()
+            client.CreateRecordSetWithLine(new()
             {
                 ZoneId = delRecord.Item1,
                 Body = new()
@@ -137,18 +116,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private async Task<(string?, bool)> DelRecord(string domain, string subDomain)
         {
             //Get RecordID
-            var recordId = GetRecordID(domain, subDomain);
+            var client = await GetClient();
+            var recordId = await GetRecordID(domain, subDomain);
             while (recordId.Item2 != default)
             {
                 //Delete Record
-                Client.DeleteRecordSets(new()
+                client.DeleteRecordSets(new()
                 {
                     ZoneId = recordId.Item1,
                     RecordsetId = recordId.Item2
                 });
                 //Get RecordID
                 await Task.Delay(300);
-                recordId = GetRecordID(domain, subDomain);
+                recordId = await GetRecordID(domain, subDomain);
             }
             return (recordId.Item1, true);
         }
@@ -159,10 +139,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <param name="domain">Domain</param>
         /// <param name="subDomain">SubDomain</param>
         /// <returns></returns>
-        private (string?, string?) GetRecordID(string domain, string? subDomain = default)
+        private async Task<(string?, string?)> GetRecordID(string domain, string? subDomain = default)
         {
             //domain
-            var resp1 = Client.ListRecordSetsWithLine(new()
+            var client = await GetClient();
+            var resp1 = client.ListRecordSetsWithLine(new()
             {
                 Type = "NS",
                 Name = domain.TrimEnd('.'),
@@ -172,7 +153,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             //subDomain
             if (subDomain != default)
             {
-                var resp2 = Client.ListRecordSetsWithLine(new()
+                var resp2 = client.ListRecordSetsWithLine(new()
                 {
                     Type = "TXT",
                     Name = subDomain,
@@ -191,9 +172,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// </summary>
         /// <param name="record">DnsValidationRecord</param>
         /// <returns></returns>
-        private string? GetDomain(DnsValidationRecord record)
+        private async Task<string?> GetDomain(DnsValidationRecord record)
         {
-            var resp = Client.ListRecordSetsWithLine(new()
+            var client = await GetClient();
+            var resp = client.ListRecordSetsWithLine(new()
             {
                 Type = "NS"
             });

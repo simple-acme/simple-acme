@@ -3,6 +3,7 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace PKISharp.WACS.UnitTests.Mock.Clients
@@ -94,19 +95,40 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         public bool HasFtpSites => Sites.Any(x => x.Type == IISSiteType.Ftp);
         public bool HasWebSites => Sites.Any(x => x.Type == IISSiteType.Web);
 
-        public void UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null)
+        public IISHttpBindingUpdaterContext UpdateHttpSite(IEnumerable<Identifier> identifiers, BindingOptions bindingOptions, byte[]? oldCertificate = null, IEnumerable<Identifier>? allIdentifiers = null)
         {
             var updater = new IISHttpBindingUpdater<MockSite, MockBinding>(this, _log);
-            var updated = updater.AddOrUpdateBindings(identifiers, bindingOptions, allIdentifiers, oldCertificate);
-            if (updated > 0)
+            var context = new IISHttpBindingUpdaterContext()
             {
-                _log.Information("Committing {count} {type} binding changes to IIS while updating site {site}", updated, "https", bindingOptions.SiteId);
-
+                PartIdentifiers = identifiers,
+                BindingOptions = bindingOptions,
+                AllIdentifiers = allIdentifiers,
+                PreviousCertificate = oldCertificate
+            };
+            updater.AddOrUpdateBindings(context);
+            if (context.TouchedBindings > 0)
+            {
+                if (bindingOptions.SiteId == null)
+                {
+                    _log.Information("Committing {count} {type} binding changes to IIS", context.TouchedBindings, "https");
+                }
+                else
+                {
+                    _log.Information("Committing {count} {type} binding changes to IIS while updating site {site}", context.TouchedBindings, "https", bindingOptions.SiteId);
+                }
             }
             else
             {
-                _log.Information("No bindings have been changed while updating site {site}", bindingOptions.SiteId);
+                if (bindingOptions.SiteId == null)
+                {
+                    _log.Information("No bindings have been changed in IIS");
+                }
+                else
+                {
+                    _log.Information("No bindings have been changed while updating site {site}", bindingOptions.SiteId);
+                }
             }
+            return context;
         }
         public MockSite GetSite(long id, IISSiteType? type = null) => Sites.First(x => id == x.Id && (type == null || x.Type == type));
         public void UpdateFtpSite(long? FtpSiteId, string? store, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate) { }
@@ -125,7 +147,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
                 .WithHost(binding.Host)
                 .WithIP(binding.IP)
                 .WithPort(binding.Port);
-            site.Bindings.Add(new MockBinding(updateOptions));
+            site.Bindings.Add(new MockBinding(updateOptions) { Id = binding.Id });
         }
 
         public void Refresh()
@@ -137,6 +159,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         }
     }
 
+    [DebuggerDisplay("{Id}: {Name}")]
     internal class MockSite : IIISSite<MockBinding>
     {
         IEnumerable<IIISBinding> IIISSite.Bindings => Bindings;
@@ -148,6 +171,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         public IISSiteType Type => IISSiteType.Web;
     }
 
+    [DebuggerDisplay("{Id}: {BindingInformation}")]
     internal class MockBinding : IIISBinding
     {
         public MockBinding() { }
@@ -162,6 +186,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
             SSLFlags = options.Flags;
         }
 
+        public int Id { get; set; }
         public string Host { get; set; } = "";
         public string Protocol { get; set; } = "";
         public int Port { get; set; }

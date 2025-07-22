@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace PKISharp.WACS.Services.Serialization
 {
-    public class WacsJsonPluginsOptionsFactory(ILogService log, ISettingsService settings)
+    public class WacsJsonPluginsOptionsFactory(ILogService log, ISettings settings)
     {
 
         /// <summary>

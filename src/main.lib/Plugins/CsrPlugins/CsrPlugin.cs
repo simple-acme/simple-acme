@@ -23,12 +23,12 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
     /// <summary>
     /// Common implementation between RSA and EC certificates
     /// </summary>
-    public abstract class CsrPlugin<TOptions>(ILogService log, ISettingsService settings, TOptions options) : 
+    public abstract class CsrPlugin<TOptions>(ILogService log, ISettings settings, TOptions options) : 
         ICsrPlugin
         where TOptions : CsrPluginOptions
     {
         protected readonly ILogService _log = log;
-        protected readonly ISettingsService _settings = settings;
+        protected readonly ISettings _settings = settings;
         protected readonly TOptions _options = options;
 
         protected string? _cacheData;
@@ -60,7 +60,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
 
             if (!string.IsNullOrEmpty(keyPath))
             {
-                SaveToCache(keyPath);
+                await SaveToCache(keyPath);
             }
 
             return csr;
@@ -103,10 +103,10 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         /// Save cached key information to disk, if needed
         /// </summary>
         /// <param name="cachePath"></param>
-        private void SaveToCache(string cachePath)
+        private async Task SaveToCache(string cachePath)
         {
             var rawData = new ProtectedString(_cacheData);
-            File.WriteAllText(cachePath, rawData.DiskValue(_settings.Security.EncryptConfig));
+            await FileInfoExtensions.SafeWrite(cachePath, rawData.DiskValue(_settings.Security.EncryptConfig));
         }
 
         public abstract string GetSignatureAlgorithm();

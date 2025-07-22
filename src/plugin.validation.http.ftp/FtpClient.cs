@@ -13,24 +13,17 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Clients
 {
-    internal class FtpClient
+    internal class FtpClient(
+        NetworkCredentialOptions? options,
+        ISettings settings,
+        ILogService log,
+        SecretServiceManager secretService)
     {
-        private NetworkCredential? Credential { get; set; }
-        private readonly ILogService _log;
-        private readonly ISettingsService _settings;
-
-        public FtpClient(
-            NetworkCredentialOptions? options,
-            ISettingsService settings,
-            ILogService log, 
-            SecretServiceManager secretService)
+        private NetworkCredential? _credential;
+        private async Task<NetworkCredential?> GetNetworkCredential()
         {
-            _settings = settings;
-            _log = log;
-            if (options != null)
-            {
-                Credential = options.GetCredential(secretService);
-            }
+            _credential ??= options != null ? await options.GetCredential(secretService) : null;
+            return _credential;
         }
 
         private AsyncFtpClient? _cacheClient;
@@ -45,39 +38,39 @@ namespace PKISharp.WACS.Clients
                 {
                     ValidateAnyCertificate = true
                 };
-                if (_settings.Validation?.Ftp?.UseGnuTls == true)
+                if (settings.Validation?.Ftp?.UseGnuTls == true)
                 {
 #if PLUGGABLE
                     options.CustomStream = typeof(GnuTlsStream);
 #else
-                    _log.Warning("Unable to use GnuTLS with trimmed build of simple-acme, please download a pluggable build.");
+                    log.Warning("Unable to use GnuTLS with trimmed build of simple-acme, please download a pluggable build.");
 #endif
                 }
                 var client = new AsyncFtpClient(uri.Host, port, options)
                 {
-                    Credentials = Credential
+                    Credentials = await GetNetworkCredential()
                 };
                 client.LegacyLogger += (level, message) =>
                 {
                     switch (level)
                     {
                         case FtpTraceLevel.Verbose:
-                            _log.Verbose("FTP: {message}", message);
+                            log.Verbose("FTP: {message}", message);
                             break;
                         case FtpTraceLevel.Info:
-                            _log.Information("FTP: {message}", message);
+                            log.Information("FTP: {message}", message);
                             break;
                         case FtpTraceLevel.Warn:
-                            _log.Warning("FTP: {message}", message);
+                            log.Warning("FTP: {message}", message);
                             break;
                         case FtpTraceLevel.Error:
-                            _log.Error("FTP: {message}", message);
+                            log.Error("FTP: {message}", message);
                             break;
                     }
                 };
                 await client.AutoConnect();
                 _cacheClient = client;
-                _log.Information("Established connection with ftp server at {host}:{port}, encrypted: {enc}", uri.Host, port, _cacheClient.IsEncrypted);
+                log.Information("Established connection with ftp server at {host}:{port}, encrypted: {enc}", uri.Host, port, _cacheClient.IsEncrypted);
             }
             return _cacheClient;
         }
@@ -95,11 +88,11 @@ namespace PKISharp.WACS.Clients
             var status = await client.UploadStream(stream, uri.PathAndQuery, FtpRemoteExists.Overwrite, true);
             if (status == FtpStatus.Success)
             {
-                _log.Debug("Upload {ftpPath} status {StatusDescription}", ftpPath, status);
+                log.Debug("Upload {ftpPath} status {StatusDescription}", ftpPath, status);
             }
             else
             {
-                _log.Warning("Upload {ftpPath} status {StatusDescription}", ftpPath, status);
+                log.Warning("Upload {ftpPath} status {StatusDescription}", ftpPath, status);
             }
         }
 
@@ -120,7 +113,7 @@ namespace PKISharp.WACS.Clients
             var uri = new Uri(ftpPath);
             var client = await CreateClient(uri);
             await client.DeleteDirectory(uri.PathAndQuery);
-            _log.Debug("Delete folder {ftpPath}", ftpPath);
+            log.Debug("Delete folder {ftpPath}", ftpPath);
         }
 
         public async Task DeleteFile(string ftpPath)
@@ -128,7 +121,7 @@ namespace PKISharp.WACS.Clients
             var uri = new Uri(ftpPath);
             var client = await CreateClient(uri);
             await client.DeleteFile(uri.PathAndQuery);
-            _log.Debug("Delete file {ftpPath}", ftpPath);
+            log.Debug("Delete file {ftpPath}", ftpPath);
         }
     }
 }

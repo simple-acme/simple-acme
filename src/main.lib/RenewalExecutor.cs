@@ -24,7 +24,7 @@ namespace PKISharp.WACS
         IAutofacBuilder scopeBuilder,
         ILogService log,
         IInputService input,
-        ISettingsService settings,
+        ISettings settings,
         TargetValidator targetValidator,
         DueDateStaticService dueDateStatic,
         DueDateRuntimeService dueDateRuntime,
@@ -50,9 +50,9 @@ namespace PKISharp.WACS
             var client = await clientManager.GetClient(renewal.Account);
             using var es = scopeBuilder.Execution(_container, renewal, client, runLevel);
             var targetPlugin = es.Resolve<PluginBackend<ITargetPlugin, IPluginCapability, TargetPluginOptions>>();
-            if (targetPlugin.Capability.State.Disabled)
+            if (targetPlugin.Capability.ExecutionState.Disabled)
             {
-                return new RenewResult($"Source plugin {targetPlugin.Meta.Name} is disabled. {targetPlugin.Capability.State.Reason}");
+                return new RenewResult($"Source plugin {targetPlugin.Meta.Name} is disabled. {targetPlugin.Capability.ExecutionState.Reason}");
             }
             var target = await targetPlugin.Backend.Generate();
             if (target == null)
@@ -68,7 +68,7 @@ namespace PKISharp.WACS
             // Create one or more orders from the target
             var targetScope = scopeBuilder.Split(es, target);
             var orderPlugin = targetScope.Resolve<PluginBackend<IOrderPlugin, IPluginCapability, OrderPluginOptions>>();
-            var orders = orderPlugin.Backend.Split(renewal, target).ToList();
+            var orders = orderPlugin.Backend.Split(renewal, target);
             if (orders == null || orders.Count == 0)
             {
                 return new RenewResult($"Order plugin {orderPlugin.Meta.Name} failed to create order(s)");
@@ -114,34 +114,43 @@ namespace PKISharp.WACS
         private async Task ManageTaskScheduler(Renewal renewal, RenewResult result, RunLevel runLevel)
         {
             // Configure task scheduler
-            var setupTaskScheduler = args.SetupTaskScheduler;
-            if (!setupTaskScheduler && !args.NoTaskScheduler)
+            if (args.SetupTaskScheduler)
             {
-                setupTaskScheduler = result.Success == true && !result.Abort && (renewal.New || renewal.Updated);
+                runLevel |= RunLevel.ForceTaskScheduler;
             }
-            if (setupTaskScheduler && runLevel.HasFlag(RunLevel.Test))
+            if (args.NoTaskScheduler)
             {
-                setupTaskScheduler = await input.PromptYesNo($"[--test] Do you want to automatically renew with these settings?", true);
-                if (!setupTaskScheduler)
-                {
-                    result.Abort = true;
-                }
+                runLevel |= RunLevel.NoTaskScheduler;
             }
-            if (setupTaskScheduler)
+            if (runLevel.HasFlag(RunLevel.NoTaskScheduler))
             {
-                var taskLevel = runLevel;
-                if (args.SetupTaskScheduler)
-                {
-                    taskLevel |= RunLevel.Force;
-                }
-                try
-                {
-                    await taskScheduler.EnsureAutoRenew(taskLevel);
-                }
-                catch (Exception ex)
-                {
-                    exceptionHandler.HandleException(ex, "Unable to configure automatic renewals");
-                }
+                return;
+            }
+            if (result.Success == false)
+            {
+                return;
+            }
+
+            // Unless specifically flagged not to setup task scheduler,
+            // --test mode will ask the question whether to setup the 
+            // task or not.
+            if (!result.Abort &&
+                (renewal.New || renewal.Updated) &&
+                runLevel.HasFlag(RunLevel.Test) &&
+                !await input.PromptYesNo($"[--test] Do you want to automatically renew with these settings?", true))
+            {
+                result.Abort = true;
+                return;
+            }
+
+            // Attempt to create the scheduled task
+            try
+            {
+                await taskScheduler.EnsureAutoRenew(runLevel);
+            }
+            catch (Exception ex)
+            {
+                exceptionHandler.HandleException(ex, "Unable to configure automatic renewals");
             }
         }
 
@@ -253,7 +262,7 @@ namespace PKISharp.WACS
             // that we're going to do something. Actually we may
             // still be able to read all certificates from cache,
             // but that's the exception rather than the rule.
-            var preScript = settings.Execution?.DefaultPreExecutionScript;
+            var preScript = settings.Execution.DefaultPreExecutionScript;
             var scriptClient = execute.Resolve<ScriptClient>();
             if (!string.IsNullOrWhiteSpace(preScript))
             {
@@ -269,7 +278,7 @@ namespace PKISharp.WACS
             // from the script installation pluginService, which is handled
             // in the previous step. This is only meant to undo any
             // (firewall?) changes made by the pre-execution script.
-            var postScript = settings.Execution?.DefaultPostExecutionScript;
+            var postScript = settings.Execution.DefaultPostExecutionScript;
             if (!string.IsNullOrWhiteSpace(postScript))
             {
                 await scriptClient.RunScript(postScript, $"{renewal.Id}");

@@ -9,6 +9,7 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
@@ -23,53 +24,49 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         ILogService log,
         IProxyService proxy,
-        ISettingsService settings,
+        ISettings settings,
         SecretServiceManager ssm,
-        Route53Options options) : DnsValidation<Route53>(dnsClient, log, settings)
+        Route53Options options) : DnsValidation<Route53, AmazonRoute53Client>(dnsClient, log, settings, proxy)
     {
-        private AmazonRoute53Client? _route53Client;
+        internal const string DefaultRegion = "us-east-1";
+
         private readonly Dictionary<string, List<ResourceRecordSet>> _pendingZoneUpdates = [];
         public override ParallelOperations Parallelism => ParallelOperations.Answer;
 
-        private AWSCredentials? GetCredentials()
+        private async Task<AWSCredentials?> GetCredentials()
         {
             var baseCredential = default(AWSCredentials);
+            var proxy = await _proxy.GetWebProxy();
             if (!string.IsNullOrWhiteSpace(options.IAMRole))
             {
-                baseCredential = new InstanceProfileAWSCredentials(
-                    options.IAMRole, 
-                    proxy.GetWebProxy());
+                baseCredential = new InstanceProfileAWSCredentials(options.IAMRole, proxy);
             }
             if (!string.IsNullOrWhiteSpace(options.AccessKeyId))
             {
-                var accessKey = ssm.EvaluateSecret(options.SecretAccessKey);
+                var accessKey = await ssm.EvaluateSecret(options.SecretAccessKey);
                 baseCredential = new BasicAWSCredentials(options.AccessKeyId, accessKey);
             }
-            baseCredential ??= new InstanceProfileAWSCredentials(proxy.GetWebProxy());
+            baseCredential ??= new InstanceProfileAWSCredentials(proxy);
             if (!string.IsNullOrWhiteSpace(options.ARNRole))
             {
                 baseCredential = new AssumeRoleAWSCredentials(
                     baseCredential, 
                     options.ARNRole, 
                     _settings.Client.ClientName, 
-                    new AssumeRoleAWSCredentialsOptions() { 
-                        ProxySettings = proxy.GetWebProxy()
-                    });
+                    new AssumeRoleAWSCredentialsOptions() { ProxySettings = proxy });
             }
             return baseCredential;
         }
 
-        private AmazonRoute53Client GetClient()
+        protected override async Task<AmazonRoute53Client> CreateClient(HttpClient httpClient)
         {
-            if (_route53Client == null)
-            {
-                var credential = GetCredentials();
-                var region = RegionEndpoint.USEast1;
-                var config = new AmazonRoute53Config() { RegionEndpoint = region };
-                config.SetWebProxy(proxy.GetWebProxy());
-                _route53Client = new AmazonRoute53Client(credential, config);
-            }
-            return _route53Client;
+            var credential = await GetCredentials();
+            var regionName = string.IsNullOrWhiteSpace(options.Region) ? DefaultRegion : options.Region;
+            var region = RegionEndpoint.GetBySystemName(regionName); 
+            _log.Information("Using AWS region {region}", region.DisplayName);
+            var config = new AmazonRoute53Config() { RegionEndpoint = region };
+            config.SetWebProxy(await _proxy.GetWebProxy());
+            return new AmazonRoute53Client(credential, config);
         }
 
         private void CreateOrUpdateResourceRecordSet(string hostedZone, string name, string record)
@@ -139,7 +136,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <returns></returns>
         public override async Task SaveChanges()
         {
-            var client = GetClient();
+            var client = await GetClient();
             var updateTasks = new List<Task<ChangeResourceRecordSetsResponse>>();
             foreach (var zone in _pendingZoneUpdates.Keys)
             {
@@ -162,7 +159,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <returns></returns>
         public override async Task Finalize()
         {
-            var client = GetClient();
+            var client = await GetClient();
             var deleteTasks = new List<Task<ChangeResourceRecordSetsResponse>>();
             foreach (var zone in _pendingZoneUpdates.Keys)
             {
@@ -182,11 +179,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <returns></returns>
         private async Task<IEnumerable<string>?> GetHostedZoneIds(string recordName)
         {
-            var client = GetClient();
+            var client = await GetClient();
             var hostedZones = new List<HostedZone>();
             var response = await client.ListHostedZonesAsync();
             hostedZones.AddRange(response.HostedZones);
-            while (response.IsTruncated)
+            while (response.IsTruncated == true)
             {
                 response = await client.ListHostedZonesAsync(
                     new ListHostedZonesRequest() {
@@ -196,7 +193,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
             _log.Debug("Found {count} hosted zones in AWS", hostedZones.Count);
 
-            hostedZones = hostedZones.Where(x => !x.Config.PrivateZone).ToList();
+            hostedZones = [.. hostedZones.Where(x => !x.Config.PrivateZone == true)];
             var hostedZoneSets = hostedZones.GroupBy(x => x.Name);
             var hostedZone = FindBestMatch(hostedZoneSets.ToDictionary(x => x.Key), recordName);
             if (hostedZone != null)
@@ -214,7 +211,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <returns></returns>
         private async Task WaitChangesPropagation(ChangeInfo changeInfo)
         {
-            var client = GetClient();
+            var client = await GetClient();
             if (changeInfo.Status == ChangeStatus.INSYNC)
             {
                 return;

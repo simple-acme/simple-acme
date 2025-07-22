@@ -14,11 +14,12 @@ namespace PKISharp.WACS.Host
         Banner banner,
         ILogService logService,
         IInputService inputService,
-        ISettingsService settingsService,
+        ISettings settingsService,
         HelpService helpService,
-        VersionService versionService,
         ArgumentsParser argumentsParser,
         RenewalCreator renewalCreator,
+        DomainParseService domainParseService,
+        SecretServiceManager secretServiceManager,
         RenewalManager renewalManager,
         Unattended unattended,
         IAutoRenewService taskSchedulerService,
@@ -55,7 +56,13 @@ namespace PKISharp.WACS.Host
             {
                 return -1;
             }
-            if (!versionService.Init())
+            // Validate command line and ensure main arguments
+            // are loaded, because those influence the BaseUri
+            if (!argumentsParser.Validate())
+            {
+                return -1;
+            }
+            if (!VersionService.Valid)
             {
                 return -1;
             }
@@ -104,8 +111,13 @@ namespace PKISharp.WACS.Host
             {
                 helpService.GenerateArgumentsYaml();
                 helpService.GeneratePluginsYaml();
+                helpService.GenerateSettingsYaml();
+                helpService.GenerateSettingsYaml2();
                 return 0;
             }
+
+            // Initialize domain parser
+            await domainParseService.Initialize();
 
             // Base runlevel flags on command line arguments
             var unattendedRunLevel = RunLevel.Unattended;
@@ -123,6 +135,11 @@ namespace PKISharp.WACS.Host
             {
                 interactiveRunLevel |= RunLevel.Test;
                 unattendedRunLevel |= RunLevel.Test;
+                if (_args.NoCache)
+                {
+                    interactiveRunLevel |= RunLevel.ForceValidation;
+                    unattendedRunLevel |= RunLevel.ForceValidation;
+                }
             }
 
             // Main loop
@@ -172,7 +189,17 @@ namespace PKISharp.WACS.Host
                     }
                     else if (_args.SetupTaskScheduler)
                     {
-                        await taskSchedulerService.SetupAutoRenew(unattendedRunLevel);
+                        await taskSchedulerService.SetupAutoRenew(unattendedRunLevel | RunLevel.ForceTaskScheduler);
+                        await CloseDefault();
+                    }
+                    else if (_args.VaultStore)
+                    {
+                        await secretServiceManager.StoreSecret(_args.VaultKey, _args.VaultSecret);
+                        await CloseDefault();
+                    }
+                    else if (_args.GlobalValidation)
+                    {
+                        await mainMenu.AddGlobalValidationOption();
                         await CloseDefault();
                     }
                     else

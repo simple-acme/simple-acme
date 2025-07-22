@@ -12,7 +12,7 @@ namespace PKISharp.WACS
     internal class RenewalDescriber(
         ISharingLifetimeScope container,
         IPluginService plugin,
-        ISettingsService settings,
+        ISettings settings,
         IInputService input,
         ILogService log,
         DueDateStaticService dueDate,
@@ -77,7 +77,7 @@ namespace PKISharp.WACS
             addArgs(renewal.TargetPluginOptions);
             var validationPlugin = plugin.GetPlugin(renewal.ValidationPluginOptions);
             var validationName = validationPlugin.Trigger.ToLower();
-            if (!string.Equals(validationName, settings.Validation.DefaultValidation ?? "selfhosting", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(validationName, settings.Validation.DefaultValidation, StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("validation", validationName);
             }
@@ -85,7 +85,7 @@ namespace PKISharp.WACS
             if (renewal.OrderPluginOptions != null)
             {
                 var orderName = plugin.GetPlugin(renewal.OrderPluginOptions).Trigger.ToLower();
-                if (!string.Equals(orderName, settings.Order.DefaultPlugin ?? "single", StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(orderName, settings.Order.DefaultOrder ?? "single", StringComparison.OrdinalIgnoreCase))
                 {
                     args.Add("order", orderName);
                 }
@@ -101,7 +101,7 @@ namespace PKISharp.WACS
                 addArgs(renewal.CsrPluginOptions);
             }
             var storeNames = string.Join(",", renewal.StorePluginOptions.Select(plugin.GetPlugin).Select(x => x.Trigger.ToLower()));
-            if (!string.Equals(storeNames, settings.Store.DefaultStore ?? "certificatestore", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(storeNames, settings.Store.DefaultStore, StringComparison.OrdinalIgnoreCase))
             {
                 args.Add("store", storeNames);
             }

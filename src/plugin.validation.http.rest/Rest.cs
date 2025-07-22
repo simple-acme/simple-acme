@@ -25,12 +25,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         RestOptions options) : Validation<Http01ChallengeValidationDetails>
     {
         private readonly ConcurrentBag<(string url, string challengeValue)> _urlsChallenges = [];
-        private readonly string? _securityToken = ssm.EvaluateSecret(options.SecurityToken);
+        private async Task<string?> GetSecurityToken() => await ssm.EvaluateSecret(options.SecurityToken);
+
         private readonly bool _useHttps = options.UseHttps == true;
 
         public override ParallelOperations Parallelism => ParallelOperations.Prepare | ParallelOperations.Answer;
 
-        public override Task PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
+        public override Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
             var resourceUrl = challenge.HttpResourceUrl;
             if (_useHttps)
@@ -38,14 +39,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 resourceUrl = resourceUrl.Replace("http://", "https://");
             }
             _urlsChallenges.Add((resourceUrl, challenge.HttpResourceValue));
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         public override async Task Commit()
         {
             log.Information("Sending verification files to the server(s)");
 
-            using var client = GetClient();
+            using var client = await GetClient();
 
             var responses = await Task.WhenAll(_urlsChallenges
                 .Select(item => client.PutAsync(item.url, new StringContent(item.challengeValue))));
@@ -66,7 +67,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             log.Information("Removing verification files from the server(s)");
 
-            using var client = GetClient();
+            using var client = await GetClient();
 
             var responses = await Task.WhenAll(_urlsChallenges
                 .Select(item => client.DeleteAsync(item.url)));
@@ -77,10 +78,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
         }
 
-        private HttpClient GetClient()
+        private async Task<HttpClient> GetClient()
         {
-            var client = proxyService.GetHttpClient(false);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _securityToken);
+            var token = await GetSecurityToken();
+            var client = await proxyService.GetHttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             return client;
         }

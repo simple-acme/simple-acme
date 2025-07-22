@@ -1,16 +1,17 @@
-﻿using Autofac;
+﻿using ACMESharp.Protocol.Resources;
+using Autofac;
 using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.Context;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Plugins.Interfaces;
+using PKISharp.WACS.Plugins.ValidationPlugins.Any;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Protocol = ACMESharp.Protocol.Resources;
 
 namespace PKISharp.WACS
 {
@@ -33,7 +34,7 @@ namespace PKISharp.WACS
     /// </summary>
     internal class RenewalValidator(
         IAutofacBuilder scopeBuilder,
-        ISettingsService settings,
+        ISettings settings,
         ILogService log,
         IPluginService plugin,
         AcmeClient client,
@@ -126,7 +127,7 @@ namespace PKISharp.WACS
             }).ToList();
 
             // Choose between parallel and serial execution
-            if (settings.Validation.DisableMultiThreading != false || plugin.Parallelism == ParallelOperations.None)
+            if (settings.Validation.DisableMultiThreading || plugin.Parallelism == ParallelOperations.None)
             {
                 await SerialValidation(contexts, validationScope, breakOnError: !multipleOrders);
             }
@@ -226,15 +227,19 @@ namespace PKISharp.WACS
             }
             var identifier = Identifier.Parse(context.Authorization.Identifier);
             var pluginFrontend = scopeBuilder.ValidationFrontend(context.Order.OrderScope, options, identifier);
-            var state = pluginFrontend.Capability.State;
+            var state = pluginFrontend.Capability.ExecutionState;
             if (state.Disabled)
             {
                 log.Warning("Validation plugin {name} is not available. {disabledReason}", pluginFrontend.Meta.Name, state.Reason);
                 return false;
             }
-            if (!context.Authorization.Challenges?.Any(x => x.Type == pluginFrontend.Capability.ChallengeType) ?? false)
+            if (pluginFrontend.Backend is Null)
             {
-                log.Warning("No challenge of type {challengeType} available", pluginFrontend.Capability.ChallengeType);
+                return true;
+            }
+            if (!context.Authorization.Challenges?.Any(x => pluginFrontend.Capability.ChallengeTypes.Contains(x.Type)) ?? false)
+            {
+                log.Warning("No challenge of type {challengeType} available", pluginFrontend.Capability.ChallengeTypes);
                 return context.Authorization.Status == AcmeClient.AuthorizationValid;
             }
             return true;
@@ -249,7 +254,7 @@ namespace PKISharp.WACS
         private async Task ParallelValidation(ParallelOperations level, ILifetimeScope validationScope, List<ValidationContextParameters> parameters, RunLevel runLevel)
         {
             var contexts = parameters.Select(parameter => new ValidationContext(validationScope, parameter)).ToList();
-            var batchSize = settings.Validation.ParallelBatchSize ?? 100;
+            var batchSize = settings.Validation.ParallelBatchSize;
             var batches = Math.DivRem(contexts.Count, batchSize, out var remainder);
             batches += remainder > 0 ? 1 : 0;
             for (var i = 0; i < remainder; i += 1)
@@ -295,6 +300,15 @@ namespace PKISharp.WACS
                     return;
                 }
 
+                // The Null plugin goes through the prepare step to 
+                // signal potential issues (like domains expected to
+                // be pre-authorized, but not actually being so). But
+                // it doesn't require Commit/Cleanup stages
+                if (plugin is Null)
+                {
+                    return;
+                }
+
                 // Commit
                 var commited = await Commit(plugin);
                 if (!commited)
@@ -330,7 +344,10 @@ namespace PKISharp.WACS
             finally
             {
                 // Cleanup
-                await Cleanup(plugin);
+                if (plugin is not Null)
+                {
+                    await Cleanup(plugin);
+                }
             }
         }
 
@@ -384,11 +401,11 @@ namespace PKISharp.WACS
         /// <param name="authorizationUri"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        private static async Task<Protocol.AcmeAuthorization?> GetAuthorizationDetails(OrderContext context, string authorizationUri)
+        private static async Task<AcmeAuthorization?> GetAuthorizationDetails(OrderContext context, string authorizationUri)
         {
             // Get authorization challenge details from server
             var client = context.OrderScope.Resolve<AcmeClient>();
-            Protocol.AcmeAuthorization? authorization;
+            AcmeAuthorization? authorization;
             try
             {
                 authorization = await client.GetAuthorizationDetails(authorizationUri);
@@ -409,76 +426,66 @@ namespace PKISharp.WACS
         /// <returns></returns>
         private async Task Prepare(ValidationContext context, RunLevel runLevel)
         {
+            log.Information("[{identifier}] Authorizing...", context.Label);
+            log.Verbose("[{identifier}] Initial authorization status: {status}", context.Label, context.Authorization.Status);
+
+            // Handle missing plugin (should not happen at this point in the code)
             if (context.ValidationPlugin == null)
             {
                 throw new InvalidOperationException("No validation plugin configured");
             }
-            var client = context.Scope.Resolve<AcmeClient>();
+
+            // Special case for pre-authorization / null validation
+            if (context.ValidationPlugin is Null)
+            {
+                if (context.Authorization.Status == AcmeClient.AuthorizationValid)
+                {
+                    log.Information("[{identifier}] Pre-authorized, skip validation", context.Label);
+                }
+                else
+                {
+                    log.Error("[{identifier}] Domain is not pre-authorized as expected", context.Label);
+                    context.OrderResult.AddErrorMessage("Domain is not pre-authorized as expected", !context.Valid);
+                }
+                return;
+            }
+
+            // Regular plugin
             try
             {
                 if (context.Valid)
                 {
                     log.Information("[{identifier}] Cached authorization result: {Status}", context.Label, context.Authorization.Status);
-                    if (!runLevel.HasFlag(RunLevel.Test) && !runLevel.HasFlag(RunLevel.NoCache))
+                    if (!runLevel.HasFlag(RunLevel.ForceValidation))
                     {
                         return;
                     }
-                    log.Information("[{identifier}] Handling challenge anyway because --test and/or --nocache is active", context.Label);
+                    log.Information("[{identifier}] Handling challenge anyway because flags --test and --nocache are set", context.Label);
+                }
+                var challenge = await SelectChallenge(context, runLevel);
+                if (challenge == null)
+                {
+                    return;
                 }
 
-                log.Information("[{identifier}] Authorizing...", context.Label);
-                log.Verbose("[{identifier}] Initial authorization status: {status}", context.Label, context.Authorization.Status);
-                log.Verbose("[{identifier}] Challenge types available: {challenges}", context.Label, context.Authorization.Challenges?.Select(x => x.Type ?? "[Unknown]"));
-                var challenge = context.Authorization.Challenges?.FirstOrDefault(c => string.Equals(c.Type, context.ChallengeType, StringComparison.InvariantCultureIgnoreCase));
-                if (challenge == default)
-                {
-                    if (context.OrderResult.Success == true)
-                    {
-                        var usedType = context.Authorization.Challenges?.
-                            Where(x => x.Status == AcmeClient.ChallengeValid).
-                            FirstOrDefault();
-                        log.Warning("[{identifier}] Expected challenge type {type} not available, already validated using {valided}.",
-                            context.Label,
-                            context.ChallengeType,
-                            usedType?.Type ?? "[unknown]");
-                        return;
-                    }
-                    else
-                    {
-                        log.Error("[{identifier}] Expected challenge type {type} not available.",
-                            context.Label,
-                            context.ChallengeType);
-                        context.OrderResult.AddErrorMessage("Expected challenge type not available", !context.Valid);
-                        return;
-                    }
-                }
-                else
-                {
-                    log.Verbose("[{identifier}] Initial challenge status: {status}", context.Label, challenge.Status);
-                    if (challenge.Status == AcmeClient.ChallengeValid)
-                    {
-                        // We actually should not get here because if one of the
-                        // challenges is valid, the authorization itself should also 
-                        // be valid.
-                        if (!runLevel.HasFlag(RunLevel.Test) && !runLevel.HasFlag(RunLevel.NoCache))
-                        {
-                            log.Information("[{identifier}] Cached challenge result: {Status}", !context.Valid);
-                            return;
-                        }
-                    }
-                }
                 log.Information("[{identifier}] Authorizing using {challengeType} validation ({name})",
                     context.Label,
-                    context.ChallengeType,
+                    challenge.Type,
                     context.PluginName);
+
                 try
                 {
                     // Now that we're going to call into PrepareChallenge, we will assume 
                     // responsibility to also call CleanUp later, which is signalled by
                     // the AcmeChallenge propery being not null
+                    var client = context.Scope.Resolve<AcmeClient>();
                     context.ChallengeDetails = client.DecodeChallengeValidation(context.Authorization, challenge);
                     context.Challenge = challenge;
-                    await context.ValidationPlugin.PrepareChallenge(context);
+                    var ret = await context.ValidationPlugin.PrepareChallenge(context);
+                    if (!ret)
+                    {
+                        throw new Exception("User aborted");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -493,6 +500,61 @@ namespace PKISharp.WACS
                 var message = exceptionHandler.HandleException(ex);
                 context.OrderResult.AddErrorMessage(message, !context.Valid);
             }
+        }
+
+        /// <summary>
+        /// Select a challenge from the list of available ones, based on plugin capabilities
+        /// and authorization state.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        private async Task<AcmeChallenge?> SelectChallenge(ValidationContext context, RunLevel runLevel)
+        {
+            log.Verbose("[{identifier}] Challenge types available: {challenges}", context.Label, context.Authorization.Challenges?.Select(x => x.Type ?? "[Unknown]"));
+
+            // Have the plugin select the challenge that it wants to answer
+            var supportedChallenges = context.Authorization.Challenges?.Where(c => context.ChallengeTypes.Contains(c.Type)).ToList() ?? [];
+            var challenge = supportedChallenges.Count > 1
+                ? await context.ValidationPlugin.SelectChallenge(supportedChallenges)
+                : supportedChallenges.FirstOrDefault();
+
+            if (challenge == null)
+            {
+                // No appropriate challenge available
+                if (context.OrderResult.Success == true)
+                {
+                    var usedType = context.Authorization.Challenges?.
+                        Where(x => x.Status == AcmeClient.ChallengeValid).
+                        FirstOrDefault();
+                    log.Warning("[{identifier}] Expected challenge type(s) {type} not available, already validated using {valided}.",
+                        context.Label,
+                        context.ChallengeTypes,
+                        usedType?.Type ?? "[unknown]");
+                }
+                else
+                {
+                    log.Error("[{identifier}] Expected challenge type {type} not available.",
+                        context.Label,
+                        context.ChallengeTypes);
+                    context.OrderResult.AddErrorMessage("Expected challenge type not available", !context.Valid);
+                }
+                return null;
+            }
+
+            log.Verbose("[{identifier}] Initial challenge status: {status}", context.Label, challenge.Status);
+            if (challenge.Status == AcmeClient.ChallengeValid)
+            {
+                // We actually should not get here because if one of the
+                // challenges is valid, the authorization itself should also 
+                // be valid. But with the right flag, we want to trigger
+                // the validation process regardless of it being necessary.
+                if (!runLevel.HasFlag(RunLevel.ForceValidation))
+                {
+                    // We can skip the challenge
+                    return null;
+                }
+            }
+            return challenge;
         }
 
         /// <summary>
@@ -580,11 +642,11 @@ namespace PKISharp.WACS
             {
                 log.Verbose("Starting post-validation cleanup");
                 await validationPlugin.CleanUp();
-                log.Verbose("Post-validation cleanup was successful");
+                log.Verbose("Post-validation cleanup complete");
             }
             catch (Exception ex)
             {
-                log.Warning(ex, "An error occured during post-validation cleanup");
+                log.Warning(ex, "An error occurred during post-validation cleanup: {message}", ex.Message);
             }
         }
     }

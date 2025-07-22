@@ -26,9 +26,17 @@ namespace PKISharp.WACS.Services
             {
                 _allTypes.AddRange(WindowsPlugins());
             }
-            _allTypes.AddRange(LoadFromDisk());
+            if (VersionService.Init(logger))
+            {
+                _allTypes.AddRange(LoadFromDisk(VersionService.PluginPath));
+            }
         }
 
+        /// <summary>
+        /// Hard-coded list of built-in plugins, these are always loaded
+        /// and this is done to avoid requiring reflection in the trimmed build
+        /// </summary>
+        /// <returns></returns>
         internal static List<TypeDescriptor> BuiltInTypes()
         {
             return
@@ -42,8 +50,9 @@ namespace PKISharp.WACS.Services
                 new(typeof(Plugins.TargetPlugins.Manual)), new(typeof(Plugins.TargetPlugins.ManualArguments)),
 
                 // Validation plugins
-                new(typeof(Plugins.ValidationPlugins.Dns.Manual)),
+                new(typeof(Plugins.ValidationPlugins.Any.Manual)),
                 new(typeof(Plugins.ValidationPlugins.Dns.Script)), new(typeof(Plugins.ValidationPlugins.Dns.ScriptArguments)),
+                new(typeof(Plugins.ValidationPlugins.Any.Null)),
                 new(typeof(Plugins.ValidationPlugins.Http.FileSystem)), new(typeof(Plugins.ValidationPlugins.Http.FileSystemArguments)),
                 new(typeof(Plugins.ValidationPlugins.Http.SelfHosting)), new(typeof(Plugins.ValidationPlugins.Http.SelfHostingArguments)),
                 new(typeof(Plugins.ValidationPlugins.Tls.SelfHosting)), new(typeof(Plugins.ValidationPlugins.Tls.SelfHostingArguments)),
@@ -70,12 +79,19 @@ namespace PKISharp.WACS.Services
 
                 // Secret plugins
                 new(typeof(Plugins.SecretPlugins.JsonSecretService)),
+                new(typeof(Plugins.SecretPlugins.ScriptSecretService)),
+                new(typeof(Plugins.SecretPlugins.EnvironmentSecretService)),
 
                 // Notification targets
                 new(typeof(Plugins.NotificationPlugins.NotificationTargetEmail))
             ];
         }
 
+        /// <summary>
+        /// Hard-coded list of Windows-specific plugins, only loaded 
+        /// on Windows systems
+        /// </summary>
+        /// <returns></returns>
         [SupportedOSPlatform("windows")]
         internal static List<TypeDescriptor> WindowsPlugins()
         {
@@ -88,6 +104,10 @@ namespace PKISharp.WACS.Services
             ];
         }
 
+        /// <summary>
+        /// Do not attempt to load the following libraries, they are
+        /// either native code part of .NET or part of the main program
+        /// </summary>
         private static readonly List<string> IgnoreLibraries = [
             "clrcompression.dll",
             "clrjit.dll",
@@ -100,13 +120,19 @@ namespace PKISharp.WACS.Services
             "System.Private.CoreLib.dll"
         ];
 
-        protected List<TypeDescriptor> LoadFromDisk()
+        /// <summary>
+        /// How many types are currently loaded?
+        /// Can be used for cache invalidation
+        /// </summary>
+        internal int Count => _allTypes.Count;
+
+        protected List<TypeDescriptor> LoadFromDisk(string path)
         {
-            if (string.IsNullOrEmpty(VersionService.PluginPath))
+            if (string.IsNullOrEmpty(path))
             {
                 return [];
             }
-            var pluginDirectory = new DirectoryInfo(VersionService.PluginPath);
+            var pluginDirectory = new DirectoryInfo(path);
             if (!pluginDirectory.Exists)
             {
                 return [];
@@ -126,14 +152,16 @@ namespace PKISharp.WACS.Services
             {
                 return LoadFromDiskReal(dllFiles);
             }
-
         }
 
 #if !PLUGGABLE
         protected static List<TypeDescriptor> LoadFromDiskReal(IEnumerable<FileInfo> _) => [];
-#endif
-
-#if PLUGGABLE
+#else
+        /// <summary>
+        /// Load assembly from disk
+        /// </summary>
+        /// <param name="dllFiles"></param>
+        /// <returns></returns>
         protected List<TypeDescriptor> LoadFromDiskReal(IEnumerable<FileInfo> dllFiles)
         {
             var allAssemblies = new List<Assembly>();
@@ -177,9 +205,14 @@ namespace PKISharp.WACS.Services
                 ret.AddRange(types);
             }
             return ret.Select(t => new TypeDescriptor(t)).ToList();
-
         }
 
+        /// <summary>
+        /// Load types from an assembly, filtering out abstract types and anything
+        /// not in the PKISharp namespace.
+        /// </summary>
+        /// <param name="assembly"></param>
+        /// <returns></returns>
         internal IEnumerable<Type> GetTypesFromAssembly(Assembly assembly)
         {
             if (assembly.DefinedTypes == null)
@@ -222,7 +255,12 @@ namespace PKISharp.WACS.Services
                 );
         }
 #endif
-        
+
+        /// <summary>
+        /// Get all types that are assignable to T, excluding T itself
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public virtual List<TypeDescriptor> GetResolvable<T>()
         {
             return _allTypes.
@@ -231,6 +269,12 @@ namespace PKISharp.WACS.Services
                 Distinct().
                 ToList();
         }
+
+        /// <summary>
+        /// Load types from a specific path and append them to the list of known types
+        /// </summary>
+        /// <param name="path"></param>
+        internal void LoadFromPath(string path) => _allTypes.AddRange(LoadFromDisk(path));
 
         /// <summary>
         /// Wrapper around type to convince and instruct the trimmer that the

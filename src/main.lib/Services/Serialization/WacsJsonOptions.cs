@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Services.Serialization
             PluginOptionsConverter pluginConverter,
             PluginOptionsListConverter pluginOptionsListConverter,
             ILogService log,
-            ISettingsService settings)
+            ISettings settings)
         {
             var options = new JsonSerializerOptions
             {

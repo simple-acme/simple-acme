@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         Target target,
         LookupClientProvider dnsClient,
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         IProxyService proxy,
         ArgumentsInputService arguments) : PluginOptionsFactory<AcmeOptions>
     {

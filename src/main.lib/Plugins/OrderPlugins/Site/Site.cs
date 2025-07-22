@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
         "Site", "Separate certificate for each IIS site")]
     internal class Site : IOrderPlugin
     {
-        public IEnumerable<Order> Split(Renewal renewal, Target target) 
+        public List<Order> Split(Renewal renewal, Target target) 
         {
             var ret = new List<Order>();
             foreach (var part in target.Parts)

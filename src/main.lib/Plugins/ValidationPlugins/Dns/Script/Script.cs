@@ -4,7 +4,7 @@ using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
-using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
@@ -26,9 +26,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         LookupClientProvider dnsClient,
         ScriptClient client,
         ILogService log,
-        DomainParseService domainParseService,
         SecretServiceManager secretServiceManager,
-        ISettingsService settings) : DnsValidation<Script>(dnsClient, log, settings)
+        DomainParseService domainParseService,
+        ISettings settings) : DnsValidation<Script>(dnsClient, log, settings)
     {
         internal const string DefaultCreateArguments = "create {Identifier} {RecordName} {Token}";
         internal const string DefaultDeleteArguments = "delete {Identifier} {RecordName} {Token}";
@@ -46,12 +46,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     args = options.CreateScriptArguments;
                 }
                 var escapeToken = script.EndsWith(".ps1");
-                var actualArguments = ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, false);
-                var censoredArguments = ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, true);
-                return await client.RunScript(
-                    script,
-                    actualArguments,
-                    censoredArguments);
+                var actualArguments = await ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, false);
+                var censoredArguments = await ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, true);
+                var result = await client.RunScript(script, actualArguments, censoredArguments);
+                return result.Success;
             }
             else
             {
@@ -71,8 +69,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     args = options.DeleteScriptArguments;
                 }
                 var escapeToken = script.EndsWith(".ps1");
-                var actualArguments = ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, false);
-                var censoredArguments = ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, true);
+                var actualArguments =  await ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, false);
+                var censoredArguments = await ProcessArguments(record.Context.Identifier, record.Authority.Domain, record.Value, args, escapeToken, true);
                 await client.RunScript(script, actualArguments, censoredArguments);
             }
             else
@@ -81,7 +79,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
         }
 
-        private string ProcessArguments(string identifier, string recordName, string token, string args, bool escapeToken, bool censor)
+        private async Task<string> ProcessArguments(string identifier, string recordName, string token, string args, bool escapeToken, bool censor)
         {
             var ret = args;
             // recordName: _acme-challenge.sub.domain.com
@@ -113,24 +111,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 ret = ret.Replace("{Token}", "\"{Token}\"");
             }
 
-            // Numbered parameters for backwards compatibility only,
-            // do not extend for future updates
-            return TokenRegex().Replace(ret, (m) => {
-                return m.Value switch
-                {
-                    "{ZoneName}" => zoneName,
-                    "{NodeName}" => nodeName,
-                    "{Identifier}" => identifier,
-                    "{RecordName}" => recordName,
-                    "{Token}" => token,
-                    var s when s.StartsWith($"{{{SecretServiceManager.VaultPrefix}") =>
-                        censor ? s : secretServiceManager.EvaluateSecret(s.Trim('{', '}')) ?? s,
-                    _ => m.Value
-                };
-            });
+            // Replace tokens in the script
+            var replacements = new Dictionary<string, string?>
+            {
+                { "ZoneName", zoneName },
+                { "NodeName", nodeName },
+                { "Identifier", identifier },
+                { "RecordName", recordName },
+                { "Token", censor ? "***" : token }
+            };
+            return await ScriptClient.ReplaceTokens(ret, replacements, secretServiceManager, censor);
         }
-
-        [GeneratedRegex("{.+?}")]
-        private static partial Regex TokenRegex();
     }
 }

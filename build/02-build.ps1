@@ -1,6 +1,13 @@
 ﻿# Clear previous build results
 ClearFolders
 
+# Write metadata
+$yaml = "releasename: $env:APPVEYOR_REPO_TAG_NAME
+releasetag: $env:APPVEYOR_REPO_TAG_NAME
+releasebuild: $env:APPVEYOR_BUILD_VERSION
+commit: $env:APPVEYOR_REPO_COMMIT"
+Set-Content -Path "$($Out)build.yml" -Value $yaml
+
 # Restore NuGet packages
 & dotnet restore $Root\src\main\wacs.csproj
 
@@ -59,6 +66,7 @@ if ($BuildPlugins) {
 	$pluginFolders = (Get-ChildItem $Root\src\ plugin.*).Name
 	$plugins = $pluginFolders | `
 		Where-Object { -not ($_ -like "*.common.*") } | `
+		Where-Object { -not ($_ -like "*.reference") } | `
 		ForEach-Object { @{ Name = $_; Files = @(); Folder = "" } } | `
 		Select-Object -First $BuildPluginsCount
 

@@ -16,14 +16,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     internal class DnsExitDnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
         DomainParseService domainParser,
         DnsexitOptions options,
         SecretServiceManager ssm,
         IProxyService proxyService) : DnsValidation<DnsExitDnsValidation>(dnsClient, logService, settings)
     {
         private readonly DnsManagementClient _client = new(
-                ssm.EvaluateSecret(options.ApiKey) ?? "",
+                ssm.EvaluateSecret(options.ApiKey).Result ?? "",
                 logService, proxyService);
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)

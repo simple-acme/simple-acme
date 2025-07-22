@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.TargetPlugins;
+using PKISharp.WACS.UnitTests.Mock.Services;
 using System.IO;
 using System.Linq;
 
@@ -42,7 +43,7 @@ ZkoLUgEWU5OcCkq5AIpmloeaCTC/vKrlS5M3BvjEmQ==
                 File.WriteAllText(tempFile, Csr);
                 var csrOptions = new CsrOptions() { CsrFile = tempFile };
                 var log = new Mock.Services.LogService(false);
-                var csrPlugin = new Csr(log, csrOptions);
+                var csrPlugin = new Csr(log, csrOptions, new Clients.ScriptClient(log, new MockSettingsService()));
                 var target = csrPlugin.Generate().Result;
                 Assert.IsNotNull(target);
                 Assert.IsTrue(target.Parts.Count == 1);
@@ -54,6 +55,33 @@ ZkoLUgEWU5OcCkq5AIpmloeaCTC/vKrlS5M3BvjEmQ==
                 Assert.IsTrue(target.Parts.First().Identifiers.OfType<EmailIdentifier>().Any(x => x.Value == "win.acme.simple@gmail.com"));
 
             } 
+            finally
+            {
+                File.Delete(tempFile);
+            }
+        }
+
+        [TestMethod]
+        public void Script()
+        {
+            var tempFile = Path.GetTempFileName() + ".ps1";
+            try
+            {
+                File.WriteAllText(tempFile, $"return @\"\n{Csr}\n\"@");
+                var csrOptions = new CsrOptions() { CsrScript = tempFile };
+                var log = new Mock.Services.LogService(false);
+                var csrPlugin = new Csr(log, csrOptions, new Clients.ScriptClient(log, new MockSettingsService()));
+                var target = csrPlugin.Generate().Result;
+                Assert.IsNotNull(target);
+                Assert.IsTrue(target.Parts.Count == 1);
+                Assert.IsTrue(target.Parts.First().Identifiers.OfType<IpIdentifier>().Count() == 3);
+                Assert.IsTrue(target.Parts.First().Identifiers.OfType<DnsIdentifier>().Count() == 2);
+                Assert.IsTrue(target.Parts.First().Identifiers.OfType<EmailIdentifier>().Count() == 1);
+                Assert.IsTrue(target.Parts.First().Identifiers.OfType<IpIdentifier>().Any(x => x.Value == "1.1.1.1"));
+                Assert.IsTrue(target.Parts.First().Identifiers.OfType<DnsIdentifier>().Any(x => x.Value == "www.win-acme.com"));
+                Assert.IsTrue(target.Parts.First().Identifiers.OfType<EmailIdentifier>().Any(x => x.Value == "win.acme.simple@gmail.com"));
+
+            }
             finally
             {
                 File.Delete(tempFile);

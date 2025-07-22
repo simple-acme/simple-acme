@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private readonly IInputService? _input;
 
         public AcmeDnsClient(LookupClientProvider dnsClient, IProxyService proxy, ILogService log,
-                             ISettingsService settings, IInputService? input, Uri baseUri)
+                             ISettings settings, IInputService? input, Uri baseUri)
         {
             _baseUri = baseUri;
             _proxy = proxy;
@@ -81,7 +81,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                         }
                         if (await VerifyRegistration(domain, newReg.Fulldomain, interactive))
                         {
-                            await File.WriteAllTextAsync(FileForDomain(domain), JsonSerializer.Serialize(newReg, AcmeJson.Default.RegisterResponse));
+                            await FileInfoExtensions.SafeWrite(FileForDomain(domain), JsonSerializer.Serialize(newReg, AcmeJson.Default.RegisterResponse));
                             return true;
                         }
                     }
@@ -194,7 +194,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         private async Task<RegisterResponse?> Register()
         {
-            using var client = Client();
+            using var client = await Client();
             try
             {
                 var response = await client.PostAsync($"register", new StringContent(""));
@@ -224,7 +224,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 _log.Warning("Registration for domain {domain} appears invalid", domain);
             }
-            using var client = Client();
+            using var client = await Client();
             client.DefaultRequestHeaders.Add("X-Api-User", reg.UserName);
             client.DefaultRequestHeaders.Add("X-Api-Key", reg.Password);
             var request = new UpdateRequest()
@@ -254,9 +254,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// Construct common WebClient
         /// </summary>
         /// <returns></returns>
-        private HttpClient Client()
+        private async Task<HttpClient> Client()
         {
-            var httpClient = _proxy.GetHttpClient();
+            var httpClient = await _proxy.GetHttpClient();
             var uri = _baseUri;
             httpClient.BaseAddress = uri;
             if (uri.UserInfo != null)

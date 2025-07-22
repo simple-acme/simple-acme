@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    internal class NetworkCheckService(IProxyService proxy, ISettingsService settings, ILogService log)
+    internal class NetworkCheckService(IProxyService proxy, ISettings settings, ILogService log)
     {
 
         /// <summary>
@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         internal async Task CheckNetwork()
         {
-            using var httpClient = proxy.GetHttpClient();
+            using var httpClient = await proxy.GetHttpClient();
             httpClient.BaseAddress = settings.BaseUri;
             httpClient.Timeout = new TimeSpan(0, 0, 10);
             var success = await CheckNetworkUrl(httpClient, "directory");
@@ -75,7 +75,7 @@ namespace PKISharp.WACS.Services
             }
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Server returned status {response.StatusCode}:{response.ReasonPhrase}");
+                throw new Exception($"Server returned status {(int)response.StatusCode}: {response.ReasonPhrase ?? response.StatusCode.ToString()}");
             }
             string? content;
             try

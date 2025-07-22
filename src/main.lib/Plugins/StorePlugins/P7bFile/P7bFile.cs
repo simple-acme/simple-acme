@@ -26,12 +26,12 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         private readonly string _path;
         private readonly string? _name;
 
-        public static string? DefaultPath(ISettingsService settings) =>
+        public static string? DefaultPath(ISettings settings) =>
             settings.Store.P7bFile?.DefaultPath;
 
         public P7bFile(
             ILogService log,
-            ISettingsService settings,
+            ISettings settings,
             P7bFileOptions options)
         {
             _log = log;
@@ -63,7 +63,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             try
             {
                 var dest = PathForIdentifier(_name ?? input.CommonName?.Value ?? input.SanNames.First().Value);
-                var data = input.AsCollection(X509KeyStorageFlags.EphemeralKeySet).Export(X509ContentType.Pkcs7) ?? throw new Exception();
+                var data = input.AsCollection(X509KeyStorageFlags.EphemeralKeySet, _log).Export(X509ContentType.Pkcs7) ?? throw new Exception();
                 var fi = new FileInfo(dest);
                 using var fs = fi.Open(FileMode.Create);
                 using var stream = new MemoryStream(data);

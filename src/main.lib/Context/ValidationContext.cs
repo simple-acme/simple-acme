@@ -8,6 +8,7 @@ using PKISharp.WACS.Plugins.Base;
 using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Plugins.Interfaces;
 using System;
+using System.Collections.Generic;
 
 namespace PKISharp.WACS.Context
 {
@@ -44,14 +45,14 @@ namespace PKISharp.WACS.Context
             PluginName = parameters.Name;
             var backend = scope.Resolve<PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>>();
             ValidationPlugin = backend.Backend;
-            ChallengeType = backend.Capability.ChallengeType;
+            ChallengeTypes = backend.Capability.ChallengeTypes;
             Valid = parameters.Authorization.Status == AcmeClient.AuthorizationValid;
         }
         public bool Valid { get; }
         public ILifetimeScope Scope { get; }
         public string Identifier { get; }
         public string Label { get; }
-        public string ChallengeType { get; }
+        public IEnumerable<string> ChallengeTypes { get; }
         public string PluginName { get; }
         public OrderResult OrderResult { get; }
         public TargetPart? TargetPart { get; }

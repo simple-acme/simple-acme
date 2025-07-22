@@ -5,6 +5,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns.NS1;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
@@ -18,19 +19,21 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     internal class NS1DnsValidation(
         LookupClientProvider dnsClient,
         ILogService logService,
-        ISettingsService settings,
+        ISettings settings,
+        IProxyService proxy,
         NS1Options options,
-        SecretServiceManager ssm,
-        IProxyService proxyService) : DnsValidation<NS1DnsValidation>(dnsClient, logService, settings)
+        SecretServiceManager ssm) : DnsValidation<NS1DnsValidation, DnsManagementClient>(dnsClient, logService, settings, proxy)
     {
-        private readonly DnsManagementClient _client = new(
-                ssm.EvaluateSecret(options.ApiKey) ?? "",
-                proxyService);
+        protected override async Task<DnsManagementClient> CreateClient(HttpClient httpClient) => new(
+            await ssm.EvaluateSecret(options.ApiKey) ?? "",
+            httpClient);
+
         private static readonly Dictionary<string, string> _zonesMap = [];
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
-            var zones = await _client.GetZones();
+            var client = await GetClient();
+            var zones = await client.GetZones();
             if (zones == null)
             {
                 _log.Error("Failed to get DNS zones list for account. Aborting.");
@@ -45,7 +48,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
             _zonesMap[record.Authority.Domain] = zone;
 
-            var result = await _client.CreateRecord(zone, record.Authority.Domain, "TXT", record.Value);
+            var result = await client.CreateRecord(zone, record.Authority.Domain, "TXT", record.Value);
             if (!result)
             {
                 _log.Error("Failed to create DNS record. Aborting");
@@ -57,6 +60,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
+            var client = await GetClient();
             string zone;
             if (!_zonesMap.TryGetValue(record.Authority.Domain, out zone!))
             {
@@ -64,7 +68,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 return;
             }
             _ = _zonesMap.Remove(record.Authority.Domain);
-            var result = await _client.DeleteRecord(zone, record.Authority.Domain, "TXT");
+            var result = await client.DeleteRecord(zone, record.Authority.Domain, "TXT");
             if (!result)
             {
                 _log.Error("Failed to delete DNS record");

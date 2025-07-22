@@ -1,4 +1,5 @@
 {
+  "$schema": "https://simple-acme.com/schema/settings.json",
   "Client": {
     "ClientName": "simple-acme",
     "ConfigurationPath": null,
@@ -22,6 +23,7 @@
     "RetryCount": 15,
     "RetryInterval": 5,
     "PreferredIssuer": null,
+    "CertificateProfile": null,
     "MaxDomains": 100,
     "PublicSuffixListUri": "https://publicsuffix.org/list/public_suffix_list.dat"
   },
@@ -75,6 +77,7 @@
     "PreValidateDnsRetryCount": 10,
     "PreValidateDnsRetryInterval": 30,
     "PreValidateDnsLocal": false,
+    "DnsPropagationDelay": 30,
     "AllowDnsSubstitution": true,
     "DnsServers": [ "[System]" ]
   },
@@ -121,6 +124,10 @@
   "Secrets": {
     "Json": {
       "FilePath": null
+    },
+    "Script": {
+      "Get": null,
+      "GetArguments": null
     }
   }
 }

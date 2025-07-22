@@ -39,7 +39,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
         public CertificateStore(
             ILogService log, IIISClient iisClient,
-            ISettingsService settings, FindPrivateKey keyFinder, 
+            ISettings settings, FindPrivateKey keyFinder, 
             CertificateStoreOptions options, RunLevel runLevel)
         {
             _log = log;
@@ -64,7 +64,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         /// <param name="settings"></param>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static string DefaultStore(ISettingsService settings, IIISClient client)
+        public static string DefaultStore(ISettings settings, IIISClient client)
         {
             // First priority: specified in settings.json 
             string? storeName;

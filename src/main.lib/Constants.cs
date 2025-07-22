@@ -16,9 +16,11 @@ namespace PKISharp.WACS
         Simple = 4,
         Advanced = 8,
         Test = 16,
-        Import = 32,
+        ForceValidation = 32,
         Force = 64,
-        NoCache = 128
+        NoCache = 128,
+        NoTaskScheduler = 256,
+        ForceTaskScheduler = 512
     }
 
     [Flags]
@@ -32,6 +34,7 @@ namespace PKISharp.WACS
         Store = 16,
         Installation = 32,
         Account = 64,
+        Profile = 128,
         All = int.MaxValue
     }
 

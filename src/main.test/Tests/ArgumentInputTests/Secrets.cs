@@ -149,7 +149,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
                 Result;
             Assert.AreEqual(output, result?.Value);
 
-            var foundSecret = secrets.EvaluateSecret(result?.Value);
+            var foundSecret = secrets.EvaluateSecret(result?.Value).Result;
             Assert.AreEqual(secret, foundSecret);
         }
 
@@ -157,7 +157,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow(
             "", // Command line 
             new[] { // UserInput
-                "3", // "Use from vault"
+                "3", // "Use from vault",
                 "1" // Select key1
             },
             "vault://mock/key1", // Expected output
@@ -176,7 +176,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
                 Result;
             Assert.AreEqual(output, result?.Value);
 
-            var foundSecret = secrets.EvaluateSecret(result?.Value);
+            var foundSecret = secrets.EvaluateSecret(result?.Value).Result;
             Assert.AreEqual(secret, foundSecret);
         }
 

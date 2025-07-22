@@ -17,10 +17,10 @@ internal class InfomaniakClient
     private readonly HttpClient _httpClient;
     private const string Root = "https://api.infomaniak.com/";
 
-    public InfomaniakClient(string apiToken, ILogService logService, IProxyService proxyService)
+    public InfomaniakClient(string apiToken, ILogService logService, HttpClient httpClient)
     {
         _log = logService;
-        _httpClient = proxyService.GetHttpClient();
+        _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(Root);
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiToken}");
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));

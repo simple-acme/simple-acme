@@ -2,6 +2,7 @@
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
 {
@@ -21,14 +22,15 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
             ];
         }
 
-        public IEnumerable<Renewal> Read()
+        public Task<IEnumerable<Renewal>> Read()
         {
-            return _renewalsCache.Where(x => !x.Deleted).ToList();
+            return Task.FromResult(_renewalsCache.Where(x => !x.Deleted));
         }
 
-        public void Write(IEnumerable<Renewal> renewals)
+        public Task Write(IEnumerable<Renewal> renewals)
         {
-            _renewalsCache = renewals.ToList();
+            _renewalsCache = [.. renewals];
+            return Task.CompletedTask;
         }
     }
 }

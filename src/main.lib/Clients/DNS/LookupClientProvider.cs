@@ -17,13 +17,13 @@ namespace PKISharp.WACS.Clients.DNS
         private readonly LookupClientWrapper _systemClient;
 
         private readonly ILogService _log;
-        private readonly ISettingsService _settings;
+        private readonly ISettings _settings;
         private readonly DomainParseService _domainParser;
 
         public LookupClientProvider(
             DomainParseService domainParser,
             ILogService logService,
-            ISettingsService settings)
+            ISettings settings)
         {
             _log = logService;
             _settings = settings;
@@ -42,36 +42,33 @@ namespace PKISharp.WACS.Clients.DNS
         {
             var ret = new List<IPAddress>();
             var items = _settings.Validation.DnsServers;
-            if (items != null)
+            foreach (var item in items)
             {
-                foreach (var item in items)
+                if (IPAddress.TryParse(item, out var ip))
                 {
-                    if (IPAddress.TryParse(item, out var ip))
+                    _log.Verbose("Adding {ip} as DNS server", ip);
+                    ret.Add(ip);
+                }
+                else if (!string.IsNullOrEmpty(item))
+                {
+                    if (item.Equals("[System]", StringComparison.OrdinalIgnoreCase))
                     {
-                        _log.Verbose("Adding {ip} as DNS server", ip);
-                        ret.Add(ip);
+                        _log.Debug("Adding local system default as DNS server");
+                        return null;
                     }
-                    else if (!string.IsNullOrEmpty(item))
+                    else
                     {
-                        if (item.Equals("[System]", StringComparison.OrdinalIgnoreCase))
+                        var tempClient = new LookupClient();
+                        var queryResult = tempClient.GetHostEntry(item);
+                        var address = queryResult.AddressList.FirstOrDefault();
+                        if (address != null)
                         {
-                            _log.Debug("Adding local system default as DNS server");
-                            return null;
+                            _log.Verbose("Adding {item} ({ip}) as DNS server", item, address);
+                            ret.Add(address);
                         }
                         else
                         {
-                            var tempClient = new LookupClient();
-                            var queryResult = tempClient.GetHostEntry(item);
-                            var address = queryResult.AddressList.FirstOrDefault();
-                            if (address != null)
-                            {
-                                _log.Verbose("Adding {item} ({ip}) as DNS server", item, address);
-                                ret.Add(address);
-                            }
-                            else
-                            {
-                                _log.Warning("IP for DNS server {item} could not be resolved", item);
-                            }
+                            _log.Warning("IP for DNS server {item} could not be resolved", item);
                         }
                     }
                 }

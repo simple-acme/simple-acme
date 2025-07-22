@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>PKISharp.WACS.Plugins.Azure.Common</RootNamespace>
     <AssemblyName>PKISharp.WACS.Plugins.Azure.Common</AssemblyName>
     <Version>2.1.0.0</Version>
@@ -14,8 +14,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.13.1" />
-    <PackageReference Include="Azure.ResourceManager" Version="1.13.0" />
+    <PackageReference Include="Azure.Identity" Version="1.14.1" />
+    <PackageReference Include="Azure.ResourceManager" Version="1.13.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         private ArgumentResult<ProtectedString?> PrivateKey => arguments.
             GetProtectedString<TransIpArguments>(a => a.PrivateKey).
-            Validate(x => Task.FromResult(CheckKey(ssm.EvaluateSecret(x?.Value))), "invalid private key").
+            Validate(async x => await CheckKey(await ssm.EvaluateSecret(x?.Value)), "invalid private key").
             Required();
 
         public override async Task<TransIpOptions?> Aquire(IInputService input, RunLevel runLevel)
@@ -42,7 +42,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             var keyFile = await arguments.
                 GetString<TransIpArguments>(a => a.PrivateKeyFile).
                 Validate(x => Task.FromResult(x.ValidFile(log)), "file doesn't exist").
-                Validate(async x => CheckKey(await File.ReadAllTextAsync(x!)), "invalid key").
+                Validate(async x => await CheckKey(await File.ReadAllTextAsync(x!)), "invalid key").
                 GetValue();
 
             var key = keyFile != null
@@ -56,7 +56,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             };
         }
 
-        private bool CheckKey(string? privateKey)
+        private async Task<bool> CheckKey(string? privateKey)
         {
             if (privateKey == null)
             {
@@ -64,7 +64,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
             try
             {
-                _ = new AuthenticationService("check", privateKey, proxy);
+                var httpClient = await proxy.GetHttpClient();
+                _ = new AuthenticationService("check", privateKey, httpClient);
                 return true;
             }
             catch (Exception ex) 

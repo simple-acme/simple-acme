@@ -8,7 +8,7 @@ namespace PKISharp.WACS.Services
 {
     internal class CertificatePicker(
         ILogService log,
-        ISettingsService settingsService)
+        ISettings settingsService)
     {
 
         /// <summary>

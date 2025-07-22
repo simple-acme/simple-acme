@@ -11,7 +11,9 @@ namespace PKISharp.WACS.Configuration
 {
     public interface INetworkCredentialArguments : IArguments
     {
+        [CommandLine(Description = "Username for remote server")]
         public string? UserName { get; }
+        [CommandLine(Description = "Password for remote server", Secret = true)]
         public string? Password { get; }
     }
 
@@ -22,9 +24,9 @@ namespace PKISharp.WACS.Configuration
         [JsonPropertyName("PasswordSafe")]
         public ProtectedString? Password { get; set; }
 
-        public NetworkCredential GetCredential(
+        public async Task<NetworkCredential> GetCredential(
             SecretServiceManager secretService) =>
-            new(UserName, secretService.EvaluateSecret(Password?.Value));
+            new(UserName, await secretService.EvaluateSecret(Password?.Value));
 
         public void Show(IInputService input)
         {

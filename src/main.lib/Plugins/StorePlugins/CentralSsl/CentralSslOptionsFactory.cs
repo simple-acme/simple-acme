@@ -10,7 +10,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 {
     internal class CentralSslOptionsFactory(
         ILogService log,
-        ISettingsService settings,
+        ISettings settings,
         ArgumentsInputService argumentInput) : PluginOptionsFactory<CentralSslOptions>
     {
         private ArgumentResult<ProtectedString?> PfxPassword => argumentInput.

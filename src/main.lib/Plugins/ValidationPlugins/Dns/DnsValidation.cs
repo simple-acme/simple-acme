@@ -5,6 +5,7 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
@@ -15,11 +16,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     public abstract class DnsValidation<TPlugin>(
         LookupClientProvider dnsClient,
         ILogService log,
-        ISettingsService settings) : Validation<Dns01ChallengeValidationDetails>
+        ISettings settings) : Validation<Dns01ChallengeValidationDetails>
     {
         protected readonly LookupClientProvider _dnsClient = dnsClient;
         protected readonly ILogService _log = log;
-        protected readonly ISettingsService _settings = settings;
+        protected readonly ISettings _settings = settings;
         private readonly List<DnsValidationRecord> _recordsCreated = [];
 
         /// <summary>
@@ -28,7 +29,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <param name="context"></param>
         /// <param name="challenge"></param>
         /// <returns></returns>
-        public override async Task PrepareChallenge(ValidationContext context, Dns01ChallengeValidationDetails challenge)
+        public override async Task<bool> PrepareChallenge(ValidationContext context, Dns01ChallengeValidationDetails challenge)
         {
             // Check for substitute domains
             var authority = await _dnsClient.GetAuthority(
@@ -52,6 +53,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                     _recordsCreated.Add(record);
                 }
             }
+            return true;
         }
 
         /// <summary>
@@ -70,6 +72,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 var validationTasks = _recordsCreated.Select(ValidateRecord);
                 await Task.WhenAll(validationTasks);
+            }
+            if (_settings.Validation.DnsPropagationDelay > 0)
+            {
+                _log.Information("Waiting {n} seconds for global DNS propagation...", _settings.Validation.DnsPropagationDelay);
+                await Task.Delay(_settings.Validation.DnsPropagationDelay * 1000);
             }
         }
 
@@ -95,7 +102,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 _log.Debug("[{identifier}] Looking for TXT value {DnsRecordValue}...", record.Context.Label, record.Value);
                 var testClients = record.Authority.Nameservers;
-                if (_settings.Validation.PreValidateDnsLocal == true)
+                if (_settings.Validation.PreValidateDnsLocal)
                 {
                     testClients = testClients.Append(_dnsClient.GetSystemClient());
                 }
@@ -156,16 +163,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                     _log.Warning(ex, "[{identifier}] Error deleting record {value}", record.Context.Label, record.Value);
                 }
             }
-            try
-            {
-                await Finalize();
-                _recordsCreated.Clear();
-                _log.Debug("DNS record cleanup finalized");
-            }
-            catch (Exception ex)
-            {
-                _log.Warning(ex, "Error finalizing cleanup: {Message}");
-            }
+            await Finalize();
+            _recordsCreated.Clear();
+            _log.Debug("DNS records cleaned up");
         }
 
         /// <summary>
@@ -294,6 +294,46 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             public ValidationContext Context { get; } = context;
             public DnsLookupResult Authority { get; } = authority;
             public string Value { get; } = value;
+        }
+    }
+
+    public abstract class DnsValidation<TPlugin, TClient>(LookupClientProvider dnsClient, ILogService log, ISettings settings, IProxyService proxy) : 
+        DnsValidation<TPlugin>(dnsClient, log, settings), IDisposable 
+        where TClient: class
+    {
+        protected IProxyService _proxy = proxy;
+
+        private HttpClient? _httpClient = default;
+        protected async Task<HttpClient> GetHttpClient()
+        {
+            if (_httpClient == default)
+            {
+                _httpClient = await _proxy.GetHttpClient();
+            }
+            return _httpClient;
+        }
+
+        private TClient? _cachedClient = default;
+        protected async Task<TClient> GetClient()
+        {
+            if (_cachedClient == default) {
+                _log.Debug("Client of type {x} created", typeof(TClient).Name);
+                var httpClient = await GetHttpClient();
+                _cachedClient = await CreateClient(httpClient);
+            }
+            return _cachedClient;
+        }
+        protected internal abstract Task<TClient> CreateClient(HttpClient httpClient);
+
+        public void Dispose()
+        {
+            if (_cachedClient is IDisposable disposable)
+            {
+                _log.Debug("Client of type {x} disposed", typeof(TClient).Name);
+                disposable?.Dispose();
+            }
+            _httpClient?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

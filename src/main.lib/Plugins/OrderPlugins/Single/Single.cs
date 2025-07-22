@@ -14,6 +14,6 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
         "Single", "Single certificate")]
     internal class Single : IOrderPlugin
     {
-        public IEnumerable<Order> Split(Renewal renewal, Target target) => [new(renewal, target)];
+        public List<Order> Split(Renewal renewal, Target target) => [new(renewal, target)];
     }
 }

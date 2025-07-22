@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         private readonly ILogService _log;
         private readonly CertificateStoreClient _storeClient;
 
-        public UserStore(ILogService log, ISettingsService settings)
+        public UserStore(ILogService log, ISettings settings)
         {
             _log = log;
             _storeClient = new CertificateStoreClient(DefaultStoreName, StoreLocation.CurrentUser, _log, settings);

@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,20 +11,17 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
 {
-    public class DnsManagementClient(string apiKey, string apiSecret, IProxyService proxyService)
+    public class DnsManagementClient : IDisposable
     {
-        private readonly string _apiKey = apiKey;
-        private readonly string _apiSecret = apiSecret;
-        private readonly IProxyService _proxyService = proxyService;
-        private readonly string _uri = "https://api.dnsmadeeasy.com/";
+        private readonly HttpClient _httpClient;
+        private const string _uri = "https://api.dnsmadeeasy.com/";
 
         #region Lookup Domain Id
         public async Task<string> LookupDomainId(string domain)
         {
-            using var client = GetClient();
             var buildApiUrl = $"V2.0/dns/managed/name?domainname={domain}";
 
-            var response = await client.GetAsync(buildApiUrl);
+            var response = await _httpClient.GetAsync(buildApiUrl);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 string json = await response.Content.ReadAsStringAsync();
@@ -57,11 +53,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
         #region Lookup Domain Record Id
         public async Task<string[]> LookupDomainRecordId(string domainId, string recordName, RecordType type)
         {
-            using var client = GetClient();
             string recordType = type.ToString();
             var buildApiUrl = $"V2.0/dns/managed/{domainId}/records?recordName={recordName}&type={recordType}";
 
-            var response = await client.GetAsync(buildApiUrl);
+            var response = await _httpClient.GetAsync(buildApiUrl);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 string json = await response.Content.ReadAsStringAsync();
@@ -98,24 +93,24 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
         private class DomainRequest : DomainResponse {}
         #endregion
 
-        private HttpClient GetClient()
+        public DnsManagementClient(string apiKey, string apiSecret, HttpClient client)
         {
-            var client = _proxyService.GetHttpClient();
             client.BaseAddress = new Uri(_uri);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
             var currentDate = DateTime.UtcNow.ToString("r");
-            client.DefaultRequestHeaders.Add("x-dnsme-apiKey", _apiKey);
+            client.DefaultRequestHeaders.Add("x-dnsme-apiKey", apiKey);
             client.DefaultRequestHeaders.Add("x-dnsme-requestDate", currentDate);
-            client.DefaultRequestHeaders.Add("x-dnsme-hmac", HMACSHA1(currentDate, _apiSecret));
-            return client;
+            client.DefaultRequestHeaders.Add("x-dnsme-hmac", HMACSHA1(currentDate, apiSecret));
+            _httpClient = client;
         }
+
         private static string HMACSHA1(string text, string key)
         {
             using var hmacsha256 = new HMACSHA1(Encoding.UTF8.GetBytes(key));
             var hash = hmacsha256.ComputeHash(Encoding.UTF8.GetBytes(text));
             return BitConverter.ToString(hash).Replace("-", "").ToLower();
         }
+
         public async Task CreateRecord(string domain, string recordName, RecordType type, string value)
         {
             string domainId = await LookupDomainId(domain);
@@ -127,30 +122,28 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
                 await DeleteRecord(domainId, domainRecordIds);
             }
 
-            using (var client = GetClient())
+ 
+            var putData = new { name = recordName, type = type.ToString(), value, ttl = 600, gtdLocation = "DEFAULT" };
+            var serializedObject = JsonConvert.SerializeObject(putData);
+
+            //Record successfully created
+            // Wrap our JSON inside a StringContent which then can be used by the HttpClient class
+            var httpContent = new StringContent(serializedObject, Encoding.UTF8, "application/json");
+            var buildApiUrl = $"V2.0/dns/managed/{domainId}/records/";
+
+            var response = await _httpClient.PostAsync(buildApiUrl, httpContent);
+            if (response.StatusCode == HttpStatusCode.Created)
             {
-                var putData = new { name = recordName, type = type.ToString(), value, ttl = 600, gtdLocation = "DEFAULT" };
-                var serializedObject = JsonConvert.SerializeObject(putData);
-
-                //Record successfully created
-                // Wrap our JSON inside a StringContent which then can be used by the HttpClient class
-                var httpContent = new StringContent(serializedObject, Encoding.UTF8, "application/json");
-                var buildApiUrl = $"V2.0/dns/managed/{domainId}/records/";
-
-                var response = await client.PostAsync(buildApiUrl, httpContent);
-                if (response.StatusCode == HttpStatusCode.Created)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    //_logService.Information("DnsMadeEasy Created Responded with: {0}", content);
-                    //_logService.Information("Waiting for 30 seconds");
-                    //await Task.Delay(30000);
-                }
-                else
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    throw new Exception(content);
-                }
-            };
+                var content = await response.Content.ReadAsStringAsync();
+                //_logService.Information("DnsMadeEasy Created Responded with: {0}", content);
+                //_logService.Information("Waiting for 30 seconds");
+                //await Task.Delay(30000);
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                throw new Exception(content);
+            }
         }
         public async Task DeleteRecord(string domain, string recordName, RecordType type)
         {
@@ -161,12 +154,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
         }
         public async Task DeleteRecord(string domainId, string[] domainRecordIds)
         {
-            using var client = GetClient();
             foreach (var domainRecordId in domainRecordIds)
             {
                 var buildApiUrl = $"V2.0/dns/managed/{domainId}/records/{domainRecordId}";
 
-                var response = await client.DeleteAsync(buildApiUrl);
+                var response = await _httpClient.DeleteAsync(buildApiUrl);
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -177,6 +169,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
                     throw new Exception(content);
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            _httpClient?.Dispose();
         }
     }
 }

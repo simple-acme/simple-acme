@@ -4,6 +4,8 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
 {
     public class DefaultCapability : IPluginCapability
     {
-        public virtual State State => State.EnabledState();
+        public virtual State ExecutionState => State.EnabledState();
+
+        public virtual State ConfigurationState => ExecutionState;
     }
 }

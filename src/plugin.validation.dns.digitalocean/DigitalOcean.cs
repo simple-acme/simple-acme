@@ -6,6 +6,7 @@ using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
@@ -18,12 +19,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         External = true)]
     internal class DigitalOcean(
         DigitalOceanOptions options, LookupClientProvider dnsClient,
-        SecretServiceManager ssm, ILogService log,
-        ISettingsService settings) : DnsValidation<DigitalOcean>(dnsClient, log, settings)
+        SecretServiceManager ssm, ILogService log, IProxyService proxy,
+        ISettings settings) : DnsValidation<DigitalOcean, IDigitalOceanClient>(dnsClient, log, settings, proxy)
     {
-        private readonly IDigitalOceanClient _doClient = new DigitalOceanClient(ssm.EvaluateSecret(options.ApiToken));
         private long? _recordId;
         private string? _zone;
+
+        protected override async Task<IDigitalOceanClient> CreateClient(HttpClient client)
+        {
+            return new DigitalOceanClient(await ssm.EvaluateSecret(options.ApiToken));
+        }
 
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
@@ -35,7 +40,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     return;
                 }
 
-                await _doClient.DomainRecords.Delete(_zone, _recordId.Value);
+                var client = await GetClient();
+                await client.DomainRecords.Delete(_zone, _recordId.Value);
                 _log.Information("Successfully deleted DNS record on DigitalOcean.");
             }
             catch (Exception ex)
@@ -48,15 +54,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             try
             {
-                var zones = await _doClient.Domains.GetAll();
+                var client = await GetClient();
+                var zones = await client.Domains.GetAll();
                 var zone = FindBestMatch(zones.Select(x => x.Name).ToDictionary(x => x), record.Authority.Domain);
                 if (zone == null)
                 {
                     _log.Error($"Unable to find a zone on DigitalOcean for '{record.Authority.Domain}'.");
                     return false;
                 }
-
-                var createdRecord = await _doClient.DomainRecords.Create(zone, new DomainRecord
+                var createdRecord = await client.DomainRecords.Create(zone, new DomainRecord
                 {
                     Type = "TXT",
                     Name = RelativeRecordName(zone, record.Authority.Domain),
