@@ -50,7 +50,7 @@
 		<PackageReference Include="Serilog.Sinks.EventLog" Version="4.0.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.6" />
-		<PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.6" />
+		<PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.8" />
 		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.6" />
 		<PackageReference Include="TaskScheduler" Version="2.12.1" />
 	</ItemGroup>
