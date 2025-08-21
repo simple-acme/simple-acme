@@ -46,7 +46,7 @@ namespace PKISharp.WACS.Clients.IIS
                     }
                     if (sb.binding.CertificateHash == null)
                     {
-                        return sb.binding.SSLFlags.HasFlag(SSLFlags.CentralSsl);
+                        return sb.binding.SSLFlags.HasFlag(SSLFlags.CentralCertStore);
                     }
                     else
                     {
@@ -211,7 +211,7 @@ namespace PKISharp.WACS.Clients.IIS
                     {
                         return 
                             identifier is DnsIdentifier dns && dns.Value.StartsWith('*') &&
-                            !ctx.BindingOptions.Flags.HasFlag(SSLFlags.CentralSsl);
+                            !ctx.BindingOptions.Flags.HasFlag(SSLFlags.CentralCertStore);
                     }
                     return false;
                 }));
@@ -246,7 +246,7 @@ namespace PKISharp.WACS.Clients.IIS
             {
                 var bestMatch = matchingBindings.First();
                 var bestMatches = matchingBindings.Where(x => x.binding.Host == bestMatch.binding.Host);
-                if (bestMatch.fit == 100 || !bindingOptions.Flags.HasFlag(SSLFlags.CentralSsl))
+                if (bestMatch.fit == 100 || !bindingOptions.Flags.HasFlag(SSLFlags.CentralCertStore))
                 {
                     foreach (var match in bestMatches)
                     {
@@ -324,20 +324,20 @@ namespace PKISharp.WACS.Clients.IIS
         private bool UpdateExistingBindingFlags(SSLFlags start, IIISBinding match, IIISBinding[] allBindings, out SSLFlags modified)
         {
             modified = start;
-            if (client.Version.Major >= 8 && !match.SSLFlags.HasFlag(SSLFlags.SNI))
+            if (client.Version.Major >= 8 && !match.SSLFlags.HasFlag(SSLFlags.Sni))
             {
                 if (allBindings
                     .Except([match])
                     .Where(x => x.Port == match.Port)
                     .Where(x => x.IP == match.IP)
                     .Where(x => StructuralComparisons.StructuralEqualityComparer.Equals(match.CertificateHash, x.CertificateHash))
-                    .Where(x => !x.SSLFlags.HasFlag(SSLFlags.SNI))
+                    .Where(x => !x.SSLFlags.HasFlag(SSLFlags.Sni))
                     .Any())
                 {
                     if (!string.IsNullOrEmpty(match.Host))
                     {
                         log.Warning("Turning on SNI for existing binding to avoid conflict");
-                        modified = start | SSLFlags.SNI;
+                        modified = start | SSLFlags.Sni;
                     }
                     else
                     {
@@ -372,7 +372,7 @@ namespace PKISharp.WACS.Clients.IIS
                 !string.IsNullOrEmpty(host) &&
                 client.Version.Major >= 8)
             {
-                flags |= SSLFlags.SNI;
+                flags |= SSLFlags.Sni;
             }
 
             // Modern flags are not supported by IIS versions lower than 10. 
@@ -389,7 +389,7 @@ namespace PKISharp.WACS.Clients.IIS
             // because when using CentralSsl they are supposedly configured at 
             // the server level instead of at the binding level (though the IIS 
             // Manager doesn't seem to expose these options).
-            if (flags.HasFlag(SSLFlags.CentralSsl))
+            if (flags.HasFlag(SSLFlags.CentralCertStore))
             {
                 // Do not allow CentralSSL flag to be set on the default binding
                 // Logic elsewhere in the program should prevent this 
@@ -434,7 +434,7 @@ namespace PKISharp.WACS.Clients.IIS
             options = options.WithFlags(CheckFlags(false, existingBinding.Host, options.Flags));
 
             var currentFlags = existingBinding.SSLFlags;
-            if ((currentFlags & ~SSLFlags.SNI) == (options.Flags & ~SSLFlags.SNI) && // Don't care about SNI status
+            if ((currentFlags & ~SSLFlags.Sni) == (options.Flags & ~SSLFlags.Sni) && // Don't care about SNI status
                 ((options.Store == null && existingBinding.CertificateStoreName == null) ||
                 (StructuralComparisons.StructuralEqualityComparer.Equals(existingBinding.CertificateHash, options.Thumbprint) &&
                 string.Equals(existingBinding.CertificateStoreName, options.Store, StringComparison.InvariantCultureIgnoreCase))))
@@ -454,8 +454,8 @@ namespace PKISharp.WACS.Clients.IIS
                 // Update 25-12-2019: preserve all existing SSL flags
                 // instead of just SNI, to accomdate the new set of flags 
                 // introduced in recent versions of Windows Server.
-                var preserveFlags = existingBinding.SSLFlags & ~SSLFlags.CentralSsl;
-                if (options.Flags.HasFlag(SSLFlags.CentralSsl))
+                var preserveFlags = existingBinding.SSLFlags & ~SSLFlags.CentralCertStore;
+                if (options.Flags.HasFlag(SSLFlags.CentralCertStore))
                 {
                     preserveFlags &= ~SSLFlags.NotWithCentralSsl;
                 }
@@ -504,7 +504,7 @@ namespace PKISharp.WACS.Clients.IIS
 
             // The default (emtpy) binding matches with all hostnames.
             // But it's not supported with Central SSL
-            if (string.IsNullOrEmpty(binding.Host) && (!flags.HasFlag(SSLFlags.CentralSsl)))
+            if (string.IsNullOrEmpty(binding.Host) && (!flags.HasFlag(SSLFlags.CentralCertStore)))
             {
                 return 10;
             }
