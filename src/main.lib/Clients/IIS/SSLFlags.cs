@@ -41,6 +41,6 @@ namespace PKISharp.WACS.Clients.IIS
         /// Incompatibiliy between certain flags
         /// </summary>
         [SuppressMessage("Design", "CA1069:Enums values should not be duplicated", Justification = "Forwards compatibility")]
-        NotWithCentralSsl = DisableHTTP2 | DisableOCSPStp | DisableQUIC | DisableTLS13 | DisableLegacyTLS
+        NotWithCentralSsl = DisableHTTP2 | DisableOCSPStp | DisableQUIC | DisableTLS13 | DisableLegacyTLS | NegotiateClientCert
     }
 }
