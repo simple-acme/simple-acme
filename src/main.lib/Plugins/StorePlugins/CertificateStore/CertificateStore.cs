@@ -87,83 +87,104 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         public Task<StoreInfo?> Save(ICertificateInfo input)
         {
             _log.Information("Installing certificate in the certificate store");
-            var exportable = _storeClient.InstallCertificate(input, X509KeyStorageFlags.MachineKeySet);
-            var existing = _storeClient.FindByThumbprint(input.Thumbprint);
+            _storeClient.InstallCertificate(input, X509KeyStorageFlags.MachineKeySet);
             if (!_runLevel.HasFlag(RunLevel.Test))
             {
                 _storeClient.InstallCertificateChain(input);
             }
-            if (exportable)
+
+            // Handle permissions
+            SetKeyPermissions(input);
+
+            return Task.FromResult<StoreInfo?>(new StoreInfo()
             {
-                _options.AclRead ??= [];
-                if (!_options.AclRead.Contains("administrators")) {
-                    _log.Information("Add local administators to Private Key ACL to allow export");
-                    _options.AclRead.Add("administrators");
-                }
-            }
-            if (_options.AclFullControl != null)
-            {
-                SetAcl(existing, _options.AclFullControl, FileSystemRights.FullControl);
-            }
-            if (_options.AclRead != null)
-            {
-                SetAcl(existing, _options.AclRead, FileSystemRights.Read);
-            }
-            return Task.FromResult<StoreInfo?>(new StoreInfo() {
                 Name = Trigger,
                 Path = _storeName
             });
         }
 
-        private void SetAcl(X509Certificate2? cert, List<string> accounts, FileSystemRights rights)
+        /// <summary>
+        /// Locate pivate key file and set ACLs
+        /// </summary>
+        /// <param name="input"></param>
+        private void SetKeyPermissions(ICertificateInfo input)
         {
-            if (cert == null)
+            // If no specific permissions are configured/requested by the user,
+            // we will add full control persmissions for administrators by default.
+            // Windows does this automatically on the first run (when the renewal is
+            // created by one of the administators), but it will *not* do this for
+            // renewals executed by the scheduled task under the SYSTEM account.
+            // Adding this default ensures consistency and avoids unexpected
+            // permissions issues after the first renewal period. Users not wanting
+            // to grant administrators access can still configure the .renewal.json
+            // to have an empty list instead of a null/undefined value.
+            var full = _options.AclFullControl ?? ["administrators"];
+            var read = _options.AclRead ?? [];
+
+            // Early out, save the work if finding the key
+            if (full.Count + read.Count == 0)
             {
-                _log.Error("Unable to set requested ACL on private key (certificate not found)");
+                return;
+            }
+
+            var existing = _storeClient.FindByThumbprint(input.Thumbprint);
+            if (existing == null)
+            {
+                _log.Error("Unable to set ACL on private key (certificate not found)");
                 return;
             }
             try
             {
-                var file = _keyFinder.Find(cert);
-                if (file != null)
+                var file = _keyFinder.Find(existing);
+                if (file == null)
                 {
-                    _log.Verbose("Private key found at {dir}", file.FullName);
-                    var fs = new FileSecurity(file.FullName, AccessControlSections.All);
-                    foreach (var account in accounts)
-                    {
-                        try
-                        {
-                            IdentityReference? identity = null;
-                            identity = account.ToLower() switch
-                            {
-                                // For for international installs of Windows
-                                // reference: https://learn.microsoft.com/en-US/windows-server/identity/ad-ds/manage/understand-security-identifiers
-                                "administrators" => new SecurityIdentifier("S-1-5-32-544"),             
-                                "network service" => new SecurityIdentifier("S-1-5-20"),
-                                var s when s.StartsWith("s-1-5-") => new SecurityIdentifier(s),
-                                _ => new NTAccount(account).Translate(typeof(SecurityIdentifier)),
-                            };
-                            fs.AddAccessRule(new FileSystemAccessRule(identity, rights, AccessControlType.Allow));
-                            _log.Information("Add {rights} rights for {account}", rights, identity.Translate(typeof(NTAccount)).Value);
-                        }
-                        catch (Exception ex)
-                        {
-                            _log.Warning(ex, "Unable to set {rights} rights for {account}", rights, account);
-                        }
-                    }
-                    file.SetAccessControl(fs);
-                } 
-                else
-                {
-                    _log.Error("Unable to set requested ACL on private key (file not found)");
+                    _log.Error("Unable to set ACL on private key (file not found)");
+                    return;
                 }
+                _log.Verbose("Private key found at {dir}", file.FullName);
+                SetAcl(file, full, FileSystemRights.FullControl);
+                SetAcl(file, read, FileSystemRights.Read);
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Unable to set requested ACL on private key");
+                _log.Error(ex, "Unable to set ACL on private key");
             }
         }
 
+        private void SetAcl(FileInfo file, List<string> accounts, FileSystemRights rights)
+        {
+            var fs = new FileSecurity(file.FullName, AccessControlSections.All);
+            foreach (var account in accounts)
+            {
+                try
+                {
+                    IdentityReference? identity = null;
+                    identity = account.ToLower() switch
+                    {
+                        // For for international installs of Windows
+                        // reference: https://learn.microsoft.com/en-US/windows-server/identity/ad-ds/manage/understand-security-identifiers
+                        "administrators" => new SecurityIdentifier("S-1-5-32-544"),             
+                        "network service" => new SecurityIdentifier("S-1-5-20"),
+                        var s when s.StartsWith("s-1-5-") => new SecurityIdentifier(s),
+                        _ => new NTAccount(account).Translate(typeof(SecurityIdentifier)),
+                    };
+                    fs.AddAccessRule(new FileSystemAccessRule(identity, rights, AccessControlType.Allow));
+                    _log.Information("Add {rights} rights for {account}", rights, identity.Translate(typeof(NTAccount)).Value);
+                }
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Unable to set {rights} rights for {account}", rights, account);
+                }
+            }
+            file.SetAccessControl(fs);
+        }
+
+        /// <summary>
+        /// Delete certificate from the store, but only if it is not 
+        /// still active in IIS for some reason
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         public Task Delete(ICertificateInfo input)
         {
             // Test if the user manually added the certificate to IIS
