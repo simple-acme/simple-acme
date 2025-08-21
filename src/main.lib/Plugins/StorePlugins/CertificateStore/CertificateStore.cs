@@ -105,6 +105,8 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
         /// <summary>
         /// Locate pivate key file and set ACLs
+        /// <summary>
+        /// Locate private key file and set ACLs
         /// </summary>
         /// <param name="input"></param>
         private void SetKeyPermissions(ICertificateInfo input)
