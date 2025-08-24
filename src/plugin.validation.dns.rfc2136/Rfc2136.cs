@@ -76,6 +76,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 catch (Exception ex)
                 {
                     _log.Debug("Error creating {domain} in zone {zone}: {ex}", domain, currentZone, ex.Message);
+                    _client = null;
                 }
 
                 if (subDomains.Count != 0)
@@ -176,7 +177,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 Convert.FromBase64String(key));
 
             var client = await GetClient();
-            _log.Verbose("Send DNS update transaction {TransactionID}");
+            _log.Verbose("Send DNS update transaction {TransactionID}", msg.TransactionID);
             var ret = await client.SendUpdateAsync(msg);
             if (ret == null || ret.ReturnCode != ReturnCode.NoError)
             {
