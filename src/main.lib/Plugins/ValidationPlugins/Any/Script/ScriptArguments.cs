@@ -6,6 +6,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
     internal class ScriptArguments : BaseArguments
     {
         [CommandLine(Description = "Path to script that handles both preparation and cleanup, depending on its parameters. If this parameter is provided then --dnscreatescript and --dnsdeletescript are ignored.")]
+        public string? Script { get; set; }
+
+        [CommandLine(Obsolete = true, Description = "Path to script that handles both preparation and cleanup, depending on its parameters. If this parameter is provided then --dnscreatescript and --dnsdeletescript are ignored.")]
         public string? DnsScript { get; set; }
 
         [CommandLine(Description = "Script that prepares to handle the validation challenge.")]

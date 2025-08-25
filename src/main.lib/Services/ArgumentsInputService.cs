@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection.Metadata.Ecma335;
 
 namespace PKISharp.WACS.Services
 {
@@ -35,8 +36,8 @@ namespace PKISharp.WACS.Services
                 log, allowEmtpy);
 
         public ArgumentResult<string?> GetString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
-            (Expression<Func<T, string?>> expression) where T : class, IArguments, new() =>
-            new(GetArgument(expression), GetMetaData(expression),
+            (Expression<Func<T, string?>> expression1, Expression<Func<T, string?>>? expression2 = null) where T : class, IArguments, new() =>
+            new(GetArgument(expression1, expression2), GetMetaData(expression2 ?? expression1),
                 async args => await input.RequestString(args.Label), log);
 
         public ArgumentResult<bool?> GetBool<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
@@ -90,20 +91,30 @@ namespace PKISharp.WACS.Services
         /// <param name="what"></param>
         /// <param name="secret"></param>
         /// <returns></returns>
-        protected P GetArgument<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T, P>(Expression<Func<T, P>> action) where T : class, IArguments, new()
+        protected P GetArgument<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T, P>
+            (Expression<Func<T, P>> action1, Expression<Func<T, P>>? action2 = null) 
+            where T : class, IArguments, new()
         {
             var returnValue = default(P);
             var args = arguments.GetArguments<T>();
+            var chosenAction = action1;
             if (args != null)
             {
-                var func = action.Compile();
+                var func = action1.Compile();
                 returnValue = func(args);
+                if (returnValue == null && action2 != null)
+                {
+                    chosenAction = action2;
+                    func = action2.Compile();
+                    returnValue = func(args);
+                }
             }
             else
             {
                 throw new InvalidOperationException($"Missing argumentprovider for type {typeof(T).Name}");
             }
-            var meta = GetMetaData(action);
+          
+            var meta = GetMetaData(chosenAction);
             var argumentName = meta.ArgumentName;
             if (returnValue == null)
             {

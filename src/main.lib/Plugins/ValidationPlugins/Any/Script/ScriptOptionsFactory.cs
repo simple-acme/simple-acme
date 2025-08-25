@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         ArgumentsInputService arguments) : PluginOptionsFactory<ScriptOptions>
     {
         private ArgumentResult<string?> CommonScript => arguments.
-            GetString<ScriptArguments>(x => x.DnsScript);
+            GetString<ScriptArguments>(x => x.DnsScript, x => x.Script);
 
         private ArgumentResult<string?> CreateScript => arguments.
             GetString<ScriptArguments>(x => x.DnsCreateScript).

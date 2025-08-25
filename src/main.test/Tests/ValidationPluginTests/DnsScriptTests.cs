@@ -51,6 +51,22 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
                 Assert.IsNull(options.CreateScript, commonScript.FullName);
                 Assert.IsNull(options.DeleteScript, commonScript.FullName);
             }
+
+            options = Options($"--script {commonScript.FullName}");
+            Assert.IsNotNull(options);
+            if (options != null)
+            {
+                Assert.AreEqual(options.Script, commonScript.FullName);
+                Assert.IsNull(options.CreateScript, commonScript.FullName);
+                Assert.IsNull(options.DeleteScript, commonScript.FullName);
+            }
+        }
+
+        [TestMethod]
+        public void None()
+        {
+            var options = Options($"");
+            Assert.IsNull(options);
         }
 
         [TestMethod]
