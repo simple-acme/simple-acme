@@ -86,8 +86,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             if (!string.IsNullOrWhiteSpace(script))
             {
                 var args = options.ChallengeType == Constants.Http01ChallengeType ?
-                    ScriptHttp.DefaultCreateArguments :
-                    ScriptDns.DefaultCreateArguments;
+                    ScriptHttp.DefaultPrepareArguments :
+                    ScriptDns.DefaultPrepareArguments;
                 if (!string.IsNullOrWhiteSpace(options.CreateScriptArguments))
                 {
                     args = options.CreateScriptArguments;
@@ -100,7 +100,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             }
             else
             {
-                log.Error("No create script configured");
+                log.Error("No prepare script configured");
                 return false;
             }
         }
@@ -118,8 +118,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             if (!string.IsNullOrWhiteSpace(script))
             {
                 var args = options.ChallengeType == Constants.Http01ChallengeType ? 
-                    ScriptHttp.DefaultDeleteArguments : 
-                    ScriptDns.DefaultDeleteArguments;
+                    ScriptHttp.DefaultCleanupArguments : 
+                    ScriptDns.DefaultCleanupArguments;
                 if (!string.IsNullOrWhiteSpace(options.DeleteScriptArguments))
                 {
                     args = options.DeleteScriptArguments;
@@ -131,7 +131,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             }
             else
             {
-                log.Warning("No delete script configured, validation record remains");
+                log.Warning("No cleanup script configured");
             }
         }
 

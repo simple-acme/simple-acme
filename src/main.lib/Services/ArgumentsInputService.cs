@@ -62,8 +62,8 @@ namespace PKISharp.WACS.Services
                 }, log);
 
         public ArgumentResult<int?> GetInt<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
-            (Expression<Func<T, int?>> expression) where T : class, IArguments, new() =>
-            new(GetArgument(expression), GetMetaData(expression),
+            (Expression<Func<T, int?>> expression1, Expression<Func<T, int?>>? expression2 = null) where T : class, IArguments, new() =>
+            new(GetArgument(expression1, expression2), GetMetaData(expression1),
                 args => input.RequestInt(args.Label), log);
 
         protected static CommandLineAttribute GetMetaData(LambdaExpression action)

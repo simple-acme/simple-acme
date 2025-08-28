@@ -14,8 +14,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         HttpValidationParameters pars,
         Http01ChallengeValidationDetails details) : HttpValidation<ManualOptions>(new ManualOptions(), pars)
     {
-        internal const string DefaultCreateArguments = "create {Identifier} {Path} {Token}";
-        internal const string DefaultDeleteArguments = "delete {Identifier} {Path} {Token}";
+        internal const string DefaultPrepareArguments = "prepare {Identifier} {Path} {Token}";
+        internal const string DefaultCleanupArguments = "cleanup {Identifier} {Path} {Token}";
 
         protected override Task DeleteFolder(string path) => Task.CompletedTask;
         protected override Task<bool> IsEmpty(string path) => Task.FromResult(true);

@@ -41,18 +41,11 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
         }
 
         [TestMethod]
-        public void OnlyCommon()
+        [DataRow("--dnsscript")]
+        [DataRow("--validationscript")]
+        public void OnlyCommon(string arg1)
         {
-            var options = Options($"--dnsscript {commonScript.FullName}");
-            Assert.IsNotNull(options);
-            if (options != null)
-            {
-                Assert.AreEqual(options.Script, commonScript.FullName);
-                Assert.IsNull(options.CreateScript, commonScript.FullName);
-                Assert.IsNull(options.DeleteScript, commonScript.FullName);
-            }
-
-            options = Options($"--script {commonScript.FullName}");
+            var options = Options($"{arg1} {commonScript.FullName}");
             Assert.IsNotNull(options);
             if (options != null)
             {
@@ -70,9 +63,11 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
         }
 
         [TestMethod]
-        public void AutoMerge()
+        [DataRow("--dnsdeletescript", "--dnscreatescript")]
+        [DataRow("--validationcleanupscript", "--validationpreparescript")]
+        public void AutoMerge(string arg1, string arg2)
         {
-            var options = Options($"--dnsdeletescript {commonScript.FullName} --dnscreatescript {commonScript.FullName}");
+            var options = Options($"{arg1} {commonScript.FullName} {arg2} {commonScript.FullName}");
             Assert.IsNotNull(options);
             if (options != null)
             {
@@ -83,9 +78,11 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
         }
 
         [TestMethod]
-        public void Different()
+        [DataRow("--dnsdeletescript", "--dnscreatescript")]
+        [DataRow("--validationcleanupscript", "--validationpreparescript")]
+        public void Different(string arg1, string arg2)
         {
-            var options = Options($"--dnsdeletescript {deleteScript.FullName} --dnscreatescript {createScript.FullName}");
+            var options = Options($"{arg1} {deleteScript.FullName} {arg2} {createScript.FullName}");
             Assert.IsNotNull(options); if (options != null)
             {
                 Assert.IsNull(options.Script);
@@ -95,9 +92,11 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
         }
 
         [TestMethod]
-        public void CreateOnly()
+        [DataRow("--dnscreatescript")]
+        [DataRow("--validationpreparescript")]
+        public void CreateOnly(string arg1)
         {
-            var options = Options($"--dnscreatescript {createScript.FullName}");
+            var options = Options($"{arg1} {createScript.FullName}");
             Assert.IsNotNull(options);
             if (options != null)
             {
@@ -108,11 +107,13 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
         }
 
         [TestMethod]
-        public void WrongPath()
+        [DataRow("--dnscreatescript")]
+        [DataRow("--validationpreparescript")]
+        public void WrongPath(string arg1)
         {
             try
             {
-                var options = Options($"--dnscreatescript {createScript.FullName}error");
+                var options = Options($"{arg1} {createScript.FullName}error");
                 Assert.Fail("Should have thrown exception");
             }
             catch

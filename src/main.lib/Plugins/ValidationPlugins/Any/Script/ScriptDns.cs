@@ -16,8 +16,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         ILogService log,
         ISettings settings) : DnsValidation<ScriptDns>(dnsClient, log, settings)
     {
-        internal const string DefaultCreateArguments = "create {Identifier} {RecordName} {Token}";
-        internal const string DefaultDeleteArguments = "delete {Identifier} {RecordName} {Token}";
+        internal const string DefaultPrepareArguments = "create {Identifier} {RecordName} {Token}";
+        internal const string DefaultCleanupArguments = "delete {Identifier} {RecordName} {Token}";
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record) => 
             await parent.Create(record.Context.Identifier, record.Authority.Domain, record.Value);

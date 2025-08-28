@@ -13,35 +13,35 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         ISettings settings,
         ArgumentsInputService arguments) : PluginOptionsFactory<ScriptOptions>
     {
-        private ArgumentResult<string?> CommonScript => arguments.
-            GetString<ScriptArguments>(x => x.DnsScript, x => x.Script);
+        private ArgumentResult<string?> Script => arguments.
+            GetString<ScriptArguments>(x => x.DnsScript, x => x.ValidationScript);
 
-        private ArgumentResult<string?> CreateScript => arguments.
-            GetString<ScriptArguments>(x => x.DnsCreateScript).
+        private ArgumentResult<string?> PrepareScript => arguments.
+            GetString<ScriptArguments>(x => x.DnsCreateScript, x => x.ValidationPrepareScript).
             WithLabel("Preparation script").
             Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
-        private ArgumentResult<string?> CreateScriptArguments(bool http) => arguments.
-            GetString<ScriptArguments>(x => x.DnsCreateScriptArguments).
-            WithDefault(http ? ScriptHttp.DefaultCreateArguments : ScriptDns.DefaultCreateArguments).
+        private ArgumentResult<string?> PrepareScriptArguments(bool http) => arguments.
+            GetString<ScriptArguments>(x => x.DnsCreateScriptArguments, x => x.ValidationPrepareScriptArguments).
+            WithDefault(http ? ScriptHttp.DefaultPrepareArguments : ScriptDns.DefaultPrepareArguments).
             WithLabel("Arguments").
             WithDescription("Arguments passed to the preparation script.").
             DefaultAsNull();
 
-        private ArgumentResult<string?> DeleteScript => arguments.
-            GetString<ScriptArguments>(x => x.DnsDeleteScript).
+        private ArgumentResult<string?> CleanupScript => arguments.
+            GetString<ScriptArguments>(x => x.DnsDeleteScript, x => x.ValidationCleanupScript).
             WithLabel("Cleanup script").
             Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
-        private ArgumentResult<string?> DeleteScriptArguments(bool http) => arguments.
-            GetString<ScriptArguments>(x => x.DnsDeleteScriptArguments).
-            WithDefault(http ? ScriptHttp.DefaultCreateArguments : ScriptDns.DefaultCreateArguments).
+        private ArgumentResult<string?> CleanupScriptArguments(bool http) => arguments.
+            GetString<ScriptArguments>(x => x.DnsDeleteScriptArguments, x => x.ValidationCleanupScriptArguments).
+            WithDefault(http ? ScriptHttp.DefaultCleanupArguments : ScriptDns.DefaultCleanupArguments).
             WithLabel("Arguments").
             WithDescription("Arguments passed to the cleanup script.").
             DefaultAsNull();
 
         private ArgumentResult<int?> Parallelism => arguments.
-            GetInt<ScriptArguments>(x => x.DnsScriptParallelism).
+            GetInt<ScriptArguments>(x => x.DnsScriptParallelism, x => x.ValidationScriptParallelism).
             WithDefault(0).
             Validate(x => Task.FromResult(x!.Value is >= 0 and <= 3), "invalid value").
             DefaultAsNull();
@@ -58,7 +58,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             {
                 ChallengeType =
                     await input.ChooseFromMenu(
-                        "Which type of challenge does your script handle?",
+                        "Which type of challenges does your script handle?",
                         [
                             Choice.Create(Constants.Http01ChallengeType, "HTTP challenge (serve file with specific name and content)"),
                             Choice.Create(Constants.Dns01ChallengeType, "DNS challenge (create TXT record with specific value)", @default: true)
@@ -66,13 +66,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             };
 
             var http = ret.ChallengeType == Constants.Http01ChallengeType;
-            var createScript = await CreateScript.Interactive(input).GetValue();
+            var createScript = await PrepareScript.Interactive(input).GetValue();
             string? deleteScript = null;
             var chosen = await input.ChooseFromMenu(
                 "How to clean up after validation",
                 [
                     Choice.Create(() => { deleteScript = createScript; return Task.CompletedTask; }, "Using the same script"),
-                    Choice.Create<Func<Task>>(async () => deleteScript = await DeleteScript.Interactive(input).GetValue(), "Using a different script"),
+                    Choice.Create<Func<Task>>(async () => deleteScript = await CleanupScript.Interactive(input).GetValue(), "Using a different script"),
                     Choice.Create(() => Task.CompletedTask, "Do not clean up")
                 ]);
             await chosen.Invoke();
@@ -87,10 +87,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             }
             input.CreateSpace();
           
-            ret.CreateScriptArguments = await CreateScriptArguments(http).Interactive(input).GetValue();
+            ret.CreateScriptArguments = await PrepareScriptArguments(http).Interactive(input).GetValue();
             if (!string.IsNullOrWhiteSpace(ret.DeleteScript) || !string.IsNullOrWhiteSpace(ret.Script))
             {
-                ret.DeleteScriptArguments = await DeleteScriptArguments(http).Interactive(input).GetValue();
+                ret.DeleteScriptArguments = await CleanupScriptArguments(http).Interactive(input).GetValue();
             }
             if (!settings.Validation.DisableMultiThreading)
             {
@@ -99,7 +99,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
                     [
                         Choice.Create<int?>(null, "Run everything one by one", @default: true),
                         Choice.Create<int?>(1, "Allow multiple instances of the script to run at the same time"),
-                        Choice.Create<int?>(2, "Allow multiple records to be validated at the same time"),
+                        Choice.Create<int?>(2, "Allow multiple domains to be validated at the same time"),
                         Choice.Create<int?>(3, "Allow both modes of parallelism")
                     ]);
             }
@@ -110,15 +110,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         public override async Task<ScriptOptions?> Default()
         {
             var ret = new ScriptOptions();
-            var commonScript = await CommonScript.GetValue();
-            var createScript = await CreateScript.GetValue();
-            var deleteScript = await DeleteScript.GetValue();
+            var commonScript = await Script.GetValue();
+            var createScript = await PrepareScript.GetValue();
+            var deleteScript = await CleanupScript.GetValue();
             if (!ProcessScripts(ret, commonScript, createScript, deleteScript))
             {
                 return null;
             }
-            ret.DeleteScriptArguments = await DeleteScriptArguments(false).GetValue();
-            ret.CreateScriptArguments = await CreateScriptArguments(false).GetValue();
+            ret.DeleteScriptArguments = await CleanupScriptArguments(false).GetValue();
+            ret.CreateScriptArguments = await PrepareScriptArguments(false).GetValue();
             ret.Parallelism = await Parallelism.GetValue();
             return ret;
         }
@@ -136,11 +136,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             {
                 if (!string.IsNullOrWhiteSpace(createInput))
                 {
-                    log.Warning($"Ignoring --dnscreatescript because --dnsscript was provided");
+                    log.Warning($"Ignoring --validationpreparescript because --validationscript was provided");
                 }
                 if (!string.IsNullOrWhiteSpace(deleteInput))
                 {
-                    log.Warning("Ignoring --dnsdeletescript because --dnsscript was provided");
+                    log.Warning("Ignoring --validationcleanupscript because --validationscript was provided");
                 }
             }
             if (string.IsNullOrWhiteSpace(commonInput) &&
@@ -159,7 +159,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             }
             if (options.CreateScript == null && options.Script == null)
             {
-                log.Error("Missing --dnsscript or --dnscreatescript");
+                log.Error("Missing --validationscript or --validationpreparescript");
                 return false;
             }
             return true;
@@ -168,11 +168,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(ScriptOptions options)
         {
             var http = options.ChallengeType == Constants.Http01ChallengeType;
-            yield return (CommonScript.Meta, options.Script);
-            yield return (CreateScript.Meta, options.CreateScript);
-            yield return (CreateScriptArguments(http).Meta, options.CreateScriptArguments);
-            yield return (DeleteScript.Meta, options.DeleteScript);
-            yield return (DeleteScriptArguments(http).Meta, options.DeleteScriptArguments);
+            yield return (Script.Meta, options.Script);
+            yield return (PrepareScript.Meta, options.CreateScript);
+            yield return (PrepareScriptArguments(http).Meta, options.CreateScriptArguments);
+            yield return (CleanupScript.Meta, options.DeleteScript);
+            yield return (CleanupScriptArguments(http).Meta, options.DeleteScriptArguments);
             yield return (Parallelism.Meta, options.Parallelism);
         }
     }
