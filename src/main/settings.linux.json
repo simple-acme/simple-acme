@@ -25,7 +25,7 @@
     "PreferredIssuer": null,
     "CertificateProfile": null,
     "MaxDomains": 100,
-  "PublicSuffixListUri": "https://publicsuffix.org/list/public_suffix_list.dat"
+    "PublicSuffixListUri": "https://publicsuffix.org/list/public_suffix_list.dat"
   },
   "Execution": {
     "DefaultPreExecutionScript": null,
