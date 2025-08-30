@@ -17,19 +17,21 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         /// of the generated certificates
         /// </summary>
         bool FriendlyNameDateTimeStamp { get; }
+        bool AllowDangerousCertificateReparse { get; }
     }
 
     internal class InheritSecuritySettings(params IEnumerable<SecuritySettings?> chain) : InheritSettings<SecuritySettings>(chain), ISecuritySettings
     {
          public bool EncryptConfig => Get(x => x.EncryptConfig) ?? true;
          public bool FriendlyNameDateTimeStamp => Get(x => x.FriendlyNameDateTimeStamp) ?? true;
+         public bool AllowDangerousCertificateReparse => Get(x => x.AllowDangerousCertificateReparse) ?? false;
     }
 
     public class SecuritySettings
     {
         [SettingsValue(
             Default = "true",
-            Description = "Uses Microsoft Data Protection API to encrypt sensitive parts of the configuration, e.g. passwords. This may be disabled to share the configuration across a cluster of machines.",
+            Description = "Uses Microsoft Data Protection API to encrypt sensitive parts of the configuration (e.g. passwords) using the machine key. This may be disabled to share the configuration across a cluster of machines.",
             Warning = "Not supported on Linux.")]
         public bool? EncryptConfig { get; set; }
 
@@ -37,6 +39,12 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             Default = "true",
             Description = "Add the issue date and time to the friendly name of requested certificates. This feature should be disabled if you require full control over the final certificate friendly name.")]
         public bool? FriendlyNameDateTimeStamp { get; set; }
+
+        [SettingsValue(
+            Default = "false",
+            Description = "Allow dangerous certificate reparsing with disabled limits if initial parsing fails. Only enable if you need compatibility with legacy or non-standard certificates.",
+            Warning = "Disabling limits may reduce security. Use only if necessary.")]
+        public bool? AllowDangerousCertificateReparse { get; set; }
 
         [SettingsValue(Hidden = true)]
         public bool? PrivateKeyExportable { get; set; }
