@@ -24,7 +24,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     {
          public bool EncryptConfig => Get(x => x.EncryptConfig) ?? true;
          public bool FriendlyNameDateTimeStamp => Get(x => x.FriendlyNameDateTimeStamp) ?? true;
-         public bool AllowDangerousCertificateReparse => Get(x => x.AllowDangerousCertificateReparse) ?? true;
+         public bool AllowDangerousCertificateReparse => Get(x => x.AllowDangerousCertificateReparse) ?? false;
     }
 
     public class SecuritySettings
