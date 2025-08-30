@@ -128,7 +128,7 @@ btUK9CQkVXXUE5FDNjWBh/WxofE=
 -----END CERTIFICATE-----";
             var store = ParseData(cert1);
             var certinfo = new CertificateInfo(store);
-            var collection = certinfo.AsCollection(Net.X509KeyStorageFlags.EphemeralKeySet, new Mock.Services.LogService());
+            var collection = certinfo.AsCollection(Net.X509KeyStorageFlags.EphemeralKeySet, new Mock.Services.LogService(), null);
             var main = collection.FirstOrDefault(x => !collection.Any(y => x.Subject == y.Issuer));
             Assert.IsNotNull(main);
         }
