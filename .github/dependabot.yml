@@ -5,3 +5,5 @@ updates:
     directory: "/src"
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 7
