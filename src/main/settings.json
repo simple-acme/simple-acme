@@ -132,7 +132,10 @@
     }
   },
   "Installation": {
-    "DefaultInstallation": null
+    "DefaultInstallation": null,
+    "IIS": {
+      "BindingFlags": [ "None" ]
+    }
   },
   "Secrets": {
     "Json": {

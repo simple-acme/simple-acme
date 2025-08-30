@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Installation
             get
             {
                 var ret = SSLFlags.None;
-                var raw = Get(x => x.BindingFlags).ParseCsv();
+                var raw = Get(x => x.BindingFlags);
                 if (raw == null || raw.Count == 0)
                 {
                     return ret;
@@ -45,6 +45,6 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Installation
             $"<code>{nameof(SSLFlags.DisableLegacyTLS)}</code> and " + 
             $"<code>{nameof(SSLFlags.NegotiateClientCert)}</code>. " +
             "Multiple values may be comma separated.")]
-        public string? BindingFlags { get; set; }
+        public List<string>? BindingFlags { get; set; }
     }
 }
