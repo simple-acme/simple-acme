@@ -339,7 +339,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             new[] { "adder.tinus.online" },
             new int[] { },
             (long)3,
-            new string[] { "*:443:adder.tinus.online (site:3, flags:SNI)" },
+            new string[] { "*:443:adder.tinus.online (site:3, flags:Sni)" },
             null,
             DisplayName = "Simple add")]
         [DataRow(

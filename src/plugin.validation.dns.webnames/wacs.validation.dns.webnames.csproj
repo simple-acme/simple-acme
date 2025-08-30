@@ -1,21 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>PKISharp.WACS.Plugins.ValidationPlugins.Webnames</AssemblyName>
     <RootNamespace>PKISharp.WACS.Plugins.ValidationPlugins</RootNamespace>
-    <AssemblyName>PKISharp.WACS.Plugins.ValidationPlugins.Tencent</AssemblyName>
     <Version>2.1.0.0</Version>
     <AssemblyVersion>2.1.0.0</AssemblyVersion>
     <FileVersion>2.1.0.0</FileVersion>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="TencentCloudSDK.Common" Version="3.0.1305" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\main.lib\wacs.lib.csproj" />
