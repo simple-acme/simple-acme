@@ -41,6 +41,26 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
         }
 
         [TestMethod]
+        [DataRow("--validationmode DNS-01", null)]
+        [DataRow("--validationmode HTTP-01", "http-01")]
+        [DataRow("--validationmode dns-01", null)]
+        [DataRow("--validationmode http-01", "http-01")]
+        [DataRow("--validationmode nonsense", null)]
+        [DataRow("", null)]
+        public void Type(string arg1, string? expected)
+        {
+            var options = Options($"{arg1}--validationscript {commonScript.FullName}");
+            Assert.IsNotNull(options);
+            if (options != null)
+            {
+                Assert.AreEqual(expected, options.ChallengeType);
+                Assert.AreEqual(options.Script, commonScript.FullName);
+                Assert.IsNull(options.CreateScript, commonScript.FullName);
+                Assert.IsNull(options.DeleteScript, commonScript.FullName);
+            }
+        }
+
+        [TestMethod]
         [DataRow("--dnsscript")]
         [DataRow("--validationscript")]
         public void OnlyCommon(string arg1)

@@ -1,4 +1,6 @@
-﻿using PKISharp.WACS.Configuration;
+﻿using ACMESharp.Authorizations;
+using PKISharp.WACS.Configuration;
+using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
@@ -13,6 +15,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         ISettings settings,
         ArgumentsInputService arguments) : PluginOptionsFactory<ScriptOptions>
     {
+        private ArgumentResult<string?> ValidationMode => arguments.
+            GetString<MainArguments>(x => x.ValidationMode).
+            WithDefault(Dns01ChallengeValidationDetails.Dns01ChallengeType).
+            DefaultAsNull();
+
         private ArgumentResult<string?> Script => arguments.
             GetString<ScriptArguments>(x => x.DnsScript, x => x.ValidationScript);
 
@@ -109,6 +116,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 
         public override async Task<ScriptOptions?> Default()
         {
+            var challengeType = await ValidationMode.GetValue();
+            var isHttp = string.Equals(challengeType, Http01ChallengeValidationDetails.Http01ChallengeType, StringComparison.OrdinalIgnoreCase);
             var ret = new ScriptOptions();
             var commonScript = await Script.GetValue();
             var createScript = await PrepareScript.GetValue();
@@ -117,9 +126,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             {
                 return null;
             }
-            ret.DeleteScriptArguments = await CleanupScriptArguments(false).GetValue();
-            ret.CreateScriptArguments = await PrepareScriptArguments(false).GetValue();
+            ret.DeleteScriptArguments = await CleanupScriptArguments(isHttp).GetValue();
+            ret.CreateScriptArguments = await PrepareScriptArguments(isHttp).GetValue();
             ret.Parallelism = await Parallelism.GetValue();
+            ret.ChallengeType = challengeType?.ToLower();
             return ret;
         }
 
