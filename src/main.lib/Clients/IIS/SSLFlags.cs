@@ -6,7 +6,7 @@ namespace PKISharp.WACS.Clients.IIS
     /// <summary>
     /// This enum defines the flags that can be applied to IIS bindings.
     /// Names are sourced by decompiling the IISAdministration PowerShell module,
-    /// found at, because Microsoft is appearantly no longer providing updates to the
+    /// found at, because Microsoft is apparently no longer providing updates to the
     /// Microsoft.Web.Administration NuGet package.
     /// https://www.powershellgallery.com/packages/IISAdministration/1.1.0.0
     /// </summary>

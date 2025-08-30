@@ -58,7 +58,8 @@
   },
   "Security": {
     "EncryptConfig": false,
-    "FriendlyNameDateTimeStamp": true
+    "FriendlyNameDateTimeStamp": true,
+    "AllowDangerousCertificateReparse": false
   },
   "Script": {
     "Timeout": 600,

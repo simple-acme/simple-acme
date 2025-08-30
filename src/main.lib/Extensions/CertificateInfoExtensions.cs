@@ -54,7 +54,7 @@ namespace PKISharp.WACS.Extensions
         /// </summary>
         /// <param name="ci"></param>
         /// <returns></returns>
-        public static X509Certificate2Collection AsCollection(this ICertificateInfo ci, X509KeyStorageFlags flags, ILogService log, string? password = null)
+        public static X509Certificate2Collection AsCollection(this ICertificateInfo ci, X509KeyStorageFlags flags, ILogService log, ISettings settings, string? password = null)
         {
             try
             {
@@ -66,18 +66,22 @@ namespace PKISharp.WACS.Extensions
                         PreserveUnknownAttributes = true,
                         PreserveStorageProvider = false
                     });
-            } 
+            }
             catch (Pkcs12LoadLimitExceededException ex)
             {
-                log.Warning(ex, "Reparsing certificate");
-                return X509CertificateLoader.LoadPkcs12Collection(ci.PfxBytes(password), password, flags, 
-                    new Pkcs12LoaderLimits(Pkcs12LoaderLimits.DangerousNoLimits)
-                    {
-                        PreserveKeyName = true,
-                        PreserveCertificateAlias = true,
-                        PreserveUnknownAttributes = true,
-                        PreserveStorageProvider = false 
-                    });
+                if (settings.Security.AllowDangerousCertificateReparse)
+                {
+                    log.Warning(ex, "Initial parse failed due to loader limits, dangerous reparse enabled...");
+                    return X509CertificateLoader.LoadPkcs12Collection(ci.PfxBytes(password), password, flags,
+                        new Pkcs12LoaderLimits(Pkcs12LoaderLimits.DangerousNoLimits)
+                        {
+                            PreserveKeyName = true,
+                            PreserveCertificateAlias = true,
+                            PreserveUnknownAttributes = true,
+                            PreserveStorageProvider = false
+                        });
+                }
+                throw;
             }
         }
 
