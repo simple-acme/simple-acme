@@ -16,7 +16,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         ArgumentsInputService arguments) : PluginOptionsFactory<ScriptOptions>
     {
         private ArgumentResult<string?> ValidationMode => arguments.
-            GetString<MainArguments>(x => x.ValidationMode).
+            GetLowerString<MainArguments>(x => x.ValidationMode).
             WithDefault(Dns01ChallengeValidationDetails.Dns01ChallengeType).
             DefaultAsNull();
 

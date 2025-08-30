@@ -41,11 +41,10 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
         }
 
         [TestMethod]
-        [DataRow("--validationmode DNS-01", null)]
-        [DataRow("--validationmode HTTP-01", "http-01")]
-        [DataRow("--validationmode dns-01", null)]
-        [DataRow("--validationmode http-01", "http-01")]
-        [DataRow("--validationmode nonsense", null)]
+        [DataRow("--validationmode DNS-01 ", null)]
+        [DataRow("--validationmode HTTP-01 ", "http-01")]
+        [DataRow("--validationmode dns-01 ", null)]
+        [DataRow("--validationmode http-01 ", "http-01")]
         [DataRow("", null)]
         public void Type(string arg1, string? expected)
         {

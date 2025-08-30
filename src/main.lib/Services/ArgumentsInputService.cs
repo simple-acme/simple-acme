@@ -5,7 +5,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection.Metadata.Ecma335;
 
 namespace PKISharp.WACS.Services
 {
@@ -34,6 +33,11 @@ namespace PKISharp.WACS.Services
                     ? async args => (await secretService.GetSecret(args.Label, args.Default?.Value, "", args.Required, args.Multiline)).Protect(true)
                     : async args => (await secretService.GetSecret(args.Label, args.Default?.Value, null, args.Required, args.Multiline)).Protect(false),
                 log, allowEmtpy);
+
+        public ArgumentResult<string?> GetLowerString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
+            (Expression<Func<T, string?>> expression) where T : class, IArguments, new() =>
+            new(GetArgument(expression)?.ToLower(), GetMetaData(expression),
+                async args => (await input.RequestString(args.Label)).ToLower(), log);
 
         public ArgumentResult<string?> GetString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
             (Expression<Func<T, string?>> expression1, Expression<Func<T, string?>>? expression2 = null) where T : class, IArguments, new() =>
