@@ -25,8 +25,14 @@ namespace PKISharp.WACS.Configuration.Settings.Types
          public bool FriendlyNameDateTimeStamp => Get(x => x.FriendlyNameDateTimeStamp) ?? true;
     }
 
-    public class SecuritySettings
-    {
+        public class SecuritySettings
+        {
+            [SettingsValue(
+                Default = "false",
+                Description = "Allow dangerous certificate reparsing with disabled limits if initial parsing fails. Only enable if you need compatibility with legacy or non-standard certificates.",
+                Warning = "Disabling limits may reduce security. Use only if necessary.")]
+            public bool? AllowDangerousCertificateReparse { get; set; }
+            
         [SettingsValue(
             Default = "true",
             Description = "Uses Microsoft Data Protection API to encrypt sensitive parts of the configuration, e.g. passwords. This may be disabled to share the configuration across a cluster of machines.",
