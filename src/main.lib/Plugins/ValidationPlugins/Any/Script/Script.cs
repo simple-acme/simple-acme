@@ -158,10 +158,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 
             // Replace tokens in the script
             var replacements = options.ChallengeType == Constants.Http01ChallengeType
-                ? ScriptHttp.ReplaceTokens(identifier, path, censor, token)
-                : _scriptDns?.ReplaceTokens(identifier, path, censor, token) ?? [];
+                ? _scriptHttp?.ReplaceTokens(identifier, path, censor, token)
+                : _scriptDns?.ReplaceTokens(identifier, path, censor, token);
 
-            return await ScriptClient.ReplaceTokens(args, replacements, secretServiceManager, censor);
+            return await ScriptClient.ReplaceTokens(args, replacements ?? [], secretServiceManager, censor);
         }
 
         public async Task CleanUp() =>

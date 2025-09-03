@@ -4,7 +4,6 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 {
@@ -26,13 +25,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         protected override async Task DeleteFile(string path) =>
              await parent.Create(context.Identifier, path, details.HttpResourceValue);
 
-        internal static Dictionary<string, string?> ReplaceTokens(string identifier, string path, bool censor, string token)
+        internal Dictionary<string, string?> ReplaceTokens(string identifier, string path, bool censor, string token)
         {
             return new Dictionary<string, string?>
             {
                 { "Identifier", identifier },
                 { "Path", path },
-                { "FileName", path.Split('/')[^-1] },
+                { "FileName", path.Split(PathSeparator)[^1] },
                 { "Token", censor ? "***" : token }
             };
         }
