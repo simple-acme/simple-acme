@@ -22,7 +22,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         protected override async Task WriteFile(string path, string content) =>
              await parent.Create(context.Identifier, path, details.HttpResourceValue);
 
-             await parent.Delete(context.Identifier, path, details.HttpResourceValue);
+        protected override async Task DeleteFile(string path) =>    
+            await parent.Delete(context.Identifier, path, details.HttpResourceValue);
 
         internal Dictionary<string, string?> ReplaceTokens(string identifier, string path, bool censor, string token)
         {

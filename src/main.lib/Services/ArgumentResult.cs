@@ -146,9 +146,10 @@ namespace PKISharp.WACS.Services
         /// <param name="input"></param>
         /// <param name="label"></param>
         /// <returns></returns>
-        public ArgumentResult<TResult> Interactive(IInputService input)
+        public ArgumentResult<TResult> Interactive(IInputService input, bool multiline = false)
         {
             _inputService = input;
+            _inputMultiline = multiline;
             return this;
         }
 
@@ -158,10 +159,9 @@ namespace PKISharp.WACS.Services
         /// <param name="validator"></param>
         /// <param name="errorReason"></param>
         /// <returns></returns>
-        public ArgumentResult<TResult> WithDescription(string? description = null, bool multiline = false)
+        public ArgumentResult<TResult> WithDescription(string? description = null)
         {
             _inputDescription = description;
-            _inputMultiline = multiline;
             return this;
         }
 
