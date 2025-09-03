@@ -55,8 +55,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 default:
                     throw new InvalidOperationException();
             }
-            ret.ARNRole = await ArnRole.Interactive(input, "Assume STS role? (provide ARN or press enter to skip)").GetValue();
-            ret.Region = await Region.Interactive(input, "AWS region to connect to (press enter for default 'us-east-1')").GetValue();
+            ret.ARNRole = await ArnRole.Interactive(input).WithLabel("Assume STS role? (provide ARN or press enter to skip)").GetValue();
+            ret.Region = await Region.Interactive(input).WithLabel("AWS region to connect to (press enter for default 'us-east-1')").GetValue();
             return ret;
         }
 

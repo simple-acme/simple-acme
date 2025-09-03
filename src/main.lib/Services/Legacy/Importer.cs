@@ -4,11 +4,11 @@ using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.CsrPlugins;
+using PKISharp.WACS.Plugins.ValidationPlugins.Any;
 using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Dns = PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using Http = PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using Install = PKISharp.WACS.Plugins.InstallationPlugins;
 using Store = PKISharp.WACS.Plugins.StorePlugins;
@@ -173,7 +173,7 @@ namespace PKISharp.WACS.Services.Legacy
             {
                 case "dns-01.script":
                 case "dns-01.dnsscript":
-                    ret.ValidationPluginOptions = new Dns.ScriptOptions()
+                    ret.ValidationPluginOptions = new ScriptOptions()
                     {
                         CreateScript = legacy.Binding.DnsScriptOptions?.CreateScript,
                         CreateScriptArguments = "{Identifier} {RecordName} {Token}",

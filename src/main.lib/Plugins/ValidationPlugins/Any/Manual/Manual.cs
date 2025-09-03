@@ -70,7 +70,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             }
             else if (context.ChallengeDetails is Http01ChallengeValidationDetails httpChallenge)
             {
-                _manualHttp = new ManualHttp(pars, pars.RunLevel, input);
+                _manualHttp = new ManualHttp(pars, input);
                 return await _manualHttp.PrepareChallenge(context, httpChallenge);
             }
             return false;

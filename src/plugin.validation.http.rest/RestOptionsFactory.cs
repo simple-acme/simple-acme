@@ -25,8 +25,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             return new RestOptions()
             {
-                SecurityToken = await SecurityToken.Interactive(inputService, "Security token").GetValue(),
-                UseHttps = await UseHttps.Interactive(inputService, "Use HTTPS").GetValue(),
+                SecurityToken = await SecurityToken.Interactive(inputService).WithLabel("Security token").GetValue(),
+                UseHttps = await UseHttps.Interactive(inputService).WithLabel("Use HTTPS").GetValue(),
             };
         }
 

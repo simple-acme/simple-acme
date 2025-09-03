@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new CloudDnsOptions
             {
-                ServiceAccountKeyPath = await ServiceAccountKey.Interactive(input, "Path to Service Account Key").GetValue(),
+                ServiceAccountKeyPath = await ServiceAccountKey.Interactive(input).WithLabel("Path to Service Account Key").GetValue(),
                 ProjectId = await ProjectId.Interactive(input).GetValue()
             };
         }

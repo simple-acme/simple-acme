@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new CloudflareOptions
             {
-                ApiToken = await ApiKey.Interactive(inputService, "Cloudflare API Token").GetValue()
+                ApiToken = await ApiKey.Interactive(inputService).WithLabel("Cloudflare API Token").GetValue()
             };
         }
 

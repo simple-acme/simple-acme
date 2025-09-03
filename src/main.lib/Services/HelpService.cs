@@ -150,6 +150,10 @@ namespace PKISharp.WACS.Services
             }
             if (plugin.Step == Steps.Validation)
             {
+                if (plugin.Capability.IsAssignableTo(typeof(AnyValidationCapability)))
+                {
+                    return "Validation";
+                }
                 if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
                 {
                     return "DNS validation";
@@ -177,13 +181,17 @@ namespace PKISharp.WACS.Services
             var offset = 0;
             if (plugin.Step == Steps.Validation)
             {
-                if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
+                if (plugin.Capability.IsAssignableTo(typeof(AnyValidationCapability)))
                 {
                     offset = 1;
                 }
-                if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
+                if (plugin.Capability.IsAssignableTo(typeof(DnsValidationCapability)))
                 {
                     offset = 2;
+                }
+                if (plugin.Capability.IsAssignableTo(typeof(TlsValidationCapability)))
+                {
+                    offset = 3;
                 }
             }
             return (int)plugin.Step + offset;

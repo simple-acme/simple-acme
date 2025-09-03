@@ -31,6 +31,10 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
+	
+	<ItemGroup>
+	  <None Include="Plugins\ValidationPlugins\Any\Script\ScriptDns.cs" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Autofac" Version="8.4.0" />

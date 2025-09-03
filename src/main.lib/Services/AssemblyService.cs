@@ -51,7 +51,7 @@ namespace PKISharp.WACS.Services
 
                 // Validation plugins
                 new(typeof(Plugins.ValidationPlugins.Any.Manual)),
-                new(typeof(Plugins.ValidationPlugins.Dns.Script)), new(typeof(Plugins.ValidationPlugins.Dns.ScriptArguments)),
+                new(typeof(Plugins.ValidationPlugins.Any.Script)), new(typeof(Plugins.ValidationPlugins.Any.ScriptArguments)),
                 new(typeof(Plugins.ValidationPlugins.Any.Null)),
                 new(typeof(Plugins.ValidationPlugins.Http.FileSystem)), new(typeof(Plugins.ValidationPlugins.Http.FileSystemArguments)),
                 new(typeof(Plugins.ValidationPlugins.Http.SelfHosting)), new(typeof(Plugins.ValidationPlugins.Http.SelfHostingArguments)),

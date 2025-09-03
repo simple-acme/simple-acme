@@ -19,9 +19,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new ALiYunOptions
             {
-                ApiServer = await ApiServer.Interactive(inputService, "ALiYun Domain Server").GetValue(),
-                ApiID = await ApiID.Interactive(inputService, "ALiYun AccessKey ID").GetValue(),
-                ApiSecret = await ApiSecret.Interactive(inputService, "ALiYun AccessKey Secret").GetValue(),
+                ApiServer = await ApiServer.Interactive(inputService).WithLabel("ALiYun Domain Server").GetValue(),
+                ApiID = await ApiID.Interactive(inputService).WithLabel("ALiYun AccessKey ID").GetValue(),
+                ApiSecret = await ApiSecret.Interactive(inputService).WithLabel("ALiYun AccessKey Secret").GetValue(),
             };
         }
 
