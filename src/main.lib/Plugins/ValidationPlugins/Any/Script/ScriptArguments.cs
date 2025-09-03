@@ -22,8 +22,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         public string? ValidationCleanupScript { get; set; }
 
         [CommandLine(Description = $"Arguments passed to the cleanup script. If not specified " +
-            $"these will be \"{ScriptDns.DefaultCleanupArguments} \" for DNS challenges " +
-            $"or \" {ScriptHttp.DefaultCleanupArguments}\" for HTTP challenges.")]
+            $"these will be \"{ScriptDns.DefaultCleanupArguments}\" for DNS challenges " +
+            $"or \"{ScriptHttp.DefaultCleanupArguments}\" for HTTP challenges.")]
         public string? ValidationCleanupScriptArguments { get; set; }
 
         [CommandLine(Description = "Configure parallelism mode. " +
