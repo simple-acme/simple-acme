@@ -101,7 +101,7 @@ namespace PKISharp.WACS.Clients.Acme
             {
                 replaces = CertificateId(parameters.Replaces);
             }
-            return await _client.Retry(() => _client.CreateOrderAsync(acmeIdentifiers, replaces, parameters.NotAfter, profile: parameters.Profile), _log);
+            return await _client.Retry(() => _client.CreateOrderAsync(acmeIdentifiers, replaces, notAfter: parameters.NotAfter, profile: parameters.Profile), _log);
         }
 
         /// <summary>

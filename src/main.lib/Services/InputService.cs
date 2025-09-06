@@ -437,7 +437,7 @@ namespace PKISharp.WACS.Services
                 else
                 {
                     selected = choices.
-                        Where(t => string.Equals(t.Command, choice, StringComparison.InvariantCultureIgnoreCase)).
+                        Where(t => string.Equals(t.Command?.Trim(), choice, StringComparison.InvariantCultureIgnoreCase)).
                         FirstOrDefault();
 
                     selected ??= choices.
