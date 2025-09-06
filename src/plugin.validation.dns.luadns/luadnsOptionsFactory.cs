@@ -21,8 +21,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new LuaDnsOptions
             {
-                Username = await Username.Interactive(input, "Username").GetValue(),
-                APIKey = await ApiKey.Interactive(input, "API key").GetValue()
+                Username = await Username.Interactive(input).WithLabel("Username").GetValue(),
+                APIKey = await ApiKey.Interactive(input).WithLabel("API key").GetValue()
             };
         }
 

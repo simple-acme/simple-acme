@@ -22,6 +22,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
     {
         internal const string Trigger = "P7bFile";
 
+        private readonly ISettings _settings;
         private readonly ILogService _log;
         private readonly string _path;
         private readonly string? _name;
@@ -36,6 +37,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         {
             _log = log;
             _name = options.FileName;
+            _settings = settings;
             var path = !string.IsNullOrWhiteSpace(options.Path) ?
                 options.Path :
                 DefaultPath(settings);
@@ -63,7 +65,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             try
             {
                 var dest = PathForIdentifier(_name ?? input.CommonName?.Value ?? input.SanNames.First().Value);
-                var data = input.AsCollection(X509KeyStorageFlags.EphemeralKeySet, _log).Export(X509ContentType.Pkcs7) ?? throw new Exception();
+                var data = input.AsCollection(X509KeyStorageFlags.EphemeralKeySet, _log, _settings).Export(X509ContentType.Pkcs7) ?? throw new Exception();
                 var fi = new FileInfo(dest);
                 using var fs = fi.Open(FileMode.Create);
                 using var stream = new MemoryStream(data);

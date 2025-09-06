@@ -67,7 +67,8 @@
   },
   "Security": {
     "EncryptConfig": true,
-    "FriendlyNameDateTimeStamp": true
+    "FriendlyNameDateTimeStamp": true,
+    "AllowDangerousCertificateReparse": false
   },
   "Script": {
     "Timeout": 600,
@@ -131,7 +132,10 @@
     }
   },
   "Installation": {
-    "DefaultInstallation": null
+    "DefaultInstallation": null,
+    "IIS": {
+      "BindingFlags": [ "None" ]
+    }
   },
   "Secrets": {
     "Json": {

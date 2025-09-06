@@ -46,17 +46,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             var pathGetter = _arguments.
                 GetString<TArguments>(x => x.Root).
                 WithDefault(defaultPath).
-                Required(!allowEmpty);
-            pathGetter = webRootHint.Length > 1
-                ? pathGetter.Interactive(input, webRootHint[0], string.Join('\n', webRootHint[1..]))
-                : pathGetter.Interactive(input, webRootHint[0]);
+                Required(!allowEmpty).
+                Interactive(input).
+                WithLabel(webRootHint[0]);
+            if (webRootHint.Length > 1)
+            {
+                pathGetter = pathGetter.WithDescription(string.Join('\n', webRootHint[1..]));
+            }
             var path = await pathGetter.GetValue();
             var isRootPath = await input.PromptYesNo($"Append \"{Http01ChallengeValidationDetails.HttpPathPrefix}\"?", true);
             return new TOptions
             {
                 Path = path,
                 IsRootPath = isRootPath,
-                CopyWebConfig = _target.IIS || await CopyWebConfig.Interactive(input, "Copy default web.config before validation?").GetValue() == true
+                CopyWebConfig = _target.IIS || await CopyWebConfig.Interactive(input).WithLabel("Copy default web.config before validation?").GetValue() == true
             };
         }
 

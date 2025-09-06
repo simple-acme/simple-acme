@@ -21,8 +21,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new HetznerOptions
             {
-                ApiToken = await ApiKey.Interactive(inputService, "Hetzner API Token").GetValue(),
-                ZoneId = await ZoneId.Interactive(inputService, "Hetzner Zone Id").GetValue()
+                ApiToken = await ApiKey.Interactive(inputService).WithLabel("Hetzner API Token").GetValue(),
+                ZoneId = await ZoneId.Interactive(inputService).WithLabel("Hetzner Zone Id").GetValue()
             };
         }
 

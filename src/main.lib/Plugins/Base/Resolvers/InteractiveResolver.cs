@@ -33,7 +33,8 @@ namespace PKISharp.WACS.Plugins.Resolvers
         private class PluginChoice<TCapability, TOptions>(
             Plugin meta,
             PluginFrontend<TCapability, TOptions> frontend,
-            State state,
+            State configurationState,
+            State executionState,
             string description,
             bool @default)
             where TCapability : IPluginCapability
@@ -41,7 +42,8 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             public Plugin Meta { get; } = meta;
             public PluginFrontend<TCapability, TOptions> Frontend { get; } = frontend;
-            public State State { get; } = state;
+            public State ConfigurationState { get; } = configurationState;
+            public State ExecutionState { get; } = executionState;
             public string Description { get; } = description;
             public bool Default { get; set; } = @default;
         }
@@ -55,26 +57,27 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 string? defaultParam1 = null,
                 string? defaultParam2 = null,
                 Func<PluginFrontend<TCapability, TOptions>, int>? sort = null, 
-                Func<TCapability, State>? state = null,
+                Func<TCapability, State>? configState = null,
                 Func<PluginFrontend<TCapability, TOptions>, string>? description = null,
-                bool allowAbort = true) 
+                bool allowAbort = true,
+                bool explain = true) 
                 where TCapability : IPluginCapability
                 where TOptions : PluginOptions, new()
         {
-            // Helper method to determine final usability state
+            // Helper method to determine final usability configurationState
             // combination of plugin being enabled (e.g. due to missing
             // administrator rights) and being a right fit for the current
             // renewal (e.g. cannot validate wildcards using http-01)
-            State combinedState(PluginFrontend<TCapability, TOptions> plugin)
+            State combinedConfigState(PluginFrontend<TCapability, TOptions> plugin)
             {
-                var baseState = plugin.Capability.State;
+                var baseState = plugin.Capability.ConfigurationState;
                 if (baseState.Disabled)
                 {
                     return baseState;
                 }
-                else if (state != null)
+                else if (configState != null)
                 {
-                    return state(plugin.Capability);
+                    return configState(plugin.Capability);
                 }
                 return State.EnabledState();
             };
@@ -91,13 +94,14 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 Select(plugin => new PluginChoice<TCapability, TOptions>(
                     plugin.Meta,
                     plugin,
-                    combinedState(plugin),
+                    combinedConfigState(plugin),
+                    plugin.Capability.ExecutionState,
                     description == null ? plugin.Meta.Description : description(plugin),
                     false)).
                 ToList();
            
             // Default out when there are no reasonable plugins to pick
-            if (options.Count == 0 || options.All(x => x.State.Disabled))
+            if (options.Count == 0 || options.All(x => x.ConfigurationState.Disabled))
             {
                 return null;
             }
@@ -129,12 +133,26 @@ namespace PKISharp.WACS.Plugins.Resolvers
                     showMenu = true;
                     continue;
                 }
-                if (defaultOption.State.Disabled)
+                if (defaultOption.ConfigurationState.Disabled)
                 {
-                    log.Warning("{n} plugin {x} not available: {m}",
-                        char.ToUpper(className[0]) + className[1..],
-                        defaultOption.Frontend.Meta.Name ?? backend.Name,
-                        defaultOption.State.Reason);
+                    if (explain)
+                    {
+                        log.Warning("{n} plugin {x} not available: {m}",
+                            char.ToUpper(className[0]) + className[1..],
+                            defaultOption.Frontend.Meta.Name ?? backend.Name,
+                            defaultOption.ConfigurationState.Reason);
+                    }
+                    showMenu = true;
+                }
+                else if (defaultOption.ExecutionState.Disabled)
+                {
+                    if (explain)
+                    {
+                        log.Warning("{n} plugin {x} might not work: {m}",
+                            char.ToUpper(className[0]) + className[1..],
+                            defaultOption.Frontend.Meta.Name ?? backend.Name,
+                            defaultOption.ExecutionState.Reason);
+                    }
                     showMenu = true;
                 }
                 else
@@ -150,7 +168,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             }
 
             // List plugins for generating new certificates
-            if (!string.IsNullOrEmpty(longDescription))
+            if (!string.IsNullOrEmpty(longDescription) && explain)
             {
                 inputService.CreateSpace();
                 inputService.Show(null, longDescription);
@@ -161,12 +179,38 @@ namespace PKISharp.WACS.Plugins.Resolvers
                        choice.Frontend,
                        description: choice.Description,
                        @default: choice.Default,
-                       state: choice.State);
+                       state: choice.ConfigurationState);
             }
 
-            return allowAbort
+            var result = allowAbort
                 ? await inputService.ChooseOptional(shortDescription, options, creator, "Abort")
                 : await inputService.ChooseRequired(shortDescription, options, creator);
+
+            if (result?.Capability.ExecutionState.Disabled == true) 
+            {
+                log.Warning("Chosen {n} plugin {x} might not work: {m}",
+                    char.ToUpper(className[0]) + className[1..],
+                    result.Meta.Name,
+                    result.Capability.ExecutionState.Reason);
+                var retry = await inputService.PromptYesNo("Switch to another one?", true);
+                if (retry)
+                {
+                    return await GetPlugin(
+                        step: step, 
+                        defaultBackends: defaultBackends,
+                        shortDescription: shortDescription, 
+                        longDescription: longDescription,
+                        defaultParam1: defaultParam1,
+                        defaultParam2: defaultParam2, 
+                        sort: sort,
+                        configState: configState,
+                        description: description, 
+                        allowAbort: allowAbort, 
+                        explain: false);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -323,7 +367,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             defaultParam1 = csv?.Count > installation.Count() ? csv[installation.Count()] : "";
             return await GetPlugin<IInstallationPluginCapability, InstallationPluginOptions>(
                 Steps.Installation,
-                state: x => x.CanInstall(stores.Select(x => x.Backend), installation.Select(x => x.Backend)),
+                configState: x => x.CanInstall(stores.Select(x => x.Backend), installation.Select(x => x.Backend)),
                 defaultParam1: defaultParam1,
                 defaultBackends: [defaultType, typeof(InstallationPlugins.Null)],
                 shortDescription: shortDescription,

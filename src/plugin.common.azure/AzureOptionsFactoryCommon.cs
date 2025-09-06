@@ -59,9 +59,9 @@ namespace PKISharp.WACS.Plugins.Azure.Common
             if (!options.UseMsi)
             {
                 // These options are only necessary for client id/secret authentication.
-                options.TenantId = await TenantId.Interactive(_input, "Directory/tenant id").GetValue();
-                options.ClientId = await ClientId.Interactive(_input, "Application client id").GetValue();
-                options.Secret = await ClientSecret.Interactive(_input, "Application client secret").GetValue();
+                options.TenantId = await TenantId.Interactive(_input).WithLabel("Directory/tenant id").GetValue();
+                options.ClientId = await ClientId.Interactive(_input).WithLabel("Application client id").GetValue();
+                options.Secret = await ClientSecret.Interactive(_input).WithLabel("Application client secret").GetValue();
             }
         }
 

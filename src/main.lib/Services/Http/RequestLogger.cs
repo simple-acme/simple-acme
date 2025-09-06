@@ -41,7 +41,7 @@ namespace PKISharp.WACS.Services
             }
             else
             {
-                log.Warning("[HTTP] Request completed with status {s}", response.StatusCode);
+                log.Debug("[HTTP] Request completed with status {s}", response.StatusCode);
             }
             if (response.Content != null)
             {

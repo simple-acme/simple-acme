@@ -25,8 +25,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
     /// <param name="target"></param>
     /// <param name="runLevel"></param>
     /// <param name="identifier"></param>
-    public abstract class HttpValidation<TOptions>(TOptions options, RunLevel runLevel, HttpValidationParameters pars) :
-        HttpValidationBase(pars.LogService, runLevel, pars.InputService)
+    public abstract class HttpValidation<TOptions>(TOptions options, HttpValidationParameters pars) :
+        HttpValidationBase(pars.LogService, pars.RunLevel, pars.InputService)
         where TOptions : HttpValidationOptions
     {
         private readonly List<string> _filesWritten = [];
@@ -35,7 +35,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         protected IInputService _input = pars.InputService;
         protected ISettings _settings = pars.Settings;
         protected Renewal _renewal = pars.Renewal;
-        protected RunLevel _runLevel = runLevel;
+        protected RunLevel _runLevel = pars.RunLevel;
         protected ILogService _log = pars.LogService;
 
         /// <summary>
@@ -95,6 +95,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                     log.Warning("Preliminary validation failed, the server answered '{value}' instead of '{expected}'. The ACME server might have a different perspective",
                         foundValue ?? "(null)",
                         challenge.HttpResourceValue);
+                    return true;
                 }
             }
             catch (HttpRequestException hrex)

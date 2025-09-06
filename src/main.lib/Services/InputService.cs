@@ -127,6 +127,10 @@ namespace PKISharp.WACS.Services
                 if (level > 0)
                 {
                     label = new string(' ', (level * 2) + 1) + $"- {label}";
+                } 
+                else
+                {
+                    label = ' ' + label; 
                 }
                 offset = Math.Max(20, label!.Length + 1);
                 Write(label, ConsoleColor.White);
@@ -433,7 +437,7 @@ namespace PKISharp.WACS.Services
                 else
                 {
                     selected = choices.
-                        Where(t => string.Equals(t.Command, choice, StringComparison.InvariantCultureIgnoreCase)).
+                        Where(t => string.Equals(t.Command?.Trim(), choice, StringComparison.InvariantCultureIgnoreCase)).
                         FirstOrDefault();
 
                     selected ??= choices.
@@ -491,7 +495,19 @@ namespace PKISharp.WACS.Services
                     Take(settings.UI.PageSize);
                 foreach (var target in page)
                 {
-                    target.Command ??= (currentIndex + 1).ToString();
+                    if (target.Command == null)
+                    {
+                        var prefix = "";
+                        if (listItems.Count() >= 100 && currentIndex < 99)
+                        {
+                            prefix = "  ";
+                        } 
+                        else if (listItems.Count() >= 10 && currentIndex < 9)
+                        {
+                            prefix = " ";
+                        }
+                        target.Command = $"{prefix}{currentIndex + 1}";
+                    }
 
                     if (!string.IsNullOrEmpty(target.Command))
                     {

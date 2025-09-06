@@ -19,9 +19,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new HuaWeiCloudOptions
             {
-                DnsRegion = await DnsRegion.Interactive(inputService, "HuaWeiCloud Dns Region").GetValue(),
-                KeyID = await KeyID.Interactive(inputService, "HuaWeiCloud AccessKey ID").GetValue(),
-                KeySecret = await KeySecret.Interactive(inputService, "HuaWeiCloud AccessKey Secret").GetValue(),
+                DnsRegion = await DnsRegion.Interactive(inputService).WithLabel("HuaWeiCloud Dns Region").GetValue(),
+                KeyID = await KeyID.Interactive(inputService).WithLabel("HuaWeiCloud AccessKey ID").GetValue(),
+                KeySecret = await KeySecret.Interactive(inputService).WithLabel("HuaWeiCloud AccessKey Secret").GetValue(),
             };
         }
 

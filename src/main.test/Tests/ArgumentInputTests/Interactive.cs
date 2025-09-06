@@ -28,7 +28,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var input = container.Resolve<IInputService>();
             var basic = mock.
                 GetString<CentralSslArguments>(x => x.CentralSslStore).
-                Interactive(input, "Label").
+                Interactive(input).
                 GetValue().
                 Result;
             Assert.AreEqual(output, basic);
@@ -46,7 +46,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var mock = container.Resolve<ArgumentsInputService>();
             var input = container.Resolve<IInputService>(); 
             var result = mock.GetString<CentralSslArguments>(x => x.CentralSslStore).
-                Interactive(input, "label").
+                Interactive(input).
                 WithDefault(@default).
                 GetValue().
                 Result;

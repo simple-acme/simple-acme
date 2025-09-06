@@ -30,8 +30,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new TransIpOptions()
             {
-                Login = await Login.Interactive(input, "Username").GetValue(),
-                PrivateKey = await PrivateKey.Interactive(input, "Private key", multiline: true).GetValue()
+                Login = await Login.Interactive(input).WithLabel("Username").GetValue(),
+                PrivateKey = await PrivateKey.Interactive(input, multiline: true).WithLabel("Private key").GetValue()
             };
         }
 

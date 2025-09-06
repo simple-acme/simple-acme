@@ -146,16 +146,34 @@ namespace PKISharp.WACS.Services
         /// <param name="input"></param>
         /// <param name="label"></param>
         /// <returns></returns>
-        public ArgumentResult<TResult> Interactive(
-            IInputService input, 
-            string? label = null, 
-            string? description = null,
-            bool multiline = false)
+        public ArgumentResult<TResult> Interactive(IInputService input, bool multiline = false)
         {
             _inputService = input;
-            _inputLabel = label;
             _inputMultiline = multiline;
+            return this;
+        }
+
+        /// <summary>
+        /// Set label for interactive input
+        /// </summary>
+        /// <param name="validator"></param>
+        /// <param name="errorReason"></param>
+        /// <returns></returns>
+        public ArgumentResult<TResult> WithDescription(string? description = null)
+        {
             _inputDescription = description;
+            return this;
+        }
+
+        /// <summary>
+        /// Set label for interactive input
+        /// </summary>
+        /// <param name="validator"></param>
+        /// <param name="errorReason"></param>
+        /// <returns></returns>
+        public ArgumentResult<TResult> WithLabel(string label)
+        {
+            _inputLabel = label;
             return this;
         }
 

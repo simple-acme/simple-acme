@@ -50,9 +50,9 @@ namespace PKISharp.WACS
             var client = await clientManager.GetClient(renewal.Account);
             using var es = scopeBuilder.Execution(_container, renewal, client, runLevel);
             var targetPlugin = es.Resolve<PluginBackend<ITargetPlugin, IPluginCapability, TargetPluginOptions>>();
-            if (targetPlugin.Capability.State.Disabled)
+            if (targetPlugin.Capability.ExecutionState.Disabled)
             {
-                return new RenewResult($"Source plugin {targetPlugin.Meta.Name} is disabled. {targetPlugin.Capability.State.Reason}");
+                return new RenewResult($"Source plugin {targetPlugin.Meta.Name} is disabled. {targetPlugin.Capability.ExecutionState.Reason}");
             }
             var target = await targetPlugin.Backend.Generate();
             if (target == null)

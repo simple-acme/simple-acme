@@ -21,8 +21,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new TencentOptions
             {
-                ApiID = await ApiID.Interactive(inputService, "Tencent API ID").GetValue(),
-                ApiKey = await ApiKey.Interactive(inputService, "Tencent API Key").GetValue(),
+                ApiID = await ApiID.Interactive(inputService).WithLabel("Tencent API ID").GetValue(),
+                ApiKey = await ApiKey.Interactive(inputService).WithLabel("Tencent API Key").GetValue(),
             };
         }
 

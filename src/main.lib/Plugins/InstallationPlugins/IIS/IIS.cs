@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
         IISCapability, WacsJsonPlugins>
         ("13058a79-5084-48af-b047-634e0ee222f4",
         "IISFTP", "Create or update FTP bindings in IIS", Hidden = true)]
-    internal class IIS(IISOptions options, IIISClient iisClient, ILogService log, Target target) : IInstallationPlugin
+    internal class IIS(IISOptions options, IIISClient iisClient, ISettings settings, ILogService log, Target target) : IInstallationPlugin
     {
         internal const string Trigger = "IIS";
         internal const string ID = "ea6a5be3-f8de-4d27-a6bd-750b619b2ee2";
@@ -106,15 +106,17 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                 } 
             }
 
+            var settingsFlags = (settings.Installation.IIS?.BindingFlags ?? SSLFlags.None) & SSLFlags.OptionalFlags;
+
             foreach (var part in target.Parts)
             {
                 var httpIdentifiers = part.Identifiers.OfType<DnsIdentifier>();
-                var bindingOptions = new BindingOptions();
+                var bindingOptions = new BindingOptions().WithFlags(settingsFlags);
 
                 // Pick between CentralSsl and CertificateStore
                 bindingOptions = centralSslForHttp
                     ? bindingOptions.
-                        WithFlags(SSLFlags.CentralSsl)
+                        WithFlags(SSLFlags.CentralCertStore | bindingOptions.Flags)
                     : bindingOptions.
                         WithThumbprint(newCertificate.GetHash()).
                         WithStore(certificateStoreName);

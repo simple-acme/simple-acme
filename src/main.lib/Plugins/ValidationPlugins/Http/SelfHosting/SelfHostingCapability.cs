@@ -20,11 +20,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             ArgumentsParser = args;
         } 
 
-        public override State State
+        public override State ExecutionState
         {
             get
             {
-                var baseState = base.State;
+                var baseState = base.ExecutionState;
                 if (baseState.Disabled)
                 {
                     return baseState;

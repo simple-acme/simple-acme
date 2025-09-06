@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new NS1Options()
             {
-                ApiKey = await ApiKey.Interactive(input, "API key").GetValue(),
+                ApiKey = await ApiKey.Interactive(input).WithLabel("API key").GetValue(),
             };
         }
 

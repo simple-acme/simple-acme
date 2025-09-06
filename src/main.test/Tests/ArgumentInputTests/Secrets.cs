@@ -29,7 +29,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
             var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword).
-                Interactive(input, "label").
+                Interactive(input).
                 GetValue().
                 Result;
             Assert.AreEqual(output, result?.Value);
@@ -59,7 +59,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
             var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword, true).
-                Interactive(input, "label").
+                Interactive(input).
                 WithDefault(defaultValue.Protect()).
                 GetValue().
                 Result;
@@ -91,7 +91,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
             var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword, true).
-                Interactive(input, "label").
+                Interactive(input).
                 GetValue().
                 Result;
             Assert.AreEqual(output, result?.Value);
@@ -144,7 +144,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<SecretServiceManager>();
             var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword).
-                Interactive(input, "label").
+                Interactive(input).
                 GetValue().
                 Result;
             Assert.AreEqual(output, result?.Value);
@@ -171,7 +171,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<SecretServiceManager>();
             var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword).
-                Interactive(input, "label").
+                Interactive(input).
                 GetValue().
                 Result;
             Assert.AreEqual(output, result?.Value);
