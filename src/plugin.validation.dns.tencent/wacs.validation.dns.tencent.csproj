@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="TencentCloudSDK.Common" Version="3.0.1310" />
+    <PackageReference Include="TencentCloudSDK.Common" Version="3.0.1313" />
   </ItemGroup>
 
   <ItemGroup>
