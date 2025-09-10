@@ -178,6 +178,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(ScriptOptions options)
         {
             var http = options.ChallengeType == Constants.Http01ChallengeType;
+            if (http)
+            {
+                yield return (ValidationMode.Meta, options.ChallengeType);
+            }
             yield return (Script.Meta, options.Script);
             yield return (PrepareScript.Meta, options.CreateScript);
             yield return (PrepareScriptArguments(http).Meta, options.CreateScriptArguments);

@@ -40,7 +40,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         {
             input.Show("{Identifier}", "Identifier that is being validated, e.g. sub.example.com");
             input.Show("{Path}", "Relative URI that will be requested");
-            input.Show("{FileName}", "Name of the file that will be request");
+            input.Show("{FileName}", "Name of the file that will be requested");
             input.Show("{Token}", "Expected response content");
             input.Show("{vault://json/key}", "Secret from the vault");
         }
