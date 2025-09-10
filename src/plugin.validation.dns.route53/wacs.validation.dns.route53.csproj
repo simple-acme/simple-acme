@@ -15,6 +15,7 @@
   
   <ItemGroup>
     <PackageReference Include="AWSSDK.Route53" Version="4.0.3.1" />
+    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.2.1" />
   </ItemGroup>
 
   <ItemGroup>
