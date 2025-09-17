@@ -7,3 +7,24 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
+    groups:
+      Microsoft:
+        patterns:
+          - "System.*"
+          - "Microsoft.*"
+          - "MSTest.*"
+          - "NETStandard.*"
+      Serilog:
+        patterns:
+          - "Serilog"
+          - "Serilog.*"
+      Azure:
+        patterns:
+          - "Azure.*"
+      AWS:
+        patterns:
+          - "AWSSDK.*"
+      FluentFTP:
+        patterns:
+          - "FluentFTP"
+          - "FluentFTP.*"
