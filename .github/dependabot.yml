@@ -7,6 +7,8 @@ updates:
       interval: "daily"
     cooldown:
       default-days: 7
+    ignore:
+        - dependency-name: "Microsoft.NET.ILLink.Tasks"
     groups:
       Microsoft:
         patterns:
