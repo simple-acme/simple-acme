@@ -50,7 +50,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         /// <param name="supportedChallenges"></param>
         /// <returns></returns>
         public Task<AcmeChallenge?> SelectChallenge(List<AcmeChallenge> supportedChallenges) => 
-            Task.FromResult(supportedChallenges.FirstOrDefault(c => c.Type == options.ChallengeType));
+            Task.FromResult(supportedChallenges.FirstOrDefault(c => c.Type == (options.ChallengeType ?? Constants.Dns01ChallengeType)));
 
         /// <summary>
         /// Prepare a single challenge for validation
