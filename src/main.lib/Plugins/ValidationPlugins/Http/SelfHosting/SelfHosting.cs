@@ -106,9 +106,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             var port = userPort ?? ((https == true) ?
                 DefaultHttpsValidationPort :
                 DefaultHttpValidationPort);
-            var prefix = $"{protocol}://+:{port}/.well-known/acme-challenge/";
             var testListener = new HttpListener();
-            testListener.Prefixes.Add(prefix);
+            // Add both IPv4 and IPv6 prefixes, universal prefix with + does not appear work on Linux
+            testListener.Prefixes.Add($"{protocol}://0:0:0:0:{port}/.well-known/acme-challenge/");
+            testListener.Prefixes.Add($"{protocol}://[::]:{port}/.well-known/acme-challenge/");
             return (testListener, port);
         }
 
