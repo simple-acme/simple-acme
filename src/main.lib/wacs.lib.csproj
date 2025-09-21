@@ -6,6 +6,10 @@
 		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;</Configurations>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
 	<PropertyGroup Condition="'$(Configuration)'=='Debug' OR '$(Configuration)'=='DebugTrimmed'">
 		<WarningLevel>4</WarningLevel>
 	</PropertyGroup>
@@ -41,6 +45,7 @@
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
 		<PackageReference Include="DnsClient" Version="1.8.0" />
 		<PackageReference Include="MailKit" Version="4.13.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.3.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.9" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.9" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.9" />

@@ -1,4 +1,6 @@
-﻿using PKISharp.WACS.Configuration;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Hosting;
+using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -33,7 +35,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
         }
 
-        public static (HttpListener, int) CreateFromArgs(SelfHostingArguments? args) =>
+        public static (WebApplication, int) CreateFromArgs(SelfHostingArguments? args) =>
             SelfHosting.CreateFromOptions(new SelfHostingOptions() { 
                 Https = args?.ValidationProtocol?.ToLower() == "https",
                 Port = args?.ValidationPort 
@@ -52,7 +54,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                     try
                     {
                         testListener.Start();
-                        testListener.Stop();
+                        testListener.StopAsync();
                     }
                     catch (HttpListenerException hex)
                     {

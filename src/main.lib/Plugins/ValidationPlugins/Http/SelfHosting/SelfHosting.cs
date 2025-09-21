@@ -1,4 +1,8 @@
 ﻿using ACMESharp.Authorizations;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using PKISharp.WACS.Context;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
@@ -46,49 +50,43 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             set => _listener = value;
         }
 
-        private async Task ReceiveRequests()
+        private async Task ReceiveRequest(HttpContext context, string path)
         {
-            while (HasListener && Listener.IsListening)
+            if (_files.TryGetValue(path, out var response))
             {
-                var ctx = await Listener.GetContextAsync();
-                var path = ctx.Request.Url?.LocalPath ?? "";
-                if (_files.TryGetValue(path, out var response))
-                {
-                    log.Verbose("SelfHosting plugin serving file {name}", path);
-                    using var writer = new StreamWriter(ctx.Response.OutputStream);
-                    writer.Write(response);
-                }
-                else
-                {
-                    log.Warning("SelfHosting plugin couldn't serve file {name}", path);
-                    ctx.Response.StatusCode = 404;
-                }
+                log.Verbose("SelfHosting plugin serving file {name} to {ip}", path, context.Connection.RemoteIpAddress);
+                await context.Response.WriteAsync(response);
+            }
+            else
+            {
+                log.Warning("SelfHosting plugin couldn't serve file {name}", path);
+                context.Response.StatusCode = 404;
             }
         }
 
         public override async Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
             // Add validation file
-            _files.GetOrAdd($"/{Http01ChallengeValidationDetails.HttpPathPrefix}/{challenge.HttpResourceName}", challenge.HttpResourceValue);
+            _files.GetOrAdd(challenge.HttpResourceName, challenge.HttpResourceValue);
             await TestChallenge(challenge);
             return true;
         }
 
-        public override Task Commit()
+        public override async Task Commit()
         {
+            // Create listener if it doesn't exist yet
             // Create listener if it doesn't exist yet
             lock (_listenerLock)
             {
                 if (_listener == null)
                 {
-                    var port = DefaultHttpValidationPort; 
+                    var port = DefaultHttpValidationPort;
                     try
                     {
                         var (listener, listenerPort) = CreateFromOptions(options);
-                        port = listenerPort;
+                        listener.MapGet($"/{Http01ChallengeValidationDetails.HttpPathPrefix}/{{*path}}", ReceiveRequest);
                         listener.Start();
-                        Listener = listener;
-                        Task.Run(ReceiveRequests);
+                        port = listenerPort;
                     }
                     catch (Exception ex)
                     {
@@ -97,23 +95,18 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                     }
                 }
             }
-            return Task.CompletedTask;
         }
 
-        private static (HttpListener, int) CreateListener(bool? https, int? userPort)
+        private static (WebApplication, int) CreateListener(bool? https, int? userPort)
         {
-            var protocol = https == true ? "https" : "http";
-            var port = userPort ?? ((https == true) ?
-                DefaultHttpsValidationPort :
-                DefaultHttpValidationPort);
-            var testListener = new HttpListener();
-            // Add both IPv4 and IPv6 prefixes, universal prefix with + does not appear work on Linux
-            testListener.Prefixes.Add($"{protocol}://0:0:0:0:{port}/.well-known/acme-challenge/");
-            testListener.Prefixes.Add($"{protocol}://[::]:{port}/.well-known/acme-challenge/");
-            return (testListener, port);
+            var protocol = https == true ? "https" : "http";            var port = userPort ?? ((https == true) ? DefaultHttpsValidationPort : DefaultHttpValidationPort);
+            var builder = WebApplication.CreateSlimBuilder();
+            builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(port));
+            var app = builder.Build();
+            return (app, port);
         }
 
-        public static (HttpListener, int) CreateFromOptions(SelfHostingOptions args) => CreateListener(args.Https, args.Port);
+        public static (WebApplication, int) CreateFromOptions(SelfHostingOptions args) => CreateListener(args.Https, args.Port);
 
         public override Task CleanUp()
         {
