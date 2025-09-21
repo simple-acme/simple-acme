@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using PKISharp.WACS.Context;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
@@ -10,7 +10,6 @@ using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
@@ -27,17 +26,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         internal const int DefaultHttpValidationPort = 80;
         internal const int DefaultHttpsValidationPort = 443;
 
-        private readonly object _listenerLock = new();
-        private HttpListener? _listener;
+        private WebApplication? _listener;
         private readonly ConcurrentDictionary<string, string> _files = new();
 
         /// <summary>
         /// We can answer requests for multiple domains
         /// </summary>
-        public override ParallelOperations Parallelism => ParallelOperations.Answer | ParallelOperations.Prepare;
+        public override ParallelOperations Parallelism => ParallelOperations.Answer;
 
         private bool HasListener => _listener != null;
-        private HttpListener Listener
+        private WebApplication Listener
         {
             get
             {
@@ -54,12 +52,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             if (_files.TryGetValue(path, out var response))
             {
-                log.Verbose("SelfHosting plugin serving file {name} to {ip}", path, context.Connection.RemoteIpAddress);
+                log.Verbose("Serving file {name} to {ip}", path, context.Connection.RemoteIpAddress);
                 await context.Response.WriteAsync(response);
             }
             else
             {
-                log.Warning("SelfHosting plugin couldn't serve file {name}", path);
+                log.Warning("Couldn't serve file {name}", path);
                 context.Response.StatusCode = 404;
             }
         }
@@ -68,66 +66,73 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             // Add validation file
             _files.GetOrAdd(challenge.HttpResourceName, challenge.HttpResourceValue);
+
+            if (_listener == null)
+            {
+                var port = DefaultHttpValidationPort;
+                try
+                {
+                    var (listener, listenerPort) = CreateFromOptions(options);
+                    if (OperatingSystem.IsWindows())
+                    {
+                        listener.MapGet($"{{*path}}", ReceiveRequest);
+                    }
+                    else
+                    {
+                        listener.MapGet($"/{Http01ChallengeValidationDetails.HttpPathPrefix}/{{*path}}", ReceiveRequest);
+                    }
+                    await listener.StartAsync();
+                    port = listenerPort;
+                    Listener = listener;
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex, "Unable to activate listener on port {port}", port);
+                    throw;
+                }
+            }
+
             await TestChallenge(challenge);
             return true;
         }
 
-        public override async Task Commit()
-        {
-            // Create listener if it doesn't exist yet
-            // Create listener if it doesn't exist yet
-            lock (_listenerLock)
-            {
-                if (_listener == null)
-                {
-                    var port = DefaultHttpValidationPort;
-                    try
-                    {
-                        var (listener, listenerPort) = CreateFromOptions(options);
-                        listener.MapGet($"/{Http01ChallengeValidationDetails.HttpPathPrefix}/{{*path}}", ReceiveRequest);
-                        listener.Start();
-                        port = listenerPort;
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error(ex, "Unable to activate listener on port {port}", port);
-                        throw;
-                    }
-                }
-            }
-        }
+        public override Task Commit() => Task.CompletedTask;
 
         private static (WebApplication, int) CreateListener(bool? https, int? userPort)
         {
-            var protocol = https == true ? "https" : "http";            var port = userPort ?? ((https == true) ? DefaultHttpsValidationPort : DefaultHttpValidationPort);
+            var protocol = https == true ? "https" : "http";           
+            var port = userPort ?? ((https == true) ? DefaultHttpsValidationPort : DefaultHttpValidationPort);
             var builder = WebApplication.CreateSlimBuilder();
-            builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(port));
+            builder.Logging.ClearProviders();
+            if (OperatingSystem.IsWindows())
+            {
+                builder.WebHost.UseHttpSys(options => options.UrlPrefixes.Add($"{protocol}://+:{port}/{Http01ChallengeValidationDetails.HttpPathPrefix}/"));
+            }
+            else
+            {
+                builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(port));
+            }
             var app = builder.Build();
             return (app, port);
         }
 
         public static (WebApplication, int) CreateFromOptions(SelfHostingOptions args) => CreateListener(args.Https, args.Port);
 
-        public override Task CleanUp()
+        public override async Task CleanUp()
         {
             // Cleanup listener if nobody else has done it yet
-            lock (_listenerLock)
+            if (HasListener)
             {
-                if (HasListener)
+                try
                 {
-                    try
-                    {
-                        Listener.Stop();
-                        Listener.Close();
-                    }
-                    finally
-                    {
-                        _listener = null;
-                    }
+                    await Listener.StopAsync();
+                    await Listener.DisposeAsync();
+                }
+                finally
+                {
+                    _listener = null;
                 }
             }
-
-            return Task.CompletedTask;
         }
     }
 }

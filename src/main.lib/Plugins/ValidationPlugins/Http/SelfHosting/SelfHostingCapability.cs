@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Hosting;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using System;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
@@ -45,36 +45,41 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             get
             {
-                return new(() =>
-                {
-                    var args = ArgumentsParser.GetArguments<SelfHostingArguments>();
-                    var (testListener, port) = SelfHostingOptions is null ?
-                        CreateFromArgs(args) :
-                        SelfHosting.CreateFromOptions(SelfHostingOptions);
-                    try
-                    {
-                        testListener.Start();
-                        testListener.StopAsync();
-                    }
-                    catch (HttpListenerException hex)
-                    {
-                        if (hex.ErrorCode == 5)
-                        {
-                            return State.DisabledState("Run as administrator to allow opening a HTTP listener.");
-                        }
-                        else if (hex.ErrorCode == 32)
-                        {
-                            return State.DisabledState($"Another program appears to be using port {port}.");
-                        }
-                        return State.DisabledState(hex.Message);
-                    }
-                    catch (Exception ex)
-                    {
-                        return State.DisabledState(ex.Message);
-                    }
-                    return State.EnabledState();
-                });
+                _testListener ??= new Lazy<State>(() => TestListenerCreator().Result);
+                return _testListener;
             }
+        }
+        internal Lazy<State>? _testListener;
+
+        internal async Task<State> TestListenerCreator() 
+        {
+            var args = ArgumentsParser.GetArguments<SelfHostingArguments>();
+            var (testListener, port) = SelfHostingOptions is null ?
+                CreateFromArgs(args) :
+                SelfHosting.CreateFromOptions(SelfHostingOptions);
+            try
+            {
+                await testListener.StartAsync();
+                await testListener.StopAsync();
+                await testListener.DisposeAsync();
+            }
+            catch (HttpListenerException hex)
+            {
+                if (hex.ErrorCode == 5)
+                {
+                    return State.DisabledState("Run as administrator to allow opening a HTTP listener.");
+                }
+                else if (hex.ErrorCode == 32)
+                {
+                    return State.DisabledState($"Another program appears to be using port {port}.");
+                }
+                return State.DisabledState(hex.Message);
+            }
+            catch (Exception ex)
+            {
+                return State.DisabledState(ex.Message);
+            }
+            return State.EnabledState();
         }
     }
 }
