@@ -14,15 +14,19 @@ namespace PKISharp.WACS.Services
         IPluginService pluginService,
         ILogService log)
     {
-        private readonly List<ISecretProvider> _providers = [.. pluginService.
-                GetSecretServices().
-                Select(b => scope.Resolve(b.Backend)).
-                OfType<ISecretProvider>()];
 
-        private readonly List<ISecretService> _services = [.. pluginService.
+        private List<ISecretProvider>? _backends = null;
+        private List<ISecretProvider> GetBackends() {
+            _backends ??= [..pluginService.
                 GetSecretServices().
-                Select(b => scope.Resolve(b.Backend)).
-                OfType<ISecretService>()];
+                Select(b => scope.Resolve(b.Backend, new TypedParameter(typeof(SecretServiceManager), this))).
+                OfType<ISecretProvider>()
+            ];
+            return _backends;
+        }
+
+        private List<ISecretProvider> Providers => GetBackends();
+        private List<ISecretService> Services => GetBackends().OfType<ISecretService>().ToList();
 
         private record DecomposedKey
         {
@@ -150,7 +154,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <returns></returns>
         public async Task Encrypt() {
-            foreach (var backend in _services) {
+            foreach (var backend in Services) {
                 await backend.Encrypt();
             }
         }
@@ -179,13 +183,13 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         private async Task<ISecretService> ChooseBackend()
         {
-            if (_services.Count == 1)
+            if (Services.Count == 1)
             {
-                return _services[0];
+                return Services[0];
             }
             return await input. 
                 ChooseRequired("Choose secret store",
-                _services, x => Choice.Create(x, description: x.GetType().ToString()));
+                Services, x => Choice.Create(x, description: x.GetType().ToString()));
         }
 
         /// <summary>
@@ -282,7 +286,7 @@ namespace PKISharp.WACS.Services
             while (!exit)
             {
                 var choices = new List<Choice<Func<Task>>>();
-                foreach (var backend in _services)
+                foreach (var backend in Services)
                 {
                     var keys = await backend.ListKeys();
                     choices.AddRange(keys.Select(key => Choice.Create(
@@ -413,7 +417,7 @@ namespace PKISharp.WACS.Services
             log.Information("Vault secret {key} successfully stored in backend {backend}", key, key.Provider);
         }
 
-        private ISecretService? GetService(string? key) => _services.FirstOrDefault(b => string.Equals(b.Prefix, key));
-        private ISecretProvider? GetProvider(string? key) => _providers.FirstOrDefault(b => string.Equals(b.Prefix, key));
+        private ISecretService? GetService(string? key) => Services.FirstOrDefault(b => string.Equals(b.Prefix, key));
+        private ISecretProvider? GetProvider(string? key) => Providers.FirstOrDefault(b => string.Equals(b.Prefix, key));
     } 
 }
