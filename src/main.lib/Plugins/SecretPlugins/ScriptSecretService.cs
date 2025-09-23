@@ -11,7 +11,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
     /// </summary>
     /// <param name="settings"></param>
     /// <param name="log"></param>
-    public class ScriptSecretService(ILogService log, ISettings settings, ScriptClient scriptClient) : ISecretProvider
+    public class ScriptSecretService(ILogService log, ISettings settings, ScriptClient scriptClient, SecretServiceManager ssm) : ISecretProvider
     {
         /// <summary>
         /// Make references to this provider unique from 
@@ -42,7 +42,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
                 { "Key", identifier },
                 { "Operation", "get" }
             };
-            var actual = await ScriptClient.ReplaceTokens(getScriptArgs, replacements);
+            var actual = await ScriptClient.ReplaceTokens(getScriptArgs, replacements, ssm);
             var result = await scriptClient.RunScript(getScript, actual, hideOutput: true);
             return result.Output?.Trim();
         }
