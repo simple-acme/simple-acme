@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using PKISharp.WACS.Configuration;
+﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -9,18 +8,13 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    internal class SelfHostingCapability : HttpValidationCapability
+    internal class SelfHostingCapability(Target target, ArgumentsParser args, ISelfHosterFactory factory) : HttpValidationCapability(target)
     {
+        protected readonly ISelfHosterFactory Factory = factory;
         protected readonly SelfHostingOptions? SelfHostingOptions;
-        protected readonly ArgumentsParser ArgumentsParser;
+        protected readonly ArgumentsParser ArgumentsParser = args;
 
-        public SelfHostingCapability(Target target, ArgumentsParser args) : base(target) => ArgumentsParser = args;
-
-        public SelfHostingCapability(Target target, ArgumentsParser args, SelfHostingOptions? options) : base(target) 
-        {
-            SelfHostingOptions = options;
-            ArgumentsParser = args;
-        } 
+        public SelfHostingCapability(Target target, ArgumentsParser args, ISelfHosterFactory factory, SelfHostingOptions? options) : this(target, args, factory) => SelfHostingOptions = options;
 
         public override State ExecutionState
         {
@@ -35,12 +29,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
         }
 
-        public static (WebApplication, int) CreateFromArgs(SelfHostingArguments? args) =>
-            SelfHosting.CreateFromOptions(new SelfHostingOptions() { 
-                Https = args?.ValidationProtocol?.ToLower() == "https",
-                Port = args?.ValidationPort 
-            });
-
         internal Lazy<State> TestListener
         {
             get
@@ -54,14 +42,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         internal async Task<State> TestListenerCreator() 
         {
             var args = ArgumentsParser.GetArguments<SelfHostingArguments>();
-            var (testListener, port) = SelfHostingOptions is null ?
-                CreateFromArgs(args) :
-                SelfHosting.CreateFromOptions(SelfHostingOptions);
+            var options = SelfHostingOptions as ISelfHosterOptions ?? args ?? new SelfHostingArguments();
+            var listener = Factory.Create(options);
             try
             {
-                await testListener.StartAsync();
-                await testListener.StopAsync();
-                await testListener.DisposeAsync();
+                await listener.Start();
+                await listener.Stop();
             }
             catch (HttpListenerException hex)
             {
@@ -71,7 +57,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 }
                 else if (hex.ErrorCode == 32)
                 {
-                    return State.DisabledState($"Another program appears to be using port {port}.");
+                    return State.DisabledState($"Another program appears to be using port {listener.Port}.");
                 }
                 return State.DisabledState(hex.Message);
             }

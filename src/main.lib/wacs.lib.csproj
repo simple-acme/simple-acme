@@ -6,10 +6,6 @@
 		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;</Configurations>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
-
 	<PropertyGroup Condition="'$(Configuration)'=='Debug' OR '$(Configuration)'=='DebugTrimmed'">
 		<WarningLevel>4</WarningLevel>
 	</PropertyGroup>
