@@ -33,10 +33,17 @@
 		<PublishSingleFile>true</PublishSingleFile>
 		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
 	</PropertyGroup>
-	
 	<PropertyGroup Condition="'$(Configuration)'=='DebugTrimmed'OR'$(Configuration)'=='ReleaseTrimmed'">
 		<PublishTrimmed>true</PublishTrimmed>
 	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64' OR '$(RuntimeIdentifier)' == 'linux-arm64'">
+		<DefineConstants>$(DefineConstants);LINUX</DefineConstants>
+	</PropertyGroup>
+	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64' OR '$(RuntimeIdentifier)' == 'linux-arm64'">
+		<ProjectReference Include="..\main.lib.kestrel\wacs.lib.kestrel.csproj" />
+		<TrimmerRootAssembly Include="wacs.lib.kestrel" />
+	</ItemGroup>
 	
 	<ItemGroup>
 		<TrimmerRootAssembly Include="Autofac" />
@@ -68,7 +75,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\main.lib.kestrel\wacs.lib.kestrel.csproj" />
 		<ProjectReference Include="..\main.lib\wacs.lib.csproj" />
 		<ProjectReference Include="..\plugin.validation.dns.acme\wacs.validation.dns.acme.csproj" />
 		<ProjectReference Include="..\plugin.validation.http.ftp\wacs.validation.http.ftp.csproj" />

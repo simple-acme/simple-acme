@@ -78,8 +78,11 @@ namespace PKISharp.WACS.Host
                 _ = builder.RegisterType<DueDateStaticService>().SingleInstance();
                 _ = builder.RegisterType<DueDateRuntimeService>().SingleInstance();
                 _ = builder.RegisterType<SecretServiceManager>().SingleInstance();
-                // _ = builder.RegisterType<KestrelSelfHosterFactory>().As<ISelfHosterFactory>().SingleInstance();
+#if LINUX
+                _ = builder.RegisterType<KestrelSelfHosterFactory>().As<ISelfHosterFactory>().SingleInstance();
+#else
                 _ = builder.RegisterType<HttpListenerFactory>().As<ISelfHosterFactory>().SingleInstance();
+#endif
                 if (OperatingSystem.IsWindows())
                 {
                     _ = builder.RegisterType<TaskSchedulerService>().As<IAutoRenewService>().SingleInstance();
