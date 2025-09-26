@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Plugins
         public string Name => meta.Name ?? meta.Trigger;
         public string Description => meta.Description;
         public bool Hidden => meta.Hidden;
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
         public Type Options => meta.Options;
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         public Type OptionsFactory => meta.OptionsFactory;

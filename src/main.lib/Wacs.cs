@@ -110,9 +110,12 @@ namespace PKISharp.WACS.Host
             if (_args.Docs)
             {
                 helpService.GenerateArgumentsYaml();
+#pragma warning disable IL2026
+                // We only run this on the untrimmed build
                 helpService.GeneratePluginsYaml();
                 helpService.GenerateSettingsYaml();
                 helpService.GenerateSettingsYaml2();
+#pragma warning restore IL2026
                 return 0;
             }
 

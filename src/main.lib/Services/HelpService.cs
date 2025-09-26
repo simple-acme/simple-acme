@@ -6,6 +6,7 @@ using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -320,6 +321,7 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// Generate plugins.yml for documentation website
         /// </summary>
+        [RequiresUnreferencedCode("Reflection on types with trimming may require DynamicallyAccessedMemberTypes.")]
         internal void GeneratePluginsYaml()
         {
             var x = new StringBuilder();
@@ -362,6 +364,7 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// Generate settings.yml for documentation website
         /// </summary>
+        [RequiresUnreferencedCode("Reflection on types with trimming may require DynamicallyAccessedMemberTypes.")]
         internal void GenerateSettingsYaml()
         {
             var metaBuilder = new StringBuilder();
@@ -377,9 +380,10 @@ namespace PKISharp.WACS.Services
         /// <param name="level"></param>
         /// <param name="x"></param>
         /// <exception cref="NotImplementedException"></exception>
-        internal void GenerateTypeYaml(Type t, int level, StringBuilder x)
+        [RequiresUnreferencedCode("Reflection on types with trimming may require DynamicallyAccessedMemberTypes.")]
+        internal static void GenerateTypeYaml([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type t, int level, StringBuilder x)
         {
-            foreach (var member in t.GetMembers(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance).OfType<PropertyInfo>())
+            foreach (var member in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 var meta = member.GetCustomAttribute<SettingsValueAttribute>();
                 if (meta?.Hidden ?? false)
@@ -521,10 +525,11 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// Generate settings2.yml for documentation website
         /// </summary>
+        [RequiresUnreferencedCode("Reflection on types with trimming may require DynamicallyAccessedMemberTypes.")]
         internal void GenerateSettingsYaml2()
         {
             var metaBuilder = new StringBuilder();
-            foreach (var member in typeof(Settings).GetMembers(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance).OfType<PropertyInfo>())
+            foreach (var member in typeof(Settings).GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 var meta = member.GetCustomAttribute<SettingsValueAttribute>();
                 if (meta?.Hidden ?? false)
@@ -538,9 +543,14 @@ namespace PKISharp.WACS.Services
             log.Debug("YAML written to {0}", new FileInfo("settings2.yml").FullName);
         }
 
-        internal void GenerateSettingsYamlForType2(Type t, string prefix, StringBuilder x)
+        [RequiresUnreferencedCode("Reflection on types with trimming may require DynamicallyAccessedMemberTypes.")]
+        internal static void GenerateSettingsYamlForType2(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] 
+            Type t, 
+            string prefix, 
+            StringBuilder x)
         {
-            foreach (var member in t.GetMembers(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance).OfType<PropertyInfo>())
+            foreach (var member in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 var meta = member.GetCustomAttribute<SettingsValueAttribute>();
                 if (meta?.Hidden ?? false)
