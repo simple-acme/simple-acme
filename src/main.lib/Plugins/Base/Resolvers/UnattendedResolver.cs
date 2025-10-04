@@ -190,27 +190,23 @@ namespace PKISharp.WACS.Plugins.Resolvers
         public async Task<PluginFrontend<IInstallationPluginCapability, InstallationPluginOptions>?> 
             GetInstallationPlugin(Plugin source, IEnumerable<Plugin> stores, IEnumerable<Plugin> installation)
         {
-            var defaultInstallation = arguments.Installation ?? settings.Installation.DefaultInstallation;
-            var parts = defaultInstallation.ParseCsv();
-            if (parts == null)
-            {
+            var installationList = arguments.Installation ?? settings.Installation.DefaultInstallation;
+            if (string.IsNullOrWhiteSpace(installationList) && OperatingSystem.IsWindows() && IIS.IDs.Contains(source.Id.ToString()))
+            { 
                 // If source is IIS, and install is not specified,
                 // assume that user intends to install with IIS as 
                 // well. Users who don't want this (are there any?)
                 // can work around this with --installation none
-                defaultInstallation = source.Id.ToString() == InstallationPlugins.IIS.ID ?
-                    InstallationPlugins.IIS.Trigger : 
-                    InstallationPlugins.Null.Trigger;
-            } 
-            else
-            {
-                var index = installation.Count();
-                defaultInstallation = index == parts.Count ? InstallationPlugins.Null.Trigger : parts[index];
+                installationList = InstallationPlugins.IIS.Trigger;
             }
+            var steps = installationList.ParseCsv();
+            steps ??= [InstallationPlugins.Null.Trigger];
+            var index = installation.Count();
+            var currentStep = index == steps.Count ? InstallationPlugins.Null.Trigger : steps[index];
             return await GetPlugin<IInstallationPluginCapability, InstallationPluginOptions>(
                 Steps.Installation,
                 configState: x => x.CanInstall(stores.Select(x => x.Backend), installation.Select(x => x.Backend)),
-                defaultParam1: defaultInstallation,
+                defaultParam1: currentStep,
                 defaultBackend: typeof(InstallationPlugins.Null));
         }
     }
