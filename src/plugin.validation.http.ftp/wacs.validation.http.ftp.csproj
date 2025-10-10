@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="53.0.1" />
+    <PackageReference Include="FluentFTP" Version="53.0.2" />
     <PackageReference Include="FluentFTP.GnuTLS" Version="1.0.37" />
   </ItemGroup>
 
