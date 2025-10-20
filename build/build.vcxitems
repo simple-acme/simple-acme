@@ -24,6 +24,7 @@
     <None Include="$(MSBuildThisFileDirectory)08-nuget.ps1" />
     <None Include="$(MSBuildThisFileDirectory)09-docs.ps1" />
     <None Include="$(MSBuildThisFileDirectory)10-chocolatey.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)11-winget.ps1" />
     <None Include="$(MSBuildThisFileDirectory)appveyor-local.ps1" />
     <None Include="$(MSBuildThisFileDirectory)codesigning.pfx" />
     <None Include="$(MSBuildThisFileDirectory)environment-local.ps1" />
