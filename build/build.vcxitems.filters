@@ -58,5 +58,8 @@
     <None Include="$(MSBuildThisFileDirectory)10-chocolatey.ps1">
       <Filter>ReleaseSteps</Filter>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)11-winget.ps1">
+      <Filter>ReleaseSteps</Filter>
+    </None>
   </ItemGroup>
 </Project>
