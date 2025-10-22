@@ -67,20 +67,18 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
         [DataRow("a")]
         public void NewAndPreviousExists(string initial)
         {
-            Assert.Throws<Exception>(() => {
-                var tempPath = Infrastructure.Directory.Temp();
-                var file = new FileInfo(tempPath.FullName + "\\a.json");
-                var newFile = new FileInfo(tempPath.FullName + "\\a.json.new");
-                var previous = new FileInfo(tempPath.FullName + "\\a.json.previous");
-                using var x = previous.Create();
-                x.Dispose();
-                using var y = newFile.Create();
-                y.Dispose();
-                file.SafeWrite(initial).Wait(TestContext.CancellationTokenSource.Token);
-            });
-
+        
+            var tempPath = Infrastructure.Directory.Temp();
+            var file = new FileInfo(tempPath.FullName + "\\a.json");
+            var newFile = new FileInfo(tempPath.FullName + "\\a.json.new");
+            var previous = new FileInfo(tempPath.FullName + "\\a.json.previous");
+            using var x = previous.Create();
+            x.Dispose();
+            using var y = newFile.Create();
+            y.Dispose();
+            Assert.ThrowsAsync<Exception>(() => file.SafeWrite(initial));
         }
 
-        public TestContext TestContext { get; set; }
+        public TestContext TestContext { get; set; } = null!;
     }
 }

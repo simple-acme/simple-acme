@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Services
         ISettings settings,
         ArgumentsParser parser)
     {
-        internal IPluginService Plugins => plugins;
+        protected internal IPluginService Plugins => plugins;
 
         /// <summary>
         /// Map arguments to plugins
