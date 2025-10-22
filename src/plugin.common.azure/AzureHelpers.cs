@@ -50,10 +50,6 @@ namespace PKISharp.WACS.Plugins.Azure.Common
                 {
                     return AzureAuthorityHosts.AzureChina;
                 }
-                else if (ArmEnvironment == ArmEnvironment.AzureGermany)
-                {
-                    return AzureAuthorityHosts.AzureGermany;
-                }
                 else if (ArmEnvironment == ArmEnvironment.AzureGovernment)
                 {
                     return AzureAuthorityHosts.AzureGovernment;

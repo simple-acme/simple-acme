@@ -1,7 +1,7 @@
 ﻿using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
-using PKISharp.WACS.UnitTests.Tests.CertificateInfoTests;
+using PKISharp.WACS.UnitTests.Tests.DomainObjectTests;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services

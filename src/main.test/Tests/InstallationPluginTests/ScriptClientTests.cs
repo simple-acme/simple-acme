@@ -62,7 +62,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
             File.WriteAllText(psExit.FullName, $"throw 'error'");
             var sc = new Clients.ScriptClient(log, settings);
             var success = sc.RunScript(psExit.FullName, "", "").Result.Success;
-            Assert.AreEqual(false, success);
+            Assert.IsFalse(success);
         }
 
         [TestMethod]
@@ -75,7 +75,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
             File.WriteAllText(psExit.FullName, $"try {{ throw 'error' }} catch {{ }}");
             var sc = new Clients.ScriptClient(log, settings);
             var success = sc.RunScript(psExit.FullName, "", "").Result.Success;
-            Assert.AreEqual(true, success);
+            Assert.IsTrue(success);
         }
 
         [TestMethod]

@@ -25,8 +25,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(Exception))]
-        public void Illegal() => TestScript("hello nonsense");
+        public void Illegal() => Assert.Throws<Exception>(() => TestScript("hello nonsense"));
 
         [TestMethod]
         public void SingleParam() => Assert.AreEqual("hello", TestScript("hello"));
