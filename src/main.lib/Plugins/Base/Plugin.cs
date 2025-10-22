@@ -33,19 +33,31 @@ namespace PKISharp.WACS.Plugins
         public string Name => meta.Name ?? meta.Trigger;
         public string Description => meta.Description;
         public bool Hidden => meta.Hidden;
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type Options => meta.Options;
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type OptionsFactory => meta.OptionsFactory;
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type OptionsJson => meta.OptionsJson;
+        public Type Options
+        {
+            [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            get => meta.Options;
+        }
+        public Type OptionsFactory
+        {
+            [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            get => meta.OptionsFactory;
+        }
+        public Type OptionsJson
+        {
+            [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            get => meta.OptionsJson;
+        }
         public Type Capability
         {
             [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             get => meta.Capability;
         }
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type? Arguments => meta.Arguments;
+        public Type? Arguments
+        {
+            [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            get => meta.Arguments;
+        }
         public bool External => meta.External;
         public bool Schema => meta.JsonSchemaPublished;
         public string? Provider => meta.Provider;
