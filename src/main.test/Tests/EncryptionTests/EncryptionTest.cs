@@ -13,7 +13,7 @@ namespace PKISharp.WACS.UnitTests.Tests.EcnryptionTests
             var plain = "---BLA---";
             var plainString = new ProtectedString(plain);
             var encrypted = plainString.DiskValue(true);
-            Assert.IsTrue(encrypted != null);
+            Assert.IsNotNull(encrypted);
 
             // Read back
             var log = new Mock.Services.LogService(false);
@@ -23,7 +23,7 @@ namespace PKISharp.WACS.UnitTests.Tests.EcnryptionTests
             // Turn off encryption
             var turnOff = new ProtectedString(encrypted ?? "", log);
             var turnOffValue = turnOff.DiskValue(false);
-            Assert.IsTrue(turnOffValue != null);
+            Assert.IsNotNull(turnOffValue);
 
             // Read back turned off value
             var readBack2 = new ProtectedString(turnOffValue ?? "", log);

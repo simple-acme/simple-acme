@@ -49,51 +49,51 @@ namespace PKISharp.WACS.UnitTests.Tests.OrderPluginTests
             dps.Initialize().Wait();
             var split = domain.Split(renewal, target);
             Assert.IsNotNull(split);
-            Assert.AreEqual(2, split.Count);
+            Assert.HasCount(2, split);
 
             // First order for X.com, two parts for sites 1 and 3
             Assert.AreEqual(x_com, split[0].Target.CommonName);
             var prts = split[0].Target.Parts.ToList();
-            Assert.AreEqual(2, prts.Count);
+            Assert.HasCount(2, prts);
 
             var prt = prts[0];
             Assert.AreEqual(1, prt.SiteId);
             Assert.AreEqual(Clients.IIS.IISSiteType.Web, prt.SiteType);
-            Assert.AreEqual(2, prt.Identifiers.Count);
+            Assert.HasCount(2, prt.Identifiers);
 
             var ids = prt.Identifiers;
-            Assert.IsTrue(ids.Contains(x_com));
-            Assert.IsTrue(ids.Contains(www_x_com));
+            Assert.Contains(x_com, ids);
+            Assert.Contains(www_x_com, ids);
 
             prt = prts[1];
             Assert.AreEqual(3, prt.SiteId);
             Assert.AreEqual(Clients.IIS.IISSiteType.Ftp, prt.SiteType);
-            Assert.AreEqual(1, prt.Identifiers.Count);
+            Assert.HasCount(1, prt.Identifiers);
 
             ids = prt.Identifiers;
-            Assert.IsTrue(ids.Contains(ftp_x_com));
+            Assert.Contains(ftp_x_com, ids);
 
             // Second order for X.com, two parts for sites 2 and 3
             Assert.AreEqual(y_com, split[1].Target.CommonName);
             prts = [.. split[1].Target.Parts];
-            Assert.AreEqual(2, prts.Count);
+            Assert.HasCount(2, prts);
 
             prt = prts[0];
             Assert.AreEqual(2, prt.SiteId);
             Assert.AreEqual(Clients.IIS.IISSiteType.Web, prt.SiteType);
-            Assert.AreEqual(2, prt.Identifiers.Count);
+            Assert.HasCount(2, prt.Identifiers);
 
             ids = prt.Identifiers;
-            Assert.IsTrue(ids.Contains(y_com));
-            Assert.IsTrue(ids.Contains(www_y_com));
+            Assert.Contains(y_com, ids);
+            Assert.Contains(www_y_com, ids);
 
             prt = prts[1];
             Assert.AreEqual(3, prt.SiteId);
             Assert.AreEqual(Clients.IIS.IISSiteType.Ftp, prt.SiteType);
-            Assert.AreEqual(1, prt.Identifiers.Count);
+            Assert.HasCount(1, prt.Identifiers);
 
             ids = prt.Identifiers;
-            Assert.IsTrue(ids.Contains(ftp_y_com));
+            Assert.Contains(ftp_y_com, ids);
         }
     }
 }

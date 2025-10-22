@@ -263,11 +263,10 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public virtual List<TypeDescriptor> GetResolvable<T>()
         {
-            return _allTypes.
+            return [.. _allTypes.
                 AsEnumerable().
                 Where(type => typeof(T) != type.Type && typeof(T).IsAssignableFrom(type.Type)).
-                Distinct().
-                ToList();
+                Distinct()];
         }
 
         /// <summary>

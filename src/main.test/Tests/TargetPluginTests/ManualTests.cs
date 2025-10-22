@@ -47,11 +47,11 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual(options.CommonName, "a.example.com");
-                Assert.AreEqual(options.AlternativeNames.Count, 3);
+                Assert.AreEqual("a.example.com", options.CommonName);
+                Assert.HasCount(3, options.AlternativeNames);
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
+                Assert.IsTrue(validator.IsValid(tar));
             }
         }
 
@@ -62,11 +62,11 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual(options.CommonName, "经/已經.example.com");
-                Assert.AreEqual(options.AlternativeNames.First(), "经/已經.example.com");
+                Assert.AreEqual("经/已經.example.com", options.CommonName);
+                Assert.AreEqual("经/已經.example.com", options.AlternativeNames.First());
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
+                Assert.IsTrue(validator.IsValid(tar));
             }
         }
 
@@ -77,11 +77,11 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual(options.CommonName, "*.经/已經.example.com");
-                Assert.AreEqual(options.AlternativeNames.First(), "*.经/已經.example.com");
+                Assert.AreEqual("*.经/已經.example.com", options.CommonName);
+                Assert.AreEqual("*.经/已經.example.com", options.AlternativeNames.First());
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
+                Assert.IsTrue(validator.IsValid(tar));
             }
         }
 
@@ -92,11 +92,11 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual(options.CommonName, "经/已經.经/已經.example.com");
-                Assert.AreEqual(options.AlternativeNames.First(), "经/已經.经/已經.example.com");
+                Assert.AreEqual("经/已經.经/已經.example.com", options.CommonName);
+                Assert.AreEqual("经/已經.经/已經.example.com", options.AlternativeNames.First());
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
+                Assert.IsTrue(validator.IsValid(tar));
             }
         }
 
@@ -107,11 +107,11 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual(options.CommonName, "*.经/已經.example.com");
-                Assert.AreEqual(options.AlternativeNames.First(), "*.经/已經.example.com");
+                Assert.AreEqual("*.经/已經.example.com", options.CommonName);
+                Assert.AreEqual("*.经/已經.example.com", options.AlternativeNames.First());
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
+                Assert.IsTrue(validator.IsValid(tar));
             }
         }
 
@@ -122,11 +122,11 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual(options.CommonName, "经/已經.经/已經.example.com");
-                Assert.AreEqual(options.AlternativeNames.First(), "经/已經.经/已經.example.com");
+                Assert.AreEqual("经/已經.经/已經.example.com", options.CommonName);
+                Assert.AreEqual("经/已經.经/已經.example.com", options.AlternativeNames.First());
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
+                Assert.IsTrue(validator.IsValid(tar));
             }
         }
 
@@ -139,8 +139,8 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             {
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
-                Assert.IsTrue(tar.Parts.First().Identifiers.OfType<IpIdentifier>().First().Value == "1.2.3.4");
+                Assert.IsTrue(validator.IsValid(tar));
+                Assert.AreEqual("1.2.3.4", tar.Parts.First().Identifiers.OfType<IpIdentifier>().First().Value);
             }
         }
 
@@ -153,8 +153,8 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             {
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
-                Assert.IsTrue(tar.CommonName?.Value == "abc.com");
+                Assert.IsTrue(validator.IsValid(tar));
+                Assert.AreEqual("abc.com", tar.CommonName?.Value);
             }
         }
 
@@ -165,11 +165,11 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual(options.CommonName, "common.example.com");
-                Assert.AreEqual(options.AlternativeNames.Count, 4);
+                Assert.AreEqual("common.example.com", options.CommonName);
+                Assert.HasCount(4, options.AlternativeNames);
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
+                Assert.IsTrue(validator.IsValid(tar));
             }
         }
 
@@ -180,16 +180,15 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual(options.CommonName, "经/已經.example.com");
-                Assert.AreEqual(options.AlternativeNames.Count, 3);
+                Assert.AreEqual("经/已經.example.com", options.CommonName);
+                Assert.HasCount(3, options.AlternativeNames);
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
-                Assert.AreEqual(validator.IsValid(tar), true);
+                Assert.IsTrue(validator.IsValid(tar));
             }
         }
 
         [TestMethod]
-        [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
-        public void NoHost() => Options($"");
+        public void NoHost() => Assert.Throws<Exception>(() => Options($""));
     }
 }

@@ -16,6 +16,7 @@ namespace PKISharp.WACS.Host
         IInputService inputService,
         ISettings settingsService,
         HelpService helpService,
+        YamlService yamlService,
         ArgumentsParser argumentsParser,
         RenewalCreator renewalCreator,
         DomainParseService domainParseService,
@@ -109,10 +110,10 @@ namespace PKISharp.WACS.Host
             // update the website.
             if (_args.Docs)
             {
-                helpService.GenerateArgumentsYaml();
-                helpService.GeneratePluginsYaml();
-                helpService.GenerateSettingsYaml();
-                helpService.GenerateSettingsYaml2();
+                yamlService.GenerateArgumentsYaml();
+                yamlService.GeneratePluginsYaml();
+                yamlService.GenerateSettingsYaml();
+                yamlService.GenerateSettingsYaml2();
                 return 0;
             }
 
