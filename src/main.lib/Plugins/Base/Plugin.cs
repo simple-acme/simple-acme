@@ -39,8 +39,11 @@ namespace PKISharp.WACS.Plugins
         public Type OptionsFactory => meta.OptionsFactory;
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         public Type OptionsJson => meta.OptionsJson;
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-        public Type Capability => meta.Capability;
+        public Type Capability
+        {
+            [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            get => meta.Capability;
+        }
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         public Type? Arguments => meta.Arguments;
         public bool External => meta.External;
