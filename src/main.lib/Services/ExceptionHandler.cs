@@ -50,7 +50,6 @@ namespace PKISharp.WACS.Services
                         {
                             log.Error("({type}): {message}", currentException.GetType().Name, currentException.Message);
                         }
-                        log.Debug("Exception details: {@ex}", currentException);
                         ExitCode = currentException.HResult;
                     }
                     else if (
@@ -65,6 +64,7 @@ namespace PKISharp.WACS.Services
                         // Autofac and Async exceptions only logged in debug/verbose mode
                         log.Debug("Wrapped in {type}: {message}", currentException.GetType().Name, currentException.Message);
                     }
+                    log.Debug("Exception details: {ex}", currentException.StackTrace);
                 }
             }
             else if (!string.IsNullOrEmpty(message))
