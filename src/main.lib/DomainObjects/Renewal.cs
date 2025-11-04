@@ -57,6 +57,11 @@ namespace PKISharp.WACS.DomainObjects
         public string Id { get; set; } = "";
 
         /// <summary>
+        /// Endpoint URL of the ACME server to use for this renewal
+        /// </summary>
+        public string? EndPoint { get; set; }
+
+        /// <summary>
         /// Friendly name for the certificate. If left
         /// blank or empty, the CommonName will be used.
         /// </summary>

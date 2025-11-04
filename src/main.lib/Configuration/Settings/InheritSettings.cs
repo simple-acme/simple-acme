@@ -14,8 +14,8 @@ namespace PKISharp.WACS.Configuration.Settings
 
     internal class InheritSettings(params IEnumerable<Settings> settings) : InheritSettings<Settings>(settings), ISettings
     {
-        ISettings ISettings.Merge(Settings? settings) => MergeTyped(settings);
-        public InheritSettings MergeTyped(Settings? settings)
+        ISettings ISettings.Merge(Settings? settings, Uri? uri) => MergeTyped(settings, uri);
+        public InheritSettings MergeTyped(Settings? settings, Uri? uri)
         { 
             if (settings == null)
             {
@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Configuration.Settings
             newSettings.Insert(0, settings);
             return new InheritSettings(newSettings)
             {
-                BaseUri = BaseUri,
+                BaseUri = uri ?? BaseUri,
                 Valid = Valid
             };
         }
