@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HuaweiCloud.SDK.Dns" Version="3.1.170" />
+    <PackageReference Include="HuaweiCloud.SDK.Dns" Version="3.1.171" />
   </ItemGroup>
 
   <ItemGroup>
