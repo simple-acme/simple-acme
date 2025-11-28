@@ -37,7 +37,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Autofac" Version="8.4.0" />
+		<PackageReference Include="Autofac" Version="9.0.0" />
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
 		<PackageReference Include="DnsClient" Version="1.8.0" />
 		<PackageReference Include="MailKit" Version="4.14.1" />
