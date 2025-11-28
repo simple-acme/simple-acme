@@ -8,7 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
 {
@@ -86,10 +88,15 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                     string jsonBody = JsonConvert.SerializeObject(objData);
                     StringDictionary headers = new StringDictionary();
                     headers["Content-Type"] = ContentType.APPLICATION_JSON;
-                    string sendUrl = $"{qiNiuServer}/{sanName.Value}/{meth}";
-                    string token = auth.CreateManageTokenV2("POST", sendUrl, headers, objData);
-                    //send post
-                    HttpResult changeResult = httpManager.PostJson(sendUrl, objData, token);
+                    string sendUrl = $"{qiNiuServer}/domain/{sanName.Value}/{meth}";
+                    string token = auth.CreateManageTokenV2("PUT", sendUrl, headers, jsonBody);
+                    //send put
+                    var byteBody = Encoding.UTF8.GetBytes(jsonBody);
+                    HttpRequestOptions httpRequestOptions = httpManager.CreateHttpRequestOptions("PUT", sendUrl, null, token);
+                    httpRequestOptions.Headers.Add("Content-Type", ContentType.APPLICATION_JSON);
+                    httpRequestOptions.AllowWriteStreamBuffering = true;
+                    httpRequestOptions.RequestData = byteBody;
+                    var changeResult = httpManager.SendRequest(httpRequestOptions);
                     if (changeResult.Code != 200)
                     {
                         //error
