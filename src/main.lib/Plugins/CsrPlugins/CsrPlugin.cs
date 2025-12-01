@@ -202,9 +202,15 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         /// <returns></returns>
         private static X509Name CommonName(Identifier? commonName)
         {
+            var cn = "";
+            // IP addresses are not allowed in CN
+            if (commonName != null && commonName.Type == IdentifierType.DnsName)
+            {
+                cn = commonName.Unicode(false).Value;
+            }
             var attrs = new Dictionary<DerObjectIdentifier, string?>
             {
-                [X509Name.CN] = commonName?.Unicode(false).Value ?? ""
+                [X509Name.CN] = cn
             };
             var ord = new List<DerObjectIdentifier>
             {
