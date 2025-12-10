@@ -68,7 +68,7 @@ namespace PKISharp.WACS.Host
                 _ = builder.RegisterType<AcmeClientManager>().SingleInstance();
                 _ = builder.RegisterType<NetworkCheckService>().SingleInstance();
                 _ = builder.RegisterType<ZeroSsl>().SingleInstance();
-                _ = builder.RegisterType<OrderManager>().SingleInstance();
+                _ = builder.RegisterType<OrderManager>().InstancePerLifetimeScope();
                 _ = builder.RegisterType<TargetValidator>().SingleInstance();
                 _ = builder.RegisterType<EmailClient>().SingleInstance();
                 _ = builder.RegisterType<ScriptClient>().SingleInstance();

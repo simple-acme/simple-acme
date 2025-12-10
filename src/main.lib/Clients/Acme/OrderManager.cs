@@ -63,7 +63,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         public async Task<AcmeOrderDetails?> GetOrCreate(Order order, AcmeClient client, ICertificateInfo? replaces, RunLevel runLevel)
         {
-            var orderParameters = CreateParameters(order, client);
+            var orderParameters = CreateParameters(client);
             orderParameters.Replaces = replaces;
 
             var cacheKey = CacheKey(order, orderParameters, client.Account.Details.Kid);
@@ -100,10 +100,10 @@ namespace PKISharp.WACS.Clients.Acme
         /// <summary>
         /// Create order parameters object to select order specific settings
         /// </summary>
-        /// <param name="order"></param>
         /// <param name="client"></param>
+        /// <param name="replaces"></param>
         /// <returns></returns>
-        private OrderParameters CreateParameters(Order order, AcmeClient client)
+        private OrderParameters CreateParameters(AcmeClient client)
         {
             var orderParameters = new OrderParameters();
             if (settings.Order.DefaultValidDays > 0)
@@ -123,8 +123,7 @@ namespace PKISharp.WACS.Clients.Acme
             }
 
             // Choose certificate profile to use
-            // First check renewal-specific settings, then fall back to global settings
-            var profile = order.Renewal.Settings?.Acme?.CertificateProfile ?? settings.Acme.CertificateProfile;
+            var profile = settings.Acme.CertificateProfile;
             if (!string.IsNullOrWhiteSpace(profile))
             {
                 if (!(client.Directory.Meta?.Profiles?.ContainsKey(profile) ?? false))
