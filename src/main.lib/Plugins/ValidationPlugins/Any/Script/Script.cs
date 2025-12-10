@@ -164,12 +164,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             return await ScriptClient.ReplaceTokens(args, replacements ?? [], secretServiceManager, censor);
         }
 
-        public async Task CleanUp() =>
-            await (
-                _scriptDns?.CleanUp() ?? 
-                _scriptHttp?.CleanUp() ??
-                Task.CompletedTask);
+        /// <summary>
+        /// Forward cleanup call to the appropriate script
+        /// </summary>
+        /// <returns></returns>
+        public Task CleanUp() => _scriptDns?.CleanUp() ?? _scriptHttp?.CleanUp() ?? Task.CompletedTask;
 
-        public Task Commit() => Task.CompletedTask;
+        /// <summary>
+        /// Forward commit call to the appropriate plugin, important for DNS prevalidation
+        /// </summary>
+        /// <returns></returns>
+        public Task Commit() => _scriptDns?.Commit() ?? _scriptHttp?.Commit() ?? Task.CompletedTask;
     }
 }
