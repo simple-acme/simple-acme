@@ -137,7 +137,11 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
             }
         }
 
-        public async Task Encrypt() => await Save();
+        public async Task Encrypt()
+        {
+            await Init();
+            await Save();
+        }
     }
 
     /// <summary>
