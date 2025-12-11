@@ -81,6 +81,7 @@ namespace PKISharp.WACS
             existing.StorePluginOptions = temp.StorePluginOptions;
             existing.ValidationPluginOptions = temp.ValidationPluginOptions;
             existing.InstallationPluginOptions = temp.InstallationPluginOptions;
+            existing.Settings = temp.Settings;
             return existing;
         }
 
