@@ -101,7 +101,6 @@ namespace PKISharp.WACS.Clients.Acme
         /// Create order parameters object to select order specific settings
         /// </summary>
         /// <param name="client"></param>
-        /// <param name="replaces"></param>
         /// <returns></returns>
         private OrderParameters CreateParameters(AcmeClient client)
         {
