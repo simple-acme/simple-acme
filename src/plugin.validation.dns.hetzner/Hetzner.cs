@@ -32,16 +32,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             ILogService logService,
             ISettingsService settings) : base(dnsClient, logService, settings)
         {
-            if (options.UseHetznerCloud)
-            {
-                _client = new HetznerCloudDnsClient(ssm.EvaluateSecret(options.ApiToken) ?? throw new InvalidOperationException("API Token cannot be null"), logService, proxyService);
-            }
-            else
-            {
-                _client = new HetznerDnsClient(ssm.EvaluateSecret(options.ApiToken) ?? throw new InvalidOperationException("API Token cannot be null"), logService, proxyService);
-            }
-
             _options = options;
+            _client = options.UseHetznerCloud
+                ? new HetznerCloudDnsClient(ssm.EvaluateSecret(options.ApiToken) ?? throw new InvalidOperationException("API Token cannot be null"), logService, proxyService)
+                : new HetznerDnsClient(ssm.EvaluateSecret(options.ApiToken) ?? throw new InvalidOperationException("API Token cannot be null"), logService, proxyService);
         }
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
