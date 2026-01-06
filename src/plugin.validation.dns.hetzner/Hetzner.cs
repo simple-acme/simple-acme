@@ -105,7 +105,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 _log.Error("No zones could be found using the Hetzner DNS API. " +
                     "Maybe you entered a wrong API Token?");
-                throw new Exception();
+                throw new InvalidOperationException("No zones could be found using the Hetzner DNS API. Maybe you entered a wrong API Token?");
             }
 
             var bestZone = FindBestMatch(zones.ToDictionary(x => x.Name), recordName);
