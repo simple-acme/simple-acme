@@ -38,7 +38,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 ApiToken = await ApiKey.GetValue(),
                 ZoneId = await ZoneId.GetValue(),
-                UseHetznerCloud = await UseHetznerCloud.GetValue() ?? true,
+                UseHetznerCloud = await UseHetznerCloud.GetValue() ?? true
             };
 
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(HetznerOptions options)
