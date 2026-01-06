@@ -18,9 +18,9 @@ internal sealed class HetznerCloudDnsClient : IHetznerClient, IDisposable
 {
     private static readonly Uri BASE_ADDRESS = new Uri("https://api.hetzner.cloud/v1/");
 
-    private ILogService log;
+    private readonly ILogService log;
 
-    private HttpClient httpClient;
+    private readonly HttpClient httpClient;
 
     public HetznerCloudDnsClient(string apiToken, ILogService logService, IProxyService proxyService)
     {
