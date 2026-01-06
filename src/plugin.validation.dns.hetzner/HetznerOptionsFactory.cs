@@ -28,9 +28,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public override async Task<HetznerOptions?> Aquire(IInputService inputService, RunLevel runLevel)
             => new HetznerOptions
             {
-                ApiToken = await ApiKey.Interactive(inputService, "Hetzner API Token").GetValue(),
-                ZoneId = await ZoneId.Interactive(inputService, "Hetzner Zone Id").GetValue(),
-                UseHetznerCloud = await UseHetznerCloud.Interactive(inputService, "Use Hetzner Cloud API").GetValue() ?? true
+                ApiToken = await ApiKey.Interactive(inputService).WithLabel("Hetzner API Token").GetValue(),
+                ZoneId = await ZoneId.Interactive(inputService).WithLabel("Hetzner Zone Id").GetValue(),
+                UseHetznerCloud = await UseHetznerCloud.Interactive(inputService).WithLabel("Use Hetzner Cloud API").GetValue() ?? true
             };
 
         public override async Task<HetznerOptions?> Default()
