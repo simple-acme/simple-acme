@@ -11,7 +11,6 @@ using PKISharp.WACS.Services;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal.Models;
 
-[assembly: SupportedOSPlatform("windows")]
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     [IPlugin.Plugin<
