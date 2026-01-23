@@ -17,7 +17,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             .GetProtectedString<HetznerArguments>(a => a.HetznerApiToken)
             .Required();
 
-        private ArgumentResult<bool?> UseHetznerCloud => _arguments
+        private ArgumentResult<bool> UseHetznerCloud => _arguments
             .GetBool<HetznerArguments>(a => a.UseHetznerCloud)
             .WithDefault(false);
 
