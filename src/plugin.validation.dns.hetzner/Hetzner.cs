@@ -30,7 +30,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             LookupClientProvider dnsClient,
             SecretServiceManager ssm,
             ILogService logService,
-            ISettingsService settings) : base(dnsClient, logService, settings)
+            ISettings settings) : base(dnsClient, logService, settings)
         {
             _options = options;
             _client = options.UseHetznerCloud
