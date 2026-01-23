@@ -13,9 +13,9 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal.Models;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
-    [IPlugin.Plugin<
+    [IPlugin.Plugin1<
         HetznerOptions, HetznerOptionsFactory,
-        DnsValidationCapability, HetznerJson>
+        DnsValidationCapability, HetznerJson, HetznerArguments>
         ("7176cc8f-ba08-4b07-aa39-2f5d012c1d5a",
         "Hetzner", "Create verification records in Hetzner DNS")]
     public class Hetzner : DnsValidation<Hetzner>, IDisposable
