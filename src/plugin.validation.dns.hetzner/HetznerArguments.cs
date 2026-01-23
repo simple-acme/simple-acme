@@ -12,6 +12,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         public string? HetznerZoneId { get; set; }
 
         [CommandLine(Description = "Use the Hetzner Cloud API.")]
-        public bool UseHetznerCloud { get; set; }
+        public bool? UseHetznerCloud { get; set; }
     }
 }
