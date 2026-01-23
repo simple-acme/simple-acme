@@ -30,7 +30,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 ApiToken = await ApiKey.Interactive(inputService).WithLabel("Hetzner API Token").GetValue(),
                 ZoneId = await ZoneId.Interactive(inputService).WithLabel("Hetzner Zone Id").GetValue(),
-                UseHetznerCloud = await UseHetznerCloud.Interactive(inputService).WithLabel("Use Hetzner Cloud API").GetValue() ?? true
+                UseHetznerCloud = await UseHetznerCloud.Interactive(inputService).WithLabel("Use Hetzner Cloud API").GetValue()!
             };
 
         public override async Task<HetznerOptions?> Default()
