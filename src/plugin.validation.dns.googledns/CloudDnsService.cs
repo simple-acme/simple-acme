@@ -43,7 +43,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 Name = name,
                 Type = "TXT",
                 Ttl = 0,
-                Rrdatas = new List<string>() { "\"" + value + "\"" }
+                Rrdatas = [ "\"" + value + "\"" ]
             };
 
             var request = client.ResourceRecordSets.Create(body, projectId, zone.Name);
