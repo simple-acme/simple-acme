@@ -10,9 +10,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     {
         public async Task<IList<ManagedZone>> GetManagedZones(string projectId)
         {
-            var request = client.ManagedZones.List(projectId);
-            var response = await request.ExecuteAsync();
-            return [.. response.ManagedZones];
+            var allZones = new List<ManagedZone>();
+            string? pageToken = null;
+            do
+            {
+                var request = client.ManagedZones.List(projectId);
+                request.PageToken = pageToken;
+                var response = await request.ExecuteAsync();
+                if (response.ManagedZones != null)
+                {
+                    allZones.AddRange(response.ManagedZones);
+                }
+                pageToken = response.NextPageToken;
+            } while (!string.IsNullOrEmpty(pageToken));
+            return allZones;
         }
 
         public async Task<ManagedZone?> FindZone(string projectId, string dnsName)
@@ -23,7 +34,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public async Task<ResourceRecordSet> CreateTxtRecord(string projectId, ManagedZone zone, string name, string value)
         {
-            if (!name.EndsWith('.'))
+            if (!name.EndsWith("."))
                 name += ".";
 
             var body = new ResourceRecordSet
@@ -32,7 +43,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 Name = name,
                 Type = "TXT",
                 Ttl = 0,
-                Rrdatas = ["\"" + value + "\""]
+                Rrdatas = new List<string>() { "\"" + value + "\"" }
             };
 
             var request = client.ResourceRecordSets.Create(body, projectId, zone.Name);
@@ -42,7 +53,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public async Task<ResourceRecordSetsDeleteResponse> DeleteTxtRecord(string projectId, ManagedZone zone, string name)
         {
-            if (!name.EndsWith('.'))
+            if (!name.EndsWith("."))
                 name += ".";
 
             var request = client.ResourceRecordSets.Delete(projectId, zone.Name, name, "TXT");
