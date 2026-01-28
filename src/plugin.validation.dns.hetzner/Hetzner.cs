@@ -17,7 +17,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         HetznerOptions, HetznerOptionsFactory,
         DnsValidationCapability, HetznerJson, HetznerArguments>
         ("7176cc8f-ba08-4b07-aa39-2f5d012c1d5a",
-        "Hetzner", "Create verification records in Hetzner DNS")]
+        "Hetzner", "Create verification records in Hetzner DNS",
+        External = true)]
     public class Hetzner : DnsValidation<Hetzner>, IDisposable
     {
         private readonly HetznerOptions _options;
