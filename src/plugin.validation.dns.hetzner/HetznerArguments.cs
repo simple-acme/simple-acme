@@ -10,5 +10,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
 
         [CommandLine(Description = "OPTIONAL: ID of zone the record is associated with.")]
         public string? HetznerZoneId { get; set; }
+
+        [CommandLine(Description = "Use the Hetzner Cloud API.")]
+        public bool? UseHetznerCloud { get; set; }
     }
 }
