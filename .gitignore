@@ -202,3 +202,4 @@ FakesAssemblies/
 # Custom
 /out/*
 launchSettings.json
+examples/notifications.log

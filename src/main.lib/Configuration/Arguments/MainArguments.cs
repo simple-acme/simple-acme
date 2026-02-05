@@ -141,6 +141,9 @@ namespace PKISharp.WACS.Configuration.Arguments
         [CommandLine(Description = "[--test] Close the application when complete, which usually does not happen when test mode is active. Useful to test unattended operation.")]
         public bool CloseOnFinish { get; set; }
 
+        [CommandLine(Description = "Test notification system by sending a test notification to all configured targets.")]
+        public bool TestNotification { get; set; }
+
         [CommandLine(Description = "Hide sites that have existing https bindings from interactive mode.")]
         public bool HideHttps { get; set; }
 
