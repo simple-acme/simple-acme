@@ -3,6 +3,7 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -215,7 +216,20 @@ namespace PKISharp.WACS.Clients
         /// <returns></returns>
         private ProcessStartInfo CreatePsi(string script, string? parameters)
         {
-            var actualScript = Environment.ExpandEnvironmentVariables(script);
+            var expandedScriptPath = Environment.ExpandEnvironmentVariables(script);
+            // Convert to absolute path if it's a relative path
+            string absoluteScriptPath;
+            try
+            {
+                absoluteScriptPath = new FileInfo(expandedScriptPath).FullName;
+            }
+            catch (Exception ex)
+            {
+                logService.Error("Invalid script path {path}: {message}", script, ex.Message);
+                throw;
+            }
+            
+            var actualScript = absoluteScriptPath;
             var actualParameters = parameters;
             if (actualScript.EndsWith(".ps1"))
             {
@@ -226,12 +240,12 @@ namespace PKISharp.WACS.Clients
                 {
                     baseParameters += " -windowstyle hidden";
                 }
-                actualParameters = $"{baseParameters} -command \"&{{&'{script.Replace("'", "''")}' {parameters?.Replace("\"", "\"\"\"")}; exit $LastExitCode}}\"";
+                actualParameters = $"{baseParameters} -command \"&{{&'{absoluteScriptPath.Replace("'", "''")}' {parameters?.Replace("\"", "\"\"\"")}; exit $LastExitCode}}\"";
             }
             else if (actualScript.EndsWith(".sh"))
             {
                 actualScript = "sh";
-                actualParameters = $"{script} {parameters}";
+                actualParameters = $"{absoluteScriptPath} {parameters}";
             }
             var ret = new ProcessStartInfo(actualScript)
             {

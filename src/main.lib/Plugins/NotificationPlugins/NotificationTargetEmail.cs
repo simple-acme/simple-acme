@@ -89,17 +89,17 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         {
             if (!_email.Enabled)
             {
-                _log.Error("Email notifications not enabled. Configure an SMTP server, sender and receiver in settings.json to enable this.");
+                _log.Information("Email notifications not configured.");
             }
             else
             {
-                _log.Information("Sending test message...");
+                _log.Information("Sending test email...");
                 var success = await _email.Send("Test notification",
                     "<p>If you are reading this, it means you will receive notifications in the future.</p>",
                     MessagePriority.Normal);
                 if (success)
                 {
-                    _log.Information("Test message sent!");
+                    _log.Information("Test email sent!");
                 }
             }
         }

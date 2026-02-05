@@ -24,7 +24,8 @@ namespace PKISharp.WACS.Host
         RenewalManager renewalManager,
         Unattended unattended,
         IAutoRenewService taskSchedulerService,
-        MainMenu mainMenu)
+        MainMenu mainMenu,
+        NotificationService notificationService)
     {
         private MainArguments _args = new();
 
@@ -196,6 +197,11 @@ namespace PKISharp.WACS.Host
                     else if (_args.VaultStore)
                     {
                         await secretServiceManager.StoreSecret(_args.VaultKey, _args.VaultSecret);
+                        await CloseDefault();
+                    }
+                    else if (_args.TestNotification)
+                    {
+                        await notificationService.NotifyTest();
                         await CloseDefault();
                     }
                     else if (_args.GlobalValidation)
