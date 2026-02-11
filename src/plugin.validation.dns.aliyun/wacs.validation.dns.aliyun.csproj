@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AlibabaCloud.SDK.Alidns20150109" Version="4.3.0" />
+    <PackageReference Include="AlibabaCloud.SDK.Alidns20150109" Version="4.3.1" />
   </ItemGroup>
 
   <ItemGroup>
