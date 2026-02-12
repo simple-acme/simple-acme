@@ -76,6 +76,27 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         /// of authenticated SMTP.
         /// </summary>
         string? SmtpUser { get; }
+
+        /// <summary>
+        /// Path to external script or program to run for notifications.
+        /// Supported extensions: .ps1, .sh, .exe, .bat, .cmd (Windows only).
+        /// </summary>
+        string? Script { get; }
+
+        /// <summary>
+        /// Parameters for the notification script. May include tokens 
+        /// like {EventType}, {RenewalId}, {FriendlyName}, {Errors}, 
+        /// {Log} (base64-encoded), and {vault://json/key} for secrets.
+        /// </summary>
+        string? ScriptParameters { get; }
+
+        /// <summary>
+        /// Send a script notification when a certificate 
+        /// has been successfully created or renewed, as 
+        /// opposed to the default behavior that only sends
+        /// failure notifications.
+        /// </summary>
+        bool ScriptNotifyOnSuccess { get; }
     }
 
     internal class InheritNotificationSettings(params IEnumerable<NotificationSettings?> chain) : InheritSettings<NotificationSettings>(chain), INotificationSettings
@@ -91,6 +112,9 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int SmtpSecureMode => Get(x => x.SmtpSecureMode) ?? 1;
         public string? SmtpServer => Get(x => x.SmtpServer);
         public string? SmtpUser => Get(x => x.SmtpUser);
+        public string? Script => Get(x => x.Script);
+        public string? ScriptParameters => Get(x => x.ScriptParameters);
+        public bool ScriptNotifyOnSuccess => Get(x => x.ScriptNotifyOnSuccess) ?? true;
     }
 
     public class NotificationSettings
@@ -162,5 +186,24 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
         [SettingsValue(Description = "This value replaces the computer machine name reported in emails.")]
         public string? ComputerName { get; set; }
+
+        [SettingsValue(
+            Description = "Path to external script or program to run for notifications. " +
+            "Supported extensions: <code>.ps1</code>, <code>.sh</code>, <code>.exe</code>, " +
+            "<code>.bat</code>, <code>.cmd</code> (Windows only).")]
+        public string? Script { get; set; }
+
+        [SettingsValue(
+            Description = "Parameters for the notification script. May include tokens like " +
+            "<code>{EventType}</code> (created, success, success-with-errors, failure, cancel, test), " +
+            "<code>{RenewalId}</code>, <code>{FriendlyName}</code>, <code>{Errors}</code>, " +
+            "<code>{Log}</code> (base64-encoded), and <code>{vault://json/key}</code> for secrets.")]
+        public string? ScriptParameters { get; set; }
+
+        [SettingsValue(
+            Default = "false",
+            Description = "Send a script notification when a certificate has been successfully created or " +
+            "renewed, as opposed to the default behavior that only sends failure notifications.")]
+        public bool? ScriptNotifyOnSuccess { get; set; }
     }
 }

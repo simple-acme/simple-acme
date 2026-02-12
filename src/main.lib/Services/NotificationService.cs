@@ -19,6 +19,7 @@ namespace PKISharp.WACS.Services
                 GetNotificationTargets().
                 Select(b => scope.Resolve(b.Backend)).
                 OfType<INotificationTarget>().
+                Where(x => x.Enabled).
                 ToList();
 
         /// <summary>
@@ -32,17 +33,15 @@ namespace PKISharp.WACS.Services
                 LogType.All, 
                 "Certificate {friendlyName} created", 
                 renewal.LastFriendlyName);
-            if (settings.Notification.EmailOnSuccess)
+            foreach (var target in _targets.Where(t => t.NotifyOnSuccess))
             {
-                foreach (var target in _targets) {
-                    try
-                    {
-                        await target.SendCreated(renewal, log);
-                    } 
-                    catch 
-                    {
-                        _log.Error("Unable to send notification using {n}", target.GetType().Name);
-                    }
+                try
+                {
+                    await target.SendCreated(renewal, log);
+                } 
+                catch 
+                {
+                    _log.Error("Unable to send notification using {n}", target.GetType().Name);
                 }
             }
         }
@@ -59,18 +58,15 @@ namespace PKISharp.WACS.Services
                 LogType.All, 
                 "Renewal for {friendlyName} succeeded" + (withErrors ? " with errors" : ""),
                 renewal.LastFriendlyName);
-            if (withErrors || settings.Notification.EmailOnSuccess)
+            foreach (var target in _targets.Where(t => withErrors || t.NotifyOnSuccess))
             {
-                foreach (var target in _targets)
+                try
                 {
-                    try
-                    {
-                        await target.SendSuccess(renewal, log);
-                    }
-                    catch
-                    {
-                        _log.Error("Unable to send notification using {n}", target.GetType().Name);
-                    }
+                    await target.SendSuccess(renewal, log);
+                }
+                catch
+                {
+                    _log.Error("Unable to send notification using {n}", target.GetType().Name);
                 }
             }
         }
