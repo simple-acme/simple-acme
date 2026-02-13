@@ -91,7 +91,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
         }
 
-        public override void Dispose() => _client?.Dispose();
+        public void Dispose() => _client?.Dispose();
 
         private async Task<HetznerZone?> GetHostedZone(IHetznerClient client, string recordName)
         {
