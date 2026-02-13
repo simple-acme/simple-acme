@@ -89,7 +89,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             }
         }
 
-        private async Task<HetznerZone?> GetHostedZone(IHetznerClient client,string recordName)
+        private async Task<HetznerZone?> GetHostedZone(IHetznerClient client, string recordName)
         {
             if (String.IsNullOrWhiteSpace(_options.ZoneId) is false)
             {
