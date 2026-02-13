@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ("7176cc8f-ba08-4b07-aa39-2f5d012c1d5a",
         "Hetzner", "Create verification records in Hetzner DNS",
         External = true)]
-    public class Hetzner : DnsValidation<Hetzner>
+    public class Hetzner : DnsValidation<Hetzner>, IDisposable
     {
         private readonly HetznerOptions _options;
 
@@ -27,6 +27,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private readonly SecretServiceManager _secretServiceManager;
 
         private readonly ILogService _logService;
+
+        private IHetznerClient? _client;
 
         public Hetzner(
             HetznerOptions options,
@@ -44,7 +46,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
-            using var client = await GetClientAsync();
+            var client = await GetClientAsync();
 
             var zone = await this.GetHostedZone(client, record.Authority.Domain).ConfigureAwait(false);
             if (zone == null)
@@ -64,7 +66,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public override async Task DeleteRecord(DnsValidationRecord record)
         {
-            using var client = await GetClientAsync();
+            var client = await GetClientAsync();
 
             try
             {
@@ -88,6 +90,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 _log.Warning(ex, "Unable to delete record from Hetzner DNS");
             }
         }
+
+        public override void Dispose() => _client?.Dispose();
 
         private async Task<HetznerZone?> GetHostedZone(IHetznerClient client, string recordName)
         {
@@ -123,14 +127,21 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         private async Task<IHetznerClient> GetClientAsync()
         {
+            if (_client is not null)
+            {
+                return _client;
+            }
+
             var apiToken = await _secretServiceManager.EvaluateSecret(_options.ApiToken)
                 ?? throw new InvalidOperationException("API Token cannot be null");
 
             var httpClient = await _proxyService.GetHttpClient();
 
-            return _options.UseHetznerCloud
+            _client = _options.UseHetznerCloud
                 ? new HetznerCloudDnsClient(apiToken, _logService, httpClient)
                 : new HetznerDnsClient(apiToken, _logService, httpClient);
+
+            return _client;
         }
     }
 }
