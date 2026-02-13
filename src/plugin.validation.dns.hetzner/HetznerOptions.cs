@@ -1,7 +1,7 @@
-﻿using PKISharp.WACS.Plugins.Base.Options;
-using PKISharp.WACS.Services.Serialization;
+﻿using System.Text.Json.Serialization;
 
-using System.Text.Json.Serialization;
+using PKISharp.WACS.Plugins.Base.Options;
+using PKISharp.WACS.Services.Serialization;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
