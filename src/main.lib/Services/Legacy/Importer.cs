@@ -48,7 +48,7 @@ namespace PKISharp.WACS.Services.Legacy
             }
 
             log.Information("Step {x}/3: ensure ACMEv2 account", 3);
-            await clientManager.GetClient();
+            await clientManager.GetClient(runLevel);
             var listCommand = "--list";
             var renewCommand = "--renew";
             if (runLevel.HasFlag(RunLevel.Interactive))
