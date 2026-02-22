@@ -19,21 +19,26 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         private readonly IPluginService _plugin;
         private readonly EmailClient _email;
         private readonly DueDateStaticService _dueDate;
+        private readonly ISettings _settings;
 
         public NotificationTargetEmail(
             ILogService log,
             IPluginService pluginService,
             EmailClient email,
             DueDateStaticService dueDate,
-            ICacheService certificateService)
+            ICacheService certificateService,
+            ISettings settings)
         {
             _log = log;
             _cacheService = certificateService;
             _plugin = pluginService;
             _email = email;
-            _plugin = pluginService;
             _dueDate = dueDate;
+            _settings = settings;
         }
+
+        public bool Enabled => _email.Enabled;
+        public bool NotifyOnSuccess => _settings.Notification.EmailOnSuccess;
 
         /// <summary>
         /// Handle created notification

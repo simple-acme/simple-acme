@@ -54,7 +54,10 @@
     "SenderAddress": null,
     "ReceiverAddresses": [],
     "EmailOnSuccess": false,
-    "ComputerName": null
+    "ComputerName": null,
+    "Script": null,
+    "ScriptParameters": null,
+    "ScriptNotifyOnSuccess": false
   },
   "Security": {
     "EncryptConfig": false,
