@@ -314,7 +314,15 @@ namespace PKISharp.WACS.Clients.Acme
             }
             else
             {
-                contacts = await GetContacts();
+                var mainArgs = _arguments.GetArguments<MainArguments>();
+                var contactRunLevel =
+                    !string.IsNullOrEmpty(mainArgs?.Target) ||
+                    !string.IsNullOrEmpty(mainArgs?.Source) ||
+                    (mainArgs?.Renew ?? false) ||
+                    (mainArgs?.Register ?? false)
+                    ? RunLevel.Unattended
+                    : RunLevel.Interactive;
+                contacts = await GetContacts(runLevel: contactRunLevel);
             }
 
             var newAccount = _accountManager.NewAccount();
@@ -433,7 +441,7 @@ namespace PKISharp.WACS.Clients.Acme
             RunLevel runLevel = RunLevel.Interactive)
         {
             var email = _accountArguments.EmailAddress;
-            if (string.IsNullOrWhiteSpace(email) && runLevel.HasFlag(RunLevel.Interactive))
+            if (email == null && runLevel.HasFlag(RunLevel.Interactive))
             {
                 var question = allowMultiple ?
                     "Enter email(s) for notifications about problems and abuse (comma-separated)" :

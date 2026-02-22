@@ -7,7 +7,7 @@
         [CommandLine(Description = "Accept the ACME terms of service.")]
         public bool AcceptTos { get; set; }
 
-        [CommandLine(Description = "Email address to link to your ACME account.")]
+        [CommandLine(Description = "Email address to link to your ACME account. Use an empty string (e.g. --emailaddress \"\") for an anonymous account without email.")]
         public string? EmailAddress { get; set; }
 
         [CommandLine(Name = "eab-key-identifier", Description = "Key identifier to use for external account binding.")]
