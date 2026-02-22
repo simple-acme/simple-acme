@@ -1,9 +1,10 @@
-﻿using PKISharp.WACS.Configuration;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+
+using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -17,7 +18,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             .GetProtectedString<HetznerArguments>(a => a.HetznerApiToken)
             .Required();
 
-        private ArgumentResult<bool> UseHetznerCloud => _arguments
+        private ArgumentResult<bool?> UseHetznerCloud => _arguments
             .GetBool<HetznerArguments>(a => a.UseHetznerCloud)
             .WithDefault(false);
 
@@ -30,7 +31,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 ApiToken = await ApiKey.Interactive(inputService).WithLabel("Hetzner API Token").GetValue(),
                 ZoneId = await ZoneId.Interactive(inputService).WithLabel("Hetzner Zone Id").GetValue(),
-                UseHetznerCloud = await UseHetznerCloud.Interactive(inputService).WithLabel("Use Hetzner Cloud API").GetValue()!
+                UseHetznerCloud = await UseHetznerCloud.Interactive(inputService).WithLabel("Use Hetzner Cloud API").GetValue() ?? false
             };
 
         public override async Task<HetznerOptions?> Default()
@@ -38,7 +39,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 ApiToken = await ApiKey.GetValue(),
                 ZoneId = await ZoneId.GetValue(),
-                UseHetznerCloud = await UseHetznerCloud.GetValue()
+                UseHetznerCloud = await UseHetznerCloud.GetValue() ?? false
             };
 
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(HetznerOptions options)
