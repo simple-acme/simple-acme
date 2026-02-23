@@ -38,7 +38,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 throw new Exception("Configuration error");
             }
-            var sa = await CredentialFactory.FromFileAsync<ServiceAccountCredential>(_options.ServiceAccountKeyPath, new CancellationToken());
+            var sa = await CredentialFactory.FromFileAsync<ServiceAccountCredential>(_options.ServiceAccountKeyPath, CancellationToken.None);
             credential = sa.ToGoogleCredential();
             var handler = await _proxy.GetHttpMessageHandler();
             var dnsService = new DnsService(new BaseClientService.Initializer()
