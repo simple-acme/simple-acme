@@ -3,14 +3,11 @@ using ACMESharp.Protocol;
 using ACMESharp.Protocol.Resources;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
-using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Net.Mail;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -37,35 +34,29 @@ namespace PKISharp.WACS.Clients.Acme
         private readonly ISettings _settings;
         private readonly ArgumentsParser _arguments;
         private readonly IProxyService _proxyService;
-        private readonly ZeroSsl _zeroSsl;
-        private readonly AccountArguments _accountArguments;
-
+        private readonly AcmeCredentialReader _acmeCredentials;
         private AcmeProtocolClient? _anonymousClient;
         private readonly Dictionary<string, AcmeClient> _authorizedClients = [];
         private readonly AccountManager _accountManager;
-        private readonly SecretServiceManager _secretServiceManager;
 
         public AcmeClientManager(
             IInputService inputService,
             ArgumentsParser arguments,
-            ILogService log, 
+            ILogService log,
             IAcmeLogger acmeLogger,
             ISettings settings,
             AccountManager accountManager,
             IProxyService proxy,
-            SecretServiceManager secretServiceManager,
-            ZeroSsl zeroSsl)
+            AcmeCredentialReader acmeCredentials)
         {
             _log = log;
             _acmeLogger = acmeLogger;
             _settings = settings;
             _arguments = arguments;
-            _accountArguments = _arguments.GetArguments<AccountArguments>() ?? new AccountArguments();
             _input = inputService;
             _proxyService = proxy;
             _accountManager = accountManager;
-            _secretServiceManager = secretServiceManager;
-            _zeroSsl = zeroSsl;
+            _acmeCredentials = acmeCredentials;
         }
 
         /// <summary>
@@ -100,7 +91,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// <param name="name"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        internal async Task<AcmeClient> CreateAuthorizedClient(string? name = null)
+        internal async Task<AcmeClient> CreateAuthorizedClient(RunLevel runLevel, string? name = null)
         {
             // Create anonymous client if we need it
             _anonymousClient ??= await CreateAnonymousClient();
@@ -114,7 +105,7 @@ namespace PKISharp.WACS.Clients.Acme
             else
             {
                 _log.Verbose("No account found, creating new one");
-                account = await SetupAccount(_anonymousClient);
+                account = await SetupAccount(_anonymousClient, runLevel);
                 if (account == null)
                 {
                     throw new Exception("AcmeClient was unable to find or create an account");
@@ -172,7 +163,7 @@ namespace PKISharp.WACS.Clients.Acme
                     {
                         return directory;
                     }
-                } 
+                }
                 catch
                 {
                 }
@@ -186,14 +177,14 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        internal async Task<AcmeClient> GetClient(string? name = null)
+        internal async Task<AcmeClient> GetClient(RunLevel runLevel, string? name = null)
         {
             var key = name ?? "";
             if (_authorizedClients.TryGetValue(key, out var value))
             {
                 return value;
             }
-            var ret = await CreateAuthorizedClient(name) ?? throw new InvalidOperationException("Failed to initialize Acme client");
+            var ret = await CreateAuthorizedClient(runLevel, name) ?? throw new InvalidOperationException("Failed to initialize Acme client");
             _authorizedClients.Add(key, ret);
             return ret;
         }
@@ -203,7 +194,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         /// <param name="client"></param>
         /// <returns></returns>
-        private async Task<Account?> SetupAccount(AcmeProtocolClient client)
+        private async Task<Account?> SetupAccount(AcmeProtocolClient client, RunLevel runLevel)
         {
             // Accept the terms of service, if defined by the server
             try
@@ -223,105 +214,41 @@ namespace PKISharp.WACS.Clients.Acme
                 _log.Error(ex, "Error getting terms of service");
             }
 
-            var contacts = default(string[]);
-
-            var eabKid = _accountArguments.EabKeyIdentifier;
-            var eabKey = await _secretServiceManager.EvaluateSecret(_accountArguments.EabKey);
-            var eabAlg = _accountArguments.EabAlgorithm ?? "HS256";
-            var eabFlow = client.Directory?.Meta?.ExternalAccountRequired ?? false;
-            var zeroSslFlow = _settings.BaseUri.Host.Contains("zerossl.com");
+            var eabRequired = client.Directory?.Meta?.ExternalAccountRequired ?? false;
+            var eabArgs = await _acmeCredentials.FromArguments();
 
             // Warn about unneeded EAB
-            if (!eabFlow && !string.IsNullOrWhiteSpace(eabKid))
+            if (!eabRequired && eabArgs != null)
             {
-                eabFlow = true;
                 _input.CreateSpace();
                 _input.Show(null, "You have provided an external account binding key, even though " +
                     "the server does not indicate that this is required. We will attempt to register " +
                     "using this key anyway.");
+                _input.CreateSpace();
             }
 
-            if (zeroSslFlow)
+            // Get EAB if required by the server
+            if (eabRequired && eabArgs == null)
             {
-                async Task emailRegistration()
+                eabArgs = _settings.BaseUri.Host.Contains("zerossl.com")
+                    ? await _acmeCredentials.GetZeroSsl(runLevel)
+                    : await _acmeCredentials.GetRegular(runLevel);
+                if (eabArgs == null)
                 {
-                    var registration = await GetContacts(allowMultiple: false, prefix: "");
-                    var eab = await _zeroSsl.Register(registration.FirstOrDefault() ?? "");
-                    if (eab != null)
-                    {
-                        eabKid = eab.Kid;
-                        eabKey = eab.Hmac;
-                    }
-                    else
-                    {
-                        _log.Error("Unable to retrieve EAB credentials using the provided email address");
-                    }
-                }
-                async Task apiKeyRegistration()
-                {
-                    var accessKey = await _input.ReadPassword("API access key");
-                    var eab = await _zeroSsl.Obtain(accessKey ?? "");
-                    if (eab != null)
-                    {
-                        eabKid = eab.Kid;
-                        eabKey = eab.Hmac;
-                    }
-                    else
-                    {
-                        _log.Error("Unable to retrieve EAB credentials using the provided API access key");
-                    }
-                }
-                if (!string.IsNullOrWhiteSpace(_accountArguments.EmailAddress))
-                {
-                    await emailRegistration();
-                } 
-                else if (!eabFlow)
-                {
-                    var instruction = "ZeroSsl can be used either by setting up a new " +
-                        "account using your email address or by connecting it to your existing " +
-                        "account using the API access key or pre-generated EAB credentials, which can " +
-                        "be obtained from the Developer section of the dashboard.";
-                    _input.CreateSpace();
-                    _input.Show(null, instruction);
-                    var chosen = await _input.ChooseFromMenu(
-                        "How would you like to create the account?",
-                        new List<Choice<Func<Task>>>()
-                        {
-                           Choice.Create(apiKeyRegistration, "API access key"),
-                           Choice.Create(emailRegistration, "Email address"),
-                           Choice.Create<Func<Task>>(() => Task.CompletedTask, "Input EAB credentials directly")
-                        });
-                    await chosen.Invoke();
+                    throw new Exception("Unable to retrieve required credentials");
                 }
             }
 
-            if (eabFlow)
-            {
-                if (string.IsNullOrWhiteSpace(eabKid))
-                {
-                    var instruction = "This ACME endpoint requires an external account. " +
-                        "You will need to provide a key identifier and a key to proceed. " +
-                        "Please refer to the providers instructions on how to obtain these.";
-                    _input.CreateSpace();
-                    _input.Show(null, instruction);
-                    eabKid = await _input.RequestString("Key identifier");
-                }
-                if (string.IsNullOrWhiteSpace(eabKey))
-                {
-                    eabKey = await _input.ReadPassword("Key (base64url encoded)");
-                }
-                contacts = await GetContacts(runLevel: RunLevel.Unattended);
-            }
-            else
-            {
-                contacts = await GetContacts();
-            }
+            // Get contacts if EAB is not required
+            var contacts = eabRequired
+                ? [] 
+                : await _acmeCredentials.GetContacts(runLevel);
 
             var newAccount = _accountManager.NewAccount();
-            var newAccountDetails = default(AccountDetails);
+            AccountDetails newAccountDetails;
             try
             {
-                newAccountDetails = await CreateAccount(client, newAccount.Signer, contacts, eabAlg, eabKid, eabKey);
+                newAccountDetails = await CreateAccount(client, newAccount.Signer, contacts, eabArgs);
             }
             catch (AcmeProtocolException apex)
             {
@@ -330,7 +257,7 @@ namespace PKISharp.WACS.Clients.Acme
                 if (apex.ProblemType == ProblemType.BadSignatureAlgorithm && newAccount.Signer.KeyType != "RS256")
                 {
                     newAccount = _accountManager.NewAccount("RS256");
-                    newAccountDetails = await CreateAccount(client, newAccount.Signer, contacts, eabAlg, eabKid, eabKey);
+                    newAccountDetails = await CreateAccount(client, newAccount.Signer, contacts, eabArgs);
                 }
                 else
                 {
@@ -361,22 +288,20 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         private async Task<AccountDetails> CreateAccount(
             AcmeProtocolClient client, AccountSigner signer,
-            string[]? contacts,
-            string eabAlg, string? eabKid, string? eabKey)
+            string[]? contacts, EabCredential? eabCredential)
         {
             if (client.Account != null)
             {
                 throw new Exception("Client already has an account!");
             }
             ExternalAccountBinding? externalAccount = null;
-            if (!string.IsNullOrWhiteSpace(eabKey) &&
-                !string.IsNullOrWhiteSpace(eabKid))
+            if (eabCredential != null)
             {
                 externalAccount = new ExternalAccountBinding(
-                    eabAlg,
+                    eabCredential.Algorithm,
                     signer.JwsTool().ExportEab(),
-                    eabKid,
-                    eabKey,
+                    eabCredential.KeyIdentifier,
+                    eabCredential.Key,
                     client.Directory?.NewAccount ?? "");
             }
             await client.ChangeAccountKeyAsync(signer.JwsTool());
@@ -401,6 +326,7 @@ namespace PKISharp.WACS.Clients.Acme
             await File.WriteAllBytesAsync(tosPath, content);
             _input.CreateSpace();
             _input.Show($"Terms of service", tosPath);
+            _input.CreateSpace();
             if (_arguments.GetArguments<AccountArguments>()?.AcceptTos ?? false)
             {
                 return true;
@@ -424,64 +350,14 @@ namespace PKISharp.WACS.Clients.Acme
         }
 
         /// <summary>
-        /// Get contact information
-        /// </summary>
-        /// <returns></returns>
-        private async Task<string[]> GetContacts(
-            bool allowMultiple = true,
-            string prefix = "mailto:",
-            RunLevel runLevel = RunLevel.Interactive)
-        {
-            var email = _accountArguments.EmailAddress;
-            if (string.IsNullOrWhiteSpace(email) && runLevel.HasFlag(RunLevel.Interactive))
-            {
-                var question = allowMultiple ?
-                    "Enter email(s) for notifications about problems and abuse (comma-separated)" :
-                    "Enter email for notifications about problems and abuse";
-                email = await _input.RequestString(question);
-            }
-            var newEmails = new List<string>();
-            if (allowMultiple)
-            {
-                newEmails = email.ParseCsv();
-                if (newEmails == null)
-                {
-                    return [];
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(email))
-            {
-                newEmails.Add(email);
-            }
-            newEmails = newEmails.Where(x =>
-            {
-                try
-                {
-                    _ = new MailAddress(x);
-                    return true;
-                }
-                catch(Exception ex)
-                {
-                    _log.Warning(ex, $"Invalid email address specified");
-                    return false;
-                }
-            }).ToList();
-            if (newEmails.Count == 0)
-            {
-                _log.Warning("No (valid) email address specified");
-            }
-            return newEmails.Select(x => $"{prefix}{x}").ToArray();
-        }
-
-        /// <summary>
         /// Update email address for the current account
         /// </summary>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        internal async Task ChangeContacts(string? name = null)
+        internal async Task ChangeContacts(RunLevel runLevel, string? name = null)
         {
-            var client = await GetClient(name);
-            var contacts = await GetContacts();
+            var client = await GetClient(runLevel, name);
+            var contacts = await _acmeCredentials.GetContacts(runLevel);
             var newDetails = await client.UpdateAccountAsync(contacts);
             if (newDetails.Payload != null)
             {
