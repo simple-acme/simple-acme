@@ -235,7 +235,14 @@ namespace PKISharp.WACS.Services
             var answer = ret.ToString();
             if (string.IsNullOrWhiteSpace(answer))
             {
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
+                if (!Console.IsOutputRedirected)
+                {
+                    var targetTop = Console.CursorTop - 1;
+                    if (targetTop >= 0)
+                    {
+                        Console.SetCursorPosition(0, targetTop);
+                    }
+                }
                 RenderRequest(what);
                 WriteLine("<Enter>");
                 WriteLine();
