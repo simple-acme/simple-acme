@@ -9,18 +9,18 @@ using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using System;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     [IPlugin.Plugin1<
-        CloudDnsOptions, CloudDnsOptionsFactory, 
+        CloudDnsOptions, CloudDnsOptionsFactory,
         DnsValidationCapability, CloudDnsJson, CloudDnsArguments>
         ("B61505E9-1709-43FD-996F-C74C3686286C",
-        "GCPDns", "Create verification records in Google Cloud DNS", 
+        "GCPDns", "Create verification records in Google Cloud DNS",
         Name = "Cloud DNS", Provider = "Google", Download = "googledns", External = true, Page = "clouddns")]
     internal class CloudDns(
         LookupClientProvider dnsClient,
@@ -38,10 +38,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 throw new Exception("Configuration error");
             }
-            using (var stream = new FileStream(_options.ServiceAccountKeyPath, FileMode.Open, FileAccess.Read))
-            {
-                credential = GoogleCredential.FromStream(stream);
-            }
+            var sa = await CredentialFactory.FromFileAsync<ServiceAccountCredential>(_options.ServiceAccountKeyPath, new CancellationToken());
+            credential = sa.ToGoogleCredential();
             var handler = await _proxy.GetHttpMessageHandler();
             var dnsService = new DnsService(new BaseClientService.Initializer()
             {
@@ -79,7 +77,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 _ = await client.CreateTxtRecord(_options.ProjectId ?? "", zone, recordName, token);
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _log.Warning(ex, "Error creating TXT record");
                 return false;
