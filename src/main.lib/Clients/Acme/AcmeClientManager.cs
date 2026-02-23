@@ -239,9 +239,13 @@ namespace PKISharp.WACS.Clients.Acme
                 }
             }
 
-            var contacts = await _acmeCredentials.GetContacts(runLevel);
+            // Get contacts if EAB is not required
+            var contacts = eabRequired
+                ? [] 
+                : await _acmeCredentials.GetContacts(runLevel);
+
             var newAccount = _accountManager.NewAccount();
-            var newAccountDetails = default(AccountDetails);
+            AccountDetails newAccountDetails;
             try
             {
                 newAccountDetails = await CreateAccount(client, newAccount.Signer, contacts, eabArgs);
@@ -294,10 +298,10 @@ namespace PKISharp.WACS.Clients.Acme
             if (eabCredential != null)
             {
                 externalAccount = new ExternalAccountBinding(
-                    eabCredential.Value.Algorithm,
+                    eabCredential.Algorithm,
                     signer.JwsTool().ExportEab(),
-                    eabCredential.Value.KeyIdentifier,
-                    eabCredential.Value.Key,
+                    eabCredential.KeyIdentifier,
+                    eabCredential.Key,
                     client.Directory?.NewAccount ?? "");
             }
             await client.ChangeAccountKeyAsync(signer.JwsTool());

@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Clients.Acme
 {
-    public readonly struct EabCredential
+    public class EabCredential
     {
-        public string Algorithm { get; init; }
-        public string KeyIdentifier { get; init; }
-        public string Key { get; init; }
+        public required string Algorithm { get; init; }
+        public required string KeyIdentifier { get; init; }
+        public required string Key { get; init; }
     }
 
     internal class AcmeCredentialReader
@@ -50,21 +50,26 @@ namespace PKISharp.WACS.Clients.Acme
             var allowMultiple = true;
             var allowNone = true;
             var prefix = "mailto:";
-            var question = "The ACME server may be able to record one or more email addresses associated with your account " +
-                "to be able to send notifications about security incidents and abuse. In some cases providing an email address " +
-                "may even be mandatory.";
+            var explanation = "The ACME server may be able to record one or more email addresses " +
+                "associated with your account to be able to send notifications about security incidents " +
+                "and abuse. In some cases providing an email address may be mandatory, but if you press " +
+                "<Enter> an anonymous registration will be attempted. Multiple addresses can be input separated " +
+                "by commas.";
+            var question = "Email(s)";
+
             if (zeroSsl)
             {
                 allowMultiple = false;
                 allowNone = false;
                 prefix = "";
-                question = "Please provide an email address to be associated with your ZeroSSL account.";
+                explanation = "Please provide an email address to be associated with your ZeroSSL account.";
+                question = "Email";
             }
             var email = _accountArguments.EmailAddress;
             if (string.IsNullOrWhiteSpace(email) && runLevel.HasFlag(RunLevel.Interactive))
             {
                 _input.CreateSpace();
-                _input.Show(null, question);
+                _input.Show(null, explanation);
                 _input.CreateSpace();
                 email = await _input.RequestString(question);
             }
@@ -105,7 +110,7 @@ namespace PKISharp.WACS.Clients.Acme
         {
             var registration = await GetContacts(runLevel, zeroSsl: true);
             var eab = await _zeroSsl.Register(registration.FirstOrDefault() ?? "");
-            if (eab?.Success == true)
+            if (eab?.Success == true && eab.Kid != null && eab.Hmac != null)
             {
                 return new EabCredential()
                 {
@@ -122,7 +127,7 @@ namespace PKISharp.WACS.Clients.Acme
         {
             var accessKey = await _input.ReadPassword("API access key");
             var eab = await _zeroSsl.Obtain(accessKey ?? "");
-            if (eab?.Success == true)
+            if (eab?.Success == true && eab.Kid != null && eab.Hmac != null)
             {
                 return new EabCredential()
                 {
@@ -142,14 +147,19 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         public async Task<EabCredential?> FromArguments()
         {
-            if (string.IsNullOrWhiteSpace(_accountArguments.EabKeyIdentifier) || string.IsNullOrWhiteSpace(_accountArguments.EabKey)) 
+            if (string.IsNullOrWhiteSpace(_accountArguments.EabKeyIdentifier)) 
+            {
+                return null;
+            }
+            var evaluatedKey = await _secretServiceManager.EvaluateSecret(_accountArguments.EabKey);
+            if (string.IsNullOrWhiteSpace(evaluatedKey))
             {
                 return null;
             }
             return new EabCredential()
             {
                 KeyIdentifier = _accountArguments.EabKeyIdentifier,
-                Key = await _secretServiceManager.EvaluateSecret(_accountArguments.EabKey),
+                Key = evaluatedKey,
                 Algorithm = _accountArguments.EabAlgorithm ?? "HS256"
             };
         }
