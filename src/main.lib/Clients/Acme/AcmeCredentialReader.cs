@@ -143,7 +143,6 @@ namespace PKISharp.WACS.Clients.Acme
         /// <summary>
         /// Get EAB credentials from command line arguments
         /// </summary>
-        /// <param name="runLevel"></param>
         /// <returns></returns>
         public async Task<EabCredential?> FromArguments()
         {
