@@ -20,11 +20,11 @@ internal sealed class HetznerCloudDnsClient : IHetznerClient, IDisposable
 
     private readonly HttpClient httpClient;
 
-    public HetznerCloudDnsClient(string apiToken, ILogService logService, IProxyService proxyService)
+    public HetznerCloudDnsClient(string apiToken, ILogService logService, HttpClient httpClient)
     {
         this.log = logService;
 
-        this.httpClient = proxyService.GetHttpClient();
+        this.httpClient = httpClient;
         this.httpClient.BaseAddress = BASE_ADDRESS;
         this.httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiToken}");
     }

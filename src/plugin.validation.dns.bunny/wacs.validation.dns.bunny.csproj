@@ -1,22 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <AssemblyName>PKISharp.WACS.Plugins.ValidationPlugins.Ftp</AssemblyName>
+    <AssemblyName>PKISharp.WACS.Plugins.ValidationPlugins.Bunny</AssemblyName>
     <RootNamespace>PKISharp.WACS.Plugins.ValidationPlugins</RootNamespace>
     <Version>2.1.0.0</Version>
     <AssemblyVersion>2.1.0.0</AssemblyVersion>
     <FileVersion>2.1.0.0</FileVersion>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="53.0.2" />
-    <PackageReference Include="FluentFTP.GnuTLS" Version="1.0.38" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\main.lib\wacs.lib.csproj" />

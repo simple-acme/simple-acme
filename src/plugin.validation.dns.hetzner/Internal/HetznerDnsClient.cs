@@ -22,11 +22,11 @@ internal sealed class HetznerDnsClient : IHetznerClient, IDisposable
 
     private HttpClient _httpClient;
 
-    public HetznerDnsClient(string apiToken, ILogService logService, IProxyService proxyService)
+    public HetznerDnsClient(string apiToken, ILogService logService, HttpClient httpClient)
     {
         _log = logService;
 
-        _httpClient = proxyService.GetHttpClient();
+        _httpClient = httpClient;
         _httpClient.BaseAddress = BASE_ADDRESS;
         _httpClient.DefaultRequestHeaders.Add("Auth-API-Token", apiToken);
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
