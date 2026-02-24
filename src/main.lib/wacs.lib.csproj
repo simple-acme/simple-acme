@@ -58,6 +58,7 @@
 		<PackageReference Include="System.Net.Http.WinHttpHandler" Version="10.0.1" />
 		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.1" />
 		<PackageReference Include="System.Security.Cryptography.X509Certificates" Version="4.3.2" />
+		<PackageReference Include="System.Threading.AccessControl" Version="10.0.3" />
 		<PackageReference Include="TaskScheduler" Version="2.12.2" />
 	</ItemGroup>
 
