@@ -111,7 +111,8 @@
     },
     "PemFiles": {
       "DefaultPath": null,
-      "DefaultPassword": null
+      "DefaultPassword": null,
+      "KeyFormat": null
     },
     "PfxFile": {
       "DefaultPath": null,
