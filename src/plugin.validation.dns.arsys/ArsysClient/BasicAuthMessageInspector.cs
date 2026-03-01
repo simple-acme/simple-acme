@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.ArsysClient
             _authHeader = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(raw));
         }
 
-        public object BeforeSendRequest(ref Message request, IClientChannel channel)
+        public object? BeforeSendRequest(ref Message request, IClientChannel channel)
         {
             HttpRequestMessageProperty httpRequestProperty;
             if (request.Properties.TryGetValue(HttpRequestMessageProperty.Name, out object property))
