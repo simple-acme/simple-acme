@@ -1,5 +1,6 @@
 using PKISharp.WACS.Clients;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Interfaces;
 using Serilog.Events;
@@ -33,17 +34,14 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         /// <summary>
         /// Check if script notifications are enabled
         /// </summary>
-        public bool Enabled => !string.IsNullOrWhiteSpace(_settings.Notification.Script);
+        public State State => !string.IsNullOrWhiteSpace(_settings.Notification.Script) ? State.EnabledState() : State.DisabledState("No script configured");
 
         public bool NotifyOnSuccess => _settings.Notification.ScriptNotifyOnSuccess;
 
         /// <summary>
         /// Handle created notification
         /// </summary>
-        public async Task SendCreated(Renewal renewal, IEnumerable<MemoryEntry> log)
-        {
-            await RunScript(renewal, log, "created", null);
-        }
+        public async Task SendCreated(Renewal renewal, IEnumerable<MemoryEntry> log) => await RunScript(renewal, log, "created", null);
 
         /// <summary>
         /// Handle success notification
@@ -58,18 +56,12 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         /// <summary>
         /// Handle failure notification
         /// </summary>
-        public async Task SendFailure(Renewal renewal, IEnumerable<MemoryEntry> log, IEnumerable<string> errors)
-        {
-            await RunScript(renewal, log, "failure", errors);
-        }
+        public async Task SendFailure(Renewal renewal, IEnumerable<MemoryEntry> log, IEnumerable<string> errors) => await RunScript(renewal, log, "failure", errors);
 
         /// <summary>
         /// Handle cancel notification
         /// </summary>
-        public async Task SendCancel(Renewal renewal)
-        {
-            await RunScript(renewal, null, "cancel", null);
-        }
+        public async Task SendCancel(Renewal renewal) => await RunScript(renewal, null, "cancel", null);
 
         /// <summary>
         /// Handle test notification

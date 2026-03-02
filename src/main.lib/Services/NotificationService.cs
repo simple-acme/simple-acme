@@ -11,15 +11,14 @@ namespace PKISharp.WACS.Services
     internal class NotificationService(
         ILifetimeScope scope,
         ILogService log,
-        IPluginService pluginService,
-        ISettings settings)
+        IPluginService pluginService)
     {
         private readonly ILogService _log = log;
         private readonly IEnumerable<INotificationTarget> _targets = pluginService.
                 GetNotificationTargets().
                 Select(b => scope.Resolve(b.Backend)).
                 OfType<INotificationTarget>().
-                Where(x => x.Enabled).
+                Where(x => !x.State.Disabled).
                 ToList();
 
         /// <summary>

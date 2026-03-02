@@ -1,6 +1,7 @@
 ﻿using MimeKit;
 using PKISharp.WACS.Clients;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Interfaces;
 using Serilog.Events;
@@ -37,7 +38,7 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
             _settings = settings;
         }
 
-        public bool Enabled => _email.Enabled;
+        public State State => _email.State;
         public bool NotifyOnSuccess => _settings.Notification.EmailOnSuccess;
 
         /// <summary>
@@ -92,7 +93,7 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
 
         public async Task SendTest()
         {
-            if (!_email.Enabled)
+            if (_email.State.Disabled)
             {
                 _log.Error("Email notifications not enabled. Configure an SMTP server, sender and receiver in settings.json to enable this.");
             }

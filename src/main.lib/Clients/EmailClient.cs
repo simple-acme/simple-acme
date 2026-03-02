@@ -2,6 +2,7 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
@@ -64,18 +65,29 @@ namespace PKISharp.WACS.Clients
             _receiverAddresses = _settings.Notification.ReceiverAddresses;
 
             // Criteria for emailing to be enabled at all
-            Enabled =
-                !string.IsNullOrEmpty(_senderAddress) &&
-                !string.IsNullOrEmpty(_server) &&
-                _receiverAddresses.Any();
-            _log.Verbose("Sending e-mails {_enabled}", Enabled);
+            if (string.IsNullOrEmpty(_senderAddress))
+            {
+                State = State.DisabledState("No sender address configured");
+            }
+            else if (string.IsNullOrEmpty(_server))
+            {
+                State = State.DisabledState("No SMTP server configured");
+            }
+            else if (!_receiverAddresses.Any())
+            {
+                State = State.DisabledState("No receiver address configured");
+            }
+            else
+            {
+                State = State.EnabledState();
+            }
         }
 
-        public bool Enabled { get; internal set; }
+        public State State { get; internal set; }
 
         public async Task<bool> Send(string subject, string content, MessagePriority priority)
         {
-            if (!Enabled)
+            if (!State.Disabled)
             {
                 return false;
             }
