@@ -7,6 +7,7 @@ namespace PKISharp.WACS.Services.Interfaces
 {
     internal interface INotificationTarget
     {
+        string Label { get; }
         State State { get; }
         bool NotifyOnSuccess { get; }
         internal Task SendCreated(Renewal renewal, IEnumerable<MemoryEntry> log);

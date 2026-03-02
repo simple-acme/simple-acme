@@ -1,5 +1,6 @@
 using PKISharp.WACS.Clients;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Interfaces;
@@ -16,7 +17,8 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
     {
         private readonly ILogService _log;
         private readonly ScriptClient _client;
-        private readonly ISettings _settings;
+        private readonly string? _script;
+        private readonly string _scriptParameters;
         private readonly SecretServiceManager _secretServiceManager;
 
         public NotificationTargetScript(
@@ -27,21 +29,41 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         {
             _log = log;
             _client = client;
-            _settings = settings;
+            _script = settings.Notification.Script?.Script;
+            _scriptParameters = settings.Notification.Script?.ScriptParameters ?? "";
             _secretServiceManager = secretServiceManager;
+            NotifyOnSuccess = settings.Notification.Script?.NotifyOnSuccess == true;
         }
+
+
+        public string Label => "Script";
 
         /// <summary>
         /// Check if script notifications are enabled
         /// </summary>
-        public State State => !string.IsNullOrWhiteSpace(_settings.Notification.Script) ? State.EnabledState() : State.DisabledState("No script configured");
+        public State State
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(_script))
+                {
+                    return State.DisabledState("No script configured");
+                }
+                if (!_script.ValidFile(_log))
+                {
+                    return State.DisabledState("Invalid script configured");
+                }
+                return State.EnabledState();
+            }
+        }
 
-        public bool NotifyOnSuccess => _settings.Notification.ScriptNotifyOnSuccess;
+        public bool NotifyOnSuccess { get; private set; }
 
         /// <summary>
         /// Handle created notification
         /// </summary>
-        public async Task SendCreated(Renewal renewal, IEnumerable<MemoryEntry> log) => await RunScript(renewal, log, "created", null);
+        public async Task SendCreated(Renewal renewal, IEnumerable<MemoryEntry> log) => 
+            await RunScript(renewal, log, "created", null);
 
         /// <summary>
         /// Handle success notification
@@ -56,19 +78,20 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         /// <summary>
         /// Handle failure notification
         /// </summary>
-        public async Task SendFailure(Renewal renewal, IEnumerable<MemoryEntry> log, IEnumerable<string> errors) => await RunScript(renewal, log, "failure", errors);
+        public async Task SendFailure(Renewal renewal, IEnumerable<MemoryEntry> log, IEnumerable<string> errors) => 
+            await RunScript(renewal, log, "failure", errors);
 
         /// <summary>
         /// Handle cancel notification
         /// </summary>
-        public async Task SendCancel(Renewal renewal) => await RunScript(renewal, null, "cancel", null);
+        public async Task SendCancel(Renewal renewal) => 
+            await RunScript(renewal, null, "cancel", null);
 
         /// <summary>
         /// Handle test notification
         /// </summary>
         public async Task SendTest()
         {
-            _log.Information("Sending test notification script...");
             var result = await RunScript(null, null, "test", null);
             if (result.Success)
             {
@@ -89,27 +112,21 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
             string eventType,
             IEnumerable<string>? errors)
         {
-            var script = _settings.Notification.Script;
-            if (string.IsNullOrWhiteSpace(script))
-            {
-                _log.Warning("No notification script configured");
-                return new ScriptResult() { Success = false };
-            }
             var parameters = await ReplaceParameters(
-                _settings.Notification.ScriptParameters ?? "",
+                _scriptParameters,
                 renewal,
                 log,
                 eventType,
                 errors,
                 false);
             var censoredParameters = await ReplaceParameters(
-                _settings.Notification.ScriptParameters ?? "",
+                _scriptParameters,
                 renewal,
                 log,
                 eventType,
                 errors,
                 true);
-            return await _client.RunScript(script, parameters, censoredParameters);
+            return await _client.RunScript(_script, parameters, censoredParameters);
         }
 
         /// <summary>
