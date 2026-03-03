@@ -97,7 +97,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             Default = "null",
             SubType = "path",
             NullBehaviour = "resolves to <code>{Client.ConfigurationPath}\\Log</code>",
-            Description = "The path where log files for the past 120 days are stored.")]
+            Description = "The path where log files are stored. By default, daily log files are retained for up to 120 days, but this can be changed in the logging configuration.")]
         public string? LogPath { get; set; }
 
         [SettingsValue(
