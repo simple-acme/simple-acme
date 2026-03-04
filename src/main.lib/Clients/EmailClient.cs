@@ -87,7 +87,7 @@ namespace PKISharp.WACS.Clients
 
         public async Task<bool> Send(string subject, string content, MessagePriority priority)
         {
-            if (!State.Disabled)
+            if (State.Disabled)
             {
                 return false;
             }

@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
     public class NotificationSettings
     {
-        [SettingsValue(Description = "This value replaces the computer machine name reported in emails.")]
+        [SettingsValue(Description = "This value replaces the computer machine name reported in notifications.")]
         public string? ComputerName { get; set; }
 
         [SettingsValue(Split = true)]

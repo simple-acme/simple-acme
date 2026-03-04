@@ -17,8 +17,9 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
     {
         private readonly ILogService _log;
         private readonly ScriptClient _client;
-        private readonly string? _script;
+        private readonly string _script;
         private readonly string _scriptParameters;
+        private readonly string? _computerName;
         private readonly SecretServiceManager _secretServiceManager;
 
         public NotificationTargetScript(
@@ -29,8 +30,13 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         {
             _log = log;
             _client = client;
-            _script = settings.Notification.Script?.Script;
-            _scriptParameters = settings.Notification.Script?.ScriptParameters ?? "";
+            _script = settings.Notification.Script?.Path ?? "";
+            _scriptParameters = settings.Notification.Script?.Parameters ?? "";
+            _computerName = settings.Notification.ComputerName;
+            if (string.IsNullOrEmpty(_computerName))
+            {
+                _computerName = Environment.MachineName;
+            }
             _secretServiceManager = secretServiceManager;
             NotifyOnSuccess = settings.Notification.Script?.NotifyOnSuccess == true;
         }
@@ -141,10 +147,11 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
             bool censor)
         {
             var replacements = new Dictionary<string, string?>
-            {
+            {              
                 { "EventType", eventType },
                 { "RenewalId", renewal?.Id ?? "" },
-                { "FriendlyName", renewal?.LastFriendlyName ?? "" }
+                { "FriendlyName", renewal?.LastFriendlyName ?? "" },
+                { "ComputerName", _computerName }
             };
 
             if (errors != null)

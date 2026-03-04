@@ -142,6 +142,11 @@ namespace PKISharp.WACS.Configuration.Settings
                 newSettings.Notification.Email ??= new EmailSettings();
                 newSettings.Notification.Email.SmtpSecureMode ??= newSettings.Notification.SmtpSecureMode;
             }
+            if (newSettings.Notification?.SmtpServer != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.SmtpServer ??= newSettings.Notification.SmtpServer;
+            }
             return newSettings;
         }
     }
