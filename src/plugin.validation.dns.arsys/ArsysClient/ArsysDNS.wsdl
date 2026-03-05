@@ -1,0 +1,1087 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<definitions xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns="urn:cloudmail" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:cloudmail">
+<types>
+<xsd:schema targetNamespace="urn:cloudmail"
+>
+ <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+ <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+ <xsd:complexType name="CreateDNSZoneRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="domain" type="xsd:string"/>
+   <xsd:element name="dnsEntries" type="tns:ArrayOfInfoDNSZoneItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="GeneralResponse">
+  <xsd:all>
+   <xsd:element name="status" type="xsd:string"/>
+   <xsd:element name="data" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="CreateDNSRes">
+  <xsd:all>
+   <xsd:element name="status" type="xsd:string"/>
+   <xsd:element name="primary" type="tns:DNSServerType"/>
+   <xsd:element name="secondary" type="tns:DNSServerType"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="CreateDNSZoneResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:CreateDNSRes"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteDNSZoneRequest">
+  <xsd:all>
+   <xsd:element name="domain" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteDNSZoneResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="CreateDNSEntryRequest">
+  <xsd:all>
+   <xsd:element name="domain" type="xsd:string"/>
+   <xsd:element name="dns" type="xsd:string"/>
+   <xsd:element name="type" type="xsd:string"/>
+   <xsd:element name="value" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="CreateDNSEntryResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDNSZoneRequest">
+  <xsd:all>
+   <xsd:element name="domain" type="xsd:string"/>
+   <xsd:element name="dns" type="xsd:string"/>
+   <xsd:element name="type" type="xsd:string"/>
+   <xsd:element name="value" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDNSZoneItem">
+  <xsd:all>
+   <xsd:element name="name" type="xsd:string"/>
+   <xsd:element name="type" type="xsd:string"/>
+   <xsd:element name="value" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ArrayOfInfoDNSZoneItem">
+  <xsd:complexContent>
+   <xsd:restriction base="SOAP-ENC:Array">
+    <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="tns:InfoDNSZoneItem[]"/>
+   </xsd:restriction>
+  </xsd:complexContent>
+ </xsd:complexType>
+ <xsd:complexType name="GeneralResponseDNS">
+  <xsd:all>
+   <xsd:element name="status" type="xsd:string"/>
+   <xsd:element name="data" type="tns:ArrayOfInfoDNSZoneItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDNSZoneResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:GeneralResponseDNS"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ModifyDNSEntryRequest">
+  <xsd:all>
+   <xsd:element name="domain" type="xsd:string"/>
+   <xsd:element name="dns" type="xsd:string"/>
+   <xsd:element name="currenttype" type="xsd:string"/>
+   <xsd:element name="currentvalue" type="xsd:string"/>
+   <xsd:element name="newtype" type="xsd:string"/>
+   <xsd:element name="newvalue" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ModifyDNSEntryResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteDNSEntryRequest">
+  <xsd:all>
+   <xsd:element name="domain" type="xsd:string"/>
+   <xsd:element name="dns" type="xsd:string"/>
+   <xsd:element name="type" type="xsd:string"/>
+   <xsd:element name="value" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteDNSEntryResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="UsageSummaryMailServiceRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="namePlan" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ResInfoSummaryMailItem">
+  <xsd:all>
+   <xsd:element name="status" type="xsd:string"/>
+   <xsd:element name="data" type="tns:InfoSummaryMailItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoSummaryMailItem">
+  <xsd:all>
+   <xsd:element name="numdomains" type="xsd:int"/>
+   <xsd:element name="numantivirus" type="xsd:int"/>
+   <xsd:element name="nummailboxes" type="xsd:int"/>
+   <xsd:element name="numredirects" type="xsd:int"/>
+   <xsd:element name="numexchange" type="xsd:int"/>
+   <xsd:element name="nummobilizations" type="xsd:int"/>
+   <xsd:element name="nummailplans" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="UsageSummaryMailServiceResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:InfoSummaryMailItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoPlanMailServiceRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="namePlan" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoPlanMailItem">
+  <xsd:all>
+   <xsd:element name="id" type="xsd:int"/>
+   <xsd:element name="name" type="xsd:string"/>
+   <xsd:element name="numdomains" type="xsd:int"/>
+   <xsd:element name="nummailboxes" type="xsd:int"/>
+   <xsd:element name="numredirects" type="xsd:int"/>
+   <xsd:element name="numexchange" type="xsd:int"/>
+   <xsd:element name="nummobilizations" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ArrayOfInfoPlanMailItem">
+  <xsd:complexContent>
+   <xsd:restriction base="SOAP-ENC:Array">
+    <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="tns:InfoPlanMailItem[]"/>
+   </xsd:restriction>
+  </xsd:complexContent>
+ </xsd:complexType>
+ <xsd:complexType name="ResArrayOfInfoPlanMailItem">
+  <xsd:all>
+   <xsd:element name="status" type="xsd:string"/>
+   <xsd:element name="data" type="tns:ArrayOfInfoPlanMailItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoPlanMailServiceResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:ArrayOfInfoPlanMailItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="NewPlanMailServiceRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="namePlan" type="xsd:string"/>
+   <xsd:element name="numMailboxes" type="xsd:int"/>
+   <xsd:element name="numRedirects" type="xsd:int"/>
+   <xsd:element name="numExchange" type="xsd:int"/>
+   <xsd:element name="numMobilizations" type="xsd:int"/>
+   <xsd:element name="predetermined" type="xsd:int"/>
+   <xsd:element name="quota" type="xsd:float"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="NewPlanMailServiceResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeletePlanMailServiceRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="namePlan" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeletePlanMailServiceResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="UpdatePlanMailServiceRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="namePlan" type="xsd:string"/>
+   <xsd:element name="numMailboxes" type="xsd:int"/>
+   <xsd:element name="numRedirects" type="xsd:int"/>
+   <xsd:element name="numExchange" type="xsd:int"/>
+   <xsd:element name="numMobilizations" type="xsd:int"/>
+   <xsd:element name="predetermined" type="xsd:int"/>
+   <xsd:element name="quota" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="UpdatePlanMailServiceResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="SearchDomainItem">
+  <xsd:all>
+   <xsd:element name="domain" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ArrayOfSearchDomainItem">
+  <xsd:complexContent>
+   <xsd:restriction base="SOAP-ENC:Array">
+    <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="tns:SearchDomainItem[]"/>
+   </xsd:restriction>
+  </xsd:complexContent>
+ </xsd:complexType>
+ <xsd:complexType name="ResArrayOfSearchDomainItem">
+  <xsd:all>
+   <xsd:element name="status" type="xsd:string"/>
+   <xsd:element name="data" type="tns:ArrayOfSearchDomainItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="SearchDomainRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="exactSearch" type="xsd:int"/>
+   <xsd:element name="onlyHosting" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="SearchDomainResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:ArrayOfSearchDomainItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="exactSearch" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainMailConfig">
+  <xsd:all>
+   <xsd:element name="inboundserver" type="xsd:string"/>
+   <xsd:element name="outboundserver" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainMailboxes">
+  <xsd:all>
+   <xsd:element name="name" type="xsd:string"/>
+   <xsd:element name="alias" type="xsd:string"/>
+   <xsd:element name="type" type="xsd:string"/>
+   <xsd:element name="spacedused" type="xsd:string"/>
+   <xsd:element name="mobilization" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ArrayOfInfoDomainMailboxes">
+  <xsd:complexContent>
+   <xsd:restriction base="SOAP-ENC:Array">
+    <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="tns:InfoDomainMailboxes[]"/>
+   </xsd:restriction>
+  </xsd:complexContent>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainMailAlias">
+  <xsd:all>
+   <xsd:element name="to" type="xsd:string"/>
+   <xsd:element name="realto" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ArrayOfInfoDomainMailAlias">
+  <xsd:complexContent>
+   <xsd:restriction base="SOAP-ENC:Array">
+    <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="tns:InfoDomainMailAlias[]"/>
+   </xsd:restriction>
+  </xsd:complexContent>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainItem">
+  <xsd:all>
+   <xsd:element name="nameplan" type="xsd:string"/>
+   <xsd:element name="mailboxes" type="tns:ArrayOfInfoDomainMailboxes"/>
+   <xsd:element name="mailfilter" type="xsd:int"/>
+   <xsd:element name="mailconfig" type="tns:InfoDomainMailConfig"/>
+   <xsd:element name="mailaliases" type="tns:ArrayOfInfoDomainMailAlias"/>
+   <xsd:element name="dnsentries" type="tns:ArrayOfInfoDNSZoneItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ResInfoDomainItem">
+  <xsd:all>
+   <xsd:element name="status" type="xsd:string"/>
+   <xsd:element name="data" type="tns:InfoDomainItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:InfoDomainItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="NewDomainRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="password" type="xsd:string"/>
+   <xsd:element name="planId" type="xsd:int"/>
+   <xsd:element name="panelAccess" type="xsd:int"/>
+   <xsd:element name="antivirus" type="xsd:int"/>
+   <xsd:element name="emailAdministrator" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="NewDomainResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="StatusDomainRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="StatusDomainResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteDomainRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteDomainResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="UpdateDomainRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="newPassword" type="xsd:string"/>
+   <xsd:element name="newplanId" type="xsd:int"/>
+   <xsd:element name="panelAccess" type="xsd:int"/>
+   <xsd:element name="antivirus" type="xsd:int"/>
+   <xsd:element name="newemailAdministrator" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="UpdateDomainResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="NewMailboxRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="email" type="xsd:string"/>
+   <xsd:element name="type" type="xsd:string"/>
+   <xsd:element name="password" type="xsd:string"/>
+   <xsd:element name="firstname" type="xsd:string"/>
+   <xsd:element name="lastname" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="NewMailboxItem">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="password" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="NewMailboxResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:NewMailboxItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteMailboxRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="email" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteMailboxResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ChangeMailboxPasswordRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="email" type="xsd:string"/>
+   <xsd:element name="password" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ChangeMailboxPasswordResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:NewMailboxItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoMailboxRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="email" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="MailAliasinfo">
+  <xsd:all>
+   <xsd:element name="id" type="xsd:int"/>
+   <xsd:element name="to" type="xsd:string"/>
+   <xsd:element name="realto" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ArrayOfMailAliasinfo">
+  <xsd:complexContent>
+   <xsd:restriction base="SOAP-ENC:Array">
+    <xsd:attribute ref="SOAP-ENC:arrayType" wsdl:arrayType="tns:MailAliasinfo[]"/>
+   </xsd:restriction>
+  </xsd:complexContent>
+ </xsd:complexType>
+ <xsd:complexType name="Mailboxinfo">
+  <xsd:all>
+   <xsd:element name="id" type="xsd:int"/>
+   <xsd:element name="name" type="xsd:string"/>
+   <xsd:element name="type" type="xsd:string"/>
+   <xsd:element name="spacedused" type="xsd:string"/>
+   <xsd:element name="mobilization" type="xsd:boolean"/>
+   <xsd:element name="mailaliases" type="tns:ArrayOfMailAliasinfo"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoMailboxResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:Mailboxinfo"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="MailboxToExchangeRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="email" type="xsd:string"/>
+   <xsd:element name="copy" type="xsd:boolean"/>
+   <xsd:element name="password" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="MailboxToExchangeResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ExchangeToMailboxRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="email" type="xsd:string"/>
+   <xsd:element name="copy" type="xsd:boolean"/>
+   <xsd:element name="password" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="ExchangeToMailboxResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="NewAliasRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="emailFrom" type="xsd:string"/>
+   <xsd:element name="emailTo" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="NewAliasResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteAliasRequest">
+  <xsd:all>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="emailFrom" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DeleteAliasResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="xsd:boolean"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDNSRequest">
+  <xsd:all>
+   <xsd:element name="domain" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DNSServerType">
+  <xsd:all>
+   <xsd:element name="name" type="xsd:string"/>
+   <xsd:element name="ip" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="DNSServers">
+  <xsd:all>
+   <xsd:element name="primary" type="tns:DNSServerType"/>
+   <xsd:element name="secondary" type="tns:DNSServerType"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDNSResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:DNSServers"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainDnsRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="offset" type="xsd:int"/>
+   <xsd:element name="limit" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainDnsResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:InfoDomainDnsItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainDnsItem">
+  <xsd:all>
+   <xsd:element name="dnsentries" type="tns:ArrayOfInfoDNSZoneItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainMailboxesRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="offset" type="xsd:int"/>
+   <xsd:element name="limit" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainMailboxesResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:InfoDomainMailboxesItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainMailboxesItem">
+  <xsd:all>
+   <xsd:element name="mailboxes" type="tns:ArrayOfInfoDomainMailboxes"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainMailaliasesRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="domainName" type="xsd:string"/>
+   <xsd:element name="offset" type="xsd:int"/>
+   <xsd:element name="limit" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainMailaliasesResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:InfoDomainMailaliasesItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainMailaliasesItem">
+  <xsd:all>
+   <xsd:element name="mailaliases" type="tns:ArrayOfInfoDomainMailAlias"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainStatusRequest">
+  <xsd:all>
+   <xsd:element name="login" type="xsd:string"/>
+   <xsd:element name="domainName" type="xsd:string"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainStatusResponse">
+  <xsd:all>
+   <xsd:element name="errorCode" type="xsd:int"/>
+   <xsd:element name="errorMsg" type="xsd:string"/>
+   <xsd:element name="res" type="tns:InfoDomainStatusItem"/>
+  </xsd:all>
+ </xsd:complexType>
+ <xsd:complexType name="InfoDomainStatusItem">
+  <xsd:all>
+   <xsd:element name="nameplan" type="xsd:string"/>
+   <xsd:element name="mailconfig" type="tns:InfoDomainMailConfig"/>
+   <xsd:element name="mailfilter" type="xsd:int"/>
+   <xsd:element name="mailboxes" type="xsd:int"/>
+   <xsd:element name="mailaliases" type="xsd:int"/>
+   <xsd:element name="dnsentries" type="xsd:int"/>
+  </xsd:all>
+ </xsd:complexType>
+</xsd:schema>
+</types>
+<message name="CreateDNSZoneRequest">
+  <part name="input" type="tns:CreateDNSZoneRequest" /></message>
+<message name="CreateDNSZoneResponse">
+  <part name="return" type="tns:CreateDNSZoneResponse" /></message>
+<message name="DeleteDNSZoneRequest">
+  <part name="input" type="tns:DeleteDNSZoneRequest" /></message>
+<message name="DeleteDNSZoneResponse">
+  <part name="return" type="tns:DeleteDNSZoneResponse" /></message>
+<message name="CreateDNSEntryRequest">
+  <part name="input" type="tns:CreateDNSEntryRequest" /></message>
+<message name="CreateDNSEntryResponse">
+  <part name="return" type="tns:CreateDNSEntryResponse" /></message>
+<message name="InfoDNSZoneRequest">
+  <part name="input" type="tns:InfoDNSZoneRequest" /></message>
+<message name="InfoDNSZoneResponse">
+  <part name="return" type="tns:InfoDNSZoneResponse" /></message>
+<message name="ModifyDNSEntryRequest">
+  <part name="input" type="tns:ModifyDNSEntryRequest" /></message>
+<message name="ModifyDNSEntryResponse">
+  <part name="return" type="tns:ModifyDNSEntryResponse" /></message>
+<message name="DeleteDNSEntryRequest">
+  <part name="input" type="tns:DeleteDNSEntryRequest" /></message>
+<message name="DeleteDNSEntryResponse">
+  <part name="return" type="tns:DeleteDNSEntryResponse" /></message>
+<message name="UsageSummaryMailServiceRequest">
+  <part name="input" type="tns:UsageSummaryMailServiceRequest" /></message>
+<message name="UsageSummaryMailServiceResponse">
+  <part name="return" type="tns:UsageSummaryMailServiceResponse" /></message>
+<message name="InfoPlanMailServiceRequest">
+  <part name="input" type="tns:InfoPlanMailServiceRequest" /></message>
+<message name="InfoPlanMailServiceResponse">
+  <part name="return" type="tns:InfoPlanMailServiceResponse" /></message>
+<message name="NewPlanMailServiceRequest">
+  <part name="input" type="tns:NewPlanMailServiceRequest" /></message>
+<message name="NewPlanMailServiceResponse">
+  <part name="return" type="tns:NewPlanMailServiceResponse" /></message>
+<message name="DeletePlanMailServiceRequest">
+  <part name="input" type="tns:DeletePlanMailServiceRequest" /></message>
+<message name="DeletePlanMailServiceResponse">
+  <part name="return" type="tns:DeletePlanMailServiceResponse" /></message>
+<message name="UpdatePlanMailServiceRequest">
+  <part name="input" type="tns:UpdatePlanMailServiceRequest" /></message>
+<message name="UpdatePlanMailServiceResponse">
+  <part name="return" type="tns:UpdatePlanMailServiceResponse" /></message>
+<message name="SearchDomainRequest">
+  <part name="input" type="tns:SearchDomainRequest" /></message>
+<message name="SearchDomainResponse">
+  <part name="return" type="tns:SearchDomainResponse" /></message>
+<message name="InfoDomainRequest">
+  <part name="input" type="tns:InfoDomainRequest" /></message>
+<message name="InfoDomainResponse">
+  <part name="return" type="tns:InfoDomainResponse" /></message>
+<message name="NewDomainRequest">
+  <part name="input" type="tns:NewDomainRequest" /></message>
+<message name="NewDomainResponse">
+  <part name="return" type="tns:NewDomainResponse" /></message>
+<message name="StatusDomainRequest">
+  <part name="input" type="tns:StatusDomainRequest" /></message>
+<message name="StatusDomainResponse">
+  <part name="return" type="tns:StatusDomainResponse" /></message>
+<message name="DeleteDomainRequest">
+  <part name="input" type="tns:DeleteDomainRequest" /></message>
+<message name="DeleteDomainResponse">
+  <part name="return" type="tns:DeleteDomainResponse" /></message>
+<message name="UpdateDomainRequest">
+  <part name="input" type="tns:UpdateDomainRequest" /></message>
+<message name="UpdateDomainResponse">
+  <part name="return" type="tns:UpdateDomainResponse" /></message>
+<message name="NewMailboxRequest">
+  <part name="input" type="tns:NewMailboxRequest" /></message>
+<message name="NewMailboxResponse">
+  <part name="return" type="tns:NewMailboxResponse" /></message>
+<message name="DeleteMailboxRequest">
+  <part name="input" type="tns:DeleteMailboxRequest" /></message>
+<message name="DeleteMailboxResponse">
+  <part name="return" type="tns:DeleteMailboxResponse" /></message>
+<message name="ChangeMailboxPasswordRequest">
+  <part name="input" type="tns:ChangeMailboxPasswordRequest" /></message>
+<message name="ChangeMailboxPasswordResponse">
+  <part name="return" type="tns:ChangeMailboxPasswordResponse" /></message>
+<message name="InfoMailboxRequest">
+  <part name="input" type="tns:InfoMailboxRequest" /></message>
+<message name="InfoMailboxResponse">
+  <part name="return" type="tns:InfoMailboxResponse" /></message>
+<message name="MailboxToExchangeRequest">
+  <part name="input" type="tns:MailboxToExchangeRequest" /></message>
+<message name="MailboxToExchangeResponse">
+  <part name="return" type="tns:MailboxToExchangeResponse" /></message>
+<message name="ExchangeToMailboxRequest">
+  <part name="input" type="tns:ExchangeToMailboxRequest" /></message>
+<message name="ExchangeToMailboxResponse">
+  <part name="return" type="tns:ExchangeToMailboxResponse" /></message>
+<message name="NewAliasRequest">
+  <part name="input" type="tns:NewAliasRequest" /></message>
+<message name="NewAliasResponse">
+  <part name="return" type="tns:NewAliasResponse" /></message>
+<message name="DeleteAliasRequest">
+  <part name="input" type="tns:DeleteAliasRequest" /></message>
+<message name="DeleteAliasResponse">
+  <part name="return" type="tns:DeleteAliasResponse" /></message>
+<message name="InfoDNSRequest">
+  <part name="input" type="tns:InfoDNSRequest" /></message>
+<message name="InfoDNSResponse">
+  <part name="return" type="tns:InfoDNSResponse" /></message>
+<message name="InfoDomainDnsRequest">
+  <part name="input" type="tns:InfoDomainDnsRequest" /></message>
+<message name="InfoDomainDnsResponse">
+  <part name="return" type="tns:InfoDomainDnsResponse" /></message>
+<message name="InfoDomainMailboxesRequest">
+  <part name="input" type="tns:InfoDomainMailboxesRequest" /></message>
+<message name="InfoDomainMailboxesResponse">
+  <part name="return" type="tns:InfoDomainMailboxesResponse" /></message>
+<message name="InfoDomainMailaliasesRequest">
+  <part name="input" type="tns:InfoDomainMailaliasesRequest" /></message>
+<message name="InfoDomainMailaliasesResponse">
+  <part name="return" type="tns:InfoDomainMailaliasesResponse" /></message>
+<message name="InfoDomainStatusRequest">
+  <part name="input" type="tns:InfoDomainStatusRequest" /></message>
+<message name="InfoDomainStatusResponse">
+  <part name="return" type="tns:InfoDomainStatusResponse" /></message>
+<portType name="WebServicesPortType">
+  <operation name="CreateDNSZone">
+    <documentation>Create a DNS Zone</documentation>
+    <input message="tns:CreateDNSZoneRequest"/>
+    <output message="tns:CreateDNSZoneResponse"/>
+  </operation>
+  <operation name="DeleteDNSZone">
+    <documentation>Delete a DNS Zone</documentation>
+    <input message="tns:DeleteDNSZoneRequest"/>
+    <output message="tns:DeleteDNSZoneResponse"/>
+  </operation>
+  <operation name="CreateDNSEntry">
+    <documentation>Create a DNS entry</documentation>
+    <input message="tns:CreateDNSEntryRequest"/>
+    <output message="tns:CreateDNSEntryResponse"/>
+  </operation>
+  <operation name="InfoDNSZone">
+    <documentation>List DNS Zone entries</documentation>
+    <input message="tns:InfoDNSZoneRequest"/>
+    <output message="tns:InfoDNSZoneResponse"/>
+  </operation>
+  <operation name="ModifyDNSEntry">
+    <documentation>Modify a DNS entry</documentation>
+    <input message="tns:ModifyDNSEntryRequest"/>
+    <output message="tns:ModifyDNSEntryResponse"/>
+  </operation>
+  <operation name="DeleteDNSEntry">
+    <documentation>Delete a DNS entry</documentation>
+    <input message="tns:DeleteDNSEntryRequest"/>
+    <output message="tns:DeleteDNSEntryResponse"/>
+  </operation>
+  <operation name="UsageSummaryMailService">
+    <documentation>Mail resource info</documentation>
+    <input message="tns:UsageSummaryMailServiceRequest"/>
+    <output message="tns:UsageSummaryMailServiceResponse"/>
+  </operation>
+  <operation name="InfoPlanMailService">
+    <documentation>Mail plans info</documentation>
+    <input message="tns:InfoPlanMailServiceRequest"/>
+    <output message="tns:InfoPlanMailServiceResponse"/>
+  </operation>
+  <operation name="NewPlanMailService">
+    <documentation>Creates a new mail plan</documentation>
+    <input message="tns:NewPlanMailServiceRequest"/>
+    <output message="tns:NewPlanMailServiceResponse"/>
+  </operation>
+  <operation name="DeletePlanMailService">
+    <documentation>Deletes a mail plan</documentation>
+    <input message="tns:DeletePlanMailServiceRequest"/>
+    <output message="tns:DeletePlanMailServiceResponse"/>
+  </operation>
+  <operation name="UpdatePlanMailService">
+    <documentation>Modifies mail plan</documentation>
+    <input message="tns:UpdatePlanMailServiceRequest"/>
+    <output message="tns:UpdatePlanMailServiceResponse"/>
+  </operation>
+  <operation name="SearchDomain">
+    <documentation>Modifies mail plan</documentation>
+    <input message="tns:SearchDomainRequest"/>
+    <output message="tns:SearchDomainResponse"/>
+  </operation>
+  <operation name="InfoDomain">
+    <documentation>Get domain info</documentation>
+    <input message="tns:InfoDomainRequest"/>
+    <output message="tns:InfoDomainResponse"/>
+  </operation>
+  <operation name="NewDomain">
+    <documentation>Get domain info</documentation>
+    <input message="tns:NewDomainRequest"/>
+    <output message="tns:NewDomainResponse"/>
+  </operation>
+  <operation name="StatusDomain">
+    <documentation>Get domain status</documentation>
+    <input message="tns:StatusDomainRequest"/>
+    <output message="tns:StatusDomainResponse"/>
+  </operation>
+  <operation name="DeleteDomain">
+    <documentation>Delete domain </documentation>
+    <input message="tns:DeleteDomainRequest"/>
+    <output message="tns:DeleteDomainResponse"/>
+  </operation>
+  <operation name="UpdateDomain">
+    <documentation>Get domain info</documentation>
+    <input message="tns:UpdateDomainRequest"/>
+    <output message="tns:UpdateDomainResponse"/>
+  </operation>
+  <operation name="NewMailbox">
+    <documentation>Create mailbox</documentation>
+    <input message="tns:NewMailboxRequest"/>
+    <output message="tns:NewMailboxResponse"/>
+  </operation>
+  <operation name="DeleteMailbox">
+    <documentation>delete mailbox</documentation>
+    <input message="tns:DeleteMailboxRequest"/>
+    <output message="tns:DeleteMailboxResponse"/>
+  </operation>
+  <operation name="ChangeMailboxPassword">
+    <documentation>Change mailbox password</documentation>
+    <input message="tns:ChangeMailboxPasswordRequest"/>
+    <output message="tns:ChangeMailboxPasswordResponse"/>
+  </operation>
+  <operation name="InfoMailbox">
+    <documentation>Active/deactive mailbox mobilization</documentation>
+    <input message="tns:InfoMailboxRequest"/>
+    <output message="tns:InfoMailboxResponse"/>
+  </operation>
+  <operation name="MailboxToExchange">
+    <documentation>Mailbox to exchange</documentation>
+    <input message="tns:MailboxToExchangeRequest"/>
+    <output message="tns:MailboxToExchangeResponse"/>
+  </operation>
+  <operation name="ExchangeToMailbox">
+    <documentation>Mailbox to exchange</documentation>
+    <input message="tns:ExchangeToMailboxRequest"/>
+    <output message="tns:ExchangeToMailboxResponse"/>
+  </operation>
+  <operation name="NewAlias">
+    <documentation>Create new mailbox alias</documentation>
+    <input message="tns:NewAliasRequest"/>
+    <output message="tns:NewAliasResponse"/>
+  </operation>
+  <operation name="DeleteAlias">
+    <documentation>Delete  mailbox alias</documentation>
+    <input message="tns:DeleteAliasRequest"/>
+    <output message="tns:DeleteAliasResponse"/>
+  </operation>
+  <operation name="InfoDNS">
+    <documentation>Get Domain DNS Servers </documentation>
+    <input message="tns:InfoDNSRequest"/>
+    <output message="tns:InfoDNSResponse"/>
+  </operation>
+  <operation name="InfoDomainDns">
+    <documentation>Get domain info</documentation>
+    <input message="tns:InfoDomainDnsRequest"/>
+    <output message="tns:InfoDomainDnsResponse"/>
+  </operation>
+  <operation name="InfoDomainMailboxes">
+    <documentation>Get domain info</documentation>
+    <input message="tns:InfoDomainMailboxesRequest"/>
+    <output message="tns:InfoDomainMailboxesResponse"/>
+  </operation>
+  <operation name="InfoDomainMailaliases">
+    <documentation>Get domain info</documentation>
+    <input message="tns:InfoDomainMailaliasesRequest"/>
+    <output message="tns:InfoDomainMailaliasesResponse"/>
+  </operation>
+  <operation name="InfoDomainStatus">
+    <documentation>Get domain info</documentation>
+    <input message="tns:InfoDomainStatusRequest"/>
+    <output message="tns:InfoDomainStatusResponse"/>
+  </operation>
+</portType>
+<binding name="WebServicesBinding" type="tns:WebServicesPortType">
+  <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+  <operation name="CreateDNSZone">
+    <soap:operation soapAction="urn:CreateDNSZone#CreateDNSZone" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:CreateDNSZoneWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:CreateDNSZoneWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="DeleteDNSZone">
+    <soap:operation soapAction="urn:DeleteDNSZone#DeleteDNSZone" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:DeleteDNSZoneWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:DeleteDNSZoneWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="CreateDNSEntry">
+    <soap:operation soapAction="urn:CreateDNSEntry#CreateDNSEntry" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:CreateDNSEntryWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:CreateDNSEntryWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="InfoDNSZone">
+    <soap:operation soapAction="urn:InfoDNSZone#InfoDNSZone" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:InfoDNSZoneWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:InfoDNSZoneWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="ModifyDNSEntry">
+    <soap:operation soapAction="urn:ModifyDNSEntry#ModifyDNSEntry" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:ModifyDNSEntryWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:ModifyDNSEntryWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="DeleteDNSEntry">
+    <soap:operation soapAction="urn:DeleteDNSEntry#DeleteDNSEntry" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:DeleteDNSEntryWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:DeleteDNSEntryWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="UsageSummaryMailService">
+    <soap:operation soapAction="urn:UsageSummaryMailService#UsageSummaryMailService" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:UsageSummaryMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:UsageSummaryMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="InfoPlanMailService">
+    <soap:operation soapAction="urn:InfoPlanMailService#InfoPlanMailService" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:InfoPlanMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:InfoPlanMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="NewPlanMailService">
+    <soap:operation soapAction="urn:NewPlanMailService#NewPlanMailService" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:NewPlanMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:NewPlanMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="DeletePlanMailService">
+    <soap:operation soapAction="urn:DeletePlanMailService#DeletePlanMailService" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:DeletePlanMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:DeletePlanMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="UpdatePlanMailService">
+    <soap:operation soapAction="urn:UpdatePlanMailService#UpdatePlanMailService" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:UpdatePlanMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:UpdatePlanMailServiceWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="SearchDomain">
+    <soap:operation soapAction="urn:SearchDomain#SearchDomain" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:SearchDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:SearchDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="InfoDomain">
+    <soap:operation soapAction="urn:InfoDomain#InfoDomain" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:InfoDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:InfoDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="NewDomain">
+    <soap:operation soapAction="urn:NewDomain#NewDomain" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:NewDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:NewDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="StatusDomain">
+    <soap:operation soapAction="urn:StatusDomain#StatusDomain" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:StatusDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:StatusDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="DeleteDomain">
+    <soap:operation soapAction="urn:DeleteDomain#DeleteDomain" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:DeleteDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:DeleteDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="UpdateDomain">
+    <soap:operation soapAction="urn:UpdateDomain#UpdateDomain" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:UpdateDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:UpdateDomainWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="NewMailbox">
+    <soap:operation soapAction="urn:NewMailbox#NewMailbox" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:NewMailboxWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:NewMailboxWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="DeleteMailbox">
+    <soap:operation soapAction="urn:DeleteMailbox#DeleteMailbox" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:DeleteMailboxWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:DeleteMailboxWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="ChangeMailboxPassword">
+    <soap:operation soapAction="urn:ChangeMailboxPassword#ChangeMailboxPassword" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:ChangeMailboxPasswordWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:ChangeMailboxPasswordWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="InfoMailbox">
+    <soap:operation soapAction="urn:InfoMailbox#InfoMailbox" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:InfoMailboxWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:InfoMailboxWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="MailboxToExchange">
+    <soap:operation soapAction="urn:MailboxToExchange#MailboxToExchange" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:MailboxToExchangeWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:MailboxToExchangeWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="ExchangeToMailbox">
+    <soap:operation soapAction="urn:ExchangeToMailbox#ExchangeToMailbox" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:ExchangeToMailboxWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:ExchangeToMailboxWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="NewAlias">
+    <soap:operation soapAction="urn:NewAlias#NewAlias" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:NewAliasWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:NewAliasWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="DeleteAlias">
+    <soap:operation soapAction="urn:DeleteAlias#DeleteAlias" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:DeleteAliasWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:DeleteAliasWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="InfoDNS">
+    <soap:operation soapAction="urn:InfoDNS#InfoDNS" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:InfoDNSWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:InfoDNSWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="InfoDomainDns">
+    <soap:operation soapAction="urn:InfoDomainDns#InfoDomainDns" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:InfoDomainDnsWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:InfoDomainDnsWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="InfoDomainMailboxes">
+    <soap:operation soapAction="urn:InfoDomainMailboxes#InfoDomainMailboxes" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:InfoDomainMailboxesWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:InfoDomainMailboxesWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="InfoDomainMailaliases">
+    <soap:operation soapAction="urn:InfoDomainMailaliases#InfoDomainMailaliases" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:InfoDomainMailaliasesWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:InfoDomainMailaliasesWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+  <operation name="InfoDomainStatus">
+    <soap:operation soapAction="urn:InfoDomainStatus#InfoDomainStatus" style="rpc"/>
+    <input><soap:body use="encoded" namespace="urn:InfoDomainStatusWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></input>
+    <output><soap:body use="encoded" namespace="urn:InfoDomainStatusWSDL" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/></output>
+  </operation>
+</binding>
+<service name="WebServices">
+  <port name="WebServicesPort" binding="tns:WebServicesBinding">
+    <soap:address location="https://api.servidoresdns.net:54321/hosting/api/soap/index.php"/>
+  </port>
+</service>
+</definitions>

@@ -201,25 +201,25 @@ namespace PKISharp.WACS.Services
             }
         }
 
+        /// <summary>
+        /// Shared by RequestString and RequestPassword
+        /// </summary>
+        /// <param name="what"></param>
+        private void RenderRequest(string what)
+        {
+            CreateSpace();
+            Write($" {what}: ", ConsoleColor.Green);
+        }
+
         public Task<string> RequestString(string what, bool multiline = false)
         {
             Validate(what);
-            CreateSpace();
-            Write($" {what}: ", ConsoleColor.Green);
+            RenderRequest(what);
 
             // Copied from http://stackoverflow.com/a/16638000
             var bufferSize = 16384;
             var inputStream = Console.OpenStandardInput(bufferSize);
             Console.SetIn(new StreamReader(inputStream, Console.InputEncoding, false, bufferSize));
-
-            int top = default;
-            int left = default;
-            if (!Console.IsOutputRedirected)
-            {
-                top = Console.CursorTop;
-                left = Console.CursorLeft;
-            }
-
             var ret = new StringBuilder();
             do
             {
@@ -237,8 +237,13 @@ namespace PKISharp.WACS.Services
             {
                 if (!Console.IsOutputRedirected)
                 {
-                    Console.SetCursorPosition(left, top);
+                    var targetTop = Console.CursorTop - 1;
+                    if (targetTop >= 0)
+                    {
+                        Console.SetCursorPosition(0, targetTop);
+                    }
                 }
+                RenderRequest(what);
                 WriteLine("<Enter>");
                 WriteLine();
                 return Task.FromResult(string.Empty);
@@ -292,8 +297,7 @@ namespace PKISharp.WACS.Services
         public Task<string?> ReadPassword(string what)
         {
             Validate(what);
-            CreateSpace();
-            Write($" {what}: ", ConsoleColor.Green);
+            RenderRequest(what);
             var password = new StringBuilder();
             try
             {

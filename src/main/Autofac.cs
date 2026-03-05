@@ -66,6 +66,7 @@ namespace PKISharp.WACS.Host
                 _ = builder.RegisterType<AutofacBuilder>().As<IAutofacBuilder>().SingleInstance();
                 _ = builder.RegisterType<AccountManager>().SingleInstance();
                 _ = builder.RegisterType<AcmeClientManager>().SingleInstance();
+                _ = builder.RegisterType<AcmeCredentialReader>().SingleInstance();
                 _ = builder.RegisterType<NetworkCheckService>().SingleInstance();
                 _ = builder.RegisterType<ZeroSsl>().SingleInstance();
                 _ = builder.RegisterType<OrderManager>().InstancePerLifetimeScope();
