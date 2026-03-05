@@ -14,7 +14,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     DnsValidationCapability, CzechiaJson, CzechiaArguments>
     ("837692a9-25bc-4adc-908e-dc3316f11e32",
      "Czechia", "Create verification records in Czechia DNS",
-     External = false)]
+     External = true,
+     Provider = "Czechia")]
      public class Czechia(
          CzechiaOptions options,
          IProxyService proxyService,
