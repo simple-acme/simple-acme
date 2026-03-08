@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+
+    <!-- drž stejné jako ostatní pluginy v tomhle repu -->
+    <RootNamespace>PKISharp.WACS.Plugins.ValidationPlugins</RootNamespace>
+    <AssemblyName>PKISharp.WACS.Plugins.ValidationPlugins.Czechia</AssemblyName>
+
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\main.lib\wacs.lib.csproj" />
+  </ItemGroup>
+
+</Project>
