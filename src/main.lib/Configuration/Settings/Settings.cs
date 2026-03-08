@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Configuration.Settings.Types;
 using PKISharp.WACS.Configuration.Settings.Types.Csr;
+using PKISharp.WACS.Configuration.Settings.Types.Notification;
 using PKISharp.WACS.Configuration.Settings.Types.Store;
 using System;
 using System.IO;
@@ -99,6 +100,52 @@ namespace PKISharp.WACS.Configuration.Settings
                 newSettings.Csr ??= new CsrSettings();
                 newSettings.Csr.Rsa ??= new RsaSettings();
                 newSettings.Csr.Rsa.KeyBits ??= newSettings.Security.RSAKeyBits;
+            }
+
+            if (newSettings.Notification?.EmailOnSuccess != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.NotifyOnSuccess ??= newSettings.Notification.EmailOnSuccess;
+            }
+            if (newSettings.Notification?.ReceiverAddresses != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.ReceiverAddresses ??= newSettings.Notification.ReceiverAddresses;
+            }
+            if (newSettings.Notification?.SenderAddress != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.SenderAddress ??= newSettings.Notification.SenderAddress;
+            }
+            if (newSettings.Notification?.SenderName != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.SenderName ??= newSettings.Notification.SenderName;
+            }
+            if (newSettings.Notification?.SmtpPassword != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.SmtpPassword ??= newSettings.Notification.SmtpPassword;
+            }
+            if (newSettings.Notification?.SmtpPort != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.SmtpPort ??= newSettings.Notification.SmtpPort;
+            }
+            if (newSettings.Notification?.SmtpSecure != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.SmtpSecure ??= newSettings.Notification.SmtpSecure;
+            }
+            if (newSettings.Notification?.SmtpSecureMode != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.SmtpSecureMode ??= newSettings.Notification.SmtpSecureMode;
+            }
+            if (newSettings.Notification?.SmtpServer != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.SmtpServer ??= newSettings.Notification.SmtpServer;
             }
             return newSettings;
         }
