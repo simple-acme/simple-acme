@@ -8,52 +8,43 @@ using System.Threading.Tasks;
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
     internal sealed class CzechiaOptionsFactory(ArgumentsInputService arguments)
-    : PluginOptionsFactory<CzechiaOptions>
+        : PluginOptionsFactory<CzechiaOptions>
     {
         private ArgumentResult<string?> ApiBaseUri => arguments.GetString<CzechiaArguments>(a => a.ApiBaseUri);
 
         private ArgumentResult<ProtectedString?> ApiToken => arguments
-        .GetProtectedString<CzechiaArguments>(a => a.ApiToken)
-        .Required();
+            .GetProtectedString<CzechiaArguments>(a => a.ApiToken)
+            .Required();
 
         private ArgumentResult<string?> ZoneName => arguments
-        .GetString<CzechiaArguments>(a => a.ZoneName)
-        .Required();
+            .GetString<CzechiaArguments>(a => a.ZoneName);
 
         private ArgumentResult<int?> Ttl => arguments.GetInt<CzechiaArguments>(a => a.Ttl);
 
         public override async Task<CzechiaOptions?> Aquire(IInputService input, RunLevel runLevel)
         {
-            var baseUri = (await ApiBaseUri.Interactive(input)
-            .WithDefault("https://api.czechia.com/api")
-            .GetValue()) ?? "https://api.czechia.com/api";
-
+            var baseUri = await ApiBaseUri.Interactive(input).GetValue();
             var token = await ApiToken.Interactive(input).GetValue();
             var zone = await ZoneName.Interactive(input).GetValue();
-            var ttl = await Ttl.Interactive(input).WithDefault(3600).GetValue() ?? 3600;
+            var ttl = await Ttl.Interactive(input).GetValue();
 
             return new CzechiaOptions
             {
                 ApiBaseUri = baseUri,
                 ApiToken = token,
-                ZoneName = zone ?? "",
+                ZoneName = zone,
                 Ttl = ttl
             };
         }
 
         public override async Task<CzechiaOptions?> Default()
         {
-            var baseUri = await ApiBaseUri.GetValue() ?? "https://api.czechia.com/api";
-            var token = await ApiToken.GetValue();
-            var zone = await ZoneName.GetValue();
-            var ttl = await Ttl.GetValue() ?? 3600;
-
             return new CzechiaOptions
             {
-                ApiBaseUri = baseUri,
-                ApiToken = token,
-                ZoneName = zone ?? "",
-                Ttl = ttl
+                ApiBaseUri = await ApiBaseUri.GetValue(),
+                ApiToken = await ApiToken.GetValue(),
+                ZoneName = await ZoneName.GetValue(),
+                Ttl = await Ttl.GetValue()
             };
         }
 

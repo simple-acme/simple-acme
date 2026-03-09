@@ -12,14 +12,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
     public class CzechiaOptions : ValidationPluginOptions
     {
-        public string ApiBaseUri { get; set; } = "https://api.czechia.com/api";
-
-            // bude uložené šifrovaně / podporuje secret store stejně jako Cloudflare
-            public ProtectedString? ApiToken { get; set; }
-
-            // v Czechia API potřebuješ znát konkrétní zónu v URL
-            public string ZoneName { get; set; } = "";
-
-            public int Ttl { get; set; } = 3600;
+        public string? ApiBaseUri { get; set; }
+        public ProtectedString? ApiToken { get; set; }
+        public string? ZoneName { get; set; }
+        public int? Ttl { get; set; }
     }
 }
