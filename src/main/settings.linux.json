@@ -44,17 +44,24 @@
     "ProtectionMode": "default"
   },
   "Notification": {
-    "SmtpServer": null,
-    "SmtpPort": 25,
-    "SmtpUser": null,
-    "SmtpPassword": null,
-    "SmtpSecure": false,
-    "SmtpSecureMode": 1,
-    "SenderName": null,
-    "SenderAddress": null,
-    "ReceiverAddresses": [],
-    "EmailOnSuccess": false,
-    "ComputerName": null
+    "ComputerName": null,
+    "Email": {
+      "SmtpServer": null,
+      "SmtpPort": 25,
+      "SmtpUser": null,
+      "SmtpPassword": null,
+      "SmtpSecure": false,
+      "SmtpSecureMode": 1,
+      "SenderName": null,
+      "SenderAddress": null,
+      "ReceiverAddresses": [],
+      "NotifyOnSuccess": false
+    },
+    "Script": {
+      "Path": null,
+      "Parameters": null,
+      "NotifyOnSuccess": false
+    }
   },
   "Security": {
     "EncryptConfig": false,
@@ -111,7 +118,8 @@
     },
     "PemFiles": {
       "DefaultPath": null,
-      "DefaultPassword": null
+      "DefaultPassword": null,
+      "KeyFormat": null
     },
     "PfxFile": {
       "DefaultPath": null,
@@ -122,7 +130,7 @@
   "Installation": {
     "DefaultInstallation": null,
     "IIS": {
-      "BindingFlags": ["None"]
+      "BindingFlags": [ "None" ]
     }
   },
   "Secrets": {

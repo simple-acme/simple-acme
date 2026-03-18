@@ -222,7 +222,7 @@ namespace PKISharp.WACS.Host
                         };
                     });
             }
-            var client = await clientManager.GetClient(account) ?? throw new InvalidOperationException("Unable to initialize acmeAccount");
+            var client = await clientManager.GetClient(runLevel, account) ?? throw new InvalidOperationException("Unable to initialize acmeAccount");
             var accountDetails = client.Account.Details;
             input.CreateSpace();
             input.Show("Account ID", accountDetails.Payload.Id ?? "-");
@@ -243,7 +243,7 @@ namespace PKISharp.WACS.Host
             {
                 try
                 {
-                    await clientManager.ChangeContacts(account);
+                    await clientManager.ChangeContacts(runLevel, account);
                     await UpdateAccount(runLevel);
                 } 
                 catch (Exception ex)
