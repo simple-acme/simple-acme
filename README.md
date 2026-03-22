@@ -10,6 +10,7 @@ If have questions on how to use the program, first please check to see if your i
 Is your business relying on this program to secure customer websites and perhaps even critical infrastructure? Then maybe it would be good for your peace of mind then to sponsor its core developer, to gain guaranteed future support and good karma at the same time. You can become a regular sponsor via [Patreon](https://www.patreon.com/woutertinus) or [GitHub Sponsors](https://github.com/sponsors/WouterTinus) or do a one-time donation at [Paypal](http://paypal.me/woutertinus).
 
 [![Build status](https://ci.appveyor.com/api/projects/status/yg3mym4rthh2pu90/branch/main?svg=true)](https://ci.appveyor.com/project/WouterTinus/simple-acme/branch/main)
+[![gitcgr](https://gitcgr.com/badge/simple-acme/simple-acme.svg)](https://gitcgr.com/simple-acme/simple-acme)
 
 # Contributors
 <a href="https://github.com/simple-acme/simple-acme/graphs/contributors">
