@@ -96,6 +96,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wacs.validation.dns.bunny",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wacs.validation.dns.arsys", "plugin.validation.dns.arsys\wacs.validation.dns.arsys.csproj", "{EE5E145E-51FE-DEA4-D0B7-F25FF0BE672E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wacs.validation.dns.czechia", "plugin.validation.dns.czechia\wacs.validation.dns.czechia.csproj", "{02E6A9BD-A6B7-CFEC-6EF4-99D2ECC720BA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -376,6 +378,14 @@ Global
 		{EE5E145E-51FE-DEA4-D0B7-F25FF0BE672E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EE5E145E-51FE-DEA4-D0B7-F25FF0BE672E}.ReleaseTrimmed|Any CPU.ActiveCfg = Release|Any CPU
 		{EE5E145E-51FE-DEA4-D0B7-F25FF0BE672E}.ReleaseTrimmed|Any CPU.Build.0 = Release|Any CPU
+		{02E6A9BD-A6B7-CFEC-6EF4-99D2ECC720BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02E6A9BD-A6B7-CFEC-6EF4-99D2ECC720BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02E6A9BD-A6B7-CFEC-6EF4-99D2ECC720BA}.DebugTrimmed|Any CPU.ActiveCfg = Debug|Any CPU
+		{02E6A9BD-A6B7-CFEC-6EF4-99D2ECC720BA}.DebugTrimmed|Any CPU.Build.0 = Debug|Any CPU
+		{02E6A9BD-A6B7-CFEC-6EF4-99D2ECC720BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02E6A9BD-A6B7-CFEC-6EF4-99D2ECC720BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02E6A9BD-A6B7-CFEC-6EF4-99D2ECC720BA}.ReleaseTrimmed|Any CPU.ActiveCfg = Release|Any CPU
+		{02E6A9BD-A6B7-CFEC-6EF4-99D2ECC720BA}.ReleaseTrimmed|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
