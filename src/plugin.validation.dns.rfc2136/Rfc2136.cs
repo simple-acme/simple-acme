@@ -157,7 +157,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             if (!Enum.TryParse<TSigAlgorithm>(options.TsigKeyAlgorithm, true, out var algorithm))
             {
-                _log.Warning("Unrecognized TsigKeyAlgorithm {alg}, fallback to MD5", options.TsigKeyAlgorithm);
+                if (!string.IsNullOrWhiteSpace(options.TsigKeyAlgorithm))
+                {
+                    _log.Warning("Unrecognized TsigKeyAlgorithm {alg}, fallback to MD5", options.TsigKeyAlgorithm);
+                }
                 algorithm = TSigAlgorithm.Md5;
             }
 
