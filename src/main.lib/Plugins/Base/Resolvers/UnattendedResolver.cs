@@ -200,9 +200,9 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 installationList = InstallationPlugins.IIS.Trigger;
             }
             var steps = installationList.ParseCsv();
-            steps ??= [InstallationPlugins.Null.Trigger];
+            steps ??= [InstallationPlugins.Null.Trigger.ToLowerInvariant()];
             var index = installation.Count();
-            var currentStep = index == steps.Count ? InstallationPlugins.Null.Trigger : steps[index];
+            var currentStep = index == steps.Count ? InstallationPlugins.Null.Trigger.ToLowerInvariant() : steps[index];
             return await GetPlugin<IInstallationPluginCapability, InstallationPluginOptions>(
                 Steps.Installation,
                 configState: x => x.CanInstall(stores.Select(x => x.Backend), installation.Select(x => x.Backend)),
