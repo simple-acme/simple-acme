@@ -161,7 +161,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 try
                 {
                     IdentityReference? identity = null;
-                    identity = account.ToLower() switch
+                    identity = account.ToLowerInvariant() switch
                     {
                         // For for international installs of Windows
                         // reference: https://learn.microsoft.com/en-US/windows-server/identity/ad-ds/manage/understand-security-identifiers

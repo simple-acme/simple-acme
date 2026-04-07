@@ -108,7 +108,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.DnsMadeEasy
         {
             using var hmacsha256 = new HMACSHA1(Encoding.UTF8.GetBytes(key));
             var hash = hmacsha256.ComputeHash(Encoding.UTF8.GetBytes(text));
-            return BitConverter.ToString(hash).Replace("-", "").ToLower();
+            return Convert.ToHexStringLower(hash);
         }
 
         public async Task CreateRecord(string domain, string recordName, RecordType type, string value)

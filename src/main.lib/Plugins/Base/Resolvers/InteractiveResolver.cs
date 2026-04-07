@@ -108,7 +108,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
 
             // Always show the menu in advanced mode, only when no default
             // selection can be made in simple mode
-            var className = step.ToString().ToLower();
+            var className = step.ToString().ToLowerInvariant();
             var showMenu = runLevel.HasFlag(RunLevel.Advanced);
             if (!string.IsNullOrEmpty(defaultParam1))
             {
@@ -138,7 +138,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
                     if (explain)
                     {
                         log.Warning("{n} plugin {x} not available: {m}",
-                            char.ToUpper(className[0]) + className[1..],
+                            char.ToUpperInvariant(className[0]) + className[1..],
                             defaultOption.Frontend.Meta.Name ?? backend.Name,
                             defaultOption.ConfigurationState.Reason);
                     }
@@ -149,7 +149,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
                     if (explain)
                     {
                         log.Warning("{n} plugin {x} might not work: {m}",
-                            char.ToUpper(className[0]) + className[1..],
+                            char.ToUpperInvariant(className[0]) + className[1..],
                             defaultOption.Frontend.Meta.Name ?? backend.Name,
                             defaultOption.ExecutionState.Reason);
                     }
@@ -189,7 +189,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             if (result?.Capability.ExecutionState.Disabled == true) 
             {
                 log.Warning("Chosen {n} plugin {x} might not work: {m}",
-                    char.ToUpper(className[0]) + className[1..],
+                    char.ToUpperInvariant(className[0]) + className[1..],
                     result.Meta.Name,
                     result.Capability.ExecutionState.Reason);
                 var retry = await inputService.PromptYesNo("Switch to another one?", true);

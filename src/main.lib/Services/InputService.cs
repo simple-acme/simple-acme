@@ -278,7 +278,7 @@ namespace PKISharp.WACS.Services
                         WriteLine();
                         return Task.FromResult(defaultChoice);
                 }
-                switch (response.KeyChar.ToString().ToLower())
+                switch (response.KeyChar.ToString().ToLowerInvariant())
                 {
                     case "y":
                         WriteLine("- yes");

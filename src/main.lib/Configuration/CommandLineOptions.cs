@@ -10,7 +10,7 @@ namespace PKISharp.WACS.Configuration
             set => MetaName = value;
         }
         internal string? MetaName { get; set; }
-        public string ArgumentName => Name.ToLower();
+        public string ArgumentName => Name.ToLowerInvariant();
         public string? Description { get; set; }
         public string? Default { get; set; }
         public bool Obsolete { get; set; }

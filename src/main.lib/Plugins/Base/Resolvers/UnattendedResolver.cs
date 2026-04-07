@@ -77,7 +77,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 return nullRet;
             }
 
-            var className = step.ToString().ToLower();
+            var className = step.ToString().ToLowerInvariant();
             if (!string.IsNullOrEmpty(defaultParam1))
             {
                 var defaultPlugin = pluginService.GetPlugin(step, defaultParam1, defaultParam2);

@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             return new SelfHostingOptions()
             {
                 Port = await ValidationPort.GetValue(),
-                Https = (await ValidationProtocol.GetValue())?.ToLower() == "https" ? true : null
+                Https = (await ValidationProtocol.GetValue())?.ToLowerInvariant() == "https" ? true : null
             };
         }
 

@@ -172,7 +172,7 @@ namespace PKISharp.WACS.Clients.DNS
             {
                 var canonicalName = cnameRecords.First().CanonicalName.Value;
                 var idn = new IdnMapping();
-                canonicalName = canonicalName.ToLower().Trim().TrimEnd('.');
+                canonicalName = canonicalName.ToLowerInvariant().Trim().TrimEnd('.');
                 canonicalName = idn.GetAscii(canonicalName);
                 return canonicalName;
             }

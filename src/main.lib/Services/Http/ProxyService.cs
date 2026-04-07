@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         [SupportedOSPlatform("windows")]
         public WindowsProxyUsePolicy ProxyType => 
-            settings.Proxy.Url?.ToLower().Trim() switch
+            settings.Proxy.Url?.ToLowerInvariant().Trim() switch
             {
                 "[winhttp]" => WindowsProxyUsePolicy.UseWinHttpProxy,
                 "[wininet]" => WindowsProxyUsePolicy.UseWinInetProxy,
@@ -32,7 +32,7 @@ namespace PKISharp.WACS.Services
         /// Is the user requesting the system proxy
         /// </summary>
         private bool CustomProxy =>
-            settings.Proxy.Url?.ToLower().Trim() switch
+            settings.Proxy.Url?.ToLowerInvariant().Trim() switch
             {
                 "[winhttp]" => false,
                 "[wininet]" => false,
