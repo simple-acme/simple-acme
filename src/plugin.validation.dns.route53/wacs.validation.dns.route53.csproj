@@ -14,8 +14,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="AWSSDK.Route53" Version="4.0.8.13" />
-    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.13" />
+    <PackageReference Include="AWSSDK.Route53" Version="4.0.8.17" />
+    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.17" />
   </ItemGroup>
 
   <ItemGroup>
