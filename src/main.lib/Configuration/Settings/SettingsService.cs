@@ -30,7 +30,20 @@ namespace PKISharp.WACS.Configuration.Settings
                 return;
             }
 
-            VersionService.Log(_log);
+            if (VersionService.Valid.Value.Disabled)
+            {
+                _log.Error(VersionService.Valid.Value.Reason ?? "Version service invalid for unknown reason");
+                return;
+            }
+            else
+            {
+                log.Verbose("ExePath: {exe}", VersionService.ExePath);
+                if (VersionService.DotNetTool)
+                {
+                    log.Verbose("SettingsPath: {exe}", VersionService.SettingsPath);
+                    log.Verbose("ResourcePath: {exe}", VersionService.ResourcePath);
+                }
+            }
 
             if (!LoadGlobalSettings())
             {

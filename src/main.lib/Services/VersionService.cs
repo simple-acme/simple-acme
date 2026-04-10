@@ -38,9 +38,17 @@ namespace PKISharp.WACS.Services
             }
             if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint))
             {
-                if (fi.ResolveLinkTarget(true) is FileInfo target)
+                try
                 {
-                    return target;
+                    if (fi.ResolveLinkTarget(true) is FileInfo target)
+                    {
+                        return target;
+                    }
+                }
+                catch
+                {
+                    // Ignore exceptions from ResolveLinkTarget,
+                    // just return the original file info
                 }
             }
             return fi;
@@ -62,20 +70,12 @@ namespace PKISharp.WACS.Services
             return State.EnabledState();
         });
 
-        internal static void Log(ILogService log)
-        {
-            log.Verbose("ExePath: {exe}", ExePath);
-            if (DotNetTool)
-            {
-                log.Verbose("SettingsPath: {exe}", SettingsPath);
-                log.Verbose("ResourcePath: {exe}", ResourcePath);
-            }
-        }
-
         internal static bool DotNetTool => ExeFileInfo.Value?.Name == "wacs.dll" && !Debug;
-        internal static string SettingsPath => DotNetTool && ProcessInfo.Value != null ? Path.Combine(ProcessInfo.Value.FullName, ".store", "simple-acme") : BasePath.Value;
+        internal static string SettingsPath => DotNetTool && ProcessInfo.Value != null && ProcessInfo.Value.Directory != null ? 
+            Path.Combine(ProcessInfo.Value.Directory.FullName, ".store", "simple-acme") : 
+            BasePath.Value;
         internal static string PluginPath => BasePath.Value;
-        internal static string ExePath => ExeFileInfo.Value?.FullName ?? throw new InvalidOperationException();
+        internal static string ExePath => ExeFileInfo.Value?.FullName ?? "unknown";
         internal static string ResourcePath => DotNetTool ? AppContext.BaseDirectory : BasePath.Value;
         internal static string Bitness => Environment.Is64BitProcess ? "64-bit" : "32-bit";
         internal static bool Pluggable =>

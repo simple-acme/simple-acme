@@ -63,15 +63,7 @@ namespace PKISharp.WACS.Host
             {
                 return -1;
             }
-            // Exit when version service is not in a valid state,
-            // which means the software has been started in an
-            // unsupported way.
-            if (VersionService.Valid.Value.Disabled)
-            {
-                logService.Error(VersionService.Valid.Value.Reason ?? "Invalid version");
-                return -1;
-            }
-
+   
             // List informational message and start-up diagnostics
             _args = argumentsParser.GetArguments<MainArguments>() ?? new();
 
