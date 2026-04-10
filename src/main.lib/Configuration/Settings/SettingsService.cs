@@ -29,6 +29,9 @@ namespace PKISharp.WACS.Configuration.Settings
             {
                 return;
             }
+
+            VersionService.Log(_log);
+
             if (!LoadGlobalSettings())
             {
                 return;

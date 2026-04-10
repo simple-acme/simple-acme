@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PKISharp.WACS.Plugins.Interfaces;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -8,78 +9,74 @@ namespace PKISharp.WACS.Services
 {
     public class VersionService
     {
-        internal static bool Init(ILogService log)
+        private static Lazy<string> BasePath { get; } = new Lazy<string>(() =>
         {
-            var exeFileInfo = ExeFileInfo;
+             if (ExeFileInfo != null && ExeFileInfo.Value != null && ExeFileInfo.Value.Directory != null)
+             {
+                 return ExeFileInfo.Value.Directory.FullName + Path.DirectorySeparatorChar;
+             }
+             return string.Empty;
+        });
+
+        private static Lazy<FileInfo?> ProcessInfo { get; } = new Lazy<FileInfo?>(() =>
+        {
+            var module = Process.GetCurrentProcess().MainModule;
+            if (module == null)
+            {
+                return null;
+            }
+            return new FileInfo(module.FileName);
+        });
+
+        private static Lazy<FileInfo?> ExeFileInfo { get; } = new Lazy<FileInfo?>(() =>
+        {
+            var cmd = Environment.GetCommandLineArgs().First();
+            var fi = new FileInfo(cmd);
+            if (!fi.Exists)
+            {
+                return null;
+            }
+            if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint))
+            {
+                if (fi.ResolveLinkTarget(true) is FileInfo target)
+                {
+                    return target;
+                }
+            }
+            return fi;
+        });
+
+        internal static Lazy<State> Valid { get; } = new Lazy<State>(() =>
+        {
+            var exeFileInfo = ExeFileInfo.Value;
             if (exeFileInfo == null || exeFileInfo.Directory == null)
             {
-                log.Error("Unable to determine main module filename.");
-                return false;
+                return State.DisabledState("Unable to determine main module filename.");
             }
 
             // Check for running as local .NET tool
             if (exeFileInfo.Name == "dotnet.exe")
             {
-                log.Error("Running as a local dotnet tool is not supported. Please install using the --global option.");
-                return false;
+                return State.DisabledState("Running as a local dotnet tool is not supported. Please install using the --global option.");
             }
+            return State.EnabledState();
+        });
 
-            // Defaults
-            ExePath = exeFileInfo.FullName;
-            var path = exeFileInfo.Directory.FullName + Path.DirectorySeparatorChar;
-            SettingsPath = path;
-            PluginPath = path;
-            ResourcePath = path;
-
-            // Check for running as global .NET tool
-            if (exeFileInfo.Name == "wacs.dll" && !Debug)
-            {
-                DotNetTool = true;
-                var processInfo = new FileInfo(Process.GetCurrentProcess().MainModule?.FileName!);
-                ExePath = processInfo.FullName;
-                SettingsPath = Path.Combine(processInfo.Directory!.FullName, ".store", "simple-acme");
-                PluginPath = exeFileInfo.DirectoryName!;
-                ResourcePath = AppContext.BaseDirectory;
-            }
-
-            log.Verbose("ExePath: {ex}", ExePath);
+        internal static void Log(ILogService log)
+        {
+            log.Verbose("ExePath: {exe}", ExePath);
             if (DotNetTool)
             {
-                log.Verbose("ResourcePath: {ex}", ResourcePath);
-                log.Verbose("PluginPath: {ex}", PluginPath);
-                log.Verbose("SettingsPath: {ex}", SettingsPath);
-            }
-            Valid = true;
-            return true;
-        }
-
-        internal static FileInfo? ExeFileInfo
-        {
-            get
-            {
-                var cmd = Environment.GetCommandLineArgs().First();
-                var fi = new FileInfo(cmd);
-                if (!fi.Exists)
-                {
-                    return null;
-                }
-                if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint))
-                {
-                    if (fi.ResolveLinkTarget(true) is FileInfo target)
-                    {
-                        return target;
-                    }
-                }
-                return fi;
+                log.Verbose("SettingsPath: {exe}", SettingsPath);
+                log.Verbose("ResourcePath: {exe}", ResourcePath);
             }
         }
 
-        internal static bool Valid { get; private set; } = false;
-        internal static bool DotNetTool { get; private set; } = false;
-        internal static string SettingsPath { get; private set; } = string.Empty;
-        internal static string PluginPath { get; private set; } = string.Empty;
-        internal static string ExePath { get; private set; } = string.Empty;
-        internal static string ResourcePath { get; private set; } = string.Empty;
+        internal static bool DotNetTool => ExeFileInfo.Value?.Name == "wacs.dll" && !Debug;
+        internal static string SettingsPath => DotNetTool && ProcessInfo.Value != null ? Path.Combine(ProcessInfo.Value.FullName, ".store", "simple-acme") : BasePath.Value;
+        internal static string PluginPath => BasePath.Value;
+        internal static string ExePath => ExeFileInfo.Value?.FullName ?? throw new InvalidOperationException();
+        internal static string ResourcePath => DotNetTool ? AppContext.BaseDirectory : BasePath.Value;
         internal static string Bitness => Environment.Is64BitProcess ? "64-bit" : "32-bit";
         internal static bool Pluggable =>
 #if PLUGGABLE

@@ -26,7 +26,7 @@ namespace PKISharp.WACS.Services
             {
                 _allTypes.AddRange(WindowsPlugins());
             }
-            if (VersionService.Init(logger))
+            if (!VersionService.Valid.Value.Disabled)
             {
                 _allTypes.AddRange(LoadFromDisk(VersionService.PluginPath));
             }
