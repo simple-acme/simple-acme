@@ -63,7 +63,11 @@ namespace PKISharp.WACS.Services
             }
 
             // Check for running as local .NET tool
-            if (exeFileInfo.Name == "dotnet.exe")
+            var hostName = Path.GetFileNameWithoutExtension(exeFileInfo.Name);
+            var comparison = OperatingSystem.IsWindows() ?
+                StringComparison.OrdinalIgnoreCase :
+                StringComparison.Ordinal;
+            if (string.Equals(hostName, "dotnet", comparison))
             {
                 return State.DisabledState("Running as a local dotnet tool is not supported. Please install using the --global option.");
             }
