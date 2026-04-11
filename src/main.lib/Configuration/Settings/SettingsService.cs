@@ -30,9 +30,9 @@ namespace PKISharp.WACS.Configuration.Settings
                 return;
             }
 
-            if (VersionService.Valid.Value.Disabled)
+            if (VersionService.State.Disabled)
             {
-                _log.Error(VersionService.Valid.Value.Reason ?? "Version service invalid for unknown reason");
+                _log.Error(VersionService.State.Reason ?? "Version disabled for unknown reason");
                 return;
             }
             else

@@ -54,7 +54,7 @@ namespace PKISharp.WACS.Services
             return fi;
         });
 
-        private static Lazy<State> _valid { get; } = new Lazy<State>(() =>
+        private static Lazy<State> GetState { get; } = new Lazy<State>(() =>
         {
             var exeFileInfo = ExeFileInfo.Value;
             if (exeFileInfo == null || exeFileInfo.Directory == null)
@@ -74,14 +74,14 @@ namespace PKISharp.WACS.Services
             return State.EnabledState();
         });
 
-        internal static State Valid => _valid.Value;
+        internal static State State => GetState.Value;
 
         internal static bool DotNetTool => ExeFileInfo.Value?.Name == "wacs.dll" && !Debug;
         internal static string SettingsPath => DotNetTool && ProcessInfo.Value != null && ProcessInfo.Value.Directory != null ? 
             Path.Combine(ProcessInfo.Value.Directory.FullName, ".store", "simple-acme") : 
             BasePath.Value;
         internal static string PluginPath => BasePath.Value;
-        internal static string ExePath => ExeFileInfo.Value?.FullName ?? "unknown";
+        internal static string ExePath => ExeFileInfo.Value?.FullName ?? string.Empty;
         internal static string ResourcePath => DotNetTool ? AppContext.BaseDirectory : BasePath.Value;
         internal static string Bitness => Environment.Is64BitProcess ? "64-bit" : "32-bit";
         internal static bool Pluggable =>
