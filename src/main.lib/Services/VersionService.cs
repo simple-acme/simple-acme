@@ -54,7 +54,7 @@ namespace PKISharp.WACS.Services
             return fi;
         });
 
-        internal static Lazy<State> Valid { get; } = new Lazy<State>(() =>
+        private static Lazy<State> _valid { get; } = new Lazy<State>(() =>
         {
             var exeFileInfo = ExeFileInfo.Value;
             if (exeFileInfo == null || exeFileInfo.Directory == null)
@@ -73,6 +73,8 @@ namespace PKISharp.WACS.Services
             }
             return State.EnabledState();
         });
+
+        internal static State Valid => _valid.Value;
 
         internal static bool DotNetTool => ExeFileInfo.Value?.Name == "wacs.dll" && !Debug;
         internal static string SettingsPath => DotNetTool && ProcessInfo.Value != null && ProcessInfo.Value.Directory != null ? 
