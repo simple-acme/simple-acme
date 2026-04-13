@@ -1,5 +1,4 @@
-﻿using PKISharp.WACS.Plugins.Interfaces;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -9,16 +8,28 @@ namespace PKISharp.WACS.Services
 {
     public class VersionService
     {
+        /// <summary>
+        /// Default client name if none can be determined from the settings
+        /// </summary>
+        internal const string DefaultClientName = "simple-acme";
+
+        /// <summary>
+        /// File where the resources are (like template settings)
+        /// </summary>
         private static Lazy<string> BasePath { get; } = new Lazy<string>(() =>
         {
-             if (ExeFileInfo != null && ExeFileInfo.Value != null && ExeFileInfo.Value.Directory != null)
+             if (ExeFileInfo != null && ExeFileInfo.Value != null)
              {
-                 return ExeFileInfo.Value.Directory.FullName + Path.DirectorySeparatorChar;
+                 var resolved = ResolveParsePoints(ExeFileInfo.Value);
+                 return resolved.Directory?.FullName + Path.DirectorySeparatorChar;
              }
              return string.Empty;
         });
 
-        private static Lazy<FileInfo?> ProcessInfo { get; } = new Lazy<FileInfo?>(() =>
+        /// <summary>
+        /// File the task scheduler should point to
+        /// </summary>
+        private static Lazy<FileInfo?> ExeFileInfo { get; } = new Lazy<FileInfo?>(() =>
         {
             var module = Process.GetCurrentProcess().MainModule;
             if (module == null)
@@ -28,7 +39,11 @@ namespace PKISharp.WACS.Services
             return new FileInfo(module.FileName);
         });
 
-        private static Lazy<FileInfo?> ExeFileInfo { get; } = new Lazy<FileInfo?>(() =>
+        /// <summary>
+        /// File that launched the process, to detect if we're running as a
+        /// dotnet tool
+        /// </summary>
+        private static Lazy<FileInfo?> LaunchInfo { get; } = new Lazy<FileInfo?>(() =>
         {
             var cmd = Environment.GetCommandLineArgs().First();
             var fi = new FileInfo(cmd);
@@ -36,6 +51,18 @@ namespace PKISharp.WACS.Services
             {
                 return null;
             }
+            return fi;
+        });
+
+        /// <summary>
+        /// Resolve parse points to get the actual file info, if possible. 
+        /// This is important for scenarios where the executable is a symlink or junction, 
+        /// such as when running as a global WinGet tool.
+        /// </summary>
+        /// <param name="fi"></param>
+        /// <returns></returns>
+        private static FileInfo ResolveParsePoints(FileInfo fi)
+        {
             if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint))
             {
                 try
@@ -52,37 +79,12 @@ namespace PKISharp.WACS.Services
                 }
             }
             return fi;
-        });
+        }
 
-        private static Lazy<State> GetState { get; } = new Lazy<State>(() =>
-        {
-            var exeFileInfo = ExeFileInfo.Value;
-            if (exeFileInfo == null || exeFileInfo.Directory == null)
-            {
-                return State.DisabledState("Unable to determine main module filename.");
-            }
-
-            // Check for running as local .NET tool
-            var hostName = Path.GetFileNameWithoutExtension(exeFileInfo.Name);
-            var comparison = OperatingSystem.IsWindows() ?
-                StringComparison.OrdinalIgnoreCase :
-                StringComparison.Ordinal;
-            if (string.Equals(hostName, "dotnet", comparison))
-            {
-                return State.DisabledState("Running as a local dotnet tool is not supported. Please install using the --global option.");
-            }
-            return State.EnabledState();
-        });
-
-        internal static State State => GetState.Value;
-
-        internal static bool DotNetTool => ExeFileInfo.Value?.Name == "wacs.dll" && !Debug;
-        internal static string SettingsPath => DotNetTool && ProcessInfo.Value != null && ProcessInfo.Value.Directory != null ? 
-            Path.Combine(ProcessInfo.Value.Directory.FullName, ".store", "simple-acme") : 
-            BasePath.Value;
-        internal static string PluginPath => BasePath.Value;
+        internal static bool DotNetTool => LaunchInfo.Value?.Name == "wacs.dll" && !Debug;
+        internal static string SettingsPath => DotNetTool ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DefaultClientName) : BasePath.Value;
         internal static string ExePath => ExeFileInfo.Value?.FullName ?? string.Empty;
-        internal static string ResourcePath => DotNetTool ? AppContext.BaseDirectory : BasePath.Value;
+        internal static string ResourcePath => BasePath.Value;
         internal static string Bitness => Environment.Is64BitProcess ? "64-bit" : "32-bit";
         internal static bool Pluggable =>
 #if PLUGGABLE

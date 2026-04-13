@@ -26,10 +26,7 @@ namespace PKISharp.WACS.Services
             {
                 _allTypes.AddRange(WindowsPlugins());
             }
-            if (!VersionService.State.Disabled)
-            {
-                _allTypes.AddRange(LoadFromDisk(VersionService.PluginPath));
-            }
+            _allTypes.AddRange(LoadFromDisk(VersionService.ResourcePath));
         }
 
         /// <summary>
