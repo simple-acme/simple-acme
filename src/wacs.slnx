@@ -1,0 +1,207 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="DebugTrimmed" />
+    <BuildType Name="Release" />
+    <BuildType Name="ReleaseTrimmed" />
+  </Configurations>
+  <Folder Name="/Plugins/">
+    <Project Path="plugin.common.azure/wacs.common.azure.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+  </Folder>
+  <Folder Name="/Plugins/Store/">
+    <Project Path="plugin.store.keyvault/wacs.store.keyvault.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.store.userstore/wacs.store.userstore.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+  </Folder>
+  <Folder Name="/Plugins/Validation/" />
+  <Folder Name="/Plugins/Validation/Dns/">
+    <Project Path="plugin.validation.dns.acme/wacs.validation.dns.acme.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.aliyun/wacs.validation.dns.aliyun.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.arsys/wacs.validation.dns.arsys.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.azure/wacs.validation.dns.azure.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.bunny/wacs.validation.dns.bunny.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.cloudflare/wacs.validation.dns.cloudflare.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.czechia/wacs.validation.dns.czechia.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.digitalocean/wacs.validation.dns.digitalocean.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.dnsexit/wacs.validation.dns.dnsexit.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.dnsmadeeasy/wacs.validation.dns.dnsmadeeasy.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.domeneshop/wacs.validation.dns.domeneshop.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.dreamhost/wacs.validation.dns.dreamhost.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.godaddy/wacs.validation.dns.godaddy.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.googledns/wacs.validation.dns.googledns.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.hetzner/wacs.validation.dns.hetzner.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Debug" />
+    </Project>
+    <Project Path="plugin.validation.dns.huaweicloud/wacs.validation.dns.huaweicloud.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.infomaniak/wacs.validation.dns.infomaniak.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.linode/wacs.validation.dns.linode.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.luadns/wacs.validation.dns.luadns.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.ns1/wacs.validation.dns.ns1.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.reference/wacs.validation.dns.reference.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.rfc2136/wacs.validation.dns.rfc2136.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.route53/wacs.validation.dns.route53.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.simply/wacs.validation.dns.simply.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.tencent/wacs.validation.dns.tencent.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.dns.transip/wacs.validation.dns.transip.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.dns.webnames/wacs.validation.dns.webnames.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+  </Folder>
+  <Folder Name="/Plugins/Validation/Http/">
+    <Project Path="plugin.validation.http.ftp/wacs.validation.http.ftp.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.http.rest/wacs.validation.http.rest.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+      <Build Solution="DebugTrimmed|*" Project="false" />
+      <Build Solution="ReleaseTrimmed|*" Project="false" />
+    </Project>
+    <Project Path="plugin.validation.http.sftp/wacs.validation.http.sftp.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+    <Project Path="plugin.validation.http.webdav/wacs.validation.http.webdav.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="../.github/dependabot.yml" />
+    <File Path="../.gitignore" />
+    <File Path="../appveyor.yml" />
+  </Folder>
+  <Folder Name="/Solution Items/.github/">
+    <File Path="../.github/ISSUE_TEMPLATE/bug_report.md" />
+    <File Path="../.github/ISSUE_TEMPLATE/feature_request.md" />
+    <File Path="../.github/ISSUE_TEMPLATE/question.md" />
+    <File Path="../.github/ISSUE_TEMPLATE/validation_problem.md" />
+  </Folder>
+  <Folder Name="/Submodules/">
+    <Project Path="ACMESharpCore/src/ACMESharp/ACMESharp.csproj" />
+    <Project Path="fluent-command-line-parser/FluentCommandLineParser/FluentCommandLineParser.csproj" />
+  </Folder>
+  <Project Path="../build/build.vcxitems" Id="64525716-9964-47e2-a71c-0d20f4497c44" />
+  <Project Path="main.lib/wacs.lib.csproj" />
+  <Project Path="main.test/wacs.test.csproj">
+    <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+    <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    <Build Solution="DebugTrimmed|*" Project="false" />
+    <Build Solution="ReleaseTrimmed|*" Project="false" />
+  </Project>
+  <Project Path="main/wacs.csproj" />
+</Solution>
