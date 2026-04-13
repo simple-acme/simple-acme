@@ -9,16 +9,12 @@
     <Project Path="plugin.common.azure/wacs.common.azure.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
   </Folder>
   <Folder Name="/Plugins/Store/">
     <Project Path="plugin.store.keyvault/wacs.store.keyvault.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.store.userstore/wacs.store.userstore.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
@@ -42,8 +38,6 @@
     <Project Path="plugin.validation.dns.azure/wacs.validation.dns.azure.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.bunny/wacs.validation.dns.bunny.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
@@ -52,8 +46,6 @@
     <Project Path="plugin.validation.dns.cloudflare/wacs.validation.dns.cloudflare.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.czechia/wacs.validation.dns.czechia.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
@@ -62,8 +54,6 @@
     <Project Path="plugin.validation.dns.digitalocean/wacs.validation.dns.digitalocean.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.dnsexit/wacs.validation.dns.dnsexit.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
@@ -76,26 +66,18 @@
     <Project Path="plugin.validation.dns.domeneshop/wacs.validation.dns.domeneshop.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.dreamhost/wacs.validation.dns.dreamhost.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.godaddy/wacs.validation.dns.godaddy.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.googledns/wacs.validation.dns.googledns.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.hetzner/wacs.validation.dns.hetzner.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
@@ -116,14 +98,10 @@
     <Project Path="plugin.validation.dns.luadns/wacs.validation.dns.luadns.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.ns1/wacs.validation.dns.ns1.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.reference/wacs.validation.dns.reference.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
@@ -136,14 +114,10 @@
     <Project Path="plugin.validation.dns.route53/wacs.validation.dns.route53.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.simply/wacs.validation.dns.simply.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.tencent/wacs.validation.dns.tencent.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
@@ -152,8 +126,6 @@
     <Project Path="plugin.validation.dns.transip/wacs.validation.dns.transip.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.dns.webnames/wacs.validation.dns.webnames.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
@@ -168,8 +140,6 @@
     <Project Path="plugin.validation.http.rest/wacs.validation.http.rest.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-      <Build Solution="DebugTrimmed|*" Project="false" />
-      <Build Solution="ReleaseTrimmed|*" Project="false" />
     </Project>
     <Project Path="plugin.validation.http.sftp/wacs.validation.http.sftp.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
@@ -200,8 +170,6 @@
   <Project Path="main.test/wacs.test.csproj">
     <BuildType Solution="DebugTrimmed|*" Project="Debug" />
     <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
-    <Build Solution="DebugTrimmed|*" Project="false" />
-    <Build Solution="ReleaseTrimmed|*" Project="false" />
   </Project>
   <Project Path="main/wacs.csproj" />
 </Solution>
