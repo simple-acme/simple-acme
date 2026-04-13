@@ -81,7 +81,7 @@
     </Project>
     <Project Path="plugin.validation.dns.hetzner/wacs.validation.dns.hetzner.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
-      <BuildType Solution="ReleaseTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
     </Project>
     <Project Path="plugin.validation.dns.huaweicloud/wacs.validation.dns.huaweicloud.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
