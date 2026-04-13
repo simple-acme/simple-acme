@@ -4,6 +4,8 @@ using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -35,7 +37,6 @@ namespace PKISharp.WACS.Host
             logService.Information(LogType.Disk | LogType.Event, "Software version {version} ({build}, {bitness}) started", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
             logService.Debug("Running on {platform} {version}", Environment.OSVersion.Platform, Environment.OSVersion.Version);
             argumentsParser.ShowCommandLine();
-
             // Connection test
             logService.Information("Connecting to {ACME}...", settingsService.BaseUri);
             var result = networkCheck.CheckNetwork();
@@ -125,7 +126,6 @@ namespace PKISharp.WACS.Host
                 LogPath = settingsService.Client.LogPath,
                 CachePath = settingsService.Cache.CachePath,
                 SettingsPath = VersionService.SettingsPath,
-                PluginPath = VersionService.PluginPath,
                 ExecutablePath = VersionService.ExePath
             };
             Console.WriteLine(JsonSerializer.Serialize(data, wacsJson.BannerData));
@@ -141,7 +141,6 @@ namespace PKISharp.WACS.Host
         public string? LogPath { get; internal set; }
         public string? CachePath { get; internal set; }
         public string? SettingsPath { get; internal set; }
-        public string? PluginPath { get; internal set; }
         public string? ExecutablePath { get; internal set; }
         public bool Debug { get; internal set; }
         public bool DotNetTool { get; internal set; }

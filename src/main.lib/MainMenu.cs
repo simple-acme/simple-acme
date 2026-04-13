@@ -171,7 +171,7 @@ namespace PKISharp.WACS.Host
                 input.Show(null, "  5. Run this option; all unprotected values will be saved with protection");
                 input.CreateSpace();
                 input.Show(null, $"Data directory: {settings.Client.ConfigurationPath}");
-                input.Show(null, $"Config directory: {new FileInfo(VersionService.ExePath).Directory?.FullName}\\settings.json");
+                input.Show(null, $"Config directory: {Path.Combine(VersionService.SettingsPath, "settings.json")}");
                 input.Show(null, $"Current EncryptConfig setting: {encryptConfig}");
                 userApproved = await input.PromptYesNo($"Save all renewal files {(encryptConfig ? "with" : "without")} encryption?", false);
             }
