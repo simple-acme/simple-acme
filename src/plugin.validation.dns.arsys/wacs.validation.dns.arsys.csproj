@@ -13,6 +13,7 @@
     <ProjectReference Include="..\main.lib\wacs.lib.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.3" />
     <PackageReference Include="System.ServiceModel.Http" Version="8.*" />
     <PackageReference Include="System.ServiceModel.NetTcp" Version="8.*" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="8.*" />
