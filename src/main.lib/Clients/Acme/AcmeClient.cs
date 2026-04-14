@@ -142,32 +142,36 @@ namespace PKISharp.WACS.Clients.Acme
         /// <param name="challenge"></param>
         /// <returns></returns>
         /// <exception cref="NotSupportedException"></exception>
-        internal async Task<AcmeChallenge> AnswerChallenge(AcmeChallenge challenge)
+        internal async Task<AcmeChallenge> AnswerChallenge(AuthorizationContext auth, AcmeChallenge challenge)
         {
             // Have to loop to wait for server to stop being pending
             if (challenge.Url == null)
             {
                 throw new NotSupportedException("Missing challenge url");
             }
-            challenge = await _client.Retry(() => _client.AnswerChallengeAsync(challenge.Url), _log);
+            await _client.Retry(() => _client.AnswerChallengeAsync(challenge.Url), _log);
             var tries = 1;
-            while (
-                challenge.Status == AuthorizationPending ||
-                challenge.Status == AuthorizationProcessing)
+            do
             {
-                if (challenge.Url == null)
-                {
-                    throw new NotSupportedException("Missing challenge url");
-                }
                 await Task.Delay(_settings.Acme.RetryInterval * 1000);
-                _log.Debug("Refreshing authorization ({tries}/{count})", tries, _settings.Acme.RetryCount);
-                challenge = await _client.Retry(() => _client.GetChallengeDetailsAsync(challenge.Url), _log);
+                _log.Debug("Refreshing authorization (try {tries}/{count})", tries, _settings.Acme.RetryCount);
+                var updatedAuth = await _client.Retry(() => _client.GetAuthorizationDetailsAsync(auth.Uri), _log);
+                if (updatedAuth != null)
+                {
+                    auth.Authorization = updatedAuth;
+                    var updatedChallenge = updatedAuth?.Challenges?.FirstOrDefault(c => c.Url == challenge.Url);
+                    if (updatedChallenge != null && challenge.Url != null)
+                    {
+                        challenge = updatedChallenge;
+                    }
+                }
                 tries += 1;
                 if (tries > _settings.Acme.RetryCount)
                 {
                     break;
                 }
-            }
+            } 
+            while (challenge.Status == AuthorizationPending || challenge.Status == AuthorizationProcessing);
             return challenge;
         }
 
