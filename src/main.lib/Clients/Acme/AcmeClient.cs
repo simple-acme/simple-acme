@@ -149,12 +149,12 @@ namespace PKISharp.WACS.Clients.Acme
             {
                 throw new NotSupportedException("Missing challenge url");
             }
-            challenge = await _client.Retry(() => _client.AnswerChallengeAsync(challenge.Url), _log);
+            await _client.Retry(() => _client.AnswerChallengeAsync(challenge.Url), _log);
             var tries = 1;
-            while (challenge.Status == AuthorizationPending || challenge.Status == AuthorizationProcessing)
+            do
             {
                 await Task.Delay(_settings.Acme.RetryInterval * 1000);
-                _log.Debug("Refreshing authorization ({tries}/{count})", tries, _settings.Acme.RetryCount);
+                _log.Debug("Refreshing authorization (try {tries}/{count})", tries, _settings.Acme.RetryCount);
                 var updatedAuth = await _client.Retry(() => _client.GetAuthorizationDetailsAsync(auth.Uri), _log);
                 if (updatedAuth != null)
                 {
@@ -170,7 +170,8 @@ namespace PKISharp.WACS.Clients.Acme
                 {
                     break;
                 }
-            }
+            } 
+            while (challenge.Status == AuthorizationPending || challenge.Status == AuthorizationProcessing);
             return challenge;
         }
 
