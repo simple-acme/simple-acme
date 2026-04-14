@@ -34,7 +34,7 @@ namespace PKISharp.WACS.Context
         {
             if (parameters.AuthorizationContext.Authorization.Identifier == null)
             {
-                throw new Exception();
+                throw new InvalidOperationException("Missing authorization identifier.");
             }
             Identifier = parameters.AuthorizationContext.Authorization.Identifier.Value;
             Label = parameters.Label;
