@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>PKISharp.WACS.Plugins.ValidationPlugins.Arsys</AssemblyName>
     <RootNamespace>PKISharp.WACS.Plugins.ValidationPlugins</RootNamespace>
     <Version>2.1.0.0</Version>
