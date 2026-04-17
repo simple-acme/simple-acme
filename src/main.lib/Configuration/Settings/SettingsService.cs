@@ -85,6 +85,10 @@ namespace PKISharp.WACS.Configuration.Settings
         private bool LoadGlobalSettings()
         {
             var globalFile = EnsureGlobalSettingsFile();
+            if (globalFile == null)
+            {
+                return false;
+            }
             try
             {
                 _settings = new InheritSettings(Settings.Load(globalFile));
