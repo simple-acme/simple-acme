@@ -73,7 +73,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             {
                 lock (_childLock)
                 {
-                    _scriptHttp = new ScriptHttp(this, context, pars, httpChallenge);
+                    _scriptHttp ??= new ScriptHttp(this, context, pars, httpChallenge);
                 }
                 return await _scriptHttp.PrepareChallenge(context, httpChallenge);
             }
