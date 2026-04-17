@@ -1,11 +1,7 @@
 ﻿using PKISharp.WACS.Clients.DNS;
-using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Services;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 {
