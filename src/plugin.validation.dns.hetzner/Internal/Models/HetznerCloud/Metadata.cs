@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.Models;
+namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal.Models.HetznerCloud;
 
 internal sealed class Metadata
 {

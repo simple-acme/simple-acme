@@ -1,4 +1,4 @@
-version: 2.3.4.{build}
+version: 2.3.6.{build}
 branches:
   only:
     - main
@@ -27,9 +27,14 @@ environment:
   PluginsCount: 999
   Clean: 0
   Test: 1
-  NetVersion: net9.0
+  NetVersion: net10.0
   SelfSigningPasswordDISABLED:
     secure: tC3u6WA0oWdjXzbLX61Ux2tBK0KhFTT9FgUZFn0Nx0pY045twcsFBvRL+Di6SE80Nc88xaM/xloHGUAQoIq4OANLNg0BEsDYPnhziZDiLBo=
+
+install:
+  - ps: |
+      Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -UseBasicParsing -OutFile "$env:temp\dotnet-install.ps1"
+      & $env:temp\dotnet-install.ps1 -Channel 10.0 -Quality GA -InstallDir "$env:ProgramFiles\dotnet"
 
 clone_script:
   - cmd: >-

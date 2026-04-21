@@ -67,7 +67,15 @@ namespace PKISharp.WACS.Services
             {
                 throw new InvalidOperationException("DomainParseService is not initialized");
             }
-            return _parser.Parse(fulldomain);
+            try
+            {
+                return _parser.Parse(fulldomain);
+            }
+            catch (Exception ex)
+            {
+                _log.Warning(ex, "Unable to determine toplevel/registerable part for {fulldomain}", fulldomain);
+                return null;          
+            }
         }
 
         public string GetTLD(string fulldomain) => GetParseResult(fulldomain)?.TopLevelDomain ?? fulldomain;

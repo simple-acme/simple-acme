@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.Models;
+namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal.Models.HetznerCloud;
 
 internal sealed class PaginationMetadata
 {
@@ -11,10 +11,10 @@ internal sealed class PaginationMetadata
     public int PerPage { get; init; }
 
     [JsonPropertyName("previous_page")]
-    public int PreviousPage { get; init; }
+    public int? PreviousPage { get; init; }
 
     [JsonPropertyName("next_page")]
-    public int NextPage { get; init; }
+    public int? NextPage { get; init; }
 
     [JsonPropertyName("last_page")]
     public int LastPage { get; init; }

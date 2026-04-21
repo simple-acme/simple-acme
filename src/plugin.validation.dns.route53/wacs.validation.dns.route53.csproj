@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>PKISharp.WACS.Plugins.ValidationPlugins.Route53</AssemblyName>
     <RootNamespace>PKISharp.WACS.Plugins.ValidationPlugins</RootNamespace>
     <Version>2.1.0.0</Version>
@@ -14,8 +14,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="AWSSDK.Route53" Version="4.0.5.2" />
-    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.2.11" />
+    <PackageReference Include="AWSSDK.Route53" Version="4.0.8.19" />
+    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.19" />
   </ItemGroup>
 
   <ItemGroup>

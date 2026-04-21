@@ -3,6 +3,7 @@ using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Context;
 using PKISharp.WACS.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -21,7 +22,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         protected readonly LookupClientProvider _dnsClient = dnsClient;
         protected readonly ILogService _log = log;
         protected readonly ISettings _settings = settings;
-        private readonly List<DnsValidationRecord> _recordsCreated = [];
+        private readonly ConcurrentBag<DnsValidationRecord> _recordsCreated = new();
 
         /// <summary>
         /// Prepare to add a new DNS record

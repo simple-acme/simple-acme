@@ -1,7 +1,9 @@
-﻿using PKISharp.WACS.Configuration;
+﻿using ARSoft.Tools.Net.Dns;
+using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -27,7 +29,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             Required();
 
         private ArgumentResult<string?> TsigKeyAlgorithm => arguments.
-            GetString<Rfc2136Arguments>(a => a.TsigKeyAlgorithm);
+            GetString<Rfc2136Arguments>(a => a.TsigKeyAlgorithm).
+            Validate(async x => Enum.TryParse<TSigAlgorithm>(x, true, out var algorithm), "unrecognized algorithm");
 
         public override async Task<Rfc2136Options?> Aquire(IInputService input, RunLevel runLevel)
         {

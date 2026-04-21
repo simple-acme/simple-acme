@@ -2,6 +2,7 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
@@ -41,13 +42,13 @@ namespace PKISharp.WACS.Clients
         {
             _log = log;
             _settings = settings;
-            _server = _settings.Notification.SmtpServer;
-            _port = _settings.Notification.SmtpPort;
-            _user = _settings.Notification.SmtpUser;
-            _password = _settings.Notification.SmtpPassword;
-            _secure = _settings.Notification.SmtpSecure;
-            _secureMode = _settings.Notification.SmtpSecureMode;
-            _senderName = _settings.Notification.SenderName;
+            _server = _settings.Notification.Email.SmtpServer;
+            _port = _settings.Notification.Email.SmtpPort;
+            _user = _settings.Notification.Email.SmtpUser;
+            _password = _settings.Notification.Email.SmtpPassword;
+            _secure = _settings.Notification.Email.SmtpSecure;
+            _secureMode = _settings.Notification.Email.SmtpSecureMode;
+            _senderName = _settings.Notification.Email.SenderName;
             _computerName = _settings.Notification.ComputerName;
             _secretService = secretService;
 
@@ -60,22 +61,33 @@ namespace PKISharp.WACS.Clients
             {
                 _senderName = _settings.Client.ClientName;
             }
-            _senderAddress = _settings.Notification.SenderAddress;
-            _receiverAddresses = _settings.Notification.ReceiverAddresses;
+            _senderAddress = _settings.Notification.Email.SenderAddress;
+            _receiverAddresses = _settings.Notification.Email.ReceiverAddresses;
 
             // Criteria for emailing to be enabled at all
-            Enabled =
-                !string.IsNullOrEmpty(_senderAddress) &&
-                !string.IsNullOrEmpty(_server) &&
-                _receiverAddresses.Any();
-            _log.Verbose("Sending e-mails {_enabled}", Enabled);
+            if (string.IsNullOrEmpty(_senderAddress))
+            {
+                State = State.DisabledState("No sender address configured");
+            }
+            else if (string.IsNullOrEmpty(_server))
+            {
+                State = State.DisabledState("No SMTP server configured");
+            }
+            else if (!_receiverAddresses.Any())
+            {
+                State = State.DisabledState("No receiver address configured");
+            }
+            else
+            {
+                State = State.EnabledState();
+            }
         }
 
-        public bool Enabled { get; internal set; }
+        public State State { get; internal set; }
 
         public async Task<bool> Send(string subject, string content, MessagePriority priority)
         {
-            if (!Enabled)
+            if (State.Disabled)
             {
                 return false;
             }

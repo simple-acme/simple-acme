@@ -29,6 +29,9 @@ namespace PKISharp.WACS.Configuration.Settings
             {
                 return;
             }
+
+            log.Verbose("Path: {exe}", VersionService.ExePath);
+
             if (!LoadGlobalSettings())
             {
                 return;
@@ -82,6 +85,10 @@ namespace PKISharp.WACS.Configuration.Settings
         private bool LoadGlobalSettings()
         {
             var globalFile = EnsureGlobalSettingsFile();
+            if (globalFile == null)
+            {
+                return false;
+            }
             try
             {
                 _settings = new InheritSettings(Settings.Load(globalFile));
@@ -129,27 +136,34 @@ namespace PKISharp.WACS.Configuration.Settings
             return false;
         }
 
-        private FileInfo EnsureGlobalSettingsFile()
+        private static string TemplateName
         {
-            var settingsFileTemplateName = "settings_default.json";
+            get
+            {
+                var templateName = "settings_default.json";
+                if (VersionService.DotNetTool)
+                {
+                    templateName = OperatingSystem.IsWindows() ? "settings.json" : "settings.linux.json";
+                }
+                return templateName;
+            }
+        }
+
+        private FileInfo? EnsureGlobalSettingsFile()
+        {
             _log.Verbose("Looking for {settingsFileName} in {path}", _fileName, VersionService.SettingsPath);
             var settings = new FileInfo(Path.Combine(VersionService.SettingsPath, _fileName));
-            var settingsTemplate = new FileInfo(Path.Combine(VersionService.ResourcePath, settingsFileTemplateName));
-            var useFile = settings;
             if (!settings.Exists)
             {
+                var settingsTemplate = new FileInfo(Path.Combine(VersionService.ResourcePath, TemplateName));
                 if (!settingsTemplate.Exists)
                 {
-                    // For .NET tool case
-                    settingsTemplate = new FileInfo(Path.Combine(VersionService.ResourcePath, _fileName));
-                }
-                if (!settingsTemplate.Exists)
-                {
-                    _log.Warning("Unable to locate {settings}", _fileName);
+                    _log.Warning("Unable to locate {settings} in {path}", TemplateName, VersionService.ResourcePath);
+                    return null;
                 }
                 else
                 {
-                    _log.Verbose("Copying {settingsFileTemplateName} to {settingsFileName}", settingsFileTemplateName, _fileName);
+                    _log.Verbose("Copying {settingsFileTemplateName} to {settingsFileName}", TemplateName, _fileName);
                     try
                     {
                         if (!settings.Directory!.Exists)
@@ -160,12 +174,12 @@ namespace PKISharp.WACS.Configuration.Settings
                     }
                     catch (Exception ex)
                     {
-                        _log.Error(ex, "Unable to create {settingsFileName}, falling back to defaults", _fileName);
-                        useFile = settingsTemplate;
+                        _log.Warning(ex, "Unable to create {settingsFileName}, falling back to defaults. Try to run with elevated permissions to fix this issue.", _fileName);
+                        return settingsTemplate;
                     }
                 }
             }
-            return useFile;
+            return settings;
         }
 
         /// <summary>
