@@ -122,6 +122,10 @@ namespace PKISharp.WACS
             {
                 args.Add("friendlyname", renewal.FriendlyName);
             }
+            if (!string.Equals(renewal.EndPoint ?? settings.BaseUri.ToString(), settings.Acme.DefaultBaseUri?.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                args.Add("baseuri", renewal.EndPoint);
+            }
             if (!string.IsNullOrWhiteSpace(renewal.Account))
             {
                 args.Add("account", renewal.Account);
@@ -154,6 +158,7 @@ namespace PKISharp.WACS
                 input.CreateSpace();
                 input.Show("Id", renewal.Id);
                 input.Show("File", $"{renewal.Id}.renewal.json");
+                input.Show("Endpoint", renewal.EndPoint ?? settings.BaseUri.ToString());
                 if (string.IsNullOrWhiteSpace(renewal.Account))
                 {
                     input.Show("Account", "Default account");
