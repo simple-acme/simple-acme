@@ -18,6 +18,12 @@ function Invoke-DeviceForm {
 
     if (-not $DeviceSchemas.ContainsKey($ConnectorType)) { throw "Unknown connector type: $ConnectorType" }
     $schema = $DeviceSchemas[$ConnectorType]
+    if ($schema.ContainsKey('Disabled') -and [bool]$schema.Disabled) {
+        $requires = if ($schema.ContainsKey('Requires')) { [string]$schema.Requires } else { 'Connector currently unavailable.' }
+        Show-TuiStatus -Message "$($schema.Label) is not available: $requires" -Type Warning -Row ([Console]::WindowHeight-2)
+        Start-Sleep -Milliseconds 1800
+        return $null
+    }
 
     # NOTE: For now each connector stores a single config; this keeps setup deterministic.
     $existing = Get-AllDeviceConfigs -ConfigDir $ConfigDir -SkipIntegrityFailures | Where-Object { $_.connector_type -eq $ConnectorType } | Select-Object -First 1

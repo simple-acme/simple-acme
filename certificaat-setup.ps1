@@ -40,6 +40,10 @@ while ($menuStack.Count -gt 0) {
             $path = Read-Host 'Backup path'
             if ($path) { & "$PSScriptRoot/certificaat-restore.ps1" -BackupPath $path -DryRun }
         }
+        'java_keystore_info' { Show-TuiStatus -Message 'Java KeyStore connector is disabled: requires JDK/keytool.exe.' -Type Warning -Row ([Console]::WindowHeight-2); Start-Sleep -Milliseconds 1800 }
+        'vbr_cloud_gateway_info' { Show-TuiStatus -Message 'Veeam VBR connector is disabled: requires VBR PowerShell module.' -Type Warning -Row ([Console]::WindowHeight-2); Start-Sleep -Milliseconds 1800 }
+        'azure_application_gateway_info' { Show-TuiStatus -Message 'Azure Application Gateway connector is disabled: requires AzureRM module.' -Type Warning -Row ([Console]::WindowHeight-2); Start-Sleep -Milliseconds 1800 }
+        'azure_ad_app_proxy_info' { Show-TuiStatus -Message 'Azure AD App Proxy connector is disabled: requires AzureAD module.' -Type Warning -Row ([Console]::WindowHeight-2); Start-Sleep -Milliseconds 1800 }
         default {
             Invoke-DeviceForm -ConnectorType $selected -ConfigDir $configDir | Out-Null
         }
