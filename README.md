@@ -65,3 +65,46 @@ Each file is named `{renewal_id}_{timestamp}.json` and should contain:
   "not_after": "2026-07-20T23:59:59Z"
 }
 ```
+
+## First-time setup
+
+1. Run: `.\certificaat-setup.ps1`
+2. Navigate to `ACME settings` — enter KID, HMAC secret, directory URL, domains.
+3. Navigate to local/remote device categories — configure each endpoint.
+4. Navigate to `Deployment policies` — assign devices to policies.
+5. Navigate to `Backup & restore` > `Create backup` — store the backup file off-machine.
+6. Exit setup. The .env and device configs are ready for the orchestrator.
+
+## Backup and restore
+
+```powershell
+# Create a backup (prompts for passphrase)
+.\certificaat-backup.ps1 -OutputPath C:\secure\certificaat-2026-04-21.certbak
+
+# Restore on a new machine (prompts for passphrase)
+.\certificaat-restore.ps1 -BackupPath \\fileserver\backups\certificaat-2026-04-21.certbak
+
+# Verify a backup is readable without restoring
+.\certificaat-restore.ps1 -BackupPath .\certificaat-2026-04-21.certbak -DryRun
+
+# Scheduled backup via Task Scheduler (passphrase from environment — see security note below)
+schtasks /create /tn "Certificaat backup" /sc WEEKLY /d MON /st 02:00 ^
+  /tr "powershell.exe -NonInteractive -File C:\certificaat\certificaat-backup.ps1 ^
+       -OutputPath \\fileserver\backups\certificaat-%DATE%.certbak ^
+       -Passphrase (ConvertTo-SecureString $env:CERTIFICAAT_BACKUP_PASSPHRASE -AsPlainText -Force)"
+```
+
+Security note on unattended backup: store the passphrase in `CERTIFICAAT_BACKUP_PASSPHRASE` as a protected environment variable on the service account, not in a script file.
+
+## Machine identity change recovery
+
+```text
+Symptoms: orchestrator logs "If the machine identity has changed, restore from backup"
+Cause:    DPAPI-encrypted secrets are unreadable after OS reinstall, domain rejoin, or
+          TPM/SID change.
+Recovery:
+  1. Install PowerShell and certificaat on the new machine.
+  2. Run: .\certificaat-restore.ps1 -BackupPath <path-to-backup>
+  3. Secrets are re-encrypted for the new machine identity automatically.
+  4. Resume normal operation.
+```
