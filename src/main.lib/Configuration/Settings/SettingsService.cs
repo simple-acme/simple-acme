@@ -59,11 +59,11 @@ namespace PKISharp.WACS.Configuration.Settings
         }
 
         /// <summary>
-        /// Get global settings from disk, and if they don't exist, try to create them from the template. If creation fails, return 
-        /// the template as a fallback to at least have some settings available. If loading fails, return false to indicate that 
-        /// settings are not available and the program should probably exit.
+        /// Get global settings from disk, and if they don't exist, try to create them from the template. If creation fails, return
+        /// the template as a fallback to at least have some settings available. If loading or initialization fails, return
+        /// <see langword="null"/> to indicate that settings are not available and the program should probably exit.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The loaded global settings, or <see langword="null"/> if they cannot be ensured, loaded, or initialized.</returns>
         private InheritSettings? LoadGlobalSettings()
         {
             var globalFile = EnsureGlobalSettingsFile();
