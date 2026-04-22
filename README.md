@@ -116,6 +116,53 @@ Recovery:
 ```
 
 
-## Connector status
-- Implemented: `iis`, `f5_bigip`, `kemp`, `citrix_adc`
-- Stubbed (explicit not implemented): `nginx`, `apache`, `haproxy`, `traefik`, `envoy`, `caddy`, `aws_alb`, `barracuda`
+## Integration with simple-acme
+
+Configure simple-acme Script Installation Plugin to write Certificaat drop files after each successful renewal.
+
+```text
+--installation Script
+--script "dist\Scripts\New-CertificaatDropFile.ps1"
+--scriptparameters "{RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
+```
+
+### Store plugin compatibility
+
+| simple-acme StoreType | Typical StorePath value | Notes |
+|---|---|---|
+| `PfxFile` | full path to `.pfx` | Required by connectors that need direct PFX import workflows. |
+| `CertificateStore` | certificate store location | Preferred for local Windows service connectors using thumbprint bindings. |
+| `PemFiles` | folder containing PEM artifacts | Used by file-based/reverse-proxy connectors. |
+| `CentralSsl` | CCS directory path | Useful when post-processing from centralized file drops is required. |
+
+### Store token mapping to connector input
+
+- `{StoreType}` maps to `event.store_type` and determines expected artifact shape.
+- `{StorePath}` maps to `event.store_path` and should be passed through unchanged.
+- `{CertThumbprint}` maps to `event.thumbprint` for thumbprint-first native Windows connectors.
+- `{OldCertThumbprint}` maps to `previous_artifact_ref` for rollback operations.
+
+## Connector reference
+
+| Connector | Category | Requirements | Rollback |
+|---|---|---|---|
+| `iis` | A (Windows-native) | IIS role | Yes |
+| `adfs` | A (Windows-native) | ADFS role | Yes |
+| `rdp_listener` | A (Windows-native) | Remote Desktop Services | Yes |
+| `rd_gateway` | A (Windows-native) | RD Gateway role | Yes |
+| `rds_full` | A (Windows-native) | RDS deployment cmdlets | Yes |
+| `ntds` | A (Windows-native) | Active Directory Domain Services | Yes |
+| `sstp` | A (Windows-native) | RemoteAccess role + optional IIS binding support | Yes |
+| `winrm` | A (Windows-native) | WinRM service | Yes |
+| `sql_server` | A (Windows-native) | SQL Server installed locally | Yes |
+| `windows_admin_center` | A (Windows-native) | Windows Admin Center installed | Yes |
+| `exchange` | C (local PSSession) | Exchange Management endpoint on localhost | Yes |
+| `f5_bigip` | B (REST) | F5 iControl REST access | Yes |
+| `citrix_adc` | B (REST) | Citrix NITRO API access | Yes |
+| `kemp` | B (REST) | Kemp REST/XML endpoint access | Yes |
+| `java_keystore` | D (external dependency) | JDK / `keytool.exe` | Stub/disabled |
+| `kemp_module` | D (external dependency) | Kemp PowerShell module | Stub/disabled |
+| `vbr_cloud_gateway` | D (external dependency) | Veeam VBR module | Stub/disabled |
+| `azure_application_gateway` | D (external dependency) | AzureRM module | Stub/disabled |
+| `azure_ad_app_proxy` | D (external dependency) | AzureAD module | Stub/disabled |
+| `sparx_procloud` | D (external dependency) | PowerShell 7 + external tooling | Stub/disabled |
