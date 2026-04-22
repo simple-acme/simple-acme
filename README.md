@@ -2,7 +2,7 @@
 
 ## Prerequisites
 - Windows Server 2019 or newer
-- PowerShell 5.1 minimum (PowerShell 7.x recommended)
+- PowerShell 5.1 minimum (target runtime)
 - No external modules or third-party binaries required
 
 ## First-run Event Log source registration
@@ -23,6 +23,12 @@ New-EventLog -LogName Application -Source Certificaat
 | CERTIFICAAT_ACTIVATE_TIMEOUT_MS | No | `120000` | Activation timeout hint in milliseconds |
 | CERTIFICAAT_DEFAULT_FANOUT | No | `fail-fast` | Default policy mode when policy does not set one |
 | CERTIFICAAT_SKIP_TLS_CHECK | No | unset | Set to `1` to disable TLS cert validation for connector API calls |
+| CERTIFICAAT_RETRY_MAX_ATTEMPTS | No | `3` | Global retry attempts for connector operations |
+| CERTIFICAAT_RETRY_BACKOFF_MS | No | `1000` | Initial retry backoff in milliseconds |
+| CERTIFICAAT_HTTP_ENABLED | No | `0` | Set to `1` to accept events via native HttpListener API |
+| CERTIFICAAT_HTTP_HOST | No | `127.0.0.1` | HTTP bind host for listener mode |
+| CERTIFICAAT_HTTP_PORT | No | `8088` | HTTP bind port for listener mode |
+| CERTIFICAAT_HTTP_BEARER_TOKEN | Conditional | unset | Required when `CERTIFICAAT_HTTP_ENABLED=1` |
 
 ## Run as scheduled task
 
@@ -44,7 +50,7 @@ schtasks /Create /SC MINUTE /MO 5 /TN "Certificaat-Orchestrator" /TR "powershell
 ## Run tests
 
 ```powershell
-Invoke-Pester .\tests\
+powershell.exe -File tests\Run-Tests.ps1
 ```
 
 ## Drop directory file format
@@ -108,3 +114,8 @@ Recovery:
   3. Secrets are re-encrypted for the new machine identity automatically.
   4. Resume normal operation.
 ```
+
+
+## Connector status
+- Implemented: `iis`, `f5_bigip`, `kemp`, `citrix_adc`
+- Stubbed (explicit not implemented): `nginx`, `apache`, `haproxy`, `traefik`, `envoy`, `caddy`, `aws_alb`, `barracuda`

@@ -37,6 +37,7 @@ function Invoke-ConnectorRollback {
     } catch {
         Update-ConnectorJobStep -JobId $job.job_id -Step 'rollback' -Status 'rolled_back_failed' -StateDir $StateDir -Attempt 0 -ErrorDetail $_.Exception.ToString() | Out-Null
         Write-CertificaatLog -Level 'ERROR' -Message "Rollback failed: $($_.Exception.ToString())" -JobId $job.job_id -Domain $Context.event.domain -Step 'rollback'
+        throw
     }
 }
 

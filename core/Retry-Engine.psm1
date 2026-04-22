@@ -1,13 +1,27 @@
 Set-StrictMode -Version Latest
 Import-Module "$PSScriptRoot/Logger.psm1" -Force
 
+function Get-RetrySetting {
+    param([string]$Name,[int]$Default)
+    $raw = [Environment]::GetEnvironmentVariable($Name)
+    if ([string]::IsNullOrWhiteSpace($raw)) { return $Default }
+    $parsed = 0
+    if (-not [int]::TryParse($raw, [ref]$parsed) -or $parsed -lt 1) {
+        throw "Invalid retry environment variable '$Name': '$raw'. Expected positive integer."
+    }
+    return $parsed
+}
+
 function Invoke-WithRetry {
     param(
         [scriptblock]$ScriptBlock,
-        [int]$MaxAttempts = 3,
-        [int]$BackoffMs = 1000,
+        [int]$MaxAttempts,
+        [int]$BackoffMs,
         [string]$Label = 'operation'
     )
+
+    if (-not $PSBoundParameters.ContainsKey('MaxAttempts')) { $MaxAttempts = Get-RetrySetting -Name 'CERTIFICAAT_RETRY_MAX_ATTEMPTS' -Default 3 }
+    if (-not $PSBoundParameters.ContainsKey('BackoffMs')) { $BackoffMs = Get-RetrySetting -Name 'CERTIFICAAT_RETRY_BACKOFF_MS' -Default 1000 }
 
     $lastError = $null
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {

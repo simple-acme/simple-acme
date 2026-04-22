@@ -71,11 +71,19 @@ function Invoke-AcmeForm {
 function Invoke-PolicyEditor {
     param([string]$ConfigDir)
     $path = Join-Path $ConfigDir 'policies.json'
-    if (-not (Test-Path -LiteralPath $path)) { [System.IO.File]::WriteAllText($path, '[]', [System.Text.Encoding]::UTF8) }
+    if (-not (Test-Path -LiteralPath $path)) {
+        $tmpInit = [System.IO.Path]::GetTempFileName()
+        [System.IO.File]::WriteAllText($tmpInit, '[]', [System.Text.Encoding]::UTF8)
+        Move-Item -LiteralPath $tmpInit -Destination $path -Force
+    }
+
     $raw = Get-Content -Raw -Path $path -Encoding UTF8
     $policies = if ([string]::IsNullOrWhiteSpace($raw)) { @() } else { $raw | ConvertFrom-Json }
-    # NOTE: Minimal non-interactive policy editor placeholder keeps persistence deterministic.
-    [System.IO.File]::WriteAllText($path, ($policies | ConvertTo-Json -Depth 10), [System.Text.Encoding]::UTF8)
+
+    $json = $policies | ConvertTo-Json -Depth 10
+    $tmpPath = [System.IO.Path]::GetTempFileName()
+    [System.IO.File]::WriteAllText($tmpPath, $json, [System.Text.Encoding]::UTF8)
+    Move-Item -LiteralPath $tmpPath -Destination $path -Force
     return $policies
 }
 
