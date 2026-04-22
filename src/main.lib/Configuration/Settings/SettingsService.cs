@@ -141,7 +141,7 @@ namespace PKISharp.WACS.Configuration.Settings
         }
 
         /// <summary>
-        /// Load server configuration from disk and marge with global settings.
+        /// Load server configuration from disk and merge with global settings.
         /// if no server configuration is found, global settings will be used as-is.
         /// If server configuration is found but fails to load, global settings will 
         /// be used as fallback.
