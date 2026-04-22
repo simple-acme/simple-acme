@@ -1,94 +1,72 @@
 param(
-  [Parameter(Mandatory=$true)][string]$AcmeDirectory,
-  [Parameter(Mandatory=$false)][string]$EabKid,
-  [Parameter(Mandatory=$false)][string]$EabHmac,
-  [Parameter(Mandatory=$true)][string]$Domain,
-  [Parameter(Mandatory=$true)][string]$PfxPassword
+    [Parameter(Mandatory)][string]$Domain,
+    [Parameter(Mandatory)][string]$PfxPath,
+    [Parameter(Mandatory)][string]$PfxPassword,
+    [string]$AcmeDirectory = '',
+    [string]$EabKid = '',
+    [string]$EabHmac = ''
 )
 
 $ErrorActionPreference = 'Stop'
+$roles = @('RDGateway','RDWebAccess','RDRedirector','RDPublishing')
 
-function Log-Info([string]$Message) { Write-Output "[INFO] $Message" }
-function Log-Warn([string]$Message) { Write-Output "[WARN] $Message" }
-function Log-Error([string]$Message) { Write-Output "[ERROR] $Message" }
-
-if (($EabKid -and -not $EabHmac) -or (-not $EabKid -and $EabHmac)) {
-  Log-Error 'EAB parameters must be provided as a pair.'
-  exit 2
-}
-
-$pfxPath = Join-Path $AcmeDirectory "$Domain.pfx"
-if (-not (Test-Path $pfxPath)) {
-  Log-Error "PFX not found at $pfxPath"
-  exit 2
+function Get-RoleThumbprint { param([string]$Role)
+    try { (Get-RDCertificate -Role $Role -ErrorAction Stop).Thumbprint } catch { $null }
 }
 
 try {
-  $secure = ConvertTo-SecureString -String $PfxPassword -AsPlainText -Force
-  $imported = Import-PfxCertificate -FilePath $pfxPath -Password $secure -CertStoreLocation Cert:\LocalMachine\My
-  $thumb = $imported.Thumbprint
-  Log-Info "Imported certificate with thumbprint $thumb"
+    $securePassword = ConvertTo-SecureString $PfxPassword -AsPlainText -Force
+    $incoming = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+    $incoming.Import($PfxPath, $PfxPassword, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet)
+
+    $current = @{}
+    foreach ($r in $roles) { $current[$r] = Get-RoleThumbprint -Role $r }
+    if (($current.Values | Where-Object { $_ -ne $incoming.Thumbprint }).Count -eq 0) {
+        Write-Output '[INFO] No change required'
+        exit 0
+    }
+
+    $cert = Import-PfxCertificate -FilePath $PfxPath -CertStoreLocation Cert:\LocalMachine\My -Password $securePassword
+    Write-Output "[INFO] Imported cert thumbprint $($cert.Thumbprint)"
+
+    $failures = @()
+    $updatedGateway = $false
+    foreach ($role in $roles) {
+        try {
+            Set-RDCertificate -Role $role -ImportPath $PfxPath -Password $securePassword -Force
+            Write-Output "[INFO] Updated role $role"
+            if ($role -eq 'RDGateway') { $updatedGateway = $true }
+        } catch {
+            $failures += $role
+            Write-Output "[ERROR] Failed updating role $role: $($_.Exception.Message)"
+        }
+    }
+
+    if ($updatedGateway) {
+        try {
+            Restart-Service TSGateway -ErrorAction Stop
+            Write-Output '[INFO] Restarted TSGateway service'
+        } catch {
+            $failures += 'TSGateway'
+            Write-Output "[ERROR] Failed restarting TSGateway: $($_.Exception.Message)"
+        }
+    }
+
+    $verifyFailures = @()
+    foreach ($role in $roles) {
+        $thumb = Get-RoleThumbprint -Role $role
+        if ($thumb -ne $cert.Thumbprint) {
+            $verifyFailures += $role
+            Write-Output "[WARN] Verification mismatch for role $role"
+        } else {
+            Write-Output "[INFO] Verification passed for role $role"
+        }
+    }
+
+    if ($failures.Count -eq $roles.Count) { exit 2 }
+    if ($failures.Count -gt 0 -or $verifyFailures.Count -gt 0) { exit 1 }
+    exit 0
 } catch {
-  Log-Error "Failed to import PFX: $($_.Exception.Message)"
-  exit 2
+    Write-Output "[ERROR] Complete failure: $($_.Exception.Message)"
+    exit 2
 }
-
-$roles = @('RDGateway', 'RDWebAccess', 'RDRedirector', 'RDPublishing')
-$failed = @()
-$changedGateway = $false
-$needsChange = $false
-
-foreach ($role in $roles) {
-  try {
-    $existing = Get-RDCertificate -Role $role
-    if ($existing.Thumbprint -ne $thumb) {
-      $needsChange = $true
-    }
-  } catch {
-    $needsChange = $true
-  }
-}
-
-if (-not $needsChange) {
-  Log-Info 'All RDS roles already bound to active certificate. No changes made.'
-  exit 0
-}
-
-foreach ($role in $roles) {
-  try {
-    Set-RDCertificate -Role $role -Thumbprint $thumb -Force
-    $updated = Get-RDCertificate -Role $role
-    if ($updated.Thumbprint -ne $thumb) {
-      $failed += $role
-      Log-Warn "Verification failed for role $role"
-    } else {
-      Log-Info "Role $role updated and verified"
-      if ($role -eq 'RDGateway') { $changedGateway = $true }
-    }
-  } catch {
-    $failed += $role
-    Log-Error "Role $role update failed: $($_.Exception.Message)"
-  }
-}
-
-if ($changedGateway) {
-  try {
-    Restart-Service -Name TSGateway -Force
-    Log-Info 'Restarted TSGateway service after RDGateway certificate change'
-  } catch {
-    Log-Warn "Unable to restart TSGateway: $($_.Exception.Message)"
-  }
-}
-
-if ($failed.Count -eq 0) {
-  Log-Info 'All RDS roles successfully configured'
-  exit 0
-}
-
-if ($failed.Count -lt $roles.Count) {
-  Log-Warn ("Partial failure for roles: " + ($failed -join ', '))
-  exit 1
-}
-
-Log-Error 'Complete failure: no role bindings succeeded'
-exit 2

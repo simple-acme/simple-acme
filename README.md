@@ -1,64 +1,67 @@
-# Connector Orchestrator (simple-acme compatible)
+# Certificaat Hybrid Certificate Lifecycle Orchestrator
 
-This repository now contains a standalone connector orchestrator that handles post-issuance certificate deployment to remote appliances.
+## Prerequisites
+- Windows Server 2019 or newer
+- PowerShell 5.1 minimum (PowerShell 7.x recommended)
+- No external modules or third-party binaries required
 
-## Setup
+## First-run Event Log source registration
+Run once as Administrator:
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Create a `policies.json` file (or set `POLICY_FILE`).
-3. Export required environment variables:
-   - `DB_PATH` (required)
-   - `POLICY_FILE` (default `./policies.json`)
-   - `VERIFY_MAX_ATTEMPTS` (default `3`)
-   - `ACTIVATE_TIMEOUT_MS` (default `120000`)
-   - `HOST` (default `0.0.0.0`)
-   - `PORT` (default `3000`)
-4. Run tests:
-   ```bash
-   npm test
-   ```
-
-## HTTP API
-
-- `POST /events` accepts certificate lifecycle events.
-- `GET /jobs/:renewal_id` returns all jobs for a renewal.
-- `GET /jobs/status/:job_id` returns one job.
-- `GET /health` returns `{ "status": "ok" }`.
-
-## Policy file format
-
-```json
-[
-  {
-    "policy_id": "example-policy",
-    "fanout_policy": "fail-fast",
-    "connectors": [
-      {
-        "connector_type": "f5_bigip",
-        "label": "F5 prod",
-        "settings": {
-          "host": "f5.example.com",
-          "token_env": "F5_API_TOKEN",
-          "ssl_profile": "clientssl"
-        }
-      }
-    ]
-  }
-]
+```powershell
+New-EventLog -LogName Application -Source Certificaat
 ```
 
-`settings` keys ending in `_env` are resolved from environment variables at runtime.
+## Environment variables
 
-## Adding a new connector
+| Name | Required | Default | Description |
+|---|---|---|---|
+| CERTIFICAAT_DROP_DIR | Yes | `C:\certificaat\drop` | Watched folder where renewal JSON files are dropped |
+| CERTIFICAAT_STATE_DIR | Yes | `C:\certificaat\state` | Job state JSON folder |
+| CERTIFICAAT_LOG_DIR | Yes | `C:\certificaat\logs` | File log directory (optional output when folder exists) |
+| CERTIFICAAT_VERIFY_MAX_ATTEMPTS | No | `3` | Retry attempts for verify style operations |
+| CERTIFICAAT_ACTIVATE_TIMEOUT_MS | No | `120000` | Activation timeout hint in milliseconds |
+| CERTIFICAAT_DEFAULT_FANOUT | No | `fail-fast` | Default policy mode when policy does not set one |
+| CERTIFICAAT_SKIP_TLS_CHECK | No | unset | Set to `1` to disable TLS cert validation for connector API calls |
 
-1. Create `packages/connectors/<vendor>/src/index.ts`.
-2. Implement the `Connector` interface from `@orchestrator/core`.
-3. Register it in your orchestrator startup wiring using `ConnectorRegistry.register(type, connector)`.
-4. Add integration tests under `packages/orchestrator/tests/integration`.
+## Run as scheduled task
 
-## RDS Gateway script
+```cmd
+schtasks /Create /SC MINUTE /MO 5 /TN "Certificaat-Orchestrator" /TR "powershell.exe -ExecutionPolicy Bypass -File C:\certificaat\certificaat-orchestrator.ps1" /RU "SYSTEM"
+```
 
-A standalone script is available at `dist/scripts/certificaat-rdsgw.ps1` for direct invocation by the certificate manager CLI.
+## Add a new connector
+1. Add a module under `connectors/`.
+2. Export exactly six functions:
+   - `Invoke-{ConnectorType}Probe`
+   - `Invoke-{ConnectorType}Deploy`
+   - `Invoke-{ConnectorType}Bind`
+   - `Invoke-{ConnectorType}Activate`
+   - `Invoke-{ConnectorType}Verify`
+   - `Invoke-{ConnectorType}Rollback`
+3. Ensure each function accepts `-Context` and throws terminating errors on failures.
+
+## Run tests
+
+```powershell
+Invoke-Pester .\tests\
+```
+
+## Drop directory file format
+Each file is named `{renewal_id}_{timestamp}.json` and should contain:
+
+```json
+{
+  "event": "certificate.renewed",
+  "renewal_id": "renewal-123",
+  "deployment_policy_id": "prod-edge",
+  "domain": "example.com",
+  "cert_path": "C:\\certificaat\\out\\cert.pem",
+  "key_path": "C:\\certificaat\\out\\key.pem",
+  "fullchain_path": "C:\\certificaat\\out\\fullchain.pem",
+  "thumbprint": "ABC123",
+  "issuer": "Let's Encrypt",
+  "not_before": "2026-04-21T00:00:00Z",
+  "not_after": "2026-07-20T23:59:59Z"
+}
+```

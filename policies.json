@@ -1,0 +1,54 @@
+[
+  {
+    "policy_id": "prod-edge",
+    "fanout_policy": "fail-fast",
+    "connectors": [
+      {
+        "connector_type": "f5_bigip",
+        "label": "F5 production",
+        "settings": {
+          "host": "f5.example.com",
+          "token_env": "F5_API_TOKEN",
+          "ssl_profile": "clientssl-prod"
+        }
+      }
+    ]
+  },
+  {
+    "policy_id": "multi-adc",
+    "fanout_policy": "quorum",
+    "quorum_threshold": 2,
+    "connectors": [
+      {
+        "connector_type": "citrix_adc",
+        "label": "Citrix primary",
+        "settings": {
+          "host": "adc1.example.com",
+          "user_env": "ADC_USER",
+          "password_env": "ADC_PASSWORD",
+          "vserver": "vs-https-prod"
+        }
+      },
+      {
+        "connector_type": "citrix_adc",
+        "label": "Citrix secondary",
+        "settings": {
+          "host": "adc2.example.com",
+          "user_env": "ADC_USER",
+          "password_env": "ADC_PASSWORD",
+          "vserver": "vs-https-prod"
+        }
+      },
+      {
+        "connector_type": "kemp",
+        "label": "Kemp edge",
+        "settings": {
+          "host": "kemp.example.com",
+          "user_env": "KEMP_USER",
+          "password_env": "KEMP_PASSWORD",
+          "vs_id": "1"
+        }
+      }
+    ]
+  }
+]
