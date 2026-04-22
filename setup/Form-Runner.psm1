@@ -1,3 +1,5 @@
+. "$PSScriptRoot/Device-Schemas.ps1"
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 Import-Module "$PSScriptRoot/../core/Tui-Engine.psm1" -Force
@@ -20,7 +22,7 @@ function Invoke-DeviceForm {
     $schema = $DeviceSchemas[$ConnectorType]
     if ($schema.ContainsKey('Disabled') -and [bool]$schema.Disabled) {
         $requires = if ($schema.ContainsKey('Requires')) { [string]$schema.Requires } else { 'Connector currently unavailable.' }
-        Show-TuiStatus -Message "$($schema.Label) is not available: $requires" -Type Warning -Row ([Console]::WindowHeight-2)
+        Show-TuiStatus -Message "$($schema.Label) is not available: $requires" -Type Warning -Row ([Math]::Max(0,[Console]::WindowHeight)-2)
         Start-Sleep -Milliseconds 1800
         return $null
     }
@@ -32,7 +34,7 @@ function Invoke-DeviceForm {
     try {
         $values = Show-TuiForm -Fields $schema.Fields -CurrentValues $current -Title "Configure $($schema.Label)"
     } catch {
-        Show-TuiStatus -Message "Error loading existing config: $($_.Exception.Message)" -Type Error -Row ([Console]::WindowHeight-2)
+        Show-TuiStatus -Message "Error loading existing config: $($_.Exception.Message)" -Type Error -Row ([Math]::Max(0,[Console]::WindowHeight)-2)
         return $null
     }
 
@@ -51,7 +53,7 @@ function Invoke-DeviceForm {
 
     $secretFields = @($schema.Fields | Where-Object { $_.Type -eq 'secret' } | Select-Object -ExpandProperty Name)
     Save-DeviceConfig -Device $device -ConfigDir $ConfigDir -SecretFields $secretFields | Out-Null
-    Show-TuiStatus -Message 'Saved successfully.' -Type Success -Row ([Console]::WindowHeight-2)
+    Show-TuiStatus -Message 'Saved successfully.' -Type Success -Row ([Math]::Max(0,[Console]::WindowHeight)-2)
     Start-Sleep -Milliseconds 1500
     return $device
 }
@@ -78,18 +80,18 @@ function Invoke-PolicyEditor {
     param([string]$ConfigDir)
     $path = Join-Path $ConfigDir 'policies.json'
     if (-not (Test-Path -LiteralPath $path)) {
-        $tmpInit = [System.IO.Path]::GetTempFileName()
-        [System.IO.File]::WriteAllText($tmpInit, '[]', [System.Text.Encoding]::UTF8)
-        Move-Item -LiteralPath $tmpInit -Destination $path -Force
+        $tmpInit = [System.IO.Path]::GetTempFileName(); [System.IO.File]::WriteAllText($tmpInit, '[]', [System.Text.Encoding]::UTF8); Move-Item -LiteralPath $tmpInit -Destination $path -Force
     }
-
-    $raw = Get-Content -Raw -Path $path -Encoding UTF8
-    $policies = if ([string]::IsNullOrWhiteSpace($raw)) { @() } else { $raw | ConvertFrom-Json }
-
-    $json = $policies | ConvertTo-Json -Depth 10
-    $tmpPath = [System.IO.Path]::GetTempFileName()
-    [System.IO.File]::WriteAllText($tmpPath, $json, [System.Text.Encoding]::UTF8)
-    Move-Item -LiteralPath $tmpPath -Destination $path -Force
+    $policies = @((Get-Content -Raw -Encoding UTF8 -Path $path | ConvertFrom-Json))
+    while($true){
+        $choice = Read-Host 'Policy editor: [N]ew [E]dit [D]elete [L]ist [Q]uit'
+        if($choice -match '^[Qq]'){ break }
+        if($choice -match '^[Ll]'){ $policies | ForEach-Object { [Console]::WriteLine("{0} fanout={1} quorum={2}" -f $_.policy_id,$_.fanout_policy,$_.quorum_threshold) }; continue }
+        if($choice -match '^[Nn]'){ $pid=Read-Host 'policy_id'; $fan=Read-Host 'fanout_policy'; $q=Read-Host 'quorum_threshold'; $policies += [pscustomobject]@{ policy_id=$pid; fanout_policy=$fan; quorum_threshold=[int]$q; connectors=@() }; continue }
+        if($choice -match '^[Dd]'){ $pid=Read-Host 'policy_id to delete'; $policies=@($policies | Where-Object { $_.policy_id -ne $pid }); continue }
+        if($choice -match '^[Ee]'){ $pid=Read-Host 'policy_id to edit'; $p=@($policies|Where-Object{$_.policy_id -eq $pid})[0]; if($null -eq $p){continue}; $p.fanout_policy=Read-Host "fanout_policy [$($p.fanout_policy)]"; $p.quorum_threshold=[int](Read-Host "quorum_threshold [$($p.quorum_threshold)]"); $conn=Read-Host 'connector types comma-separated'; if($conn){ $p.connectors=@($conn -split ',' | ForEach-Object { [pscustomobject]@{ connector_type=$_.Trim(); label=$_.Trim(); settings=@{} } }) }; }
+    }
+    $tmp = [System.IO.Path]::GetTempFileName(); [System.IO.File]::WriteAllText($tmp, ($policies | ConvertTo-Json -Depth 20), [System.Text.Encoding]::UTF8); Move-Item -LiteralPath $tmp -Destination $path -Force
     return $policies
 }
 

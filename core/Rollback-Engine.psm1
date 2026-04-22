@@ -1,3 +1,4 @@
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Import-Module "$PSScriptRoot/State-Store.psm1" -Force
 Import-Module "$PSScriptRoot/Logger.psm1" -Force
@@ -7,6 +8,7 @@ function Test-ShouldRollback {
         [ValidateSet('VerifyExhausted','ActivateTimeout','DeployInvalid','FanoutFastFail')]
         [string]$Reason
     )
+    if ([Environment]::GetEnvironmentVariable('CERTIFICAAT_DISABLE_ROLLBACK') -eq '1') { return $false }
     return $true
 }
 

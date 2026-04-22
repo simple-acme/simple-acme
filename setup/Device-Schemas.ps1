@@ -3,9 +3,7 @@ Set-StrictMode -Version Latest
 $DeviceSchemas = @{
     iis = @{ ConnectorType='iis'; Label='IIS'; Category='local_windows'; Fields=@(
         @{ Name='site_name'; Label='Site name'; Type='string'; Required=$true; Placeholder='Default Web Site'; HelpText='IIS website name' },
-        @{ Name='host'; Label='Host header'; Type='string'; Required=$false; Placeholder=''; HelpText='Optional host header for SNI binding' },
-        @{ Name='port'; Label='Port'; Type='string'; Required=$false; Placeholder='443'; HelpText='HTTPS port, defaults to 443' },
-        @{ Name='pfx_password_env'; Label='PFX password env var'; Type='string'; Required=$false; Placeholder='CERT_PFX_PASSWORD'; HelpText='Environment variable that contains PFX password' }
+        @{ Name='cert_store_location'; Label='Store location'; Type='choice'; Required=$true; Choices=@('My','WebHosting'); Placeholder='My'; HelpText='Certificate store location for IIS binding' }
     )}
 
     adfs = @{ ConnectorType='adfs'; Label='ADFS'; Category='local_windows'; Fields=@() }
@@ -25,7 +23,7 @@ $DeviceSchemas = @{
     windows_admin_center = @{ ConnectorType='windows_admin_center'; Label='Windows Admin Center'; Category='local_windows'; Fields=@() }
 
     exchange = @{ ConnectorType='exchange'; Label='Exchange (local)'; Category='exchange'; Fields=@(
-        @{ Name='services'; Label='Exchange services'; Type='string'; Required=$false; Placeholder='SMTP,IIS'; HelpText='Comma-separated list for Enable-ExchangeCertificate -Services' }
+        @{ Name='services'; Label='Exchange services'; Type='string'; Required=$false; Placeholder='SMTP,IIS,POP,IMAP'; HelpText='Comma-separated list for Enable-ExchangeCertificate -Services' }
     )}
 
     exchange_hybrid = @{ ConnectorType='exchange_hybrid'; Label='Exchange Hybrid'; Category='exchange'; Disabled=$true; Requires='Requires hybrid transport tuning not yet implemented in native connector set.'; Fields=@(
@@ -34,19 +32,19 @@ $DeviceSchemas = @{
 
     f5_bigip = @{ ConnectorType='f5_bigip'; Label='F5 BIG-IP'; Category='network_appliance'; Fields=@(
         @{ Name='host'; Label='Management hostname or IP'; Type='string'; Required=$true; Placeholder='f5.example.com'; HelpText='FQDN or IP of the F5 management interface' },
-        @{ Name='token'; Label='API token'; Type='secret'; Required=$true; Placeholder=''; HelpText='iControl REST Bearer token' },
+        @{ Name='token_env'; Label='Token env-var name'; Type='string'; Required=$true; Placeholder='F5_API_TOKEN'; HelpText='Environment variable that stores the iControl REST Bearer token' },
         @{ Name='ssl_profile'; Label='Client SSL profile name'; Type='string'; Required=$true; Placeholder='clientssl-prod'; HelpText='Name of the client SSL profile to update' }
     )}
     citrix_adc = @{ ConnectorType='citrix_adc'; Label='Citrix ADC'; Category='network_appliance'; Fields=@(
         @{ Name='host'; Label='Host'; Type='string'; Required=$true; Placeholder='adc.example.com'; HelpText='Citrix ADC management endpoint' },
-        @{ Name='user'; Label='User'; Type='secret'; Required=$true; Placeholder=''; HelpText='NITRO API username' },
-        @{ Name='password'; Label='Password'; Type='secret'; Required=$true; Placeholder=''; HelpText='NITRO API password' },
+        @{ Name='user_env'; Label='User env-var name'; Type='string'; Required=$true; Placeholder='ADC_USER'; HelpText='Environment variable name for NITRO API username' },
+        @{ Name='password_env'; Label='Password env-var name'; Type='string'; Required=$true; Placeholder='ADC_PASSWORD'; HelpText='Environment variable name for NITRO API password' },
         @{ Name='vserver'; Label='vServer'; Type='string'; Required=$true; Placeholder='prod-vsrv'; HelpText='Target virtual server name' }
     )}
     kemp = @{ ConnectorType='kemp'; Label='Kemp LoadMaster'; Category='network_appliance'; Fields=@(
         @{ Name='host'; Label='Host'; Type='string'; Required=$true; Placeholder='kemp.example.com'; HelpText='Kemp LoadMaster host' },
-        @{ Name='user'; Label='User'; Type='secret'; Required=$true; Placeholder=''; HelpText='API user for kemp' },
-        @{ Name='password'; Label='Password'; Type='secret'; Required=$true; Placeholder=''; HelpText='API password' },
+        @{ Name='user_env'; Label='User env-var name'; Type='string'; Required=$true; Placeholder='KEMP_USER'; HelpText='Environment variable name for API username' },
+        @{ Name='password_env'; Label='Password env-var name'; Type='string'; Required=$true; Placeholder='KEMP_PASSWORD'; HelpText='Environment variable name for API password' },
         @{ Name='vs_id'; Label='Virtual service ID'; Type='string'; Required=$true; Placeholder='1'; HelpText='LoadMaster virtual service id' }
     )}
 

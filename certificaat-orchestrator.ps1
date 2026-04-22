@@ -11,7 +11,12 @@ Import-Module "$PSScriptRoot/core/Http-Listener.psm1" -Force
 
 function Resolve-DeploymentPolicy {
     param([string]$PolicyId)
-    $raw = Get-Content -Raw -Encoding UTF8 -Path (Join-Path $PSScriptRoot 'policies.json') | ConvertFrom-Json
+    $policyFile = Join-Path $PSScriptRoot 'policies.json'
+    if (-not (Test-Path -LiteralPath $policyFile)) {
+        Write-CertificaatLog -Level Error -Message "policies.json missing: $policyFile"
+        return $null
+    }
+    $raw = Get-Content -Raw -Encoding UTF8 -Path $policyFile | ConvertFrom-Json
     $policies = ConvertTo-Hashtable -InputObject $raw
     $policy = $policies | Where-Object { $_.policy_id -eq $PolicyId } | Select-Object -First 1
     if ($null -eq $policy) { throw "Deployment policy '$PolicyId' was not found in policies.json." }
@@ -35,6 +40,7 @@ function Resume-PendingJobs {
     param([string]$StateDir)
     $pending = Get-PendingConnectorJobs -StateDir $StateDir
     foreach ($job in $pending) {
+        Write-Warning "Pending job '$($job.job_id)' found from previous run; auto-failing."
         Write-CertificaatLog -Level 'WARN' -Message 'Pending job found from previous run; marking as failed for operator review.' -JobId $job.job_id
         Update-ConnectorJobStep -JobId $job.job_id -Step $job.step -Status 'failed' -StateDir $StateDir -ErrorDetail 'Recovered as pending during startup.' | Out-Null
     }
@@ -45,6 +51,7 @@ function Process-EventData {
     param([hashtable]$EventData,[string]$StateDir)
     Assert-CertificateEvent -Event $EventData
     $policy = Resolve-DeploymentPolicy -PolicyId $EventData.deployment_policy_id
+    if ($null -eq $policy) { throw "deployment policy not available" }
     Invoke-FanoutRunner -Event $EventData -Policy $policy -StateDir $StateDir
 }
 
@@ -63,7 +70,6 @@ function Process-DropFile {
         if (-not (Test-Path $failed)) { New-Item -ItemType Directory -Path $failed -Force | Out-Null }
         if (Test-Path $Path) { Move-Item -Path $Path -Destination (Join-Path $failed ([IO.Path]::GetFileName($Path))) -Force }
         Write-CertificaatLog -Level 'ERROR' -Message "Failed processing drop file '$Path': $($_.Exception.ToString())"
-        throw
     }
 }
 
@@ -87,12 +93,12 @@ Resume-PendingJobs -StateDir $StateDir
 
 $useHttp = [Environment]::GetEnvironmentVariable('CERTIFICAAT_HTTP_ENABLED')
 if ($useHttp -eq '1') {
-    Start-CertificaatHttpListener -OnEvent {
-        param($EventObject)
-        $eventData = ConvertTo-Hashtable -InputObject $EventObject
-        Process-EventData -EventData $eventData -StateDir $using:StateDir
-    }
-    exit 0
+    Start-Job -ArgumentList $PSScriptRoot,$DropDir,$StateDir -ScriptBlock {
+        param($root,$drop,$state)
+        Import-Module (Join-Path $root 'core/Logger.psm1') -Force
+        Import-Module (Join-Path $root 'core/Http-Listener.psm1') -Force
+        Start-CertificaatHttpListener -DropDir $drop -StateDir $state
+    } | Out-Null
 }
 
 $watcher = New-Object System.IO.FileSystemWatcher
@@ -100,9 +106,10 @@ $watcher.Path = $DropDir
 $watcher.Filter = '*.json'
 $watcher.EnableRaisingEvents = $true
 
-$action = {
-    Process-DropFile -Path $Event.SourceEventArgs.FullPath -DropDir $using:DropDir -StateDir $using:StateDir
-}
-Register-ObjectEvent -InputObject $watcher -EventName Created -Action $action | Out-Null
+$msgData = @{ StateDir=$StateDir; DropDir=$DropDir }
+Register-ObjectEvent -InputObject $watcher -EventName Created -MessageData $msgData -Action {
+    $d = $Event.MessageData
+    Process-DropFile -Path $Event.SourceEventArgs.FullPath -DropDir $d.DropDir -StateDir $d.StateDir
+} | Out-Null
 
 while ($true) { Wait-Event -Timeout 5 | Out-Null }

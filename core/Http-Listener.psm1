@@ -1,92 +1,95 @@
+#Requires -Version 5.1
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Import-Module "$PSScriptRoot/Logger.psm1" -Force
 
-function Get-HttpListenerConfig {
-    $host = [Environment]::GetEnvironmentVariable('CERTIFICAAT_HTTP_HOST')
-    $port = [Environment]::GetEnvironmentVariable('CERTIFICAAT_HTTP_PORT')
-    $token = [Environment]::GetEnvironmentVariable('CERTIFICAAT_HTTP_BEARER_TOKEN')
-
-    if ([string]::IsNullOrWhiteSpace($host)) { $host = '127.0.0.1' }
-    if ([string]::IsNullOrWhiteSpace($port)) { $port = '8088' }
-    if ([string]::IsNullOrWhiteSpace($token)) { throw 'CERTIFICAAT_HTTP_BEARER_TOKEN is required when HTTP listener mode is enabled.' }
-
-    return @{ Host = $host; Port = $port; Token = $token }
+function Test-HttpAuth {
+    param($Request,[string]$ApiKey)
+    $xApi = [string]$Request.Headers['X-API-Key']
+    $auth = [string]$Request.Headers['Authorization']
+    if ($xApi -and $xApi -ceq $ApiKey) { return $true }
+    if ($auth -and $auth.StartsWith('Bearer ')) { return ($auth.Substring(7) -ceq $ApiKey) }
+    return $false
 }
 
-function Write-JsonResponse {
-    param([Parameter(Mandatory)]$Response,[int]$StatusCode = 200,[hashtable]$Body = @{})
-
+function Write-HttpJson {
+    param($Response,[int]$StatusCode,[hashtable]$Body)
     $json = $Body | ConvertTo-Json -Depth 8
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
     $Response.StatusCode = $StatusCode
     $Response.ContentType = 'application/json'
-    $Response.ContentEncoding = [System.Text.Encoding]::UTF8
-    $Response.OutputStream.Write($bytes, 0, $bytes.Length)
+    $Response.OutputStream.Write($bytes,0,$bytes.Length)
     $Response.OutputStream.Close()
 }
 
-function Assert-BearerAuth {
-    param([Parameter(Mandatory)]$Request,[Parameter(Mandatory)][string]$ExpectedToken)
-    $hdr = [string]$Request.Headers['Authorization']
-    if ([string]::IsNullOrWhiteSpace($hdr) -or -not $hdr.StartsWith('Bearer ')) { return $false }
-    return $hdr.Substring(7) -ceq $ExpectedToken
+function Get-JobById {
+    param([string]$StateDir,[string]$JobId)
+    $path = Join-Path $StateDir "jobs/$JobId.json"
+    if (-not (Test-Path -LiteralPath $path)) { return $null }
+    Get-Content -Raw -Encoding UTF8 -Path $path | ConvertFrom-Json
 }
 
-function Read-JsonRequestBody {
-    param([Parameter(Mandatory)]$Request)
-
-    $reader = New-Object System.IO.StreamReader($Request.InputStream, $Request.ContentEncoding)
-    try {
-        $body = $reader.ReadToEnd()
-    } finally {
-        $reader.Dispose()
-    }
-    if ([string]::IsNullOrWhiteSpace($body)) { throw 'Request body is empty.' }
-    return $body | ConvertFrom-Json
+function Get-JobsByRenewalId {
+    param([string]$StateDir,[string]$RenewalId)
+    $dir = Join-Path $StateDir 'jobs'
+    if (-not (Test-Path -LiteralPath $dir)) { return @() }
+    @(Get-ChildItem -LiteralPath $dir -Filter '*.json' | ForEach-Object {
+        $j = Get-Content -Raw -Encoding UTF8 -Path $_.FullName | ConvertFrom-Json
+        if ($j.renewal_id -eq $RenewalId) { $j }
+    })
 }
 
 function Start-CertificaatHttpListener {
-    param([Parameter(Mandatory)][scriptblock]$OnEvent)
-
-    $cfg = Get-HttpListenerConfig
-    $prefix = "http://$($cfg.Host):$($cfg.Port)/"
+    param([string]$DropDir,[string]$StateDir)
+    $prefix = [Environment]::GetEnvironmentVariable('CERTIFICAAT_HTTP_PREFIX')
+    if ([string]::IsNullOrWhiteSpace($prefix)) { $prefix = 'http://localhost:8443/' }
+    $apiKey = [Environment]::GetEnvironmentVariable('CERTIFICAAT_API_KEY')
+    if ([string]::IsNullOrWhiteSpace($apiKey)) { throw 'CERTIFICAAT_API_KEY is required.' }
 
     $listener = New-Object System.Net.HttpListener
     $listener.Prefixes.Add($prefix)
     $listener.Start()
-    Write-CertificaatLog -Level 'INFO' -Message "HTTP listener started on $prefix"
+    Write-CertificaatLog -Level Info -Message "HTTP listener started on $prefix"
 
-    try {
-        while ($listener.IsListening) {
-            $context = $listener.GetContext()
-            try {
-                $path = $context.Request.Url.AbsolutePath
-                if ($context.Request.HttpMethod -eq 'GET' -and $path -eq '/health') {
-                    Write-JsonResponse -Response $context.Response -StatusCode 200 -Body @{ status = 'ok'; service = 'certificaat-orchestrator' }
-                    continue
-                }
-
-                if (-not (Assert-BearerAuth -Request $context.Request -ExpectedToken $cfg.Token)) {
-                    Write-JsonResponse -Response $context.Response -StatusCode 401 -Body @{ error = 'unauthorized' }
-                    continue
-                }
-
-                if ($context.Request.HttpMethod -eq 'POST' -and $path -eq '/events/certificate-renewed') {
-                    $eventObj = Read-JsonRequestBody -Request $context.Request
-                    & $OnEvent $eventObj
-                    Write-JsonResponse -Response $context.Response -StatusCode 202 -Body @{ accepted = $true }
-                    continue
-                }
-
-                Write-JsonResponse -Response $context.Response -StatusCode 404 -Body @{ error = 'not_found' }
-            } catch {
-                Write-CertificaatLog -Level 'ERROR' -Message "HTTP listener request failed: $($_.Exception.Message)"
-                Write-JsonResponse -Response $context.Response -StatusCode 500 -Body @{ error = 'internal_error'; message = $_.Exception.Message }
+    while ($listener.IsListening) {
+        $context = $listener.GetContext()
+        try {
+            $path = [string]$context.Request.Url.AbsolutePath
+            if ($context.Request.HttpMethod -eq 'GET' -and $path -eq '/health') {
+                Write-HttpJson -Response $context.Response -StatusCode 200 -Body @{ status='ok' }
+                continue
             }
+            if (-not (Test-HttpAuth -Request $context.Request -ApiKey $apiKey)) {
+                Write-HttpJson -Response $context.Response -StatusCode 401 -Body @{ error='unauthorized' }
+                continue
+            }
+            if ($context.Request.HttpMethod -eq 'POST' -and $path -eq '/events') {
+                $reader = New-Object System.IO.StreamReader($context.Request.InputStream, $context.Request.ContentEncoding)
+                $raw = $reader.ReadToEnd(); $reader.Dispose()
+                $obj = $raw | ConvertFrom-Json
+                $tmp = Join-Path $DropDir "$([guid]::NewGuid()).tmp"
+                $dst = [System.IO.Path]::ChangeExtension($tmp, '.json')
+                [System.IO.File]::WriteAllText($tmp, ($obj | ConvertTo-Json -Compress), [System.Text.Encoding]::UTF8)
+                Move-Item -Path $tmp -Destination $dst -Force
+                Write-HttpJson -Response $context.Response -StatusCode 202 -Body @{ accepted=$true }
+                continue
+            }
+            if ($context.Request.HttpMethod -eq 'GET' -and $path -match '^/jobs/([^/]+)$') {
+                $jobs = Get-JobsByRenewalId -StateDir $StateDir -RenewalId $matches[1]
+                Write-HttpJson -Response $context.Response -StatusCode 200 -Body @{ jobs=$jobs }
+                continue
+            }
+            if ($context.Request.HttpMethod -eq 'GET' -and $path -match '^/jobs/status/([^/]+)$') {
+                $job = Get-JobById -StateDir $StateDir -JobId $matches[1]
+                if ($null -eq $job) { Write-HttpJson -Response $context.Response -StatusCode 404 -Body @{ error='not_found' }; continue }
+                Write-HttpJson -Response $context.Response -StatusCode 200 -Body @{ job_id=$job.job_id; status=$job.status; step=$job.step }
+                continue
+            }
+            Write-HttpJson -Response $context.Response -StatusCode 404 -Body @{ error='not_found' }
+        } catch {
+            Write-CertificaatLog -Level Error -Message "HTTP listener request failed: $($_.Exception.Message)"
+            Write-HttpJson -Response $context.Response -StatusCode 500 -Body @{ error='internal_error' }
         }
-    } finally {
-        if ($listener.IsListening) { $listener.Stop() }
-        $listener.Close()
     }
 }
 

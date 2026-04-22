@@ -1,3 +1,4 @@
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $script:EventSource = 'Certificaat'
@@ -9,7 +10,7 @@ function Ensure-EventSource {
             New-EventLog -LogName $script:EventLogName -Source $script:EventSource
         }
     } catch {
-        # NOTE: source creation may fail without elevation. Continue with Write-EventLog attempt.
+        Write-Warning "Event Log: $($_.Exception.Message)"
     }
 }
 
@@ -35,13 +36,13 @@ function Write-CertificaatLog {
     try {
         Write-EventLog -LogName $script:EventLogName -Source $script:EventSource -EventId 1000 -EntryType $entryType -Message $line
     } catch {
-        # NOTE: Event Log write may fail in non-Windows test environments.
+        Write-Warning "Event Log: $($_.Exception.Message)"
     }
 
     $logDir = $env:CERTIFICAAT_LOG_DIR
     if ($logDir -and (Test-Path -LiteralPath $logDir)) {
         $path = Join-Path $logDir 'orchestrator.log'
-        Add-Content -Path $path -Value $line -Encoding UTF8
+        try { Add-Content -Path $path -Value $line -Encoding UTF8 } catch { Write-Warning "Log file write failed: $($_.Exception.Message)" }
     }
 }
 

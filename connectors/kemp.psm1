@@ -1,3 +1,5 @@
+#Requires -Version 5.1
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Import-Module "$PSScriptRoot/../core/Logger.psm1" -Force
 
@@ -11,8 +13,9 @@ function Get-KempAuthHeader { param([hashtable]$Context)
 
 function Invoke-KempGet { param([string]$Uri,[hashtable]$Headers)
     $params = @{ Method='GET'; Uri=$Uri; Headers=$Headers; ErrorAction='Stop' }
-    if ($env:CERTIFICAAT_SKIP_TLS_CHECK -eq '1') { $params.SkipCertificateCheck = $true; Write-CertificaatLog -Level 'WARN' -Message 'CERTIFICAAT_SKIP_TLS_CHECK is enabled for Kemp connector.' }
-    Invoke-RestMethod @params
+    if ($env:CERTIFICAAT_SKIP_TLS_CHECK -eq '1') { [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; Write-CertificaatLog -Level Warning -Message 'CERTIFICAAT_SKIP_TLS_CHECK is enabled for Kemp connector.' }
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    try { Invoke-RestMethod @params } finally { [Net.ServicePointManager]::ServerCertificateValidationCallback = $null }
 }
 
 function Invoke-MultipartPost {
@@ -34,33 +37,33 @@ function Invoke-MultipartPost {
     return $body
 }
 
-function Invoke-KempProbe { param([hashtable]$Context)
+function Invoke-KempConnectorProbe { param([hashtable]$Context)
     $base = "https://$($Context.config.settings.host)/access"
     $null = Invoke-KempGet -Uri "$base/stats" -Headers (Get-KempAuthHeader -Context $Context)
     @{ reachable = $true; auth_valid = $true; detail = 'Kemp reachable and authenticated.' }
 }
-function Invoke-KempDeploy { param([hashtable]$Context)
+function Invoke-KempConnectorDeploy { param([hashtable]$Context)
     $base = "https://$($Context.config.settings.host)/access"
     $null = Invoke-MultipartPost -Uri "$base/addcert" -Headers (Get-KempAuthHeader -Context $Context) -CertPath $Context.event.fullchain_path -KeyPath $Context.event.key_path
     @{ artifact_ref = [IO.Path]::GetFileName($Context.event.fullchain_path); detail = 'Kemp certificate uploaded.' }
 }
-function Invoke-KempBind { param([hashtable]$Context)
+function Invoke-KempConnectorBind { param([hashtable]$Context)
     $base = "https://$($Context.config.settings.host)/access"
     $null = Invoke-KempGet -Uri "$base/modvs?vs=$($Context.config.settings.vs_id)&cert=$($Context.artifact_ref)" -Headers (Get-KempAuthHeader -Context $Context)
     @{ success = $true; detail = 'Kemp certificate bound.' }
 }
-function Invoke-KempActivate { param([hashtable]$Context) @{ success = $true; detail = 'Kemp applies on bind' } }
-function Invoke-KempVerify { param([hashtable]$Context)
+function Invoke-KempConnectorActivate { param([hashtable]$Context) @{ success = $true; detail = 'Kemp applies on bind' } }
+function Invoke-KempConnectorVerify { param([hashtable]$Context)
     $base = "https://$($Context.config.settings.host)/access"
     [xml]$resp = Invoke-KempGet -Uri "$base/showvs?vs=$($Context.config.settings.vs_id)" -Headers (Get-KempAuthHeader -Context $Context)
     $match = $resp.SelectSingleNode('//CertFile')
     @{ verified = ($match -and $match.InnerText -eq $Context.artifact_ref); detail = 'Kemp verification completed.' }
 }
-function Invoke-KempRollback { param([hashtable]$Context)
+function Invoke-KempConnectorRollback { param([hashtable]$Context)
     if ([string]::IsNullOrWhiteSpace($Context.previous_artifact_ref)) { throw 'No previous_artifact_ref set for Kemp rollback.' }
     $base = "https://$($Context.config.settings.host)/access"
     $null = Invoke-KempGet -Uri "$base/modvs?vs=$($Context.config.settings.vs_id)&cert=$($Context.previous_artifact_ref)" -Headers (Get-KempAuthHeader -Context $Context)
     @{ success = $true; detail = 'Kemp rollback binding applied.' }
 }
 
-Export-ModuleMember -Function Invoke-KempProbe,Invoke-KempDeploy,Invoke-KempBind,Invoke-KempActivate,Invoke-KempVerify,Invoke-KempRollback
+Export-ModuleMember -Function Invoke-KempConnectorProbe,Invoke-KempConnectorDeploy,Invoke-KempConnectorBind,Invoke-KempConnectorActivate,Invoke-KempConnectorVerify,Invoke-KempConnectorRollback

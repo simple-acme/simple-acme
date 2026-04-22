@@ -12,7 +12,8 @@
           "ssl_profile": "clientssl-prod"
         }
       }
-    ]
+    ],
+    "quorum_threshold": 0
   },
   {
     "policy_id": "multi-adc",

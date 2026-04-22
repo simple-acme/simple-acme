@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -131,7 +132,7 @@ try {
 
     $policiesPath = Join-Path $targetConfigDir 'policies.json'
     $tmpPolicies = [System.IO.Path]::GetTempFileName()
-    [System.IO.File]::WriteAllText($tmpPolicies, ($payload.policies | ConvertTo-Json -Depth 20), [System.Text.Encoding]::UTF8)
+    [System.IO.File]::WriteAllText($tmpPolicies, ($payload.policies | ConvertTo-Json -Depth 10), [System.Text.Encoding]::UTF8)
     Move-Item -LiteralPath $tmpPolicies -Destination $policiesPath -Force
 
     [Array]::Clear($parsed.Key, 0, $parsed.Key.Length)

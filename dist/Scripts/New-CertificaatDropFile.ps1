@@ -1,86 +1,23 @@
-[CmdletBinding()]
+#Requires -Version 5.1
 param(
-    [Parameter(Position=0,Mandatory=$true)]
-    [string]$RenewalId,
-    [Parameter(Position=1,Mandatory=$true)]
-    [string]$CommonName,
-    [Parameter(Position=2,Mandatory=$true)]
-    [string]$CertThumbprint,
-    [Parameter(Position=3,Mandatory=$false)]
-    [string]$OldCertThumbprint,
-    [Parameter(Position=4,Mandatory=$true)]
-    [string]$CacheFile,
-    [Parameter(Position=5,Mandatory=$false)]
-    [string]$CachePassword,
-    [Parameter(Position=6,Mandatory=$true)]
-    [string]$StorePath,
-    [Parameter(Position=7,Mandatory=$true)]
-    [string]$StoreType
+    [Parameter(Mandatory)][string]$RenewalId,
+    [Parameter(Mandatory)][string]$CommonName,
+    [Parameter(Mandatory)][string]$Thumbprint,
+    [string]$OldThumbprint='', [string]$CacheFile='',
+    [string]$CachePassword='', [string]$StorePath='', [string]$StoreType=''
 )
-
 $ErrorActionPreference = 'Stop'
-
-function Write-BridgeEvent {
-    param(
-        [Parameter(Mandatory=$true)][string]$Message,
-        [ValidateSet('Error','Information','Warning')][string]$EntryType = 'Error',
-        [int]$EventId = 3001
-    )
-
-    $source = 'Certificate'
-    if (-not [System.Diagnostics.EventLog]::SourceExists($source)) {
-        New-EventLog -LogName Application -Source $source
-    }
-
-    Write-EventLog -LogName Application -Source $source -EntryType $EntryType -EventId $EventId -Message $Message
-}
-
-if ([string]::IsNullOrWhiteSpace($env:CERTIFICAAT_DROP_DIR)) {
-    Write-BridgeEvent -Message 'CERTIFICAAT_DROP_DIR is not set. Unable to write certificate drop file.' -EntryType Error -EventId 3002
+$dropDir = [Environment]::GetEnvironmentVariable('CERTIFICAAT_DROP_DIR')
+if (-not $dropDir) {
+    try { Write-EventLog -LogName Application -Source 'Certificaat' -EventId 5001 -EntryType Error -Message 'CERTIFICAAT_DROP_DIR not set' } catch {}
     exit 1
 }
-
-$dropDir = $env:CERTIFICAAT_DROP_DIR
-if (-not (Test-Path -LiteralPath $dropDir)) {
-    Write-BridgeEvent -Message "CERTIFICAAT_DROP_DIR path '$dropDir' does not exist." -EntryType Error -EventId 3003
-    exit 1
-}
-
-try {
-    $probeName = ".certificate_write_test_{0}.tmp" -f ([guid]::NewGuid().ToString('N'))
-    $probePath = Join-Path -Path $dropDir -ChildPath $probeName
-    [System.IO.File]::WriteAllText($probePath, 'probe', [System.Text.Encoding]::UTF8)
-    Remove-Item -LiteralPath $probePath -Force -ErrorAction Stop
-} catch {
-    Write-BridgeEvent -Message "CERTIFICAAT_DROP_DIR path '$dropDir' is not writable. Error: $($_.Exception.Message)" -EntryType Error -EventId 3005
-    exit 1
-}
-
-$timestamp = (Get-Date).ToUniversalTime().ToString('o')
-$safeTs = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ')
-$rand = ([guid]::NewGuid().ToString('N')).Substring(0,8)
-$fileName = "{0}_{1}_{2}.json" -f $RenewalId, $safeTs, $rand
-$targetPath = Join-Path -Path $dropDir -ChildPath $fileName
-
-$payload = [ordered]@{
-    renewal_id = $RenewalId
-    common_name = $CommonName
-    thumbprint = $CertThumbprint
-    old_thumbprint = $OldCertThumbprint
-    cache_file = $CacheFile
-    cache_password = $CachePassword
-    store_path = $StorePath
-    store_type = $StoreType
-    timestamp = $timestamp
-}
-
-try {
-    $json = $payload | ConvertTo-Json -Depth 5
-    [System.IO.File]::WriteAllText($targetPath, $json, [System.Text.Encoding]::UTF8)
-} catch {
-    Write-BridgeEvent -Message "Failed to write drop file '$targetPath'. Error: $($_.Exception.Message)" -EntryType Error -EventId 3004
-    exit 1
-}
-
-Write-Output "Drop file created: $targetPath"
+if (-not (Test-Path $dropDir)) { New-Item -ItemType Directory -Path $dropDir -Force | Out-Null }
+$payload = [ordered]@{ renewal_id=$RenewalId; common_name=$CommonName; thumbprint=$Thumbprint;
+    old_thumbprint=$OldThumbprint; cache_file=$CacheFile; cache_password=$CachePassword;
+    store_path=$StorePath; store_type=$StoreType; timestamp=(Get-Date -Format 'o') }
+$tmp = Join-Path $dropDir "$([guid]::NewGuid()).tmp"
+$dst = [System.IO.Path]::ChangeExtension($tmp, '.json')
+[System.IO.File]::WriteAllText($tmp, ($payload | ConvertTo-Json -Compress), [System.Text.Encoding]::UTF8)
+Move-Item -Path $tmp -Destination $dst -Force
 exit 0
