@@ -110,7 +110,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// <returns></returns>
         private InheritSettings? ForBaseUri(Uri baseUri)
         {
-            _log.Verbose("Loading settings for {baseUrI}", baseUri);
+            _log.Verbose("Loading settings for {baseUri}", baseUri);
             _globalSettings.BaseUri = baseUri;
             var settings = LoadServerSettings(_globalSettings);
             try
