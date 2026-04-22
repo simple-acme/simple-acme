@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -23,7 +24,18 @@ try {
         $Passphrase = $p1
     }
 
-    $envValues = Import-EnvFile
+    Import-EnvFile | Out-Null
+
+    $envValues = @{
+        ACME_DIRECTORY=[Environment]::GetEnvironmentVariable('ACME_DIRECTORY')
+        ACME_KID=[Environment]::GetEnvironmentVariable('ACME_KID')
+        ACME_HMAC_SECRET=[Environment]::GetEnvironmentVariable('ACME_HMAC_SECRET')
+        DOMAINS=[Environment]::GetEnvironmentVariable('DOMAINS')
+        CERTIFICAAT_CONFIG_DIR=[Environment]::GetEnvironmentVariable('CERTIFICAAT_CONFIG_DIR')
+        CERTIFICAAT_DROP_DIR=[Environment]::GetEnvironmentVariable('CERTIFICAAT_DROP_DIR')
+        CERTIFICAAT_STATE_DIR=[Environment]::GetEnvironmentVariable('CERTIFICAAT_STATE_DIR')
+        CERTIFICAAT_LOG_DIR=[Environment]::GetEnvironmentVariable('CERTIFICAAT_LOG_DIR')
+    }
 
     foreach ($requiredSecret in @('ACME_KID','ACME_HMAC_SECRET')) {
         if (-not $envValues.ContainsKey($requiredSecret) -or [string]::IsNullOrWhiteSpace([string]$envValues[$requiredSecret])) {

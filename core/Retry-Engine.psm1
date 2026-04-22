@@ -1,3 +1,4 @@
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Import-Module "$PSScriptRoot/Logger.psm1" -Force
 
@@ -17,7 +18,8 @@ function Invoke-WithRetry {
         [scriptblock]$ScriptBlock,
         [int]$MaxAttempts,
         [int]$BackoffMs,
-        [string]$Label = 'operation'
+        [string]$Label = 'operation',
+        [int]$MaxBackoffMs = 30000
     )
 
     if (-not $PSBoundParameters.ContainsKey('MaxAttempts')) { $MaxAttempts = Get-RetrySetting -Name 'CERTIFICAAT_RETRY_MAX_ATTEMPTS' -Default 3 }
@@ -35,6 +37,7 @@ function Invoke-WithRetry {
                 $min = [int]($base * 0.8)
                 $max = [int]($base * 1.2)
                 $sleepMs = Get-Random -Minimum $min -Maximum ($max + 1)
+                $sleepMs = [Math]::Min($sleepMs, $MaxBackoffMs)
                 Start-Sleep -Milliseconds $sleepMs
             }
         }

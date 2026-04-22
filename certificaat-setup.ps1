@@ -1,5 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+. "$PSScriptRoot/config.ps1"
+Initialize-CertificaatConfig
 
 Import-Module "$PSScriptRoot/core/Tui-Engine.psm1" -Force
 Import-Module "$PSScriptRoot/setup/Form-Runner.psm1" -Force

@@ -1,10 +1,7 @@
 param(
     [Parameter(Mandatory)][string]$Domain,
     [Parameter(Mandatory)][string]$PfxPath,
-    [Parameter(Mandatory)][string]$PfxPassword,
-    [string]$AcmeDirectory = '',
-    [string]$EabKid = '',
-    [string]$EabHmac = ''
+    [Parameter(Mandatory)][string]$PfxPassword
 )
 
 $ErrorActionPreference = 'Stop'
@@ -63,7 +60,7 @@ try {
         }
     }
 
-    if ($failures.Count -eq $roles.Count) { exit 2 }
+    if (@($failures | Where-Object { $roles -contains $_ }).Count -ge $roles.Count) { exit 2 }
     if ($failures.Count -gt 0 -or $verifyFailures.Count -gt 0) { exit 1 }
     exit 0
 } catch {

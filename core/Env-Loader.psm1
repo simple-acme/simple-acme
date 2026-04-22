@@ -1,3 +1,4 @@
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $script:RequiredEnvKeys = @(
@@ -8,7 +9,8 @@ $script:RequiredEnvKeys = @(
     'CERTIFICAAT_CONFIG_DIR',
     'CERTIFICAAT_DROP_DIR',
     'CERTIFICAAT_STATE_DIR',
-    'CERTIFICAAT_LOG_DIR'
+    'CERTIFICAAT_LOG_DIR',
+    'CERTIFICAAT_API_KEY'
 )
 
 $script:OptionalEnvDefaults = @{
@@ -19,6 +21,8 @@ $script:OptionalEnvDefaults = @{
     CERTIFICAAT_RETRY_MAX_ATTEMPTS  = '3'
     CERTIFICAAT_RETRY_BACKOFF_MS    = '1000'
     CERTIFICAAT_HTTP_ENABLED        = '0'
+    CERTIFICAAT_HTTP_PREFIX         = 'http://localhost:8443/'
+    CERTIFICAAT_DISABLE_ROLLBACK    = '0'
     CERTIFICAAT_HTTP_HOST           = '127.0.0.1'
     CERTIFICAAT_HTTP_PORT           = '8088'
 }

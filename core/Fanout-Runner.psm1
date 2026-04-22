@@ -1,3 +1,5 @@
+#Requires -Version 5.1
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Import-Module "$PSScriptRoot/State-Store.psm1" -Force
 Import-Module "$PSScriptRoot/Retry-Engine.psm1" -Force
@@ -5,63 +7,45 @@ Import-Module "$PSScriptRoot/Rollback-Engine.psm1" -Force
 Import-Module "$PSScriptRoot/Logger.psm1" -Force
 . "$PSScriptRoot/Types.ps1"
 
+function Get-ConnectorFnName {
+    param([string]$ConnectorType,[string]$Step)
+    $connectorFn = (($ConnectorType -split '[_-]') | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper()+$_.Substring(1) } }) -join ''
+    "Invoke-${connectorFn}Connector$Step"
+}
+
 function Invoke-ConnectorJob {
-    param([hashtable]$Job,[hashtable]$Event,[hashtable]$Config,[string]$StateDir)
+    param([hashtable]$Job,[hashtable]$Event,[hashtable]$Config,[string]$StateDir,[string]$RootPath = $PSScriptRoot)
 
     $steps = @('Probe','Deploy','Bind','Activate','Verify')
+    $rawMax = [Environment]::GetEnvironmentVariable('CERTIFICAAT_VERIFY_MAX_ATTEMPTS')
+    $maxAttempts = if ([string]::IsNullOrWhiteSpace($rawMax)) { 3 } else { [int]$rawMax }
+    $rawTimeout = [Environment]::GetEnvironmentVariable('CERTIFICAAT_ACTIVATE_TIMEOUT_MS')
+    $activateTimeoutMs = if ([string]::IsNullOrWhiteSpace($rawTimeout)) { 1000 } else { [int]$rawTimeout }
     foreach ($step in $steps) {
         $stepLower = $step.ToLowerInvariant()
-        Write-CertificaatLog -Level 'INFO' -Message "Starting step '$stepLower'." -JobId $Job.job_id -Domain $Event.domain -Step $stepLower
         Update-ConnectorJobStep -JobId $Job.job_id -Step $stepLower -Status 'running' -StateDir $StateDir -Attempt 0 | Out-Null
-
-        $context = @{
-            job_id                = $Job.job_id
-            event                 = $Event
-            config                = $Config
-            artifact_ref          = (Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir).artifact_ref
-            previous_artifact_ref = (Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir).previous_artifact_ref
-        }
-        Assert-ConnectorContext -Context $context
-
+        $existing = Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir
+        $context = @{ job_id=$Job.job_id; event=$Event; config=$Config; artifact_ref=$existing.artifact_ref; previous_artifact_ref=$existing.previous_artifact_ref }
         try {
-            $result = Invoke-WithRetry -Label "$($Job.connector_type)-$stepLower" -ScriptBlock {
-                $connectorFn = (($Job.connector_type -split "[_-]") | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper()+$_.Substring(1) } }) -join ""
-                $fn = "Invoke-${connectorFn}$step"
-                & $fn -Context $context
-            }
-
+            $fn = Get-ConnectorFnName -ConnectorType $Job.connector_type -Step $step
+            $result = Invoke-WithRetry -Label "$($Job.connector_type)-$stepLower" -MaxAttempts $maxAttempts -BackoffMs $activateTimeoutMs -ScriptBlock { & $fn -Context $context }
             if ($stepLower -eq 'deploy') {
-                $artifact = $result.artifact_ref
-                $priorArtifact = (Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir).artifact_ref
-                Update-ConnectorJobStep -JobId $Job.job_id -Step $stepLower -Status 'running' -StateDir $StateDir -ArtifactRef $artifact -PreviousArtifactRef $priorArtifact | Out-Null
+                $existing = Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir
+                $previousArt = if ($existing.steps.deploy.artifact_ref) { $existing.steps.deploy.artifact_ref } else { $null }
+                Update-ConnectorJobStep -JobId $Job.job_id -Step $stepLower -Status 'running' -StateDir $StateDir -ArtifactRef $result.artifact_ref -PreviousArtifactRef $previousArt | Out-Null
             }
-
             if ($stepLower -eq 'verify') {
                 if (-not $result.verified) { throw "Verification returned false for connector '$($Job.connector_type)'" }
                 Update-ConnectorJobStep -JobId $Job.job_id -Step $stepLower -Status 'succeeded' -StateDir $StateDir | Out-Null
-                Write-CertificaatLog -Level 'INFO' -Message 'Job succeeded.' -JobId $Job.job_id -Domain $Event.domain -Step $stepLower
                 return Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir
             }
-            Write-CertificaatLog -Level 'INFO' -Message "Completed step '$stepLower'." -JobId $Job.job_id -Domain $Event.domain -Step $stepLower
         } catch {
             Update-ConnectorJobStep -JobId $Job.job_id -Step $stepLower -Status 'failed' -StateDir $StateDir -ErrorDetail $_.Exception.Message | Out-Null
-            $reason = switch ($stepLower) {
-                'verify' { 'VerifyExhausted' }
-                'activate' { 'ActivateTimeout' }
-                'deploy' { 'DeployInvalid' }
-                default { 'FanoutFastFail' }
-            }
-
-            if (Test-ShouldRollback -Reason $reason) {
+            if (Test-ShouldRollback -Reason 'FanoutFastFail') {
                 $fresh = Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir
-                $rollbackContext = @{
-                    job_id                = $fresh.job_id
-                    event                 = $Event
-                    config                = $Config
-                    artifact_ref          = $fresh.artifact_ref
-                    previous_artifact_ref = $fresh.previous_artifact_ref
-                }
-                Invoke-ConnectorRollback -Context $rollbackContext -ConnectorType $connectorFn -StateDir $StateDir
+                $rbCtx = @{ job_id=$fresh.job_id; event=$Event; config=$Config; artifact_ref=$fresh.artifact_ref; previous_artifact_ref=$fresh.previous_artifact_ref }
+                $connectorFn = (($Job.connector_type -split '[_-]') | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper()+$_.Substring(1) } }) -join ''
+                Invoke-ConnectorRollback -Context $rbCtx -ConnectorType $connectorFn -StateDir $StateDir
             }
             return Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir
         }
@@ -69,31 +53,34 @@ function Invoke-ConnectorJob {
 }
 
 function Start-ConnectorBackgroundJob {
-    param([hashtable]$Job,[hashtable]$Event,[hashtable]$Config,[string]$StateDir,[string]$ModulePath)
-
-    $jobData = @{ Job = $Job; Event = $Event; Config = $Config; StateDir = $StateDir; ModulePath = $ModulePath }
-    Start-Job -ArgumentList $jobData -ScriptBlock {
-        param($data)
-        Import-Module $data.ModulePath -Force
-        Invoke-ConnectorJob -Job $data.Job -Event $data.Event -Config $data.Config -StateDir $data.StateDir
+    param([hashtable]$Job,[hashtable]$Event,[hashtable]$Config,[string]$StateDir)
+    $root = (Split-Path $PSScriptRoot -Parent)
+    Start-Job -ArgumentList $root,$Job,$Event,$Config,$StateDir -ScriptBlock {
+        param($r,$Job,$Event,$Config,$StateDir)
+        Import-Module (Join-Path $r 'core/Logger.psm1') -Force
+        Import-Module (Join-Path $r 'core/State-Store.psm1') -Force
+        Import-Module (Join-Path $r 'core/Retry-Engine.psm1') -Force
+        Import-Module (Join-Path $r 'core/Rollback-Engine.psm1') -Force
+        Import-Module (Join-Path $r 'core/Fanout-Runner.psm1') -Force
+        $cf = Join-Path $r "connectors/$($Job.connector_type.Replace('_','-')).psm1"
+        Import-Module $cf -Force
+        Invoke-ConnectorJob -Job $Job -Event $Event -Config $Config -StateDir $StateDir -RootPath $r
     }
 }
 
 function Invoke-FanoutRunner {
     param([hashtable]$Event,[hashtable]$Policy,[string]$StateDir)
-
-    Assert-CertificateEvent -Event $Event
-    Assert-DeploymentPolicy -Policy $Policy
-
-    $modulePath = Join-Path $PSScriptRoot 'Fanout-Runner.psm1'
     $jobs = @()
     foreach ($connector in $Policy.connectors) {
         $config = ConvertTo-Hashtable -InputObject $connector
-        Assert-ConnectorConfig -Config $config
         $new = New-ConnectorJob -RenewalId $Event.renewal_id -DeploymentPolicyId $Policy.policy_id -ConnectorType $config.connector_type -StateDir $StateDir
         $jobs += ,@{ job = $new; config = $config }
-
         $connectorFile = Join-Path (Split-Path $PSScriptRoot -Parent) "connectors/$($config.connector_type.Replace('_','-')).psm1"
+        if (-not (Test-Path $connectorFile)) {
+            Update-ConnectorJob -JobId $new.job_id -Status 'failed' -StateDir $StateDir -ErrorMessage "connector_not_implemented:$($new.connector_type)"
+            Write-CertificaatLog -Level Warning -Message "No connector for '$($new.connector_type)' — job failed cleanly"
+            return
+        }
         Import-Module $connectorFile -Force
     }
 
@@ -105,52 +92,28 @@ function Invoke-FanoutRunner {
         $succeeded = @()
         foreach ($entry in $jobs) {
             $result = Invoke-ConnectorJob -Job $entry.job -Event $Event -Config $entry.config -StateDir $StateDir
-            if ($result.status -eq 'succeeded') {
-                $succeeded += ,@{ job = $result; config = $entry.config }
-                continue
-            }
-
-            foreach ($prior in $succeeded) {
-                $ctx = @{
-                    job_id                = $prior.job.job_id
-                    event                 = $Event
-                    config                = $prior.config
-                    artifact_ref          = $prior.job.artifact_ref
-                    previous_artifact_ref = $prior.job.previous_artifact_ref
-                }
-                Invoke-ConnectorRollback -Context $ctx -ConnectorType ((($prior.job.connector_type -split "[_-]") | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper()+$_.Substring(1) } }) -join "") -StateDir $StateDir
+            if ($result.status -eq 'succeeded') { $succeeded += ,$result; continue }
+            foreach ($done in $succeeded) {
+                $cfg = ($jobs | Where-Object { $_.job.job_id -eq $done.job_id } | Select-Object -First 1).config
+                Invoke-ConnectorRollback -Context @{ job=$done; config=$cfg; previous_artifact_ref=$done.steps.deploy.previous_artifact_ref } -StateDir $StateDir
             }
             break
         }
         return
     }
 
-    $bg = @()
-    foreach ($entry in $jobs) {
-        $bg += ,(Start-ConnectorBackgroundJob -Job $entry.job -Event $Event -Config $entry.config -StateDir $StateDir -ModulePath $modulePath)
-    }
-    Wait-Job -Job $bg | Out-Null
-    $null = $bg | Receive-Job
-    $bg | Remove-Job -Force
+    $bg = @(); foreach ($entry in $jobs) { $bg += ,(Start-ConnectorBackgroundJob -Job $entry.job -Event $Event -Config $entry.config -StateDir $StateDir) }
+    Wait-Job -Job $bg | Out-Null; $null = $bg | Receive-Job; $bg | Remove-Job -Force
 
     $all = Get-ConnectorJobsByRenewal -RenewalId $Event.renewal_id -StateDir $StateDir
     $succeeded = @($all | Where-Object { $_.status -eq 'succeeded' })
-
     if ($fanout -eq 'best-effort') { return }
-
-    if ($fanout -eq 'quorum') {
-        if ($succeeded.Count -lt [int]$Policy.quorum_threshold) {
-            foreach ($job in $succeeded) {
-                $cfg = $jobs | Where-Object { $_.job.job_id -eq $job.job_id } | Select-Object -First 1
-                $ctx = @{
-                    job_id                = $job.job_id
-                    event                 = $Event
-                    config                = $cfg.config
-                    artifact_ref          = $job.artifact_ref
-                    previous_artifact_ref = $job.previous_artifact_ref
-                }
-                Invoke-ConnectorRollback -Context $ctx -ConnectorType ((($job.connector_type -split "[_-]") | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper()+$_.Substring(1) } }) -join "") -StateDir $StateDir
-            }
+    if ($fanout -eq 'quorum' -and $succeeded.Count -lt [int]$Policy.quorum_threshold) {
+        $cfgMap = @{}; foreach ($e in $jobs) { $cfgMap[$e.job.job_id] = $e.config }
+        foreach ($done in $succeeded) {
+            $cfg = $cfgMap[$done.job_id]
+            if (-not $cfg) { Write-CertificaatLog -Level Warning -Message "Quorum rollback: no config for $($done.job_id)"; continue }
+            Invoke-ConnectorRollback -Context @{ job=$done; config=$cfg; previous_artifact_ref=$done.steps.deploy.previous_artifact_ref } -StateDir $StateDir
         }
     }
 }
