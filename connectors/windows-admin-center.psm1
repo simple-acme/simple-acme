@@ -47,4 +47,12 @@ function Invoke-WindowsAdminCenterRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'Windows Admin Center rollback applied.' }
 }
 
-Export-ModuleMember -Function Invoke-WindowsAdminCenterProbe,Invoke-WindowsAdminCenterDeploy,Invoke-WindowsAdminCenterBind,Invoke-WindowsAdminCenterActivate,Invoke-WindowsAdminCenterVerify,Invoke-WindowsAdminCenterRollback
+
+function Invoke-WindowsAdminCenterConnectorProbe { param([hashtable]$Context) Invoke-WindowsAdminCenterProbe -Context $Context }
+function Invoke-WindowsAdminCenterConnectorDeploy { param([hashtable]$Context) Invoke-WindowsAdminCenterDeploy -Context $Context }
+function Invoke-WindowsAdminCenterConnectorBind { param([hashtable]$Context) Invoke-WindowsAdminCenterBind -Context $Context }
+function Invoke-WindowsAdminCenterConnectorActivate { param([hashtable]$Context) Invoke-WindowsAdminCenterActivate -Context $Context }
+function Invoke-WindowsAdminCenterConnectorVerify { param([hashtable]$Context) Invoke-WindowsAdminCenterVerify -Context $Context }
+function Invoke-WindowsAdminCenterConnectorRollback { param([hashtable]$Context) Invoke-WindowsAdminCenterRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-WindowsAdminCenterProbe,Invoke-WindowsAdminCenterDeploy,Invoke-WindowsAdminCenterBind,Invoke-WindowsAdminCenterActivate,Invoke-WindowsAdminCenterVerify,Invoke-WindowsAdminCenterRollback,Invoke-WindowsAdminCenterConnectorProbe,Invoke-WindowsAdminCenterConnectorDeploy,Invoke-WindowsAdminCenterConnectorBind,Invoke-WindowsAdminCenterConnectorActivate,Invoke-WindowsAdminCenterConnectorVerify,Invoke-WindowsAdminCenterConnectorRollback

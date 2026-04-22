@@ -65,4 +65,12 @@ function Invoke-AdfsRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'ADFS rollback applied using previous thumbprint.' }
 }
 
-Export-ModuleMember -Function Invoke-AdfsProbe,Invoke-AdfsDeploy,Invoke-AdfsBind,Invoke-AdfsActivate,Invoke-AdfsVerify,Invoke-AdfsRollback
+
+function Invoke-AdfsConnectorProbe { param([hashtable]$Context) Invoke-AdfsProbe -Context $Context }
+function Invoke-AdfsConnectorDeploy { param([hashtable]$Context) Invoke-AdfsDeploy -Context $Context }
+function Invoke-AdfsConnectorBind { param([hashtable]$Context) Invoke-AdfsBind -Context $Context }
+function Invoke-AdfsConnectorActivate { param([hashtable]$Context) Invoke-AdfsActivate -Context $Context }
+function Invoke-AdfsConnectorVerify { param([hashtable]$Context) Invoke-AdfsVerify -Context $Context }
+function Invoke-AdfsConnectorRollback { param([hashtable]$Context) Invoke-AdfsRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-AdfsProbe,Invoke-AdfsDeploy,Invoke-AdfsBind,Invoke-AdfsActivate,Invoke-AdfsVerify,Invoke-AdfsRollback,Invoke-AdfsConnectorProbe,Invoke-AdfsConnectorDeploy,Invoke-AdfsConnectorBind,Invoke-AdfsConnectorActivate,Invoke-AdfsConnectorVerify,Invoke-AdfsConnectorRollback

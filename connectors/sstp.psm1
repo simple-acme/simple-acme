@@ -61,4 +61,12 @@ function Invoke-SstpRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'SSTP rollback applied.' }
 }
 
-Export-ModuleMember -Function Invoke-SstpProbe,Invoke-SstpDeploy,Invoke-SstpBind,Invoke-SstpActivate,Invoke-SstpVerify,Invoke-SstpRollback
+
+function Invoke-SstpConnectorProbe { param([hashtable]$Context) Invoke-SstpProbe -Context $Context }
+function Invoke-SstpConnectorDeploy { param([hashtable]$Context) Invoke-SstpDeploy -Context $Context }
+function Invoke-SstpConnectorBind { param([hashtable]$Context) Invoke-SstpBind -Context $Context }
+function Invoke-SstpConnectorActivate { param([hashtable]$Context) Invoke-SstpActivate -Context $Context }
+function Invoke-SstpConnectorVerify { param([hashtable]$Context) Invoke-SstpVerify -Context $Context }
+function Invoke-SstpConnectorRollback { param([hashtable]$Context) Invoke-SstpRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-SstpProbe,Invoke-SstpDeploy,Invoke-SstpBind,Invoke-SstpActivate,Invoke-SstpVerify,Invoke-SstpRollback,Invoke-SstpConnectorProbe,Invoke-SstpConnectorDeploy,Invoke-SstpConnectorBind,Invoke-SstpConnectorActivate,Invoke-SstpConnectorVerify,Invoke-SstpConnectorRollback

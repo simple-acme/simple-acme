@@ -46,6 +46,16 @@ if (-not (Test-Path -LiteralPath $dropDir)) {
     exit 1
 }
 
+try {
+    $probeName = ".certificaat_write_test_{0}.tmp" -f ([guid]::NewGuid().ToString('N'))
+    $probePath = Join-Path -Path $dropDir -ChildPath $probeName
+    [System.IO.File]::WriteAllText($probePath, 'probe', [System.Text.Encoding]::UTF8)
+    Remove-Item -LiteralPath $probePath -Force -ErrorAction Stop
+} catch {
+    Write-BridgeEvent -Message "CERTIFICAAT_DROP_DIR path '$dropDir' is not writable. Error: $($_.Exception.Message)" -EntryType Error -EventId 3005
+    exit 1
+}
+
 $timestamp = (Get-Date).ToUniversalTime().ToString('o')
 $safeTs = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ')
 $rand = ([guid]::NewGuid().ToString('N')).Substring(0,8)

@@ -72,4 +72,12 @@ function Invoke-SqlServerRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'SQL Server rollback applied.' }
 }
 
-Export-ModuleMember -Function Invoke-SqlServerProbe,Invoke-SqlServerDeploy,Invoke-SqlServerBind,Invoke-SqlServerActivate,Invoke-SqlServerVerify,Invoke-SqlServerRollback
+
+function Invoke-SqlServerConnectorProbe { param([hashtable]$Context) Invoke-SqlServerProbe -Context $Context }
+function Invoke-SqlServerConnectorDeploy { param([hashtable]$Context) Invoke-SqlServerDeploy -Context $Context }
+function Invoke-SqlServerConnectorBind { param([hashtable]$Context) Invoke-SqlServerBind -Context $Context }
+function Invoke-SqlServerConnectorActivate { param([hashtable]$Context) Invoke-SqlServerActivate -Context $Context }
+function Invoke-SqlServerConnectorVerify { param([hashtable]$Context) Invoke-SqlServerVerify -Context $Context }
+function Invoke-SqlServerConnectorRollback { param([hashtable]$Context) Invoke-SqlServerRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-SqlServerProbe,Invoke-SqlServerDeploy,Invoke-SqlServerBind,Invoke-SqlServerActivate,Invoke-SqlServerVerify,Invoke-SqlServerRollback,Invoke-SqlServerConnectorProbe,Invoke-SqlServerConnectorDeploy,Invoke-SqlServerConnectorBind,Invoke-SqlServerConnectorActivate,Invoke-SqlServerConnectorVerify,Invoke-SqlServerConnectorRollback

@@ -57,4 +57,12 @@ function Invoke-WinrmRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'WinRM rollback applied.' }
 }
 
-Export-ModuleMember -Function Invoke-WinrmProbe,Invoke-WinrmDeploy,Invoke-WinrmBind,Invoke-WinrmActivate,Invoke-WinrmVerify,Invoke-WinrmRollback
+
+function Invoke-WinrmConnectorProbe { param([hashtable]$Context) Invoke-WinrmProbe -Context $Context }
+function Invoke-WinrmConnectorDeploy { param([hashtable]$Context) Invoke-WinrmDeploy -Context $Context }
+function Invoke-WinrmConnectorBind { param([hashtable]$Context) Invoke-WinrmBind -Context $Context }
+function Invoke-WinrmConnectorActivate { param([hashtable]$Context) Invoke-WinrmActivate -Context $Context }
+function Invoke-WinrmConnectorVerify { param([hashtable]$Context) Invoke-WinrmVerify -Context $Context }
+function Invoke-WinrmConnectorRollback { param([hashtable]$Context) Invoke-WinrmRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-WinrmProbe,Invoke-WinrmDeploy,Invoke-WinrmBind,Invoke-WinrmActivate,Invoke-WinrmVerify,Invoke-WinrmRollback,Invoke-WinrmConnectorProbe,Invoke-WinrmConnectorDeploy,Invoke-WinrmConnectorBind,Invoke-WinrmConnectorActivate,Invoke-WinrmConnectorVerify,Invoke-WinrmConnectorRollback

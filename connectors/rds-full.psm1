@@ -73,4 +73,12 @@ function Invoke-RdsFullRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'RDS full rollback applied.' }
 }
 
-Export-ModuleMember -Function Invoke-RdsFullProbe,Invoke-RdsFullDeploy,Invoke-RdsFullBind,Invoke-RdsFullActivate,Invoke-RdsFullVerify,Invoke-RdsFullRollback
+
+function Invoke-RdsFullConnectorProbe { param([hashtable]$Context) Invoke-RdsFullProbe -Context $Context }
+function Invoke-RdsFullConnectorDeploy { param([hashtable]$Context) Invoke-RdsFullDeploy -Context $Context }
+function Invoke-RdsFullConnectorBind { param([hashtable]$Context) Invoke-RdsFullBind -Context $Context }
+function Invoke-RdsFullConnectorActivate { param([hashtable]$Context) Invoke-RdsFullActivate -Context $Context }
+function Invoke-RdsFullConnectorVerify { param([hashtable]$Context) Invoke-RdsFullVerify -Context $Context }
+function Invoke-RdsFullConnectorRollback { param([hashtable]$Context) Invoke-RdsFullRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-RdsFullProbe,Invoke-RdsFullDeploy,Invoke-RdsFullBind,Invoke-RdsFullActivate,Invoke-RdsFullVerify,Invoke-RdsFullRollback,Invoke-RdsFullConnectorProbe,Invoke-RdsFullConnectorDeploy,Invoke-RdsFullConnectorBind,Invoke-RdsFullConnectorActivate,Invoke-RdsFullConnectorVerify,Invoke-RdsFullConnectorRollback
