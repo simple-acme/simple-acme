@@ -32,7 +32,8 @@ function Invoke-ConnectorJob {
 
             if ($stepLower -eq 'deploy') {
                 $artifact = $result.artifact_ref
-                Update-ConnectorJobStep -JobId $Job.job_id -Step $stepLower -Status 'running' -StateDir $StateDir -ArtifactRef $artifact -PreviousArtifactRef $artifact | Out-Null
+                $priorArtifact = (Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir).artifact_ref
+                Update-ConnectorJobStep -JobId $Job.job_id -Step $stepLower -Status 'running' -StateDir $StateDir -ArtifactRef $artifact -PreviousArtifactRef $priorArtifact | Out-Null
             }
 
             if ($stepLower -eq 'verify') {
@@ -96,7 +97,9 @@ function Invoke-FanoutRunner {
         Import-Module $connectorFile -Force
     }
 
-    $fanout = if ([string]::IsNullOrWhiteSpace($Policy.fanout_policy)) { 'fail-fast' } else { $Policy.fanout_policy }
+    $defaultFanout = [Environment]::GetEnvironmentVariable('CERTIFICAAT_DEFAULT_FANOUT')
+    if ([string]::IsNullOrWhiteSpace($defaultFanout)) { $defaultFanout = 'fail-fast' }
+    $fanout = if ([string]::IsNullOrWhiteSpace($Policy.fanout_policy)) { $defaultFanout } else { $Policy.fanout_policy }
 
     if ($fanout -eq 'fail-fast') {
         $succeeded = @()

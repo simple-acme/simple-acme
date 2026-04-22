@@ -1,9 +1,0 @@
-{
-  "name": "@orchestrator/f5-bigip",
-  "version": "0.1.0",
-  "type": "module",
-  "main": "src/index.ts",
-  "dependencies": {
-    "@orchestrator/core": "0.1.0"
-  }
-}

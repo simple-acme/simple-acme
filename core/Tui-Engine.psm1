@@ -81,8 +81,12 @@ function Show-TuiForm {
         $label = $f.Label
         $existing = if ($CurrentValues.ContainsKey($f.Name)) { [string]$CurrentValues[$f.Name] } else { '' }
         if ($f.Type -eq 'choice') {
-            $value = if ($existing) { $existing } elseif ($f.Choices.Count -gt 0) { [string]$f.Choices[0] } else { '' }
-            $result[$f.Name] = $value
+            $choiceKey = if ($f.ContainsKey('ChoiceFieldName') -and -not [string]::IsNullOrWhiteSpace([string]$f.ChoiceFieldName)) { [string]$f.ChoiceFieldName } else { [string]$f.Name }
+            $choices = @()
+            if ($f.ContainsKey('Choices') -and $null -ne $f.Choices) { $choices = @($f.Choices) }
+            $value = if ($existing) { $existing } elseif ($choices.Count -gt 0) { [string]$choices[0] } else { '' }
+            if ($f.Required -and [string]::IsNullOrWhiteSpace($value)) { throw "Field '$choiceKey' is required." }
+            $result[$choiceKey] = $value
             continue
         }
         if ($existing) { $prompt = "$label [$existing]" } else { $prompt = $label }

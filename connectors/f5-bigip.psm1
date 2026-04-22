@@ -3,9 +3,12 @@ Import-Module "$PSScriptRoot/../core/Logger.psm1" -Force
 
 function Get-F5Headers {
     param([hashtable]$Context)
-    $tokenName = $Context.config.settings.token_env
-    $token = [Environment]::GetEnvironmentVariable($tokenName)
-    if ([string]::IsNullOrWhiteSpace($token)) { throw "F5 token environment variable '$tokenName' is not set." }
+    $token = [string]$Context.config.settings.token
+    if ([string]::IsNullOrWhiteSpace($token) -and $Context.config.settings.ContainsKey('token_env')) {
+        $tokenName = [string]$Context.config.settings.token_env
+        $token = [Environment]::GetEnvironmentVariable($tokenName)
+    }
+    if ([string]::IsNullOrWhiteSpace($token)) { throw 'F5 token is not configured (set settings.token or settings.token_env).' }
     @{ Authorization = "Bearer $token" }
 }
 

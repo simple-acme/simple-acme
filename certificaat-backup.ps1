@@ -24,6 +24,13 @@ try {
     }
 
     $envValues = Import-EnvFile
+
+    foreach ($requiredSecret in @('ACME_KID','ACME_HMAC_SECRET')) {
+        if (-not $envValues.ContainsKey($requiredSecret) -or [string]::IsNullOrWhiteSpace([string]$envValues[$requiredSecret])) {
+            throw "Cannot create backup: required credential '$requiredSecret' is empty."
+        }
+    }
+
     $devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICAAT_CONFIG_DIR
     $policiesPath = Join-Path $env:CERTIFICAAT_CONFIG_DIR 'policies.json'
     $policies = if (Test-Path -LiteralPath $policiesPath) { (Get-Content -Raw -Path $policiesPath -Encoding UTF8 | ConvertFrom-Json) } else { @() }
@@ -53,7 +60,8 @@ try {
     $outDir = Split-Path -Path $OutputPath -Parent
     if ($outDir -and -not (Test-Path -LiteralPath $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
 
-    $fs = [System.IO.File]::Open($OutputPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+    $tmpOutput = [System.IO.Path]::GetTempFileName()
+    $fs = [System.IO.File]::Open($tmpOutput, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
     try {
         $bw = New-Object System.IO.BinaryWriter($fs)
         $bw.Write([byte[]](0x43,0x45,0x52,0x54))
@@ -64,6 +72,7 @@ try {
         $bw.Write($encrypted.Ciphertext)
         $bw.Flush()
     } finally { $fs.Dispose() }
+    Move-Item -LiteralPath $tmpOutput -Destination $OutputPath -Force
 
     [Array]::Clear($key, 0, $key.Length)
     [Array]::Clear($plainBytes, 0, $plainBytes.Length)

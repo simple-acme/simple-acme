@@ -12,6 +12,7 @@ param(
 Import-Module "$PSScriptRoot/core/Crypto.psm1" -Force
 Import-Module "$PSScriptRoot/core/Env-Loader.psm1" -Force
 Import-Module "$PSScriptRoot/core/Config-Store.psm1" -Force
+. "$PSScriptRoot/setup/Device-Schemas.ps1"
 
 function Read-BackupPayload {
     param([string]$Path,[SecureString]$Passphrase)
@@ -35,7 +36,7 @@ function Read-BackupPayload {
         $key = New-AesKeyFromPassphrase -Passphrase $Passphrase -Salt $salt
         $plain = Unprotect-AesValue -Ciphertext $cipher -Key $key -IV $iv
         $json = [System.Text.Encoding]::UTF8.GetString($plain)
-        $payload = $json | ConvertFrom-Json -Depth 20
+        $payload = $json | ConvertFrom-Json
         if (-not $payload.manifest -or -not $payload.manifest.version) { throw 'Manifest missing.' }
         return @{ Payload = $payload; PlainBytes = $plain; Key = $key }
     } catch {
@@ -117,8 +118,8 @@ try {
                 settings = $settings
             }
             $secretFields = @()
-            foreach ($p in $settings.Keys) {
-                if ($p -match 'token|secret|password|key|user') { $secretFields += $p }
+            if ($DeviceSchemas.ContainsKey($device.connector_type)) {
+                $secretFields = @($DeviceSchemas[$device.connector_type].Fields | Where-Object { $_.Type -eq 'secret' } | ForEach-Object { $_.Name })
             }
             Save-DeviceConfig -Device $device -ConfigDir $targetConfigDir -SecretFields $secretFields | Out-Null
             Write-Host "[INFO] Restored device: $($device.label) ($($device.connector_type))"
@@ -128,7 +129,10 @@ try {
         }
     }
 
-    [System.IO.File]::WriteAllText((Join-Path $targetConfigDir 'policies.json'), (($payload.policies | ConvertTo-Json -Depth 20)), [System.Text.Encoding]::UTF8)
+    $policiesPath = Join-Path $targetConfigDir 'policies.json'
+    $tmpPolicies = [System.IO.Path]::GetTempFileName()
+    [System.IO.File]::WriteAllText($tmpPolicies, ($payload.policies | ConvertTo-Json -Depth 20), [System.Text.Encoding]::UTF8)
+    Move-Item -LiteralPath $tmpPolicies -Destination $policiesPath -Force
 
     [Array]::Clear($parsed.Key, 0, $parsed.Key.Length)
     [Array]::Clear($parsed.PlainBytes, 0, $parsed.PlainBytes.Length)

@@ -16,6 +16,11 @@ $script:OptionalEnvDefaults = @{
     CERTIFICAAT_ACTIVATE_TIMEOUT_MS = '120000'
     CERTIFICAAT_DEFAULT_FANOUT      = 'fail-fast'
     CERTIFICAAT_SKIP_TLS_CHECK      = '0'
+    CERTIFICAAT_RETRY_MAX_ATTEMPTS  = '3'
+    CERTIFICAAT_RETRY_BACKOFF_MS    = '1000'
+    CERTIFICAAT_HTTP_ENABLED        = '0'
+    CERTIFICAAT_HTTP_HOST           = '127.0.0.1'
+    CERTIFICAAT_HTTP_PORT           = '8088'
 }
 
 function Resolve-EnvPath {
@@ -143,7 +148,9 @@ function Write-EnvFile {
         New-Item -ItemType Directory -Path $directory -Force | Out-Null
     }
 
-    [System.IO.File]::WriteAllLines($Path, $lines, [System.Text.Encoding]::UTF8)
+    $tmpPath = [System.IO.Path]::GetTempFileName()
+    [System.IO.File]::WriteAllLines($tmpPath, $lines, [System.Text.Encoding]::UTF8)
+    Move-Item -LiteralPath $tmpPath -Destination $Path -Force
     Set-EnvFileAcl -Path $Path
 }
 
