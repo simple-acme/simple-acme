@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 Import-Module "$PSScriptRoot/core/Logger.psm1" -Force
 Import-Module "$PSScriptRoot/core/State-Store.psm1" -Force
 Import-Module "$PSScriptRoot/core/Fanout-Runner.psm1" -Force
+Import-Module "$PSScriptRoot/core/Config-Store.psm1" -Force
 . "$PSScriptRoot/core/Types.ps1"
 
 function Resolve-DeploymentPolicy {
@@ -68,6 +69,11 @@ try {
 
 $DropDir = $env:CERTIFICAAT_DROP_DIR
 $StateDir = $env:CERTIFICAAT_STATE_DIR
+
+$devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICAAT_CONFIG_DIR -SkipIntegrityFailures
+if ($devices.Count -eq 0) {
+    Write-CertificaatLog -Level WARN -Message 'No device configs loaded. Check config directory and integrity.'
+}
 Resume-PendingJobs -StateDir $StateDir
 
 $watcher = New-Object System.IO.FileSystemWatcher
