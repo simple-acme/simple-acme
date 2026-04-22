@@ -11,7 +11,8 @@ namespace PKISharp.WACS.Configuration.Settings
         private readonly ILogService _log;
         private readonly FolderHelpers _folderHelpers;
         private readonly MainArguments? _arguments;
-        private InheritSettings _settings = new();
+        private readonly InheritSettings _globalSettings = new();
+        private readonly InheritSettings _settings = new();
         public ISettings Current => _settings;
 
         public SettingsService(ILogService log, ArgumentsParser parser)
@@ -30,112 +31,150 @@ namespace PKISharp.WACS.Configuration.Settings
                 return;
             }
 
-            log.Verbose("Path: {exe}", VersionService.ExePath);
+            var globalSettings = LoadGlobalSettings();
+            if (globalSettings == null)
+            {
+                return;
+            }
+            _globalSettings = globalSettings;
+            _settings = globalSettings;
 
-            if (!LoadGlobalSettings())
-            {
-                return;
-            }
-            var configRoot = _settings.Client.ConfigRoot;
-            var configPath = _settings.Client.ConfigurationPath;
             try
             {
-                _folderHelpers.EnsureFolderExists(configRoot, "global configuration", true);
-                _folderHelpers.EnsureFolderExists(configPath, "server configuration", false);
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex, "Error initializing program");
-                return;
-            }
-            var serverSettings = LoadServerSettings();
-            try
-            {
-                if (serverSettings)
+                var defaultBaseUri = ChooseBaseUri(_globalSettings);
+                var serverSettings = ForBaseUri(defaultBaseUri);
+                if (serverSettings != null)
                 {
-                    if (configRoot != _settings.Client.ConfigRoot)
-                    {
-                        configRoot = _settings.Client.ConfigRoot;
-                        _folderHelpers.EnsureFolderExists(configRoot, "global configuration", true);
-                    }
-                    if (configPath != _settings.Client.ConfigurationPath)
-                    {
-                        configPath = _settings.Client.ConfigurationPath;
-                        _folderHelpers.EnsureFolderExists(configPath, "server configuration", true);
-                    }
+                    _settings = serverSettings;
                 }
-                var pathCompareMode =
-                    OperatingSystem.IsWindows() ?
-                    StringComparison.OrdinalIgnoreCase :
-                    StringComparison.Ordinal;
-                _folderHelpers.EnsureFolderExists(_settings.Client.LogPath, "log", !_settings.Client.LogPath.StartsWith(configPath, pathCompareMode));
-                _folderHelpers.EnsureFolderExists(_settings.Cache.CachePath, "cache", !_settings.Client.LogPath.StartsWith(configPath, pathCompareMode));
-
-                // Configure disk logger
-                _log.ApplyClientSettings(Current.Client);
             }
-            catch (Exception ex)
+            catch
             {
-                _log.Error(ex, "Error initializing program");
-                return;
+                _log.Error("Error choosing ACME server");
             }
+
+            // Configure disk logger
+            _log.ApplyClientSettings(_settings.Client);
             _settings.Valid = true;
         }
 
-        private bool LoadGlobalSettings()
+        /// <summary>
+        /// Get global settings from disk, and if they don't exist, try to create them from the template. If creation fails, return 
+        /// the template as a fallback to at least have some settings available. If loading fails, return false to indicate that 
+        /// settings are not available and the program should probably exit.
+        /// </summary>
+        /// <returns></returns>
+        private InheritSettings? LoadGlobalSettings()
         {
             var globalFile = EnsureGlobalSettingsFile();
             if (globalFile == null)
             {
-                return false;
+                return null;
             }
+            _log.Verbose("Loading {settingsFileName} from {path}", globalFile.Name, globalFile.Directory?.FullName);
+            InheritSettings? ret;
             try
             {
-                _settings = new InheritSettings(Settings.Load(globalFile));
+                ret = new InheritSettings(Settings.Load(globalFile));
             }
             catch (Exception ex)
             {
-                _log.Error($"Unable to load {globalFile.Name}");
+                _log.Error(ex, $"Unable to load global settings");
                 while (ex.InnerException != null)
                 {
                     _log.Error(ex.InnerException.Message);
                     ex = ex.InnerException;
                 }
-                return false;
+                return null;
             }
             try
             {
-                _settings.BaseUri = ChooseBaseUri();
+                _folderHelpers.EnsureFolderExists(ret.Client.ConfigRoot, "global configuration", true);
             }
-            catch
+            catch (Exception ex)
             {
-                _log.Error("Error choosing ACME server");
-                return false;
+                _log.Error(ex, "Error initializing program");
+                return null;
             }
-            return true;
+            return ret;
         }
 
-        private bool LoadServerSettings()
+        /// <summary>
+        /// Switch the settings to a specific base URI, by
+        /// loading the server configuration from disk and merging 
+        /// it with global settings. For now this is private but
+        /// in the future it could be exposed to allow switching between multiple
+        /// endpoints without restarting the program.
+        /// </summary>
+        /// <param name="baseUri"></param>
+        /// <returns></returns>
+        private InheritSettings? ForBaseUri(Uri baseUri)
+        {
+            _log.Verbose("Loading settings for {baseUrI}", baseUri);
+            _globalSettings.BaseUri = baseUri;
+            var settings = LoadServerSettings(_globalSettings);
+            try
+            {
+                if (settings != null)
+                {
+                    _folderHelpers.EnsureFolderExists(settings.Client.ConfigRoot, "global configuration", true);
+                }
+                else
+                {
+                    settings = _globalSettings;
+                }
+                var serverConfigPath = settings.Client.ConfigurationPath;
+                var pathCompareMode =
+                    OperatingSystem.IsWindows() ?
+                    StringComparison.OrdinalIgnoreCase :
+                    StringComparison.Ordinal;
+                _folderHelpers.EnsureFolderExists(serverConfigPath, "server configuration", true);
+                _folderHelpers.EnsureFolderExists(settings.Client.LogPath, "log", !settings.Client.LogPath.StartsWith(serverConfigPath, pathCompareMode));
+                _folderHelpers.EnsureFolderExists(settings.Cache.CachePath, "cache", !settings.Cache.CachePath.StartsWith(serverConfigPath, pathCompareMode));
+                return settings;
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Error loading server settings");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Load server configuration from disk and marge with global settings.
+        /// if no server configuration is found, global settings will be used as-is.
+        /// If server configuration is found but fails to load, global settings will 
+        /// be used as fallback.
+        /// </summary>
+        /// <param name="global"></param>
+        /// <returns></returns>
+        private InheritSettings? LoadServerSettings(InheritSettings global)
         {
             // Load overrides for settings at the server level
-            var settingsFileName = _fileName;
-            _log.Verbose("Looking for {settingsFileName} in {path}", settingsFileName, _settings.Client.ConfigurationPath);
-            var settings = new FileInfo(Path.Combine(_settings.Client.ConfigurationPath, settingsFileName));
+            var settings = new FileInfo(Path.Combine(global.Client.ConfigurationPath, _fileName));
             if (settings.Exists)
             {
+                _log.Verbose("Loading {settingsFileName} from {path}", _fileName, global.Client.ConfigurationPath);
                 try
                 {
-                    _settings = _settings.MergeTyped(Settings.Load(settings));
-                    return true;
+                    return global.MergeTyped(Settings.Load(settings), global.BaseUri);                
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Unable to load server settings from {settingsFileName}", settingsFileName);
+                    _log.Error(ex, "Unable to load server settings from {settingsFileName}", _fileName);
                 }
             }
-            return false;
+            else
+            {
+                _log.Verbose("No {settingsFileName} found at {path}", _fileName, global.Client.ConfigurationPath);
+            }
+            return null;
         }
 
+        /// <summary>
+        /// Template file name depending on whether we 
+        /// are running as a dotnet tool or not, and on the operating system.
+        /// </summary>
         private static string TemplateName
         {
             get
@@ -149,9 +188,14 @@ namespace PKISharp.WACS.Configuration.Settings
             }
         }
 
+        /// <summary>
+        /// Figure out which file to use for global settings, and if it doesn't 
+        /// exist, try to create it from the template. If creation fails, return 
+        /// the template as a fallback to at least have some settings available.
+        /// </summary>
+        /// <returns></returns>
         private FileInfo? EnsureGlobalSettingsFile()
         {
-            _log.Verbose("Looking for {settingsFileName} in {path}", _fileName, VersionService.SettingsPath);
             var settings = new FileInfo(Path.Combine(VersionService.SettingsPath, _fileName));
             if (!settings.Exists)
             {
@@ -187,7 +231,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// </summary>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private Uri ChooseBaseUri()
+        private Uri ChooseBaseUri(InheritSettings settings)
         {
             if (!string.IsNullOrWhiteSpace(_arguments?.BaseUri))
             {
@@ -203,18 +247,18 @@ namespace PKISharp.WACS.Configuration.Settings
             }
             if (_arguments?.Test ?? false)
             {
-                if (_settings.Acme.DefaultBaseUriTest?.IsAbsoluteUri ?? false)
+                if (settings.Acme.DefaultBaseUriTest?.IsAbsoluteUri ?? false)
                 {
-                    return _settings.Acme.DefaultBaseUriTest;
+                    return settings.Acme.DefaultBaseUriTest;
                 } 
                 else
                 {
                     _log.Warning("Setting Acme.DefaultBaseUriTest is unspecified or invalid, fallback to Acme.DefaultBaseUri");
                 }
             }
-            if (_settings.Acme.DefaultBaseUri?.IsAbsoluteUri ?? false)
+            if (settings.Acme.DefaultBaseUri?.IsAbsoluteUri ?? false)
             {
-                return _settings.Acme.DefaultBaseUri;
+                return settings.Acme.DefaultBaseUri;
             }
             else
             {
