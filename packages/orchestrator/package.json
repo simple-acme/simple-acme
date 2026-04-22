@@ -1,0 +1,10 @@
+{
+  "name": "@orchestrator/orchestrator",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@orchestrator/core": "0.1.0",
+    "fastify": "^4.29.1"
+  }
+}
