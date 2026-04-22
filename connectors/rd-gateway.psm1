@@ -42,4 +42,12 @@ function Invoke-RdGatewayRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'RD Gateway rollback applied.' }
 }
 
-Export-ModuleMember -Function Invoke-RdGatewayProbe,Invoke-RdGatewayDeploy,Invoke-RdGatewayBind,Invoke-RdGatewayActivate,Invoke-RdGatewayVerify,Invoke-RdGatewayRollback
+
+function Invoke-RdGatewayConnectorProbe { param([hashtable]$Context) Invoke-RdGatewayProbe -Context $Context }
+function Invoke-RdGatewayConnectorDeploy { param([hashtable]$Context) Invoke-RdGatewayDeploy -Context $Context }
+function Invoke-RdGatewayConnectorBind { param([hashtable]$Context) Invoke-RdGatewayBind -Context $Context }
+function Invoke-RdGatewayConnectorActivate { param([hashtable]$Context) Invoke-RdGatewayActivate -Context $Context }
+function Invoke-RdGatewayConnectorVerify { param([hashtable]$Context) Invoke-RdGatewayVerify -Context $Context }
+function Invoke-RdGatewayConnectorRollback { param([hashtable]$Context) Invoke-RdGatewayRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-RdGatewayProbe,Invoke-RdGatewayDeploy,Invoke-RdGatewayBind,Invoke-RdGatewayActivate,Invoke-RdGatewayVerify,Invoke-RdGatewayRollback,Invoke-RdGatewayConnectorProbe,Invoke-RdGatewayConnectorDeploy,Invoke-RdGatewayConnectorBind,Invoke-RdGatewayConnectorActivate,Invoke-RdGatewayConnectorVerify,Invoke-RdGatewayConnectorRollback

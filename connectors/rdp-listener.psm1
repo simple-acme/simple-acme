@@ -34,4 +34,12 @@ function Invoke-RdpListenerRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'RDP listener rollback applied.' }
 }
 
-Export-ModuleMember -Function Invoke-RdpListenerProbe,Invoke-RdpListenerDeploy,Invoke-RdpListenerBind,Invoke-RdpListenerActivate,Invoke-RdpListenerVerify,Invoke-RdpListenerRollback
+
+function Invoke-RdpListenerConnectorProbe { param([hashtable]$Context) Invoke-RdpListenerProbe -Context $Context }
+function Invoke-RdpListenerConnectorDeploy { param([hashtable]$Context) Invoke-RdpListenerDeploy -Context $Context }
+function Invoke-RdpListenerConnectorBind { param([hashtable]$Context) Invoke-RdpListenerBind -Context $Context }
+function Invoke-RdpListenerConnectorActivate { param([hashtable]$Context) Invoke-RdpListenerActivate -Context $Context }
+function Invoke-RdpListenerConnectorVerify { param([hashtable]$Context) Invoke-RdpListenerVerify -Context $Context }
+function Invoke-RdpListenerConnectorRollback { param([hashtable]$Context) Invoke-RdpListenerRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-RdpListenerProbe,Invoke-RdpListenerDeploy,Invoke-RdpListenerBind,Invoke-RdpListenerActivate,Invoke-RdpListenerVerify,Invoke-RdpListenerRollback,Invoke-RdpListenerConnectorProbe,Invoke-RdpListenerConnectorDeploy,Invoke-RdpListenerConnectorBind,Invoke-RdpListenerConnectorActivate,Invoke-RdpListenerConnectorVerify,Invoke-RdpListenerConnectorRollback

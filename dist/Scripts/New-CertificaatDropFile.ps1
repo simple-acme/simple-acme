@@ -27,7 +27,7 @@ function Write-BridgeEvent {
         [int]$EventId = 3001
     )
 
-    $source = 'Certificaat'
+    $source = 'Certificate'
     if (-not [System.Diagnostics.EventLog]::SourceExists($source)) {
         New-EventLog -LogName Application -Source $source
     }
@@ -36,13 +36,23 @@ function Write-BridgeEvent {
 }
 
 if ([string]::IsNullOrWhiteSpace($env:CERTIFICAAT_DROP_DIR)) {
-    Write-BridgeEvent -Message 'CERTIFICAAT_DROP_DIR is not set. Unable to write certificaat drop file.' -EntryType Error -EventId 3002
+    Write-BridgeEvent -Message 'CERTIFICAAT_DROP_DIR is not set. Unable to write certificate drop file.' -EntryType Error -EventId 3002
     exit 1
 }
 
 $dropDir = $env:CERTIFICAAT_DROP_DIR
 if (-not (Test-Path -LiteralPath $dropDir)) {
     Write-BridgeEvent -Message "CERTIFICAAT_DROP_DIR path '$dropDir' does not exist." -EntryType Error -EventId 3003
+    exit 1
+}
+
+try {
+    $probeName = ".certificate_write_test_{0}.tmp" -f ([guid]::NewGuid().ToString('N'))
+    $probePath = Join-Path -Path $dropDir -ChildPath $probeName
+    [System.IO.File]::WriteAllText($probePath, 'probe', [System.Text.Encoding]::UTF8)
+    Remove-Item -LiteralPath $probePath -Force -ErrorAction Stop
+} catch {
+    Write-BridgeEvent -Message "CERTIFICAAT_DROP_DIR path '$dropDir' is not writable. Error: $($_.Exception.Message)" -EntryType Error -EventId 3005
     exit 1
 }
 

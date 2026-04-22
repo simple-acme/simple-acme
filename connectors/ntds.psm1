@@ -49,4 +49,12 @@ function Invoke-NtdsRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'NTDS rollback applied with previous thumbprint.' }
 }
 
-Export-ModuleMember -Function Invoke-NtdsProbe,Invoke-NtdsDeploy,Invoke-NtdsBind,Invoke-NtdsActivate,Invoke-NtdsVerify,Invoke-NtdsRollback
+
+function Invoke-NtdsConnectorProbe { param([hashtable]$Context) Invoke-NtdsProbe -Context $Context }
+function Invoke-NtdsConnectorDeploy { param([hashtable]$Context) Invoke-NtdsDeploy -Context $Context }
+function Invoke-NtdsConnectorBind { param([hashtable]$Context) Invoke-NtdsBind -Context $Context }
+function Invoke-NtdsConnectorActivate { param([hashtable]$Context) Invoke-NtdsActivate -Context $Context }
+function Invoke-NtdsConnectorVerify { param([hashtable]$Context) Invoke-NtdsVerify -Context $Context }
+function Invoke-NtdsConnectorRollback { param([hashtable]$Context) Invoke-NtdsRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-NtdsProbe,Invoke-NtdsDeploy,Invoke-NtdsBind,Invoke-NtdsActivate,Invoke-NtdsVerify,Invoke-NtdsRollback,Invoke-NtdsConnectorProbe,Invoke-NtdsConnectorDeploy,Invoke-NtdsConnectorBind,Invoke-NtdsConnectorActivate,Invoke-NtdsConnectorVerify,Invoke-NtdsConnectorRollback

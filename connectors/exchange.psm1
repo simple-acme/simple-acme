@@ -68,4 +68,12 @@ function Invoke-ExchangeRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'Exchange rollback applied using previous thumbprint.' }
 }
 
-Export-ModuleMember -Function Invoke-ExchangeProbe,Invoke-ExchangeDeploy,Invoke-ExchangeBind,Invoke-ExchangeActivate,Invoke-ExchangeVerify,Invoke-ExchangeRollback
+
+function Invoke-ExchangeConnectorProbe { param([hashtable]$Context) Invoke-ExchangeProbe -Context $Context }
+function Invoke-ExchangeConnectorDeploy { param([hashtable]$Context) Invoke-ExchangeDeploy -Context $Context }
+function Invoke-ExchangeConnectorBind { param([hashtable]$Context) Invoke-ExchangeBind -Context $Context }
+function Invoke-ExchangeConnectorActivate { param([hashtable]$Context) Invoke-ExchangeActivate -Context $Context }
+function Invoke-ExchangeConnectorVerify { param([hashtable]$Context) Invoke-ExchangeVerify -Context $Context }
+function Invoke-ExchangeConnectorRollback { param([hashtable]$Context) Invoke-ExchangeRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-ExchangeProbe,Invoke-ExchangeDeploy,Invoke-ExchangeBind,Invoke-ExchangeActivate,Invoke-ExchangeVerify,Invoke-ExchangeRollback,Invoke-ExchangeConnectorProbe,Invoke-ExchangeConnectorDeploy,Invoke-ExchangeConnectorBind,Invoke-ExchangeConnectorActivate,Invoke-ExchangeConnectorVerify,Invoke-ExchangeConnectorRollback
