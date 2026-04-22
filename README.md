@@ -1,17 +1,64 @@
-# simple-acme
-A simple cross platform ACME client - for use with Let's Encrypt. Forked from [win-acme](http://github.com/win-acme/win-acme). Please check our [website](https://simple-acme.com/) for an up-to-date overview, documentation and downloads and don't forget to leave a ★ above!
+# Connector Orchestrator (simple-acme compatible)
 
-![Screenshot](https://simple-acme.com/assets/screenshot.png)
+This repository now contains a standalone connector orchestrator that handles post-issuance certificate deployment to remote appliances.
 
-# Support
-If have questions on how to use the program, first please check to see if your issue is covered in the [manual](https://simple-acme.com/manual/getting-started). If you can't find a solution that way, open a [discussion](https://github.com/orgs/simple-acme/discussions/new?category=q-a) in the Q&A section. Only open an [issue](https://github.com/simple-acme/simple-acme/issues) if you're reasonably sure that you've found a bug in the program, or your use case is not covered but would be a valueable new feature.
+## Setup
 
-# Sponsorship/donations
-Is your business relying on this program to secure customer websites and perhaps even critical infrastructure? Then maybe it would be good for your peace of mind then to sponsor its core developer, to gain guaranteed future support and good karma at the same time. You can become a regular sponsor via [Patreon](https://www.patreon.com/woutertinus) or [GitHub Sponsors](https://github.com/sponsors/WouterTinus) or do a one-time donation at [Paypal](http://paypal.me/woutertinus).
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Create a `policies.json` file (or set `POLICY_FILE`).
+3. Export required environment variables:
+   - `DB_PATH` (required)
+   - `POLICY_FILE` (default `./policies.json`)
+   - `VERIFY_MAX_ATTEMPTS` (default `3`)
+   - `ACTIVATE_TIMEOUT_MS` (default `120000`)
+   - `HOST` (default `0.0.0.0`)
+   - `PORT` (default `3000`)
+4. Run tests:
+   ```bash
+   npm test
+   ```
 
-[![Build status](https://ci.appveyor.com/api/projects/status/yg3mym4rthh2pu90/branch/main?svg=true)](https://ci.appveyor.com/project/WouterTinus/simple-acme/branch/main)
+## HTTP API
 
-# Contributors
-<a href="https://github.com/simple-acme/simple-acme/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=simple-acme/simple-acme" />
-</a>
+- `POST /events` accepts certificate lifecycle events.
+- `GET /jobs/:renewal_id` returns all jobs for a renewal.
+- `GET /jobs/status/:job_id` returns one job.
+- `GET /health` returns `{ "status": "ok" }`.
+
+## Policy file format
+
+```json
+[
+  {
+    "policy_id": "example-policy",
+    "fanout_policy": "fail-fast",
+    "connectors": [
+      {
+        "connector_type": "f5_bigip",
+        "label": "F5 prod",
+        "settings": {
+          "host": "f5.example.com",
+          "token_env": "F5_API_TOKEN",
+          "ssl_profile": "clientssl"
+        }
+      }
+    ]
+  }
+]
+```
+
+`settings` keys ending in `_env` are resolved from environment variables at runtime.
+
+## Adding a new connector
+
+1. Create `packages/connectors/<vendor>/src/index.ts`.
+2. Implement the `Connector` interface from `@orchestrator/core`.
+3. Register it in your orchestrator startup wiring using `ConnectorRegistry.register(type, connector)`.
+4. Add integration tests under `packages/orchestrator/tests/integration`.
+
+## RDS Gateway script
+
+A standalone script is available at `dist/scripts/certificaat-rdsgw.ps1` for direct invocation by the certificate manager CLI.
