@@ -1,5 +1,6 @@
 #Requires -Version 5.1
 param(
+    [Parameter(Mandatory)][string]$DeploymentPolicyId,
     [Parameter(Mandatory)][string]$RenewalId,
     [Parameter(Mandatory)][string]$CommonName,
     [Parameter(Mandatory)][string]$Thumbprint,
@@ -13,9 +14,24 @@ if (-not $dropDir) {
     exit 1
 }
 if (-not (Test-Path $dropDir)) { New-Item -ItemType Directory -Path $dropDir -Force | Out-Null }
-$payload = [ordered]@{ renewal_id=$RenewalId; common_name=$CommonName; thumbprint=$Thumbprint;
-    old_thumbprint=$OldThumbprint; cache_file=$CacheFile; cache_password=$CachePassword;
-    store_path=$StorePath; store_type=$StoreType; timestamp=(Get-Date -Format 'o') }
+$payload = [ordered]@{
+    event                = 'certificate_renewed'
+    renewal_id           = $RenewalId
+    deployment_policy_id = $DeploymentPolicyId
+    domain               = $CommonName
+    thumbprint           = $Thumbprint
+    cert_path            = $CacheFile
+    key_path             = ''
+    fullchain_path       = ''
+    issuer               = ''
+    not_before           = ''
+    not_after            = ''
+    old_thumbprint       = $OldThumbprint
+    cache_password       = $CachePassword
+    store_path           = $StorePath
+    store_type           = $StoreType
+    timestamp            = (Get-Date -Format 'o')
+}
 $tmp = Join-Path $dropDir "$([guid]::NewGuid()).tmp"
 $dst = [System.IO.Path]::ChangeExtension($tmp, '.json')
 [System.IO.File]::WriteAllText($tmp, ($payload | ConvertTo-Json -Compress), [System.Text.Encoding]::UTF8)
