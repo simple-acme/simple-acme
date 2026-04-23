@@ -6,6 +6,7 @@ $script:RequiredEnvKeys = @(
     'ACME_KID',
     'ACME_HMAC_SECRET',
     'DOMAINS',
+    'ACME_SCRIPT_PATH',
     'CERTIFICAAT_CONFIG_DIR',
     'CERTIFICAAT_DROP_DIR',
     'CERTIFICAAT_STATE_DIR',

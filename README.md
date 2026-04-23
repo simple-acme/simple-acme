@@ -126,6 +126,23 @@ Configure simple-acme Script Installation Plugin to write Certificaat drop files
 --scriptparameters "{RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
 ```
 
+
+### Idempotent installer/update reconcile
+
+Use the reconciler script to safely converge `.env` with existing simple-acme renewal state without manual JSON edits:
+
+```powershell
+.\certificaat-simple-acme-reconcile.ps1
+```
+
+Behavior:
+- `create` when no matching renewal exists.
+- `no-op` when `.env` already matches renewal JSON.
+- `update` when drift is detected (runs `wacs --cancel --friendlyname <primary-domain>` then re-issues with full arguments).
+- Merges `%PROGRAMDATA%\simple-acme\settings.json` to enforce:
+  - `ScheduledTask.RenewalDays = 199`
+  - `ScheduledTask.RenewalMinimumValidDays = 16`
+
 ### Store plugin compatibility
 
 | simple-acme StoreType | Typical StorePath value | Notes |
