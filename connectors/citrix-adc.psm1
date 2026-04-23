@@ -21,7 +21,7 @@ function Invoke-CitrixRest {
             $params.WebSession = $script:NitroSession
             return Invoke-RestMethod @params
         }
-        throw "Citrix API call failed for $Method $uri: $($_.Exception.Message)"
+        throw "Citrix API call failed for $Method ${uri}: $($_.Exception.Message)"
     } finally {
         [Net.ServicePointManager]::ServerCertificateValidationCallback = $null
     }
@@ -68,4 +68,6 @@ function Invoke-CitrixAdcConnectorRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'Citrix rollback binding applied.' }
 }
 
-Export-ModuleMember -Function Invoke-CitrixAdcConnectorProbe,Invoke-CitrixAdcConnectorDeploy,Invoke-CitrixAdcConnectorBind,Invoke-CitrixAdcConnectorActivate,Invoke-CitrixAdcConnectorVerify,Invoke-CitrixAdcConnectorRollback
+function Invoke-CitrixAdcRollback { param([hashtable]$Context) Invoke-CitrixAdcConnectorRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-CitrixAdcConnectorProbe,Invoke-CitrixAdcConnectorDeploy,Invoke-CitrixAdcConnectorBind,Invoke-CitrixAdcConnectorActivate,Invoke-CitrixAdcConnectorVerify,Invoke-CitrixAdcConnectorRollback,Invoke-CitrixAdcRollback

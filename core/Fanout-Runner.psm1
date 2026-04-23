@@ -31,7 +31,7 @@ function Invoke-ConnectorJob {
             $result = Invoke-WithRetry -Label "$($Job.connector_type)-$stepLower" -MaxAttempts $maxAttempts -BackoffMs $activateTimeoutMs -ScriptBlock { & $fn -Context $context }
             if ($stepLower -eq 'deploy') {
                 $existing = Get-ConnectorJob -JobId $Job.job_id -StateDir $StateDir
-                $previousArt = if ($existing.steps.deploy.artifact_ref) { $existing.steps.deploy.artifact_ref } else { $null }
+                $previousArt = if (-not [string]::IsNullOrWhiteSpace($existing.artifact_ref)) { $existing.artifact_ref } else { $null }
                 Update-ConnectorJobStep -JobId $Job.job_id -Step $stepLower -Status 'running' -StateDir $StateDir -ArtifactRef $result.artifact_ref -PreviousArtifactRef $previousArt | Out-Null
             }
             if ($stepLower -eq 'verify') {
@@ -77,7 +77,7 @@ function Invoke-FanoutRunner {
         $jobs += ,@{ job = $new; config = $config }
         $connectorFile = Join-Path (Split-Path $PSScriptRoot -Parent) "connectors/$($config.connector_type.Replace('_','-')).psm1"
         if (-not (Test-Path $connectorFile)) {
-            Update-ConnectorJob -JobId $new.job_id -Status 'failed' -StateDir $StateDir -ErrorMessage "connector_not_implemented:$($new.connector_type)"
+            Update-ConnectorJobStep -JobId $new.job_id -Step 'probe' -Status 'failed' -StateDir $StateDir -ErrorDetail "connector_not_implemented:$($new.connector_type)" | Out-Null
             Write-CertificaatLog -Level Warning -Message "No connector for '$($new.connector_type)' — job failed cleanly"
             return
         }
@@ -95,7 +95,8 @@ function Invoke-FanoutRunner {
             if ($result.status -eq 'succeeded') { $succeeded += ,$result; continue }
             foreach ($done in $succeeded) {
                 $cfg = ($jobs | Where-Object { $_.job.job_id -eq $done.job_id } | Select-Object -First 1).config
-                Invoke-ConnectorRollback -Context @{ job=$done; config=$cfg; previous_artifact_ref=$done.steps.deploy.previous_artifact_ref } -StateDir $StateDir
+                $rbConnectorFn = (($done.connector_type -split '[_-]') | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper()+$_.Substring(1) } }) -join ''
+                Invoke-ConnectorRollback -Context @{ job_id=$done.job_id; event=$Event; config=$cfg; artifact_ref=$done.artifact_ref; previous_artifact_ref=$done.previous_artifact_ref } -ConnectorType $rbConnectorFn -StateDir $StateDir
             }
             break
         }
@@ -113,7 +114,8 @@ function Invoke-FanoutRunner {
         foreach ($done in $succeeded) {
             $cfg = $cfgMap[$done.job_id]
             if (-not $cfg) { Write-CertificaatLog -Level Warning -Message "Quorum rollback: no config for $($done.job_id)"; continue }
-            Invoke-ConnectorRollback -Context @{ job=$done; config=$cfg; previous_artifact_ref=$done.steps.deploy.previous_artifact_ref } -StateDir $StateDir
+            $rbConnectorFn = (($done.connector_type -split '[_-]') | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper()+$_.Substring(1) } }) -join ''
+            Invoke-ConnectorRollback -Context @{ job_id=$done.job_id; event=$Event; config=$cfg; artifact_ref=$done.artifact_ref; previous_artifact_ref=$done.previous_artifact_ref } -ConnectorType $rbConnectorFn -StateDir $StateDir
         }
     }
 }

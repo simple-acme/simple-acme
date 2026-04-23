@@ -25,7 +25,7 @@ function Invoke-F5Rest {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         try { Invoke-RestMethod @params } finally { [Net.ServicePointManager]::ServerCertificateValidationCallback = $null }
     } catch {
-        throw "F5 API call failed for $Method $Uri: $($_.Exception.Message)"
+        throw "F5 API call failed for $Method ${Uri}: $($_.Exception.Message)"
     }
 }
 
@@ -67,4 +67,6 @@ function Invoke-F5BigipConnectorRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'F5 rollback binding applied.' }
 }
 
-Export-ModuleMember -Function Invoke-F5BigipConnectorProbe,Invoke-F5BigipConnectorDeploy,Invoke-F5BigipConnectorBind,Invoke-F5BigipConnectorActivate,Invoke-F5BigipConnectorVerify,Invoke-F5BigipConnectorRollback
+function Invoke-F5BigipRollback { param([hashtable]$Context) Invoke-F5BigipConnectorRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-F5BigipConnectorProbe,Invoke-F5BigipConnectorDeploy,Invoke-F5BigipConnectorBind,Invoke-F5BigipConnectorActivate,Invoke-F5BigipConnectorVerify,Invoke-F5BigipConnectorRollback,Invoke-F5BigipRollback

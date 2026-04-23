@@ -77,4 +77,11 @@ function Invoke-IisRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'IIS rollback binding restored.' }
 }
 
-Export-ModuleMember -Function Invoke-IisProbe,Invoke-IisDeploy,Invoke-IisBind,Invoke-IisActivate,Invoke-IisVerify,Invoke-IisRollback
+function Invoke-IisConnectorProbe    { param([hashtable]$Context) Invoke-IisProbe    -Context $Context }
+function Invoke-IisConnectorDeploy   { param([hashtable]$Context) Invoke-IisDeploy   -Context $Context }
+function Invoke-IisConnectorBind     { param([hashtable]$Context) Invoke-IisBind     -Context $Context }
+function Invoke-IisConnectorActivate { param([hashtable]$Context) Invoke-IisActivate -Context $Context }
+function Invoke-IisConnectorVerify   { param([hashtable]$Context) Invoke-IisVerify   -Context $Context }
+function Invoke-IisConnectorRollback { param([hashtable]$Context) Invoke-IisRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-IisProbe,Invoke-IisDeploy,Invoke-IisBind,Invoke-IisActivate,Invoke-IisVerify,Invoke-IisRollback,Invoke-IisConnectorProbe,Invoke-IisConnectorDeploy,Invoke-IisConnectorBind,Invoke-IisConnectorActivate,Invoke-IisConnectorVerify,Invoke-IisConnectorRollback

@@ -66,4 +66,6 @@ function Invoke-KempConnectorRollback { param([hashtable]$Context)
     @{ success = $true; detail = 'Kemp rollback binding applied.' }
 }
 
-Export-ModuleMember -Function Invoke-KempConnectorProbe,Invoke-KempConnectorDeploy,Invoke-KempConnectorBind,Invoke-KempConnectorActivate,Invoke-KempConnectorVerify,Invoke-KempConnectorRollback
+function Invoke-KempRollback { param([hashtable]$Context) Invoke-KempConnectorRollback -Context $Context }
+
+Export-ModuleMember -Function Invoke-KempConnectorProbe,Invoke-KempConnectorDeploy,Invoke-KempConnectorBind,Invoke-KempConnectorActivate,Invoke-KempConnectorVerify,Invoke-KempConnectorRollback,Invoke-KempRollback
