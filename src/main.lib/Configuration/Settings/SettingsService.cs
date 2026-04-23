@@ -39,18 +39,25 @@ namespace PKISharp.WACS.Configuration.Settings
             _globalSettings = globalSettings;
             _settings = globalSettings;
 
+            Uri? defaultBaseUri;
             try
             {
-                var defaultBaseUri = ChooseBaseUri(_globalSettings);
-                var serverSettings = ForBaseUri(defaultBaseUri);
-                if (serverSettings != null)
-                {
-                    _settings = serverSettings;
-                }
+                defaultBaseUri = ChooseBaseUri(_globalSettings);
             }
-            catch
+            catch (Exception ex)
             {
-                _log.Error("Error choosing ACME server");
+                _log.Error(ex, "Error choosing ACME server");
+                return;
+            }
+
+            try
+            {
+                _settings = ForBaseUri(defaultBaseUri);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Error loading server settings");
+                return;
             }
 
             // Configure disk logger
@@ -108,36 +115,28 @@ namespace PKISharp.WACS.Configuration.Settings
         /// </summary>
         /// <param name="baseUri"></param>
         /// <returns></returns>
-        private InheritSettings? ForBaseUri(Uri baseUri)
+        private InheritSettings ForBaseUri(Uri baseUri)
         {
             _log.Verbose("Loading settings for {baseUrI}", baseUri);
             _globalSettings.BaseUri = baseUri;
             var settings = LoadServerSettings(_globalSettings);
-            try
+            if (settings != null)
             {
-                if (settings != null)
-                {
-                    _folderHelpers.EnsureFolderExists(settings.Client.ConfigRoot, "global configuration", true);
-                }
-                else
-                {
-                    settings = _globalSettings;
-                }
-                var serverConfigPath = settings.Client.ConfigurationPath;
-                var pathCompareMode =
-                    OperatingSystem.IsWindows() ?
-                    StringComparison.OrdinalIgnoreCase :
-                    StringComparison.Ordinal;
-                _folderHelpers.EnsureFolderExists(serverConfigPath, "server configuration", true);
-                _folderHelpers.EnsureFolderExists(settings.Client.LogPath, "log", !settings.Client.LogPath.StartsWith(serverConfigPath, pathCompareMode));
-                _folderHelpers.EnsureFolderExists(settings.Cache.CachePath, "cache", !settings.Cache.CachePath.StartsWith(serverConfigPath, pathCompareMode));
-                return settings;
+                _folderHelpers.EnsureFolderExists(settings.Client.ConfigRoot, "global configuration", true);
             }
-            catch (Exception ex)
+            else
             {
-                _log.Error(ex, "Error loading server settings");
-                return null;
+                settings = _globalSettings;
             }
+            var serverConfigPath = settings.Client.ConfigurationPath;
+            var pathCompareMode =
+                OperatingSystem.IsWindows() ?
+                StringComparison.OrdinalIgnoreCase :
+                StringComparison.Ordinal;
+            _folderHelpers.EnsureFolderExists(serverConfigPath, "server configuration", true);
+            _folderHelpers.EnsureFolderExists(settings.Client.LogPath, "log", !settings.Client.LogPath.StartsWith(serverConfigPath, pathCompareMode));
+            _folderHelpers.EnsureFolderExists(settings.Cache.CachePath, "cache", !settings.Cache.CachePath.StartsWith(serverConfigPath, pathCompareMode));
+            return settings;
         }
 
         /// <summary>
