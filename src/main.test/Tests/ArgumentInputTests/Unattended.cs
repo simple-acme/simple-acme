@@ -5,6 +5,7 @@ using PKISharp.WACS.Plugins.InstallationPlugins;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
+using System;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
@@ -12,6 +13,15 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
     [TestClass]
     public class Unattended
     {
+        [TestInitialize]
+        public void Init()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Inconclusive("CentralSsl/IIS argument tests are Windows-only.");
+            }
+        }
+
         [TestMethod]
         [DataRow("I:", "I:", DisplayName = "Base")]
         [DataRow("I:\\", "I:\\", DisplayName = "WithSlash")]

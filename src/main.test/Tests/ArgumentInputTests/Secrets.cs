@@ -4,6 +4,7 @@ using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
@@ -12,6 +13,15 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
     [TestClass]
     public class Secrets
     {
+        [TestInitialize]
+        public void Init()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Inconclusive("CentralSsl argument tests are Windows-only.");
+            }
+        }
+
         [TestMethod]
         [DataRow(
             "", // Command line 

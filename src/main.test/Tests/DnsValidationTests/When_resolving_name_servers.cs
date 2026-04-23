@@ -2,6 +2,7 @@
 using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock.Services;
+using System;
 using System.Linq;
 using LogService = PKISharp.WACS.UnitTests.Mock.Services.LogService;
 
@@ -10,6 +11,16 @@ namespace PKISharp.WACS.UnitTests.Tests.DnsValidationTests
     [TestClass]
     public class When_resolving_name_servers
     {
+        [TestInitialize]
+        public void Init()
+        {
+            var runLive = Environment.GetEnvironmentVariable("RUN_LIVE_DNS_TESTS");
+            if (!string.Equals(runLive, "1", StringComparison.Ordinal))
+            {
+                Assert.Inconclusive("Live DNS assertions are disabled by default. Set RUN_LIVE_DNS_TESTS=1 to enable.");
+            }
+        }
+
         private readonly LookupClientProvider _dnsClient;
 
         public When_resolving_name_servers()

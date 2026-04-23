@@ -7,6 +7,7 @@ using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
+using System;
 using System.Linq;
 using System.Text.Json;
 using ManualOptions = PKISharp.WACS.Plugins.TargetPlugins.ManualOptions;
@@ -16,6 +17,15 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
     [TestClass]
     public class SecretTests
     {
+        [TestInitialize]
+        public void Init()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Inconclusive("Secret serialization tests rely on Windows-native encryption behavior.");
+            }
+        }
+
         private static ILifetimeScope? _container;
         private static IPluginService? _plugin;
 

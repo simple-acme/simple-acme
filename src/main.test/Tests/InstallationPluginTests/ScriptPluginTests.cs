@@ -17,6 +17,15 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
     [TestClass]
     public class ScriptPluginTests
     {
+        [TestInitialize]
+        public void Init()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Inconclusive("Script plugin tests in this suite are Windows-path/process specific.");
+            }
+        }
+
         private readonly Mock.Services.LogService log;
         private readonly Mock.Services.CertificateService cs;
         private readonly FileInfo batchPath;

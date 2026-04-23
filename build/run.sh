@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 rm -r debug
 mkdir debug
 unzip -o ./artifacts/simple-acme.v2.3.0.0.linux-x64.trimmed.zip -d debug

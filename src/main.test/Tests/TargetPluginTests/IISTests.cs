@@ -8,6 +8,7 @@ using PKISharp.WACS.Plugins.TargetPlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
+using System;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
@@ -18,6 +19,15 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
     [TestClass]
     public class IISTests
     {
+        [TestInitialize]
+        public void Init()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Inconclusive("IIS tests are Windows-only.");
+            }
+        }
+
         private readonly ILogService log;
         private readonly IIISClient iis;
         private readonly IISHelper helper;

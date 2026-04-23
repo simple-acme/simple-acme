@@ -18,12 +18,23 @@ namespace PKISharp.WACS.Services
         /// </summary>
         private static Lazy<string> BasePath { get; } = new Lazy<string>(() =>
         {
-             if (ExeFileInfo != null && ExeFileInfo.Value != null)
-             {
-                 var resolved = ResolveParsePoints(ExeFileInfo.Value);
-                 return resolved.Directory?.FullName + Path.DirectorySeparatorChar;
-             }
-             return string.Empty;
+            var assemblyLocation =
+                Assembly.GetEntryAssembly()?.Location ??
+                Assembly.GetExecutingAssembly()?.Location;
+            if (!string.IsNullOrWhiteSpace(assemblyLocation))
+            {
+                var assemblyFile = new FileInfo(assemblyLocation);
+                if (assemblyFile.Exists)
+                {
+                    return assemblyFile.Directory?.FullName + Path.DirectorySeparatorChar ?? string.Empty;
+                }
+            }
+            if (ExeFileInfo.Value != null)
+            {
+                var resolved = ResolveParsePoints(ExeFileInfo.Value);
+                return resolved.Directory?.FullName + Path.DirectorySeparatorChar ?? string.Empty;
+            }
+            return string.Empty;
         });
 
         /// <summary>

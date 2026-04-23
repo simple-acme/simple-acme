@@ -22,6 +22,15 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
     [TestClass]
     public class MultipleInstallerTests
     {
+        [TestInitialize]
+        public void Init()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Inconclusive("IIS installation plugin tests are Windows-only.");
+            }
+        }
+
         private readonly ILogService log;
         private readonly PluginService plugins;
         private readonly MockSettingsService settings;
