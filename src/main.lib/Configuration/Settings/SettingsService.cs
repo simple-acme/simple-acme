@@ -66,11 +66,11 @@ namespace PKISharp.WACS.Configuration.Settings
         }
 
         /// <summary>
-        /// Get global settings from disk, and if they don't exist, try to create them from the template. If creation fails, return 
-        /// the template as a fallback to at least have some settings available. If loading fails, return false to indicate that 
-        /// settings are not available and the program should probably exit.
+        /// Get global settings from disk, and if they don't exist, try to create them from the template. If creation fails, return
+        /// the template as a fallback to at least have some settings available. If loading or initialization fails, return
+        /// <see langword="null"/> to indicate that settings are not available and the program should probably exit.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The loaded global settings, or <see langword="null"/> if they cannot be ensured, loaded, or initialized.</returns>
         private InheritSettings? LoadGlobalSettings()
         {
             var globalFile = EnsureGlobalSettingsFile();
@@ -117,7 +117,7 @@ namespace PKISharp.WACS.Configuration.Settings
         /// <returns></returns>
         private InheritSettings ForBaseUri(Uri baseUri)
         {
-            _log.Verbose("Loading settings for {baseUrI}", baseUri);
+            _log.Verbose("Loading settings for {baseUri}", baseUri);
             _globalSettings.BaseUri = baseUri;
             var settings = LoadServerSettings(_globalSettings);
             if (settings != null)
@@ -140,7 +140,7 @@ namespace PKISharp.WACS.Configuration.Settings
         }
 
         /// <summary>
-        /// Load server configuration from disk and marge with global settings.
+        /// Load server configuration from disk and merge with global settings.
         /// if no server configuration is found, global settings will be used as-is.
         /// If server configuration is found but fails to load, global settings will 
         /// be used as fallback.

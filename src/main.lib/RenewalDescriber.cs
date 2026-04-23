@@ -122,9 +122,10 @@ namespace PKISharp.WACS
             {
                 args.Add("friendlyname", renewal.FriendlyName);
             }
-            if (!string.Equals(renewal.EndPoint ?? settings.BaseUri.ToString(), settings.Acme.DefaultBaseUri?.ToString(), StringComparison.OrdinalIgnoreCase))
+            var effectiveEndPoint = renewal.EndPoint ?? settings.BaseUri.ToString();
+            if (!string.Equals(effectiveEndPoint, settings.Acme.DefaultBaseUri?.ToString(), StringComparison.OrdinalIgnoreCase))
             {
-                args.Add("baseuri", renewal.EndPoint);
+                args.Add("baseuri", effectiveEndPoint);
             }
             if (!string.IsNullOrWhiteSpace(renewal.Account))
             {
