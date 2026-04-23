@@ -5,6 +5,24 @@
 - PowerShell 5.1 minimum (target runtime)
 - No external modules or third-party binaries required
 
+## Building wacs via CLI (.NET 10)
+
+Prerequisite: install .NET SDK 10.x.
+
+```bash
+dotnet --info
+dotnet restore src/wacs.slnx
+dotnet build src/wacs.slnx -c Release
+```
+
+Visual Studio 2022 (17.x) does not support `net10.0` targeting. Use CLI builds with .NET 10 SDK, or use a newer Visual Studio version that supports .NET 10.
+
+For automatic SDK bootstrapping, run:
+
+```powershell
+pwsh -NoLogo -NoProfile -File build/compile-local.ps1
+```
+
 ## First-run Event Log source registration
 Run once as Administrator:
 
