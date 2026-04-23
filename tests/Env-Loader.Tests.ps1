@@ -8,6 +8,7 @@ Describe 'Env loader' {
             'ACME_KID=kid',
             'ACME_HMAC_SECRET=secret',
             'DOMAINS=example.com',
+            'ACME_SCRIPT_PATH=C:\\simple-acme\\dist\\Scripts\\New-CertificaatDropFile.ps1',
             'CERTIFICAAT_CONFIG_DIR=C:\cfg',
             'CERTIFICAAT_DROP_DIR=C:\drop',
             'CERTIFICAAT_STATE_DIR=C:\state',
@@ -37,7 +38,7 @@ Describe 'Env loader' {
 
     It 'Import missing required lists all in one error' {
         @('ACME_DIRECTORY=x') | Set-Content -Path $script:path -Encoding UTF8
-        { Import-EnvFile -Path $script:path -Force } | Should -Throw '*ACME_KID*ACME_HMAC_SECRET*DOMAINS*'
+        { Import-EnvFile -Path $script:path -Force } | Should -Throw '*ACME_KID*ACME_HMAC_SECRET*DOMAINS*ACME_SCRIPT_PATH*'
     }
 
     It 'Import applies optional defaults' {
