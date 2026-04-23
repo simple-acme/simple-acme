@@ -53,8 +53,11 @@ This script is invoked from simple-acme Script Installation Plugin with:
 
 ```text
 --script "dist\Scripts\New-CertificaatDropFile.ps1"
---scriptparameters "{RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
+--scriptparameters "'<POLICY-ID>' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
 ```
+
+> Replace `<POLICY-ID>` with the literal policy_id from policies.json (e.g. `'prod-rdgw'`).
+> This value is the first positional argument to New-CertificaatDropFile.ps1.
 
 The script writes a JSON drop file to `$env:CERTIFICAAT_DROP_DIR`:
 

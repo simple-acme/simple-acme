@@ -123,7 +123,7 @@ Configure simple-acme Script Installation Plugin to write Certificaat drop files
 ```text
 --installation Script
 --script "dist\Scripts\New-CertificaatDropFile.ps1"
---scriptparameters "{RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
+--scriptparameters "'<POLICY-ID>' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
 ```
 
 ### Store plugin compatibility
@@ -141,6 +141,7 @@ Configure simple-acme Script Installation Plugin to write Certificaat drop files
 - `{StorePath}` maps to `event.store_path` and should be passed through unchanged.
 - `{CertThumbprint}` maps to `event.thumbprint` for thumbprint-first native Windows connectors.
 - `{OldCertThumbprint}` maps to `previous_artifact_ref` for rollback operations.
+- `<POLICY-ID>` is a literal string matching a `policy_id` in `policies.json`. Replace it with the actual policy ID for this renewal.
 
 ## Connector reference
 
