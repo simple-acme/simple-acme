@@ -1,11 +1,21 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Services.Serialization;
+using System;
 
 namespace PKISharp.WACS.UnitTests.Tests.EcnryptionTests
 {
     [TestClass]
     public class EncryptionTests
     {
+        [TestInitialize]
+        public void Init()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Inconclusive("Native encryption round-trip test is Windows-only.");
+            }
+        }
+
         [TestMethod]
         public void TurnOnOff()
         {

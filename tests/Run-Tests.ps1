@@ -20,6 +20,15 @@ function Invoke-Assertion {
 
 foreach ($file in $testFiles) {
     try {
+        $raw = Get-Content -LiteralPath $file.FullName -Raw
+        $looksLikePester = $raw -match '(?m)^\s*(Describe|Context|It)\b'
+        $hasDescribe = $null -ne (Get-Command -Name 'Describe' -CommandType Function -ErrorAction SilentlyContinue)
+        if ($looksLikePester -and -not $hasDescribe) {
+            $skip++
+            Write-Host "[SKIP] $($file.Name) :: Pester syntax detected but Pester is unavailable in this environment."
+            continue
+        }
+
         . $file.FullName
         $fns = @(Get-Command -Name 'Invoke-Test*' -CommandType Function | Where-Object { $_.ScriptBlock.File -eq $file.FullName })
         if ($fns.Count -eq 0) {

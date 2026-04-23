@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
@@ -11,6 +12,15 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
     [TestClass]
     public class Interactive
     {
+        [TestInitialize]
+        public void Init()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Inconclusive("CentralSsl argument tests are Windows-only.");
+            }
+        }
+
         [TestMethod]
         [DataRow("--centralsslstore I:", new[] { "" }, "I:", DisplayName = "ArgumentDefault")]
         [DataRow("--centralsslstore I:", new[] { "C:\\" }, "C:\\", DisplayName = "OverrideArgument")]

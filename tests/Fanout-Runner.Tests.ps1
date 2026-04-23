@@ -12,7 +12,7 @@ function Invoke-TestFanoutRunner {
         [Environment]::SetEnvironmentVariable('CERTIFICAAT_RETRY_MAX_ATTEMPTS', '2')
         [Environment]::SetEnvironmentVariable('CERTIFICAAT_RETRY_BACKOFF_MS', '1')
         Import-Module "$PSScriptRoot/../core/Retry-Engine.psm1" -Force
-        $count = 0
+        $script:count = 0
         try {
             Invoke-WithRetry -Label 'test' -ScriptBlock { $script:count++; throw 'x' }
         } catch { }
