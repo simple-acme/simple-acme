@@ -99,7 +99,7 @@ function Invoke-PolicyEditor {
 function Invoke-FirstRunWizard {
     param([Parameter(Mandatory)][string]$DefaultEnvPath)
 
-    $scriptRoot = Split-Path $DefaultEnvPath -Parent
+    $scriptRoot = Split-Path $PSScriptRoot -Parent
 
     $acmeFields = @(
         @{ Name='ACME_DIRECTORY';   Label='ACME directory URL';          Type='string'; Required=$true; Placeholder='https://acme.networking4all.com/dv'; HelpText='ACME directory endpoint' },
