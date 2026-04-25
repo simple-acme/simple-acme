@@ -91,6 +91,23 @@ Copy-Item -LiteralPath $settingsPath -Destination $settingsDefaultPath
 
 Copy-Item -Path (Join-Path -Path $distSourceDir -ChildPath '*') -Destination $DistDir -Recurse
 
+$certificateAssets = @(
+    'certificate-setup.ps1',
+    'certificate-orchestrator.ps1',
+    'certificate-simple-acme-reconcile.ps1',
+    'certificate-backup.ps1',
+    'certificate-restore.ps1',
+    'config.ps1',
+    'policies.json',
+    'core',
+    'setup',
+    'connectors'
+)
+foreach ($asset in $certificateAssets) {
+    $sourcePath = Join-Path -Path $repoRoot -ChildPath $asset
+    Copy-Item -Path $sourcePath -Destination $DistDir -Recurse -Force
+}
+
 if (-not $SkipPlugins) {
     foreach ($pluginFolder in $pluginFolders) {
         $pluginPublishDir = Join-Path -Path $pluginFolder.FullName -ChildPath 'bin\Release\net10.0\publish'

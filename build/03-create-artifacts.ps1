@@ -31,6 +31,21 @@
 		Copy-Item "$MainBinDir\settings.json" "$Temp\settings_default.json"
 	}
 	Copy-Item "$Root\dist\*" $Temp -Recurse
+	$certificateAssets = @(
+		'certificate-setup.ps1',
+		'certificate-orchestrator.ps1',
+		'certificate-simple-acme-reconcile.ps1',
+		'certificate-backup.ps1',
+		'certificate-restore.ps1',
+		'config.ps1',
+		'policies.json',
+		'core',
+		'setup',
+		'connectors'
+	)
+	foreach ($asset in $certificateAssets) {
+		Copy-Item "$Root\$asset" $Temp -Recurse -Force
+	}
 	Set-Content -Path "$Temp\version.txt" -Value "v$Version ($Platform, $Config)"
 	Compress $Temp $MainZipPath
 	Remove-Item $Temp\* -recurse
