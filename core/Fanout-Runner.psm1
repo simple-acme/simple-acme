@@ -17,9 +17,9 @@ function Invoke-ConnectorJob {
     param([hashtable]$Job,[hashtable]$Event,[hashtable]$Config,[string]$StateDir,[string]$RootPath = $PSScriptRoot)
 
     $steps = @('Probe','Deploy','Bind','Activate','Verify')
-    $rawMax = [Environment]::GetEnvironmentVariable('CERTIFICAAT_VERIFY_MAX_ATTEMPTS')
+    $rawMax = [Environment]::GetEnvironmentVariable('CERTIFICATE_VERIFY_MAX_ATTEMPTS')
     $maxAttempts = if ([string]::IsNullOrWhiteSpace($rawMax)) { 3 } else { [int]$rawMax }
-    $rawTimeout = [Environment]::GetEnvironmentVariable('CERTIFICAAT_ACTIVATE_TIMEOUT_MS')
+    $rawTimeout = [Environment]::GetEnvironmentVariable('CERTIFICATE_ACTIVATE_TIMEOUT_MS')
     $activateTimeoutMs = if ([string]::IsNullOrWhiteSpace($rawTimeout)) { 1000 } else { [int]$rawTimeout }
     foreach ($step in $steps) {
         $stepLower = $step.ToLowerInvariant()
@@ -78,13 +78,13 @@ function Invoke-FanoutRunner {
         $connectorFile = Join-Path (Split-Path $PSScriptRoot -Parent) "connectors/$($config.connector_type.Replace('_','-')).psm1"
         if (-not (Test-Path $connectorFile)) {
             Update-ConnectorJobStep -JobId $new.job_id -Step 'probe' -Status 'failed' -StateDir $StateDir -ErrorDetail "connector_not_implemented:$($new.connector_type)" | Out-Null
-            Write-CertificaatLog -Level Warning -Message "No connector for '$($new.connector_type)' — job failed cleanly"
+            Write-CertificateLog -Level Warning -Message "No connector for '$($new.connector_type)' — job failed cleanly"
             return
         }
         Import-Module $connectorFile -Force
     }
 
-    $defaultFanout = [Environment]::GetEnvironmentVariable('CERTIFICAAT_DEFAULT_FANOUT')
+    $defaultFanout = [Environment]::GetEnvironmentVariable('CERTIFICATE_DEFAULT_FANOUT')
     if ([string]::IsNullOrWhiteSpace($defaultFanout)) { $defaultFanout = 'fail-fast' }
     $fanout = if ([string]::IsNullOrWhiteSpace($Policy.fanout_policy)) { $defaultFanout } else { $Policy.fanout_policy }
 
@@ -113,7 +113,7 @@ function Invoke-FanoutRunner {
         $cfgMap = @{}; foreach ($e in $jobs) { $cfgMap[$e.job.job_id] = $e.config }
         foreach ($done in $succeeded) {
             $cfg = $cfgMap[$done.job_id]
-            if (-not $cfg) { Write-CertificaatLog -Level Warning -Message "Quorum rollback: no config for $($done.job_id)"; continue }
+            if (-not $cfg) { Write-CertificateLog -Level Warning -Message "Quorum rollback: no config for $($done.job_id)"; continue }
             $rbConnectorFn = (($done.connector_type -split '[_-]') | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper()+$_.Substring(1) } }) -join ''
             Invoke-ConnectorRollback -Context @{ job_id=$done.job_id; event=$Event; config=$cfg; artifact_ref=$done.artifact_ref; previous_artifact_ref=$done.previous_artifact_ref } -ConnectorType $rbConnectorFn -StateDir $StateDir
         }

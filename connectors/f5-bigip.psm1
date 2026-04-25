@@ -16,12 +16,12 @@ function Get-F5Headers {
 
 function Invoke-F5Rest {
     param([string]$Method,[string]$Uri,$Body,[hashtable]$Headers)
-    $skip = $env:CERTIFICAAT_SKIP_TLS_CHECK -eq '1'
-    if ($skip) { Write-CertificaatLog -Level 'WARN' -Message 'CERTIFICAAT_SKIP_TLS_CHECK is enabled for F5 connector.' }
+    $skip = $env:CERTIFICATE_SKIP_TLS_CHECK -eq '1'
+    if ($skip) { Write-CertificateLog -Level 'WARN' -Message 'CERTIFICATE_SKIP_TLS_CHECK is enabled for F5 connector.' }
     try {
         $params = @{ Method = $Method; Uri = $Uri; Headers = $Headers; ErrorAction = 'Stop' }
         if ($null -ne $Body) { $params.Body = ($Body | ConvertTo-Json -Depth 10); $params.ContentType = 'application/json' }
-        if ($skip) { [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; Write-CertificaatLog -Level Warning -Message 'CERTIFICAAT_SKIP_TLS_CHECK is enabled for F5 connector.' }
+        if ($skip) { [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; Write-CertificateLog -Level Warning -Message 'CERTIFICATE_SKIP_TLS_CHECK is enabled for F5 connector.' }
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         try { Invoke-RestMethod @params } finally { [Net.ServicePointManager]::ServerCertificateValidationCallback = $null }
     } catch {

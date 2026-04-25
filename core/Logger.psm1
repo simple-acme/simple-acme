@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$script:EventSource = 'Certificaat'
+$script:EventSource = 'Certificate'
 $script:EventLogName = 'Application'
 
 function Ensure-EventSource {
@@ -14,7 +14,7 @@ function Ensure-EventSource {
     }
 }
 
-function Write-CertificaatLog {
+function Write-CertificateLog {
     param(
         [ValidateSet('INFO','WARN','ERROR')][string]$Level,
         [string]$Message,
@@ -39,11 +39,11 @@ function Write-CertificaatLog {
         Write-Warning "Event Log: $($_.Exception.Message)"
     }
 
-    $logDir = $env:CERTIFICAAT_LOG_DIR
+    $logDir = $env:CERTIFICATE_LOG_DIR
     if ($logDir -and (Test-Path -LiteralPath $logDir)) {
         $path = Join-Path $logDir 'orchestrator.log'
         try { Add-Content -Path $path -Value $line -Encoding UTF8 } catch { Write-Warning "Log file write failed: $($_.Exception.Message)" }
     }
 }
 
-Export-ModuleMember -Function Write-CertificaatLog
+Export-ModuleMember -Function Write-CertificateLog

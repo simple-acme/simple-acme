@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-$script:DpapiEntropy = [System.Text.Encoding]::UTF8.GetBytes('certificaat-dpapi-entropy-v1')
+$script:DpapiEntropy = [System.Text.Encoding]::UTF8.GetBytes('certificate-dpapi-entropy-v1')
 
 function ConvertTo-PlainText {
     param([Parameter(Mandatory)][SecureString]$SecureString)
@@ -46,7 +46,7 @@ function Unprotect-DpapiValue {
         $plainBytes = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $script:DpapiEntropy, $scopeEnum)
         return [System.Text.Encoding]::UTF8.GetString($plainBytes)
     } catch {
-        throw "Unprotect-DpapiValue failed for scope '$Scope'. If the machine identity has changed, restore from backup using certificaat-restore.ps1. Inner error: $($_.Exception.Message)"
+        throw "Unprotect-DpapiValue failed for scope '$Scope'. If the machine identity has changed, restore from backup using certificate-restore.ps1. Inner error: $($_.Exception.Message)"
     }
 }
 

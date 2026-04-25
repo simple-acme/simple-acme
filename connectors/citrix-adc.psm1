@@ -8,10 +8,10 @@ function Invoke-CitrixRest {
     param([hashtable]$Context,[string]$Method,[string]$Path,$Body)
     $base = "https://$($Context.config.settings.host)/nitro/v1"
     $uri = "$base$Path"
-    $skip = $env:CERTIFICAAT_SKIP_TLS_CHECK -eq '1'
+    $skip = $env:CERTIFICATE_SKIP_TLS_CHECK -eq '1'
     $params = @{ Method=$Method; Uri=$uri; ErrorAction='Stop'; WebSession=$script:NitroSession }
     if ($null -ne $Body) { $params.Body = ($Body | ConvertTo-Json -Depth 10); $params.ContentType = 'application/json' }
-    if ($skip) { [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; Write-CertificaatLog -Level Warning -Message 'CERTIFICAAT_SKIP_TLS_CHECK is enabled for Citrix connector.' }
+    if ($skip) { [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; Write-CertificateLog -Level Warning -Message 'CERTIFICATE_SKIP_TLS_CHECK is enabled for Citrix connector.' }
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     try {
         return Invoke-RestMethod @params

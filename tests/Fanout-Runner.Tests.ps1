@@ -9,8 +9,8 @@ function Invoke-TestFanoutRunner {
     }
 
     & $Assert 'retry engine defaults can be resolved from environment' {
-        [Environment]::SetEnvironmentVariable('CERTIFICAAT_RETRY_MAX_ATTEMPTS', '2')
-        [Environment]::SetEnvironmentVariable('CERTIFICAAT_RETRY_BACKOFF_MS', '1')
+        [Environment]::SetEnvironmentVariable('CERTIFICATE_RETRY_MAX_ATTEMPTS', '2')
+        [Environment]::SetEnvironmentVariable('CERTIFICATE_RETRY_BACKOFF_MS', '1')
         Import-Module "$PSScriptRoot/../core/Retry-Engine.psm1" -Force
         $script:count = 0
         try {

@@ -2,7 +2,7 @@
 
 ## Document status
 
-- **Intent**: describe the hybrid model used by this repository (`simple-acme` issuance + Certificaat connector orchestration).
+- **Intent**: describe the hybrid model used by this repository (`simple-acme` issuance + Certificate connector orchestration).
 - **Current as of**: **2026-04-25 (UTC)**.
 - **Volatile sections** (fork parity, upstream divergence) require periodic re-verification.
 
@@ -30,7 +30,7 @@ Typical local targets:
 
 ### Hybrid/remote execution path
 
-`simple-acme -> script bridge -> certificate event JSON -> Certificaat orchestrator -> connector fan-out`
+`simple-acme -> script bridge -> certificate event JSON -> Certificate orchestrator -> connector fan-out`
 
 Typical remote targets:
 - ADC/load balancers
@@ -87,8 +87,8 @@ Each connector participates in the same lifecycle semantics (`probe/deploy/bind/
 | ACME issuance/renewal | Present | Provided by `simple-acme` runtime and plugins. |
 | Event ingestion from script bridge | Present | Drop directory + optional HttpListener mode. |
 | Policy-based connector fan-out | Present | Policy file resolves connector jobs by `deployment_policy_id`. |
-| Step-level state tracking | Present | Job state persisted in `CERTIFICAAT_STATE_DIR`. |
-| Unified rollback framework | Partial | Available, behavior depends on connector + `CERTIFICAAT_DISABLE_ROLLBACK`. |
+| Step-level state tracking | Present | Job state persisted in `CERTIFICATE_STATE_DIR`. |
+| Unified rollback framework | Partial | Available, behavior depends on connector + `CERTIFICATE_DISABLE_ROLLBACK`. |
 | External-dependency connector families | Partial | Several listed as stub/disabled dependency classes. |
 
 ---

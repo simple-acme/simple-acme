@@ -8,9 +8,9 @@ param(
     [string]$CachePassword='', [string]$StorePath='', [string]$StoreType=''
 )
 $ErrorActionPreference = 'Stop'
-$dropDir = [Environment]::GetEnvironmentVariable('CERTIFICAAT_DROP_DIR')
+$dropDir = [Environment]::GetEnvironmentVariable('CERTIFICATE_DROP_DIR')
 if (-not $dropDir) {
-    try { Write-EventLog -LogName Application -Source 'Certificaat' -EventId 5001 -EntryType Error -Message 'CERTIFICAAT_DROP_DIR not set' } catch {}
+    try { Write-EventLog -LogName Application -Source 'Certificate' -EventId 5001 -EntryType Error -Message 'CERTIFICATE_DROP_DIR not set' } catch {}
     exit 1
 }
 if (-not (Test-Path $dropDir)) { New-Item -ItemType Directory -Path $dropDir -Force | Out-Null }

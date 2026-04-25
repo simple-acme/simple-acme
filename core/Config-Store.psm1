@@ -93,7 +93,7 @@ function Get-DeviceConfig {
     $actual = Get-Sha256OfString -Content $json
 
     if ($expected -ne $actual) {
-        throw "Integrity check failed for device '$DeviceId'. File may have been tampered with. Restore from backup using certificaat-restore.ps1 or reconfigure this device."
+        throw "Integrity check failed for device '$DeviceId'. File may have been tampered with. Restore from backup using certificate-restore.ps1 or reconfigure this device."
     }
 
     $obj = $json | ConvertFrom-Json
@@ -127,8 +127,8 @@ function Get-AllDeviceConfigs {
             if ($null -ne $config) { $results += ,$config }
         } catch {
             if (-not $SkipIntegrityFailures) { throw }
-            if (Get-Command Write-CertificaatLog -ErrorAction SilentlyContinue) {
-                Write-CertificaatLog -Level ERROR -Message "Integrity check failed. This device will not receive certificate deployments until the config is restored or reconfigured. Run certificaat-restore.ps1 or certificaat-setup.ps1. File: $($jsonFile.FullName). Error: $($_.Exception.Message)"
+            if (Get-Command Write-CertificateLog -ErrorAction SilentlyContinue) {
+                Write-CertificateLog -Level ERROR -Message "Integrity check failed. This device will not receive certificate deployments until the config is restored or reconfigured. Run certificate-restore.ps1 or certificate-setup.ps1. File: $($jsonFile.FullName). Error: $($_.Exception.Message)"
             } else {
                 Write-Error "Integrity check failed for '$($jsonFile.FullName)': $($_.Exception.Message)"
             }

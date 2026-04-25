@@ -1,7 +1,7 @@
-# Codex Task Prompt: Native simple-acme Integration into Certificaat Orchestrator
+# Codex Task Prompt: Native simple-acme Integration into Certificate Orchestrator
 
 ## Objective
-Implement a native integration between simple-acme and the Certificaat orchestrator by introducing a Script-plugin bridge, adding Windows-native connector implementations, updating setup schemas/menu metadata, and documenting the operational model.
+Implement a native integration between simple-acme and the Certificate orchestrator by introducing a Script-plugin bridge, adding Windows-native connector implementations, updating setup schemas/menu metadata, and documenting the operational model.
 
 This task supersedes prior assumptions that broad connector coverage required external runtimes. The repository already contains native PowerShell deployment primitives in `dist/Scripts/` and these should be reused at the connector level (inline cmdlet/API logic, no child-process wrappers for the new connectors).
 
@@ -16,7 +16,7 @@ This task supersedes prior assumptions that broad connector coverage required ex
 - Exchange connector must use local Exchange endpoint:
   - `New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://localhost/PowerShell/`
   - Treat this as local Exchange management flow (not remote target orchestration).
-- `dist/Scripts/New-CertificaatDropFile.ps1` must fail gracefully when `CERTIFICAAT_DROP_DIR` is missing:
+- `dist/Scripts/New-CertificateDropFile.ps1` must fail gracefully when `CERTIFICATE_DROP_DIR` is missing:
   - write an event via `Write-EventLog`
   - exit with code `1`.
 
@@ -43,23 +43,23 @@ The simple-acme Script Installation Plugin token set is available for bridge wir
 
 ## Required Changes
 
-### Step 1 — Create simple-acme → Certificaat bridge script
+### Step 1 — Create simple-acme → Certificate bridge script
 
 Create new file:
 
-- `dist/Scripts/New-CertificaatDropFile.ps1`
+- `dist/Scripts/New-CertificateDropFile.ps1`
 
 This script is invoked from simple-acme Script Installation Plugin with:
 
 ```text
---script "dist\Scripts\New-CertificaatDropFile.ps1"
+--script "dist\Scripts\New-CertificateDropFile.ps1"
 --scriptparameters "'<POLICY-ID>' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
 ```
 
 > Replace `<POLICY-ID>` with the literal policy_id from policies.json (e.g. `'prod-rdgw'`).
-> This value is the first positional argument to New-CertificaatDropFile.ps1.
+> This value is the first positional argument to New-CertificateDropFile.ps1.
 
-The script writes a JSON drop file to `$env:CERTIFICAAT_DROP_DIR`:
+The script writes a JSON drop file to `$env:CERTIFICATE_DROP_DIR`:
 
 ```json
 {
@@ -78,7 +78,7 @@ The script writes a JSON drop file to `$env:CERTIFICAAT_DROP_DIR`:
 Behavioral requirements:
 
 - Validate required parameters.
-- Validate `CERTIFICAAT_DROP_DIR` exists and is writable.
+- Validate `CERTIFICATE_DROP_DIR` exists and is writable.
 - On missing env var/path: log to Windows Event Log (`Write-EventLog`) and `exit 1`.
 - Use a deterministic, collision-safe filename strategy (e.g., renewal id + timestamp + random suffix).
 
@@ -112,7 +112,7 @@ Mapping guidance:
 | `adfs.psm1` | `ImportADFS.ps1` | `Set-AdfsCertificate`, `Set-AdfsSslCertificate`, `X509Store` |
 | `rdp-listener.psm1` | `ImportRDListener.ps1` | `Get-CimInstance Win32_TSGeneralSetting`, `Set-CimInstance` |
 | `rd-gateway.psm1` | `ImportRDGateway.ps1` | `Set-Item RDS:\GatewayServer\SSLCertificate\Thumbprint` |
-| `rds-full.psm1` | `certificaat-rdsgw.ps1` | `Set-RDCertificate`, `Import-PfxCertificate` |
+| `rds-full.psm1` | `certificate-rdsgw.ps1` | `Set-RDCertificate`, `Import-PfxCertificate` |
 | `ntds.psm1` | `ImportNTDS.ps1` | registry operations under `HKLM:\SOFTWARE\Microsoft\Cryptography\Services\NTDS` |
 | `sstp.psm1` | `ImportSSTP.ps1` | `Set-RemoteAccess -SslCertificate`, service restart |
 | `winrm.psm1` | `ImportWinRM.v2.ps1` | `New-WSManInstance`/`Set-WSManInstance`, `Restart-Service WinRM` |
@@ -216,7 +216,7 @@ Add section: **Integration with simple-acme**
 
 Include:
 
-1. How to configure Script Installation Plugin to call `New-CertificaatDropFile.ps1`
+1. How to configure Script Installation Plugin to call `New-CertificateDropFile.ps1`
 2. Exact `--script` and `--scriptparameters` example
 3. Supported Store plugins (`PfxFile`, `CertificateStore`, `PemFiles`, `CentralSsl`) and connector compatibility by store type
 4. Mapping from `{StorePath}`/`{StoreType}` tokens to connector input model
@@ -247,7 +247,7 @@ Append clarification to Step 4 (stub connectors):
 
 Create:
 
-- `dist/Scripts/New-CertificaatDropFile.ps1`
+- `dist/Scripts/New-CertificateDropFile.ps1`
 - `connectors/adfs.psm1`
 - `connectors/rdp-listener.psm1`
 - `connectors/rd-gateway.psm1`
@@ -271,7 +271,7 @@ Modify:
 
 ## Verification Checklist
 
-1. Configure simple-acme with Script installation and run renewal; confirm drop file appears in `$env:CERTIFICAAT_DROP_DIR`.
+1. Configure simple-acme with Script installation and run renewal; confirm drop file appears in `$env:CERTIFICATE_DROP_DIR`.
 2. Run orchestrator and confirm it consumes drop file and routes by `renewal_id`.
 3. For each Category A connector, execute `Invoke-<Name>ConnectorDeploy` with a test cert and confirm binding updates.
 4. Execute `Invoke-<Name>ConnectorRollback` and confirm prior thumbprint is rebound.

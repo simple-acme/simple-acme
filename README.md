@@ -1,10 +1,10 @@
-# Certificaat Hybrid Certificate Lifecycle Orchestrator
+# Certificate Hybrid Certificate Lifecycle Orchestrator
 
-Certificaat adds policy-based connector orchestration around `simple-acme` certificate issuance.
+Certificate adds policy-based connector orchestration around `simple-acme` certificate issuance.
 
 - `simple-acme` obtains/renews certificates.
 - A script bridge drops certificate event JSON files.
-- `certificaat-orchestrator.ps1` fans out connector steps (`probe -> deploy -> bind -> activate -> verify`, with rollback support).
+- `certificate-orchestrator.ps1` fans out connector steps (`probe -> deploy -> bind -> activate -> verify`, with rollback support).
 
 ---
 
@@ -85,54 +85,54 @@ Interpretation:
 | `ACME_HMAC_SECRET` | Yes | ACME EAB HMAC secret. |
 | `DOMAINS` | Yes | Comma-separated domain list. |
 | `ACME_SCRIPT_PATH` | Yes | Script path passed to `wacs --installation script`. |
-| `CERTIFICAAT_CONFIG_DIR` | Yes | Directory for `certificaat.env`, device configs, and policies. |
-| `CERTIFICAAT_DROP_DIR` | Yes | Watched folder for inbound certificate event JSON. |
-| `CERTIFICAAT_STATE_DIR` | Yes | Job state storage directory. |
-| `CERTIFICAAT_LOG_DIR` | Yes | Log output directory. |
-| `CERTIFICAAT_API_KEY` | Yes | API key used by HTTP listener auth (`X-API-Key` or Bearer). |
+| `CERTIFICATE_CONFIG_DIR` | Yes | Directory for `certificate.env`, device configs, and policies. |
+| `CERTIFICATE_DROP_DIR` | Yes | Watched folder for inbound certificate event JSON. |
+| `CERTIFICATE_STATE_DIR` | Yes | Job state storage directory. |
+| `CERTIFICATE_LOG_DIR` | Yes | Log output directory. |
+| `CERTIFICATE_API_KEY` | Yes | API key used by HTTP listener auth (`X-API-Key` or Bearer). |
 
 ### Optional keys and defaults
 
 | Name | Default | Behavior |
 |---|---|---|
-| `CERTIFICAAT_VERIFY_MAX_ATTEMPTS` | `3` | Max verify retries. |
-| `CERTIFICAAT_ACTIVATE_TIMEOUT_MS` | `120000` | Activation timeout hint (ms). |
-| `CERTIFICAAT_DEFAULT_FANOUT` | `fail-fast` | Default policy fanout behavior. |
-| `CERTIFICAAT_SKIP_TLS_CHECK` | `0` | Set `1` to disable TLS certificate validation for connector API calls. |
-| `CERTIFICAAT_RETRY_MAX_ATTEMPTS` | `3` | Max connector operation retries. |
-| `CERTIFICAAT_RETRY_BACKOFF_MS` | `1000` | Initial backoff (ms). |
-| `CERTIFICAAT_HTTP_ENABLED` | `0` | Set `1` to enable native HttpListener input path. |
-| `CERTIFICAAT_HTTP_PREFIX` | `http://localhost:8443/` | HttpListener prefix actually consumed by `core/Http-Listener.psm1`. |
-| `CERTIFICAAT_DISABLE_ROLLBACK` | `0` | Set `1` to disable rollback execution. |
-| `CERTIFICAAT_HTTP_HOST` | `127.0.0.1` | Compatibility key; not currently used by listener startup path. |
-| `CERTIFICAAT_HTTP_PORT` | `8088` | Compatibility key; not currently used by listener startup path. |
+| `CERTIFICATE_VERIFY_MAX_ATTEMPTS` | `3` | Max verify retries. |
+| `CERTIFICATE_ACTIVATE_TIMEOUT_MS` | `120000` | Activation timeout hint (ms). |
+| `CERTIFICATE_DEFAULT_FANOUT` | `fail-fast` | Default policy fanout behavior. |
+| `CERTIFICATE_SKIP_TLS_CHECK` | `0` | Set `1` to disable TLS certificate validation for connector API calls. |
+| `CERTIFICATE_RETRY_MAX_ATTEMPTS` | `3` | Max connector operation retries. |
+| `CERTIFICATE_RETRY_BACKOFF_MS` | `1000` | Initial backoff (ms). |
+| `CERTIFICATE_HTTP_ENABLED` | `0` | Set `1` to enable native HttpListener input path. |
+| `CERTIFICATE_HTTP_PREFIX` | `http://localhost:8443/` | HttpListener prefix actually consumed by `core/Http-Listener.psm1`. |
+| `CERTIFICATE_DISABLE_ROLLBACK` | `0` | Set `1` to disable rollback execution. |
+| `CERTIFICATE_HTTP_HOST` | `127.0.0.1` | Compatibility key; not currently used by listener startup path. |
+| `CERTIFICATE_HTTP_PORT` | `8088` | Compatibility key; not currently used by listener startup path. |
 
 ### Env file resolution order
 
-`Import-EnvFile` resolves `certificaat.env` in this order:
+`Import-EnvFile` resolves `certificate.env` in this order:
 1. explicit `-Path`
-2. `CERTIFICAAT_ENV_FILE`
-3. `./certificaat.env` (current working directory)
-4. `$CERTIFICAAT_CONFIG_DIR/certificaat.env`
+2. `CERTIFICATE_ENV_FILE`
+3. `./certificate.env` (current working directory)
+4. `$CERTIFICATE_CONFIG_DIR/certificate.env`
 
 ---
 
 ## First-time setup (bootstrap sequence)
 
-`certificaat-setup.ps1` calls `Initialize-CertificaatConfig` immediately, so a valid env file must already exist before running setup.
+`certificate-setup.ps1` calls `Initialize-CertificateConfig` immediately, so a valid env file must already exist before running setup.
 
-1. Create `certificaat.env` with all required keys.
-2. Ensure `CERTIFICAAT_CONFIG_DIR`, `CERTIFICAAT_DROP_DIR`, `CERTIFICAAT_STATE_DIR`, and `CERTIFICAAT_LOG_DIR` directories exist.
+1. Create `certificate.env` with all required keys.
+2. Ensure `CERTIFICATE_CONFIG_DIR`, `CERTIFICATE_DROP_DIR`, `CERTIFICATE_STATE_DIR`, and `CERTIFICATE_LOG_DIR` directories exist.
 3. Run once as administrator to register event source:
 
    ```powershell
-   New-EventLog -LogName Application -Source Certificaat
+   New-EventLog -LogName Application -Source Certificate
    ```
 
 4. Run setup UI:
 
    ```powershell
-   .\certificaat-setup.ps1
+   .\certificate-setup.ps1
    ```
 
 5. Configure ACME values, devices, and deployment policies.
@@ -144,12 +144,12 @@ ACME_DIRECTORY=https://acme-v02.api.letsencrypt.org/directory
 ACME_KID=<kid>
 ACME_HMAC_SECRET=<hmac>
 DOMAINS=example.com,www.example.com
-ACME_SCRIPT_PATH=dist\Scripts\New-CertificaatDropFile.ps1
-CERTIFICAAT_CONFIG_DIR=C:\certificaat\config
-CERTIFICAAT_DROP_DIR=C:\certificaat\drop
-CERTIFICAAT_STATE_DIR=C:\certificaat\state
-CERTIFICAAT_LOG_DIR=C:\certificaat\logs
-CERTIFICAAT_API_KEY=<strong-random-token>
+ACME_SCRIPT_PATH=dist\Scripts\New-CertificateDropFile.ps1
+CERTIFICATE_CONFIG_DIR=C:\certificate\config
+CERTIFICATE_DROP_DIR=C:\certificate\drop
+CERTIFICATE_STATE_DIR=C:\certificate\state
+CERTIFICATE_LOG_DIR=C:\certificate\logs
+CERTIFICATE_API_KEY=<strong-random-token>
 ```
 
 ---
@@ -157,23 +157,23 @@ CERTIFICAAT_API_KEY=<strong-random-token>
 ## Run as scheduled task
 
 ```cmd
-schtasks /Create /SC MINUTE /MO 5 /TN "Certificaat-Orchestrator" /TR "powershell.exe -ExecutionPolicy Bypass -File C:\certificaat\certificaat-orchestrator.ps1" /RU "SYSTEM"
+schtasks /Create /SC MINUTE /MO 5 /TN "Certificate-Orchestrator" /TR "powershell.exe -ExecutionPolicy Bypass -File C:\certificate\certificate-orchestrator.ps1" /RU "SYSTEM"
 ```
 
 ---
 
 ## HTTP listener behavior
 
-When `CERTIFICAAT_HTTP_ENABLED=1`, orchestrator starts a background HttpListener job.
+When `CERTIFICATE_HTTP_ENABLED=1`, orchestrator starts a background HttpListener job.
 
-- Prefix: `CERTIFICAAT_HTTP_PREFIX`
+- Prefix: `CERTIFICATE_HTTP_PREFIX`
 - Health endpoint: `GET /health` (no auth)
 - Event endpoint: `POST /events` (auth required)
 - Job endpoints: `GET /jobs/<renewal_id>` and `GET /jobs/status/<job_id>` (auth required)
 
 Auth accepted:
-- `X-API-Key: <CERTIFICAAT_API_KEY>`
-- `Authorization: Bearer <CERTIFICAAT_API_KEY>`
+- `X-API-Key: <CERTIFICATE_API_KEY>`
+- `Authorization: Bearer <CERTIFICATE_API_KEY>`
 
 ---
 
@@ -187,9 +187,9 @@ Each file should contain a certificate event matching `Assert-CertificateEvent` 
   "renewal_id": "renewal-123",
   "deployment_policy_id": "prod-edge",
   "domain": "example.com",
-  "cert_path": "C:\\certificaat\\out\\cert.pem",
-  "key_path": "C:\\certificaat\\out\\key.pem",
-  "fullchain_path": "C:\\certificaat\\out\\fullchain.pem",
+  "cert_path": "C:\\certificate\\out\\cert.pem",
+  "key_path": "C:\\certificate\\out\\key.pem",
+  "fullchain_path": "C:\\certificate\\out\\fullchain.pem",
   "thumbprint": "ABC123",
   "issuer": "Let's Encrypt",
   "not_before": "2026-04-21T00:00:00Z",
@@ -201,18 +201,18 @@ Each file should contain a certificate event matching `Assert-CertificateEvent` 
 
 ## Integration with simple-acme
 
-Use Script Installation Plugin to emit Certificaat drop files.
+Use Script Installation Plugin to emit Certificate drop files.
 
 ```text
 --installation Script
---script "dist\Scripts\New-CertificaatDropFile.ps1"
+--script "dist\Scripts\New-CertificateDropFile.ps1"
 --scriptparameters "'<POLICY-ID>' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
 ```
 
 ### Reconcile existing simple-acme state to `.env`
 
 ```powershell
-.\certificaat-simple-acme-reconcile.ps1
+.\certificate-simple-acme-reconcile.ps1
 ```
 
 Outcomes:
@@ -266,26 +266,26 @@ Reconciler also enforces in `%PROGRAMDATA%\simple-acme\settings.json`:
 
 ```powershell
 # Create backup (prompts for passphrase if omitted)
-.\certificaat-backup.ps1 -OutputPath C:\secure\certificaat-2026-04-21.certbak
+.\certificate-backup.ps1 -OutputPath C:\secure\certificate-2026-04-21.certbak
 
 # Restore backup
-.\certificaat-restore.ps1 -BackupPath \\fileserver\backups\certificaat-2026-04-21.certbak
+.\certificate-restore.ps1 -BackupPath \\fileserver\backups\certificate-2026-04-21.certbak
 
 # Validate backup readability without writing files
-.\certificaat-restore.ps1 -BackupPath .\certificaat-2026-04-21.certbak -DryRun
+.\certificate-restore.ps1 -BackupPath .\certificate-2026-04-21.certbak -DryRun
 ```
 
 ---
 
 ## Troubleshooting quick hits
 
-- `No certificaat.env could be resolved`:
-  - set `CERTIFICAAT_ENV_FILE`, or
-  - place `certificaat.env` in current directory, or
-  - place it under `$CERTIFICAAT_CONFIG_DIR`.
+- `No certificate.env could be resolved`:
+  - set `CERTIFICATE_ENV_FILE`, or
+  - place `certificate.env` in current directory, or
+  - place it under `$CERTIFICATE_CONFIG_DIR`.
 - `Missing required environment keys`:
   - ensure all required keys listed above are present and non-empty.
 - HTTP mode returns `401 unauthorized`:
-  - send `X-API-Key` or Bearer token matching `CERTIFICAAT_API_KEY`.
+  - send `X-API-Key` or Bearer token matching `CERTIFICATE_API_KEY`.
 - Reconcile fails with missing `wacs`:
-  - ensure `wacs` is installed and available on `PATH` before running `certificaat-simple-acme-reconcile.ps1`.
+  - ensure `wacs` is installed and available on `PATH` before running `certificate-simple-acme-reconcile.ps1`.
