@@ -18,11 +18,15 @@ function Resolve-DeploymentPolicy {
         Join-Path $PSScriptRoot 'policies.json'
     }
     if (-not (Test-Path -LiteralPath $policyFile)) {
-        Write-CertificateLog -Level Error -Message "policies.json missing: $policyFile"
+        Write-CertificateLog -Level Warn -Message "policies.json not found at '$policyFile'. Run certificate-setup.ps1 and configure at least one deployment policy before processing events."
         return $null
     }
     $raw = Get-Content -Raw -Encoding UTF8 -Path $policyFile | ConvertFrom-Json
     $policies = ConvertTo-Hashtable -InputObject $raw
+    if (-not $policies -or @($policies).Count -eq 0) {
+        Write-CertificateLog -Level Warn -Message "policies.json exists but contains no policies. Run certificate-setup.ps1 and add at least one deployment policy."
+        return $null
+    }
     $policy = $policies | Where-Object { $_.policy_id -eq $PolicyId } | Select-Object -First 1
     if ($null -eq $policy) { throw "Deployment policy '$PolicyId' was not found in policies.json." }
 
