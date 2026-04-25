@@ -14,7 +14,9 @@ param(
     [string]$InstallDir = (Join-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath '..') -ChildPath '.dotnet'),
     [string]$SdkChannel = '10.0',
     [switch]$ForceInstallSdk,
-    [switch]$NoRestore
+    [switch]$NoRestore,
+    [string]$Runtime     = 'win-x64',
+    [switch]$PublishMain
 )
 
 Set-StrictMode -Version Latest
@@ -106,3 +108,18 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Step 'Build succeeded.'
+
+if ($PublishMain) {
+    $mainProject = Join-Path -Path (Split-Path -Path $SolutionPath -Parent) -ChildPath 'main\wacs.csproj'
+    if (-not (Test-Path -LiteralPath $mainProject)) {
+        throw "Main project not found: $mainProject"
+    }
+    $publishArgs = @('publish', $mainProject, '-c', 'Release', '-r', $Runtime, '--self-contained', '--nologo', '--verbosity', 'minimal')
+    Write-Step "Running: dotnet $($publishArgs -join ' ')"
+    & $dotnet @publishArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Publish failed with exit code $LASTEXITCODE"
+    }
+    $publishDir = Join-Path -Path (Split-Path -Path $mainProject -Parent) -ChildPath "bin\Release\net10.0\$Runtime\publish"
+    Write-Step "Publish output: $publishDir"
+}
