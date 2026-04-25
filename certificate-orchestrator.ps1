@@ -11,7 +11,12 @@ Import-Module "$PSScriptRoot/core/Http-Listener.psm1" -Force
 
 function Resolve-DeploymentPolicy {
     param([string]$PolicyId)
-    $policyFile = Join-Path $PSScriptRoot 'policies.json'
+    $policyFile = if (-not [string]::IsNullOrWhiteSpace($env:CERTIFICATE_CONFIG_DIR) -and
+                   (Test-Path -LiteralPath (Join-Path $env:CERTIFICATE_CONFIG_DIR 'policies.json'))) {
+        Join-Path $env:CERTIFICATE_CONFIG_DIR 'policies.json'
+    } else {
+        Join-Path $PSScriptRoot 'policies.json'
+    }
     if (-not (Test-Path -LiteralPath $policyFile)) {
         Write-CertificateLog -Level Error -Message "policies.json missing: $policyFile"
         return $null

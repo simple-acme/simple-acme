@@ -38,7 +38,6 @@
 		'certificate-backup.ps1',
 		'certificate-restore.ps1',
 		'config.ps1',
-		'policies.json',
 		'core',
 		'setup',
 		'connectors'
