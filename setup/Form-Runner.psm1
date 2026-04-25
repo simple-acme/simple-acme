@@ -148,6 +148,12 @@ function Invoke-FirstRunWizard {
 
     $envTarget = Join-Path $pathValues.CERTIFICATE_CONFIG_DIR 'certificate.env'
     Write-EnvFile -Values $all -Path $envTarget
+    $policiesPath = Join-Path $pathValues.CERTIFICATE_CONFIG_DIR 'policies.json'
+    if (-not (Test-Path -LiteralPath $policiesPath)) {
+        $tmp = [System.IO.Path]::GetTempFileName()
+        [System.IO.File]::WriteAllText($tmp, '[]', [System.Text.Encoding]::UTF8)
+        Move-Item -LiteralPath $tmp -Destination $policiesPath -Force
+    }
     [Environment]::SetEnvironmentVariable('CERTIFICATE_CONFIG_DIR', $pathValues.CERTIFICATE_CONFIG_DIR)
 
     Show-TuiStatus -Message "Wizard complete. certificate.env saved to: $envTarget" `
