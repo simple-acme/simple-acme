@@ -9,9 +9,54 @@ $TuiColors = @{
 
 function Clear-TuiScreen { [Console]::BackgroundColor = $TuiColors.Background; [Console]::Clear(); [Console]::SetCursorPosition(0,0) }
 function Read-TuiKey { [Console]::ReadKey($true) }
-function Write-TuiAt { param([int]$X,[int]$Y,[string]$Text,[ConsoleColor]$Fg=[ConsoleColor]::Gray,[ConsoleColor]$Bg=[ConsoleColor]::Black); [Console]::ForegroundColor=$Fg; [Console]::BackgroundColor=$Bg; [Console]::SetCursorPosition($X,$Y); [Console]::Write($Text); [Console]::ForegroundColor=$TuiColors.Text; [Console]::BackgroundColor=$TuiColors.Background }
+function Write-TuiAt {
+    param(
+        [int]$X,
+        [int]$Y,
+        [string]$Text,
+        [ConsoleColor]$Fg=[ConsoleColor]::Gray,
+        [ConsoleColor]$Bg=[ConsoleColor]::Black
+    )
+
+    $width = [Console]::WindowWidth
+    $height = [Console]::WindowHeight
+    if ($width -le 0 -or $height -le 0) { return }
+    if ($X -lt 0 -or $Y -lt 0 -or $X -ge $width -or $Y -ge $height) { return }
+
+    $output = if ($null -eq $Text) { '' } else { [string]$Text }
+    $available = $width - $X
+    if ($available -le 0) { return }
+    if ($output.Length -gt $available) { $output = $output.Substring(0, $available) }
+
+    [Console]::ForegroundColor = $Fg
+    [Console]::BackgroundColor = $Bg
+    [Console]::SetCursorPosition($X, $Y)
+    [Console]::Write($output)
+    [Console]::ForegroundColor = $TuiColors.Text
+    [Console]::BackgroundColor = $TuiColors.Background
+}
 function Write-TuiBox { param([int]$X,[int]$Y,[int]$Width,[int]$Height,[string]$Title=''); if($Width -lt 2 -or $Height -lt 2){return}; Write-TuiAt $X $Y ('+'+('-'*($Width-2))+'+') $TuiColors.Accent; for($i=1;$i -lt ($Height-1);$i++){ Write-TuiAt $X ($Y+$i) ('|' + (' '*($Width-2)) + '|') $TuiColors.Accent }; Write-TuiAt $X ($Y+$Height-1) ('+'+('-'*($Width-2))+'+') $TuiColors.Accent; if($Title){ Write-TuiAt ($X+2) $Y $Title $TuiColors.Title } }
-function Show-TuiStatus { param([string]$Message,[ValidateSet('Info','Success','Error','Warning')][string]$Type='Info',[int]$Row); $fg=switch($Type){'Success'{$TuiColors.Success}'Error'{$TuiColors.Error}'Warning'{$TuiColors.Warning}default{$TuiColors.Text}}; Write-TuiAt 0 $Row ($Message.PadRight([Console]::WindowWidth)) $fg }
+function Show-TuiStatus {
+    param(
+        [string]$Message,
+        [ValidateSet('Info','Success','Error','Warning')][string]$Type='Info',
+        [int]$Row
+    )
+
+    $fg = switch ($Type) {
+        'Success' { $TuiColors.Success }
+        'Error' { $TuiColors.Error }
+        'Warning' { $TuiColors.Warning }
+        default { $TuiColors.Text }
+    }
+
+    $height = [Console]::WindowHeight
+    if ($height -le 0) { return }
+    $safeRow = [Math]::Max(0, [Math]::Min($Row, $height - 1))
+    $width = [Math]::Max(1, [Console]::WindowWidth)
+    $safeMessage = if ($null -eq $Message) { '' } else { [string]$Message }
+    Write-TuiAt 0 $safeRow ($safeMessage.PadRight($width)) $fg
+}
 
 function Show-TuiMenu {
     param([Parameter(Mandatory)][hashtable]$Menu,[int]$X=2,[int]$Y=4)
