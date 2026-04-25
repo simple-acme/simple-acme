@@ -63,6 +63,18 @@ Set all required values:
 - `CERTIFICAAT_LOG_DIR`
 - `CERTIFICAAT_API_KEY`
 
+`CERTIFICAAT_API_KEY` must be a real secret value (not a placeholder string). Generate a high-entropy value, for example:
+
+```powershell
+[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
+```
+
+Then set it in `certificaat.env`, e.g.
+
+```dotenv
+CERTIFICAAT_API_KEY=<paste-generated-value-here>
+```
+
 ### 3.3 Create directories referenced by env
 
 ```powershell
