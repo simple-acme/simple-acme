@@ -85,7 +85,7 @@ if ($Runtime -like 'linux*') {
 $mainBinary = Join-Path -Path $mainPublishDir -ChildPath $mainBinaryName
 Copy-Item -LiteralPath $mainBinary -Destination $DistDir
 
-$settingsPath = Join-Path -Path $mainPublishDir -ChildPath 'settings.json'
+$settingsPath = Join-Path -Path $srcRoot -ChildPath 'main\settings.json'
 $settingsDefaultPath = Join-Path -Path $DistDir -ChildPath 'settings_default.json'
 Copy-Item -LiteralPath $settingsPath -Destination $settingsDefaultPath
 
