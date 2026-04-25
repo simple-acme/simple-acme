@@ -1,5 +1,6 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$script:tuiModule = $null
 
 $tuiEngineModulePath = Join-Path $PSScriptRoot 'core/Tui-Engine.psm1'
 $formRunnerModulePath = Join-Path $PSScriptRoot 'setup/Form-Runner.psm1'
@@ -24,8 +25,9 @@ Run this script from a full repository checkout and confirm the module file exis
     }
 }
 
-Import-Module $tuiEngineModulePath -Force -Global
-Assert-SetupCommandAvailable -CommandName 'Show-TuiMenu' -ExpectedModulePath $tuiEngineModulePath
+$script:tuiModule = Import-Module "$PSScriptRoot/core/Tui-Engine.psm1" -Force -PassThru -ErrorAction Stop
+if ($null -eq $script:tuiModule) { throw "TUI module failed to load from $PSScriptRoot/core/Tui-Engine.psm1" }
+if (-not (Get-Command Show-TuiMenu -Module $script:tuiModule.Name -ErrorAction SilentlyContinue)) { throw "Show-TuiMenu not exported by module $($script:tuiModule.Name)" }
 
 Import-Module $formRunnerModulePath -Force -Global
 Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModulePath $formRunnerModulePath
