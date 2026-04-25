@@ -1,5 +1,6 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$script:tuiModule = $null
 
 $tuiEngineModulePath = Join-Path $PSScriptRoot 'core/Tui-Engine.psm1'
 $formRunnerModulePath = Join-Path $PSScriptRoot 'setup/Form-Runner.psm1'
@@ -24,8 +25,9 @@ Run this script from a full repository checkout and confirm the module file exis
     }
 }
 
-Import-Module $tuiEngineModulePath -Force -Global
-Assert-SetupCommandAvailable -CommandName 'Show-TuiMenu' -ExpectedModulePath $tuiEngineModulePath
+$script:tuiModule = Import-Module "$PSScriptRoot/core/Tui-Engine.psm1" -Force -PassThru -ErrorAction Stop
+if ($null -eq $script:tuiModule) { throw "TUI module failed to load from $PSScriptRoot/core/Tui-Engine.psm1" }
+if (-not (Get-Command Show-TuiMenu -Module $script:tuiModule.Name -ErrorAction SilentlyContinue)) { throw "Show-TuiMenu not exported by module $($script:tuiModule.Name)" }
 
 Import-Module $formRunnerModulePath -Force -Global
 Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModulePath $formRunnerModulePath
@@ -53,10 +55,8 @@ if (-not (Test-Path -LiteralPath $configDir)) { New-Item -ItemType Directory -Pa
 $menuStack = @($CertificateMenuTree)
 while ($menuStack.Count -gt 0) {
     $currentMenu = $menuStack[$menuStack.Count - 1]
-    $selected = & $tuiModule {
-        param($menu)
-        Show-TuiMenu -Menu $menu
-    } $currentMenu
+    if ($null -eq $script:tuiModule) { throw "Internal error: tuiModule not initialized before menu rendering." }
+    $selected = & $script:tuiModule { param($m) Show-TuiMenu -Menu $m } $currentMenu
 
     if ($null -eq $selected -or $selected -eq 'exit') {
         if ($menuStack.Count -eq 1) { break }
@@ -85,28 +85,28 @@ while ($menuStack.Count -gt 0) {
             if ($path) { & "$PSScriptRoot/certificate-restore.ps1" -BackupPath $path -DryRun }
         }
         'java_keystore_info'             {
-            & $tuiModule {
+            & $script:tuiModule {
                 param($message, $row)
                 Show-TuiStatus -Message $message -Type Warning -Row $row
             } 'Java KeyStore connector is disabled: requires JDK/keytool.exe.' ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         'vbr_cloud_gateway_info'         {
-            & $tuiModule {
+            & $script:tuiModule {
                 param($message, $row)
                 Show-TuiStatus -Message $message -Type Warning -Row $row
             } 'Veeam VBR connector is disabled: requires VBR PowerShell module.' ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         'azure_application_gateway_info' {
-            & $tuiModule {
+            & $script:tuiModule {
                 param($message, $row)
                 Show-TuiStatus -Message $message -Type Warning -Row $row
             } 'Azure Application Gateway connector is disabled: requires AzureRM module.' ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         'azure_ad_app_proxy_info'        {
-            & $tuiModule {
+            & $script:tuiModule {
                 param($message, $row)
                 Show-TuiStatus -Message $message -Type Warning -Row $row
             } 'Azure AD App Proxy connector is disabled: requires AzureAD module.' ([Console]::WindowHeight-2)
