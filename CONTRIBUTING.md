@@ -31,6 +31,12 @@ Or auto-bootstrap SDK when missing:
 pwsh -NoLogo -NoProfile -File build/compile-local.ps1
 ```
 
+Optional publish check (main executable):
+
+```powershell
+pwsh -NoLogo -NoProfile -File build/compile-local.ps1 -PublishMain -Runtime win-x64
+```
+
 ### Test runner
 
 ```powershell
@@ -111,9 +117,10 @@ function Invoke-ExampleConnectorActivate { param([hashtable]$Context) Invoke-Exa
 function Invoke-ExampleConnectorVerify { param([hashtable]$Context) Invoke-ExampleVerify -Context $Context }
 function Invoke-ExampleConnectorRollback { param([hashtable]$Context) Invoke-ExampleRollback -Context $Context }
 
-Export-ModuleMember -Function \
-    Invoke-ExampleProbe,Invoke-ExampleDeploy,Invoke-ExampleBind,Invoke-ExampleActivate,Invoke-ExampleVerify,Invoke-ExampleRollback,\
-    Invoke-ExampleConnectorProbe,Invoke-ExampleConnectorDeploy,Invoke-ExampleConnectorBind,Invoke-ExampleConnectorActivate,Invoke-ExampleConnectorVerify,Invoke-ExampleConnectorRollback
+Export-ModuleMember -Function @(
+    'Invoke-ExampleProbe','Invoke-ExampleDeploy','Invoke-ExampleBind','Invoke-ExampleActivate','Invoke-ExampleVerify','Invoke-ExampleRollback',
+    'Invoke-ExampleConnectorProbe','Invoke-ExampleConnectorDeploy','Invoke-ExampleConnectorBind','Invoke-ExampleConnectorActivate','Invoke-ExampleConnectorVerify','Invoke-ExampleConnectorRollback'
+)
 ```
 
 ---

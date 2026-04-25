@@ -42,6 +42,13 @@ What `build/compile-local.ps1` does:
 - Reuses existing `dotnet` when available.
 - Otherwise downloads `https://dot.net/v1/dotnet-install.ps1` and installs SDK channel `10.0` into `.\.dotnet`.
 - Builds `src/wacs.slnx`.
+- Optional `-PublishMain` publishes `src/main/wacs.csproj` for a selected runtime (default `win-x64`).
+
+Publish example:
+
+```powershell
+pwsh -NoLogo -NoProfile -File build/compile-local.ps1 -PublishMain -Runtime win-x64
+```
 
 > Visual Studio 2022 (17.x) does not target `net10.0`. Use CLI builds with .NET 10 SDK.
 
