@@ -59,7 +59,12 @@ function Show-TuiStatus {
 }
 
 function Show-TuiMenu {
-    param([Parameter(Mandatory)][hashtable]$Menu,[int]$X=2,[int]$Y=4)
+    param(
+        [Parameter(Mandatory)][hashtable]$Menu,
+        [int]$X=2,
+        [int]$Y=4,
+        [switch]$DisableSubmenuRecursion
+    )
     $selected = 0
     while ($true) {
         Clear-TuiScreen
@@ -78,6 +83,7 @@ function Show-TuiMenu {
                 $item = $Menu.Items[$selected]
                 if ($item.Type -eq 'back') { return $null }
                 if ($item.Type -eq 'submenu') {
+                    if ($DisableSubmenuRecursion) { return $item.Key }
                     $child = Show-TuiMenu -Menu @{ Title=$item.Label; Items=($item.Items + @(@{Key='back';Label='.. Back';Type='back'})) }
                     if ($child) { return $child }
                     continue

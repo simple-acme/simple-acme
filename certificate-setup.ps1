@@ -25,14 +25,15 @@ Run this script from a full repository checkout and confirm the module file exis
     }
 }
 
-$script:tuiModule = Import-Module "$PSScriptRoot/core/Tui-Engine.psm1" -Force -PassThru -ErrorAction Stop
-if ($null -eq $script:tuiModule) { throw "TUI module failed to load from $PSScriptRoot/core/Tui-Engine.psm1" }
-if (-not (Get-Command Show-TuiMenu -Module $script:tuiModule.Name -ErrorAction SilentlyContinue)) { throw "Show-TuiMenu not exported by module $($script:tuiModule.Name)" }
+Import-Module $tuiEngineModulePath -Force -Global
+Assert-SetupCommandAvailable -CommandName 'Show-TuiMenu' -ExpectedModulePath $tuiEngineModulePath
+Assert-SetupCommandAvailable -CommandName 'Show-TuiStatus' -ExpectedModulePath $tuiEngineModulePath
 
 Import-Module $formRunnerModulePath -Force -Global
 Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModulePath $formRunnerModulePath
 Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeForm' -ExpectedModulePath $formRunnerModulePath
 Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyEditor' -ExpectedModulePath $formRunnerModulePath
+Assert-SetupCommandAvailable -CommandName 'Invoke-DeviceForm' -ExpectedModulePath $formRunnerModulePath
 . "$PSScriptRoot/setup/Menu-Tree.ps1"
 
 $envPath = if ($env:CERTIFICATE_CONFIG_DIR) {
@@ -55,7 +56,7 @@ if (-not (Test-Path -LiteralPath $configDir)) { New-Item -ItemType Directory -Pa
 $menuStack = @($CertificateMenuTree)
 while ($menuStack.Count -gt 0) {
     $currentMenu = $menuStack[$menuStack.Count - 1]
-    $selected = Show-TuiMenu -Menu $currentMenu
+    $selected = Show-TuiMenu -Menu $currentMenu -DisableSubmenuRecursion
 
     if ($null -eq $selected -or $selected -eq 'exit') {
         if ($menuStack.Count -eq 1) { break }
@@ -67,7 +68,7 @@ while ($menuStack.Count -gt 0) {
     if ($null -eq $menuItem) { continue }
 
     if ($menuItem.Type -eq 'submenu') {
-        $menuStack += ,@{ Title = $menuItem.Label; Items = @($menuItem.Items + @{ Label='Back'; Key='exit'; Type='action' }) }
+        $menuStack += ,@{ Title = $menuItem.Label; Items = @($menuItem.Items) }
         continue
     }
 
