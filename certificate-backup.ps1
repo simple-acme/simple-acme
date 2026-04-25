@@ -15,6 +15,9 @@ Import-Module "$PSScriptRoot/core/Config-Store.psm1" -Force
 try {
     if ((Test-Path -LiteralPath $OutputPath) -and -not $Force) { throw "Output path already exists: $OutputPath. Use -Force to overwrite." }
 
+    $p1 = $null
+    $p2 = $null
+
     if (-not $Passphrase) {
         $p1 = Read-Host -AsSecureString -Prompt 'Enter backup passphrase (store this securely — required for restore):'
         $p2 = Read-Host -AsSecureString -Prompt 'Confirm backup passphrase'
