@@ -53,10 +53,7 @@ if (-not (Test-Path -LiteralPath $configDir)) { New-Item -ItemType Directory -Pa
 $menuStack = @($CertificateMenuTree)
 while ($menuStack.Count -gt 0) {
     $currentMenu = $menuStack[$menuStack.Count - 1]
-    $selected = & $tuiModule {
-        param($menu)
-        Show-TuiMenu -Menu $menu
-    } $currentMenu
+    $selected = Show-TuiMenu -Menu $currentMenu
 
     if ($null -eq $selected -or $selected -eq 'exit') {
         if ($menuStack.Count -eq 1) { break }
@@ -85,31 +82,19 @@ while ($menuStack.Count -gt 0) {
             if ($path) { & "$PSScriptRoot/certificate-restore.ps1" -BackupPath $path -DryRun }
         }
         'java_keystore_info'             {
-            & $tuiModule {
-                param($message, $row)
-                Show-TuiStatus -Message $message -Type Warning -Row $row
-            } 'Java KeyStore connector is disabled: requires JDK/keytool.exe.' ([Console]::WindowHeight-2)
+            Show-TuiStatus -Message 'Java KeyStore connector is disabled: requires JDK/keytool.exe.' -Type Warning -Row ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         'vbr_cloud_gateway_info'         {
-            & $tuiModule {
-                param($message, $row)
-                Show-TuiStatus -Message $message -Type Warning -Row $row
-            } 'Veeam VBR connector is disabled: requires VBR PowerShell module.' ([Console]::WindowHeight-2)
+            Show-TuiStatus -Message 'Veeam VBR connector is disabled: requires VBR PowerShell module.' -Type Warning -Row ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         'azure_application_gateway_info' {
-            & $tuiModule {
-                param($message, $row)
-                Show-TuiStatus -Message $message -Type Warning -Row $row
-            } 'Azure Application Gateway connector is disabled: requires AzureRM module.' ([Console]::WindowHeight-2)
+            Show-TuiStatus -Message 'Azure Application Gateway connector is disabled: requires AzureRM module.' -Type Warning -Row ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         'azure_ad_app_proxy_info'        {
-            & $tuiModule {
-                param($message, $row)
-                Show-TuiStatus -Message $message -Type Warning -Row $row
-            } 'Azure AD App Proxy connector is disabled: requires AzureAD module.' ([Console]::WindowHeight-2)
+            Show-TuiStatus -Message 'Azure AD App Proxy connector is disabled: requires AzureAD module.' -Type Warning -Row ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         default          { Invoke-DeviceForm -ConnectorType $selected -ConfigDir $configDir | Out-Null }
