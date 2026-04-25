@@ -6,7 +6,7 @@ $AcmeSchema = @(
     @{ Name='ACME_KID'; Label='ACME KID'; Type='secret'; Required=$true; Placeholder=''; HelpText='ACME external account KID' },
     @{ Name='ACME_HMAC_SECRET'; Label='ACME HMAC secret'; Type='secret'; Required=$true; Placeholder=''; HelpText='ACME external account HMAC secret' },
     @{ Name='DOMAINS'; Label='Domains (comma-separated)'; Type='string'; Required=$true; Placeholder='example.com,www.example.com'; HelpText='Domain list for certificate issuance' },
-    @{ Name='ACME_SCRIPT_PATH'; Label='ACME script path'; Type='string'; Required=$true; Placeholder='C:\simple-acme\dist\Scripts\New-CertificateDropFile.ps1'; HelpText='Absolute path to New-CertificateDropFile.ps1' }
+    @{ Name='ACME_SCRIPT_PATH'; Label='ACME script path'; Type='string'; Required=$true; Placeholder='C:\certificate\dist\Scripts\New-CertificateDropFile.ps1'; HelpText='Absolute path to New-CertificateDropFile.ps1' }
 )
 
 $CertificateMenuTree = @{
