@@ -26,11 +26,13 @@ Run this script from a full repository checkout and confirm the module file exis
 
 Import-Module $tuiEngineModulePath -Force -Global
 Assert-SetupCommandAvailable -CommandName 'Show-TuiMenu' -ExpectedModulePath $tuiEngineModulePath
+Assert-SetupCommandAvailable -CommandName 'Show-TuiStatus' -ExpectedModulePath $tuiEngineModulePath
 
 Import-Module $formRunnerModulePath -Force -Global
 Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModulePath $formRunnerModulePath
 Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeForm' -ExpectedModulePath $formRunnerModulePath
 Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyEditor' -ExpectedModulePath $formRunnerModulePath
+Assert-SetupCommandAvailable -CommandName 'Invoke-DeviceForm' -ExpectedModulePath $formRunnerModulePath
 . "$PSScriptRoot/setup/Menu-Tree.ps1"
 
 $envPath = if ($env:CERTIFICATE_CONFIG_DIR) {
@@ -53,10 +55,7 @@ if (-not (Test-Path -LiteralPath $configDir)) { New-Item -ItemType Directory -Pa
 $menuStack = @($CertificateMenuTree)
 while ($menuStack.Count -gt 0) {
     $currentMenu = $menuStack[$menuStack.Count - 1]
-    $selected = & $tuiModule {
-        param($menu)
-        Show-TuiMenu -Menu $menu
-    } $currentMenu
+    $selected = Show-TuiMenu -Menu $currentMenu -DisableSubmenuRecursion
 
     if ($null -eq $selected -or $selected -eq 'exit') {
         if ($menuStack.Count -eq 1) { break }
@@ -68,7 +67,7 @@ while ($menuStack.Count -gt 0) {
     if ($null -eq $menuItem) { continue }
 
     if ($menuItem.Type -eq 'submenu') {
-        $menuStack += ,@{ Title = $menuItem.Label; Items = @($menuItem.Items + @{ Label='Back'; Key='exit'; Type='action' }) }
+        $menuStack += ,@{ Title = $menuItem.Label; Items = @($menuItem.Items) }
         continue
     }
 
@@ -85,31 +84,19 @@ while ($menuStack.Count -gt 0) {
             if ($path) { & "$PSScriptRoot/certificate-restore.ps1" -BackupPath $path -DryRun }
         }
         'java_keystore_info'             {
-            & $tuiModule {
-                param($message, $row)
-                Show-TuiStatus -Message $message -Type Warning -Row $row
-            } 'Java KeyStore connector is disabled: requires JDK/keytool.exe.' ([Console]::WindowHeight-2)
+            Show-TuiStatus -Message 'Java KeyStore connector is disabled: requires JDK/keytool.exe.' -Type Warning -Row ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         'vbr_cloud_gateway_info'         {
-            & $tuiModule {
-                param($message, $row)
-                Show-TuiStatus -Message $message -Type Warning -Row $row
-            } 'Veeam VBR connector is disabled: requires VBR PowerShell module.' ([Console]::WindowHeight-2)
+            Show-TuiStatus -Message 'Veeam VBR connector is disabled: requires VBR PowerShell module.' -Type Warning -Row ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         'azure_application_gateway_info' {
-            & $tuiModule {
-                param($message, $row)
-                Show-TuiStatus -Message $message -Type Warning -Row $row
-            } 'Azure Application Gateway connector is disabled: requires AzureRM module.' ([Console]::WindowHeight-2)
+            Show-TuiStatus -Message 'Azure Application Gateway connector is disabled: requires AzureRM module.' -Type Warning -Row ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         'azure_ad_app_proxy_info'        {
-            & $tuiModule {
-                param($message, $row)
-                Show-TuiStatus -Message $message -Type Warning -Row $row
-            } 'Azure AD App Proxy connector is disabled: requires AzureAD module.' ([Console]::WindowHeight-2)
+            Show-TuiStatus -Message 'Azure AD App Proxy connector is disabled: requires AzureAD module.' -Type Warning -Row ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
         default          { Invoke-DeviceForm -ConnectorType $selected -ConfigDir $configDir | Out-Null }
