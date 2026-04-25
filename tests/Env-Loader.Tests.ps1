@@ -2,17 +2,17 @@ Import-Module "$PSScriptRoot/../core/Env-Loader.psm1" -Force
 
 Describe 'Env loader' {
     BeforeEach {
-        $script:path = 'TestDrive:\certificaat.env'
+        $script:path = 'TestDrive:\certificate.env'
         @(
             'ACME_DIRECTORY=https://acme.example.com/directory',
             'ACME_KID=kid',
             'ACME_HMAC_SECRET=secret',
             'DOMAINS=example.com',
-            'ACME_SCRIPT_PATH=C:\\simple-acme\\dist\\Scripts\\New-CertificaatDropFile.ps1',
-            'CERTIFICAAT_CONFIG_DIR=C:\cfg',
-            'CERTIFICAAT_DROP_DIR=C:\drop',
-            'CERTIFICAAT_STATE_DIR=C:\state',
-            'CERTIFICAAT_LOG_DIR=C:\log'
+            'ACME_SCRIPT_PATH=C:\\simple-acme\\dist\\Scripts\\New-CertificateDropFile.ps1',
+            'CERTIFICATE_CONFIG_DIR=C:\cfg',
+            'CERTIFICATE_DROP_DIR=C:\drop',
+            'CERTIFICATE_STATE_DIR=C:\state',
+            'CERTIFICATE_LOG_DIR=C:\log'
         ) | Set-Content -Path $script:path -Encoding UTF8
     }
 
@@ -43,7 +43,7 @@ Describe 'Env loader' {
 
     It 'Import applies optional defaults' {
         $values = Import-EnvFile -Path $script:path -Force
-        $values.CERTIFICAAT_VERIFY_MAX_ATTEMPTS | Should -Be '3'
+        $values.CERTIFICATE_VERIFY_MAX_ATTEMPTS | Should -Be '3'
     }
 
     It 'Import does not overwrite existing without force' {

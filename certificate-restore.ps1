@@ -20,17 +20,17 @@ function Read-BackupPayload {
 
     if (-not (Test-Path -LiteralPath $Path)) { throw "Backup not found: $Path" }
     $bytes = [System.IO.File]::ReadAllBytes($Path)
-    if ($bytes.Length -lt 57) { throw 'File does not appear to be a valid Certificaat backup.' }
+    if ($bytes.Length -lt 57) { throw 'File does not appear to be a valid Certificate backup.' }
     if ($bytes[0] -ne 0x43 -or $bytes[1] -ne 0x45 -or $bytes[2] -ne 0x52 -or $bytes[3] -ne 0x54) {
-        throw 'File does not appear to be a valid Certificaat backup.'
+        throw 'File does not appear to be a valid Certificate backup.'
     }
-    if ($bytes[4] -ne 0x01) { throw 'File does not appear to be a valid Certificaat backup.' }
+    if ($bytes[4] -ne 0x01) { throw 'File does not appear to be a valid Certificate backup.' }
 
     $offset = 5
     $salt = $bytes[$offset..($offset+31)]; $offset += 32
     $iv = $bytes[$offset..($offset+15)]; $offset += 16
     $len = [BitConverter]::ToUInt32($bytes, $offset); $offset += 4
-    if ($offset + $len -gt $bytes.Length) { throw 'File does not appear to be a valid Certificaat backup.' }
+    if ($offset + $len -gt $bytes.Length) { throw 'File does not appear to be a valid Certificate backup.' }
     $cipher = $bytes[$offset..($offset+$len-1)]
 
     try {
@@ -90,19 +90,38 @@ try {
         exit 0
     }
 
-    $targetConfigDir = if (-not [string]::IsNullOrWhiteSpace($ConfigDir)) { $ConfigDir } elseif ($payload.env.CERTIFICAAT_CONFIG_DIR) { [string]$payload.env.CERTIFICAAT_CONFIG_DIR } else { Read-Host 'Enter target config directory' }
+    $targetConfigDir = if (-not [string]::IsNullOrWhiteSpace($ConfigDir)) {
+        $ConfigDir
+    } elseif ($payload.env.CERTIFICATE_CONFIG_DIR) {
+        [string]$payload.env.CERTIFICATE_CONFIG_DIR
+    } elseif ($payload.env.CERTIFICAAT_CONFIG_DIR) {
+        [string]$payload.env.CERTIFICAAT_CONFIG_DIR
+    } else {
+        Read-Host 'Enter target config directory'
+    }
     if (-not (Test-Path -LiteralPath $targetConfigDir)) { New-Item -ItemType Directory -Path $targetConfigDir -Force | Out-Null }
 
-    $envPath = Join-Path $targetConfigDir 'certificaat.env'
+    $restoredApiKey = if ($payload.env.CERTIFICATE_API_KEY) {
+        [string]$payload.env.CERTIFICATE_API_KEY
+    } elseif ($payload.env.CERTIFICAAT_API_KEY) {
+        [string]$payload.env.CERTIFICAAT_API_KEY
+    } else {
+        $newKey = [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
+        Write-Warning "Backup did not contain CERTIFICATE_API_KEY. A new key has been auto-generated: $newKey"
+        $newKey
+    }
+
+    $envPath = Join-Path $targetConfigDir 'certificate.env'
     Write-EnvFile -Values @{
-        ACME_DIRECTORY = [string]$payload.env.ACME_DIRECTORY
-        ACME_KID = [string]$payload.env.ACME_KID
-        ACME_HMAC_SECRET = [string]$payload.env.ACME_HMAC_SECRET
-        DOMAINS = [string]$payload.env.DOMAINS
-        CERTIFICAAT_CONFIG_DIR = [string]$targetConfigDir
-        CERTIFICAAT_DROP_DIR = [string]$payload.env.CERTIFICAAT_DROP_DIR
-        CERTIFICAAT_STATE_DIR = [string]$payload.env.CERTIFICAAT_STATE_DIR
-        CERTIFICAAT_LOG_DIR = [string]$payload.env.CERTIFICAAT_LOG_DIR
+        ACME_DIRECTORY         = [string]$payload.env.ACME_DIRECTORY
+        ACME_KID               = [string]$payload.env.ACME_KID
+        ACME_HMAC_SECRET       = [string]$payload.env.ACME_HMAC_SECRET
+        DOMAINS                = [string]$payload.env.DOMAINS
+        CERTIFICATE_CONFIG_DIR = [string]$targetConfigDir
+        CERTIFICATE_DROP_DIR   = [string]$payload.env.CERTIFICATE_DROP_DIR
+        CERTIFICATE_STATE_DIR  = [string]$payload.env.CERTIFICATE_STATE_DIR
+        CERTIFICATE_LOG_DIR    = [string]$payload.env.CERTIFICATE_LOG_DIR
+        CERTIFICATE_API_KEY    = $restoredApiKey
     } -Path $envPath
 
     $failed = @()
@@ -139,7 +158,7 @@ try {
     [Array]::Clear($parsed.PlainBytes, 0, $parsed.PlainBytes.Length)
 
     Write-Host ("Restore complete. Devices restored: {0}, policies restored: {1}, config dir: {2}" -f (@($payload.devices).Count - $failed.Count), @($payload.policies).Count, $targetConfigDir)
-    Write-Host 'Verify connectivity for each restored device using certificaat-setup.ps1 before resuming certificate operations.'
+    Write-Host 'Verify connectivity for each restored device using certificate-setup.ps1 before resuming certificate operations.'
 
     if ($failed.Count -gt 0) { exit 3 }
     exit 0

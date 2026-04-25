@@ -8,7 +8,7 @@ function Test-ShouldRollback {
         [ValidateSet('VerifyExhausted','ActivateTimeout','DeployInvalid','FanoutFastFail')]
         [string]$Reason
     )
-    if ([Environment]::GetEnvironmentVariable('CERTIFICAAT_DISABLE_ROLLBACK') -eq '1') { return $false }
+    if ([Environment]::GetEnvironmentVariable('CERTIFICATE_DISABLE_ROLLBACK') -eq '1') { return $false }
     return $true
 }
 
@@ -21,12 +21,12 @@ function Invoke-ConnectorRollback {
 
     $job = Get-ConnectorJob -JobId $Context.job_id -StateDir $StateDir
     if ($null -eq $job) {
-        Write-CertificaatLog -Level 'ERROR' -Message "Cannot rollback missing job '$($Context.job_id)'" -JobId $Context.job_id -Domain $Context.event.domain -Step 'rollback'
+        Write-CertificateLog -Level 'ERROR' -Message "Cannot rollback missing job '$($Context.job_id)'" -JobId $Context.job_id -Domain $Context.event.domain -Step 'rollback'
         return
     }
 
     if ($job.status -in @('rolled_back','rolled_back_failed')) {
-        Write-CertificaatLog -Level 'INFO' -Message 'Rollback already completed previously, skipping.' -JobId $job.job_id -Domain $Context.event.domain -Step 'rollback'
+        Write-CertificateLog -Level 'INFO' -Message 'Rollback already completed previously, skipping.' -JobId $job.job_id -Domain $Context.event.domain -Step 'rollback'
         return
     }
 
@@ -35,10 +35,10 @@ function Invoke-ConnectorRollback {
         $fn = "Invoke-${ConnectorType}Rollback"
         & $fn -Context $Context | Out-Null
         Update-ConnectorJobStep -JobId $job.job_id -Step 'rollback' -Status 'rolled_back' -StateDir $StateDir -Attempt 0 | Out-Null
-        Write-CertificaatLog -Level 'INFO' -Message 'Rollback succeeded.' -JobId $job.job_id -Domain $Context.event.domain -Step 'rollback'
+        Write-CertificateLog -Level 'INFO' -Message 'Rollback succeeded.' -JobId $job.job_id -Domain $Context.event.domain -Step 'rollback'
     } catch {
         Update-ConnectorJobStep -JobId $job.job_id -Step 'rollback' -Status 'rolled_back_failed' -StateDir $StateDir -Attempt 0 -ErrorDetail $_.Exception.ToString() | Out-Null
-        Write-CertificaatLog -Level 'ERROR' -Message "Rollback failed: $($_.Exception.ToString())" -JobId $job.job_id -Domain $Context.event.domain -Step 'rollback'
+        Write-CertificateLog -Level 'ERROR' -Message "Rollback failed: $($_.Exception.ToString())" -JobId $job.job_id -Domain $Context.event.domain -Step 'rollback'
         throw
     }
 }

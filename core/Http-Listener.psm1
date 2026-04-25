@@ -39,17 +39,17 @@ function Get-JobsByRenewalId {
     })
 }
 
-function Start-CertificaatHttpListener {
+function Start-CertificateHttpListener {
     param([string]$DropDir,[string]$StateDir)
-    $prefix = [Environment]::GetEnvironmentVariable('CERTIFICAAT_HTTP_PREFIX')
+    $prefix = [Environment]::GetEnvironmentVariable('CERTIFICATE_HTTP_PREFIX')
     if ([string]::IsNullOrWhiteSpace($prefix)) { $prefix = 'http://localhost:8443/' }
-    $apiKey = [Environment]::GetEnvironmentVariable('CERTIFICAAT_API_KEY')
-    if ([string]::IsNullOrWhiteSpace($apiKey)) { throw 'CERTIFICAAT_API_KEY is required.' }
+    $apiKey = [Environment]::GetEnvironmentVariable('CERTIFICATE_API_KEY')
+    if ([string]::IsNullOrWhiteSpace($apiKey)) { throw 'CERTIFICATE_API_KEY is required.' }
 
     $listener = New-Object System.Net.HttpListener
     $listener.Prefixes.Add($prefix)
     $listener.Start()
-    Write-CertificaatLog -Level Info -Message "HTTP listener started on $prefix"
+    Write-CertificateLog -Level Info -Message "HTTP listener started on $prefix"
 
     while ($listener.IsListening) {
         $context = $listener.GetContext()
@@ -87,10 +87,10 @@ function Start-CertificaatHttpListener {
             }
             Write-HttpJson -Response $context.Response -StatusCode 404 -Body @{ error='not_found' }
         } catch {
-            Write-CertificaatLog -Level Error -Message "HTTP listener request failed: $($_.Exception.Message)"
+            Write-CertificateLog -Level Error -Message "HTTP listener request failed: $($_.Exception.Message)"
             Write-HttpJson -Response $context.Response -StatusCode 500 -Body @{ error='internal_error' }
         }
     }
 }
 
-Export-ModuleMember -Function Start-CertificaatHttpListener
+Export-ModuleMember -Function Start-CertificateHttpListener

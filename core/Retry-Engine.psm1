@@ -22,8 +22,8 @@ function Invoke-WithRetry {
         [int]$MaxBackoffMs = 30000
     )
 
-    if (-not $PSBoundParameters.ContainsKey('MaxAttempts')) { $MaxAttempts = Get-RetrySetting -Name 'CERTIFICAAT_RETRY_MAX_ATTEMPTS' -Default 3 }
-    if (-not $PSBoundParameters.ContainsKey('BackoffMs')) { $BackoffMs = Get-RetrySetting -Name 'CERTIFICAAT_RETRY_BACKOFF_MS' -Default 1000 }
+    if (-not $PSBoundParameters.ContainsKey('MaxAttempts')) { $MaxAttempts = Get-RetrySetting -Name 'CERTIFICATE_RETRY_MAX_ATTEMPTS' -Default 3 }
+    if (-not $PSBoundParameters.ContainsKey('BackoffMs')) { $BackoffMs = Get-RetrySetting -Name 'CERTIFICATE_RETRY_BACKOFF_MS' -Default 1000 }
 
     $lastError = $null
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
@@ -31,7 +31,7 @@ function Invoke-WithRetry {
             return & $ScriptBlock
         } catch {
             $lastError = $_
-            Write-CertificaatLog -Level 'WARN' -Message "Retryable failure for '$Label' on attempt $attempt/${MaxAttempts}: $($_.Exception.Message)"
+            Write-CertificateLog -Level 'WARN' -Message "Retryable failure for '$Label' on attempt $attempt/${MaxAttempts}: $($_.Exception.Message)"
             if ($attempt -lt $MaxAttempts) {
                 $base = $BackoffMs * [math]::Pow(2, $attempt - 1)
                 $min = [int]($base * 0.8)

@@ -53,7 +53,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 function Write-Step([string]$Message) {
-    Write-Host "[certificaat-rdsgw] $Message"
+    Write-Host "[certificate-rdsgw] $Message"
 }
 
 function Test-Admin {

@@ -15,6 +15,9 @@ Import-Module "$PSScriptRoot/core/Config-Store.psm1" -Force
 try {
     if ((Test-Path -LiteralPath $OutputPath) -and -not $Force) { throw "Output path already exists: $OutputPath. Use -Force to overwrite." }
 
+    $p1 = $null
+    $p2 = $null
+
     if (-not $Passphrase) {
         $p1 = Read-Host -AsSecureString -Prompt 'Enter backup passphrase (store this securely — required for restore):'
         $p2 = Read-Host -AsSecureString -Prompt 'Confirm backup passphrase'
@@ -31,20 +34,21 @@ try {
         ACME_KID=[Environment]::GetEnvironmentVariable('ACME_KID')
         ACME_HMAC_SECRET=[Environment]::GetEnvironmentVariable('ACME_HMAC_SECRET')
         DOMAINS=[Environment]::GetEnvironmentVariable('DOMAINS')
-        CERTIFICAAT_CONFIG_DIR=[Environment]::GetEnvironmentVariable('CERTIFICAAT_CONFIG_DIR')
-        CERTIFICAAT_DROP_DIR=[Environment]::GetEnvironmentVariable('CERTIFICAAT_DROP_DIR')
-        CERTIFICAAT_STATE_DIR=[Environment]::GetEnvironmentVariable('CERTIFICAAT_STATE_DIR')
-        CERTIFICAAT_LOG_DIR=[Environment]::GetEnvironmentVariable('CERTIFICAAT_LOG_DIR')
+        CERTIFICATE_CONFIG_DIR=[Environment]::GetEnvironmentVariable('CERTIFICATE_CONFIG_DIR')
+        CERTIFICATE_DROP_DIR=[Environment]::GetEnvironmentVariable('CERTIFICATE_DROP_DIR')
+        CERTIFICATE_STATE_DIR=[Environment]::GetEnvironmentVariable('CERTIFICATE_STATE_DIR')
+        CERTIFICATE_LOG_DIR=[Environment]::GetEnvironmentVariable('CERTIFICATE_LOG_DIR')
+        CERTIFICATE_API_KEY=[Environment]::GetEnvironmentVariable('CERTIFICATE_API_KEY')
     }
 
-    foreach ($requiredSecret in @('ACME_KID','ACME_HMAC_SECRET')) {
+    foreach ($requiredSecret in @('ACME_KID','ACME_HMAC_SECRET','CERTIFICATE_API_KEY')) {
         if (-not $envValues.ContainsKey($requiredSecret) -or [string]::IsNullOrWhiteSpace([string]$envValues[$requiredSecret])) {
             throw "Cannot create backup: required credential '$requiredSecret' is empty."
         }
     }
 
-    $devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICAAT_CONFIG_DIR
-    $policiesPath = Join-Path $env:CERTIFICAAT_CONFIG_DIR 'policies.json'
+    $devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICATE_CONFIG_DIR
+    $policiesPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'policies.json'
     $policies = if (Test-Path -LiteralPath $policiesPath) { (Get-Content -Raw -Path $policiesPath -Encoding UTF8 | ConvertFrom-Json) } else { @() }
 
     $payload = @{
@@ -54,10 +58,11 @@ try {
             ACME_KID = $envValues.ACME_KID
             ACME_HMAC_SECRET = $envValues.ACME_HMAC_SECRET
             DOMAINS = $envValues.DOMAINS
-            CERTIFICAAT_CONFIG_DIR = $envValues.CERTIFICAAT_CONFIG_DIR
-            CERTIFICAAT_DROP_DIR = $envValues.CERTIFICAAT_DROP_DIR
-            CERTIFICAAT_STATE_DIR = $envValues.CERTIFICAAT_STATE_DIR
-            CERTIFICAAT_LOG_DIR = $envValues.CERTIFICAAT_LOG_DIR
+            CERTIFICATE_CONFIG_DIR = $envValues.CERTIFICATE_CONFIG_DIR
+            CERTIFICATE_DROP_DIR = $envValues.CERTIFICATE_DROP_DIR
+            CERTIFICATE_STATE_DIR = $envValues.CERTIFICATE_STATE_DIR
+            CERTIFICATE_LOG_DIR = $envValues.CERTIFICATE_LOG_DIR
+            CERTIFICATE_API_KEY = $envValues.CERTIFICATE_API_KEY
         }
         devices = $devices
         policies = $policies
@@ -88,6 +93,9 @@ try {
 
     [Array]::Clear($key, 0, $key.Length)
     [Array]::Clear($plainBytes, 0, $plainBytes.Length)
+
+    if ($p1) { $p1.Dispose() }
+    if ($p2) { $p2.Dispose() }
 
     Write-Host ("Backup created: {0} bytes, devices: {1}, timestamp: {2}" -f (Get-Item $OutputPath).Length, $devices.Count, (Get-Date).ToUniversalTime().ToString('o'))
     exit 0

@@ -10,6 +10,6 @@ function Invoke-TestIntegration {
 
     & $Assert 'http-listener module imports' {
         Import-Module "$PSScriptRoot/../core/Http-Listener.psm1" -Force
-        (Get-Command Start-CertificaatHttpListener -ErrorAction Stop) | Out-Null
+        (Get-Command Start-CertificateHttpListener -ErrorAction Stop) | Out-Null
     }
 }

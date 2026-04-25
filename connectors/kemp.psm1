@@ -13,7 +13,7 @@ function Get-KempAuthHeader { param([hashtable]$Context)
 
 function Invoke-KempGet { param([string]$Uri,[hashtable]$Headers)
     $params = @{ Method='GET'; Uri=$Uri; Headers=$Headers; ErrorAction='Stop' }
-    if ($env:CERTIFICAAT_SKIP_TLS_CHECK -eq '1') { [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; Write-CertificaatLog -Level Warning -Message 'CERTIFICAAT_SKIP_TLS_CHECK is enabled for Kemp connector.' }
+    if ($env:CERTIFICATE_SKIP_TLS_CHECK -eq '1') { [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; Write-CertificateLog -Level Warning -Message 'CERTIFICATE_SKIP_TLS_CHECK is enabled for Kemp connector.' }
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     try { Invoke-RestMethod @params } finally { [Net.ServicePointManager]::ServerCertificateValidationCallback = $null }
 }
@@ -21,9 +21,9 @@ function Invoke-KempGet { param([string]$Uri,[hashtable]$Headers)
 function Invoke-MultipartPost {
     param([string]$Uri,[hashtable]$Headers,[string]$CertPath,[string]$KeyPath)
     $handler = [System.Net.Http.HttpClientHandler]::new()
-    if ($env:CERTIFICAAT_SKIP_TLS_CHECK -eq '1') {
+    if ($env:CERTIFICATE_SKIP_TLS_CHECK -eq '1') {
         $handler.ServerCertificateCustomValidationCallback = { $true }
-        Write-CertificaatLog -Level 'WARN' -Message 'CERTIFICAAT_SKIP_TLS_CHECK is enabled for Kemp connector.'
+        Write-CertificateLog -Level 'WARN' -Message 'CERTIFICATE_SKIP_TLS_CHECK is enabled for Kemp connector.'
     }
     $client = [System.Net.Http.HttpClient]::new($handler)
     foreach ($key in $Headers.Keys) { $client.DefaultRequestHeaders.Add($key, $Headers[$key]) }

@@ -13,7 +13,7 @@ function Resolve-DeploymentPolicy {
     param([string]$PolicyId)
     $policyFile = Join-Path $PSScriptRoot 'policies.json'
     if (-not (Test-Path -LiteralPath $policyFile)) {
-        Write-CertificaatLog -Level Error -Message "policies.json missing: $policyFile"
+        Write-CertificateLog -Level Error -Message "policies.json missing: $policyFile"
         return $null
     }
     $raw = Get-Content -Raw -Encoding UTF8 -Path $policyFile | ConvertFrom-Json
@@ -41,7 +41,7 @@ function Resume-PendingJobs {
     $pending = Get-PendingConnectorJobs -StateDir $StateDir
     foreach ($job in $pending) {
         Write-Warning "Pending job '$($job.job_id)' found from previous run; auto-failing."
-        Write-CertificaatLog -Level 'WARN' -Message 'Pending job found from previous run; marking as failed for operator review.' -JobId $job.job_id
+        Write-CertificateLog -Level 'WARN' -Message 'Pending job found from previous run; marking as failed for operator review.' -JobId $job.job_id
         Update-ConnectorJobStep -JobId $job.job_id -Step $job.step -Status 'failed' -StateDir $StateDir -ErrorDetail 'Recovered as pending during startup.' | Out-Null
     }
 }
@@ -69,21 +69,21 @@ function Process-DropFile {
         $failed = Join-Path $DropDir 'failed'
         if (-not (Test-Path $failed)) { New-Item -ItemType Directory -Path $failed -Force | Out-Null }
         if (Test-Path $Path) { Move-Item -Path $Path -Destination (Join-Path $failed ([IO.Path]::GetFileName($Path))) -Force }
-        Write-CertificaatLog -Level 'ERROR' -Message "Failed processing drop file '$Path': $($_.Exception.ToString())"
+        Write-CertificateLog -Level 'ERROR' -Message "Failed processing drop file '$Path': $($_.Exception.ToString())"
     }
 }
 
 try {
-    Initialize-CertificaatConfig
+    Initialize-CertificateConfig
 } catch {
-    Write-CertificaatLog -Level 'ERROR' -Message "Configuration validation failed: $($_.Exception.Message)"
+    Write-CertificateLog -Level 'ERROR' -Message "Configuration validation failed: $($_.Exception.Message)"
     exit 2
 }
 
-$DropDir = $env:CERTIFICAAT_DROP_DIR
-$StateDir = $env:CERTIFICAAT_STATE_DIR
+$DropDir = $env:CERTIFICATE_DROP_DIR
+$StateDir = $env:CERTIFICATE_STATE_DIR
 
-$devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICAAT_CONFIG_DIR -SkipIntegrityFailures
+$devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICATE_CONFIG_DIR -SkipIntegrityFailures
 if ($devices.Count -eq 0) {
     throw 'No device configs loaded. Failing startup because orchestrator cannot safely deploy without configured connectors.'
 }
@@ -91,13 +91,13 @@ Resume-PendingJobs -StateDir $StateDir
 
 
 
-$useHttp = [Environment]::GetEnvironmentVariable('CERTIFICAAT_HTTP_ENABLED')
+$useHttp = [Environment]::GetEnvironmentVariable('CERTIFICATE_HTTP_ENABLED')
 if ($useHttp -eq '1') {
     Start-Job -ArgumentList $PSScriptRoot,$DropDir,$StateDir -ScriptBlock {
         param($root,$drop,$state)
         Import-Module (Join-Path $root 'core/Logger.psm1') -Force
         Import-Module (Join-Path $root 'core/Http-Listener.psm1') -Force
-        Start-CertificaatHttpListener -DropDir $drop -StateDir $state
+        Start-CertificateHttpListener -DropDir $drop -StateDir $state
     } | Out-Null
 }
 
