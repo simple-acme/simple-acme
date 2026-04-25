@@ -1,13 +1,30 @@
 # Certificaat Hybrid Certificate Lifecycle Orchestrator
 
+Certificaat adds policy-based connector orchestration around `simple-acme` certificate issuance.
+
+- `simple-acme` obtains/renews certificates.
+- A script bridge drops certificate event JSON files.
+- `certificaat-orchestrator.ps1` fans out connector steps (`probe -> deploy -> bind -> activate -> verify`, with rollback support).
+
+---
+
 ## Prerequisites
-- Windows Server 2019 or newer
-- PowerShell 5.1 minimum (target runtime)
-- No external modules or third-party binaries required
 
-## Building wacs via CLI (.NET 10)
+### Runtime (orchestrator)
+- Windows Server 2019 or newer.
+- Windows PowerShell 5.1.
+- Required Windows roles/features depend on configured connectors (IIS, ADFS, RD Gateway, etc.).
 
-Prerequisite: install .NET SDK 10.x.
+### Build/development
+- .NET SDK 10.x for compiling `src/wacs.slnx`.
+- `pwsh` optional (used by `build/compile-local.ps1` to bootstrap SDK when missing).
+- Internet access optional unless SDK bootstrap is needed.
+
+---
+
+## Build and compile
+
+### Option A: SDK already installed
 
 ```bash
 dotnet --info
@@ -15,38 +32,127 @@ dotnet restore src/wacs.slnx
 dotnet build src/wacs.slnx -c Release
 ```
 
-Visual Studio 2022 (17.x) does not support `net10.0` targeting. Use CLI builds with .NET 10 SDK, or use a newer Visual Studio version that supports .NET 10.
-
-For automatic SDK bootstrapping, run:
+### Option B: auto-bootstrap local SDK
 
 ```powershell
 pwsh -NoLogo -NoProfile -File build/compile-local.ps1
 ```
 
-## First-run Event Log source registration
-Run once as Administrator:
+What `build/compile-local.ps1` does:
+- Reuses existing `dotnet` when available.
+- Otherwise downloads `https://dot.net/v1/dotnet-install.ps1` and installs SDK channel `10.0` into `.\.dotnet`.
+- Builds `src/wacs.slnx`.
+- Optional `-PublishMain` publishes `src/main/wacs.csproj` for a selected runtime (default `win-x64`).
+
+Publish example:
 
 ```powershell
-New-EventLog -LogName Application -Source Certificaat
+pwsh -NoLogo -NoProfile -File build/compile-local.ps1 -PublishMain -Runtime win-x64
 ```
 
-## Environment variables
+> Visual Studio 2022 (17.x) does not target `net10.0`. Use CLI builds with .NET 10 SDK.
 
-| Name | Required | Default | Description |
-|---|---|---|---|
-| CERTIFICAAT_DROP_DIR | Yes | `C:\certificaat\drop` | Watched folder where renewal JSON files are dropped |
-| CERTIFICAAT_STATE_DIR | Yes | `C:\certificaat\state` | Job state JSON folder |
-| CERTIFICAAT_LOG_DIR | Yes | `C:\certificaat\logs` | File log directory (optional output when folder exists) |
-| CERTIFICAAT_VERIFY_MAX_ATTEMPTS | No | `3` | Retry attempts for verify style operations |
-| CERTIFICAAT_ACTIVATE_TIMEOUT_MS | No | `120000` | Activation timeout hint in milliseconds |
-| CERTIFICAAT_DEFAULT_FANOUT | No | `fail-fast` | Default policy mode when policy does not set one |
-| CERTIFICAAT_SKIP_TLS_CHECK | No | unset | Set to `1` to disable TLS cert validation for connector API calls |
-| CERTIFICAAT_RETRY_MAX_ATTEMPTS | No | `3` | Global retry attempts for connector operations |
-| CERTIFICAAT_RETRY_BACKOFF_MS | No | `1000` | Initial retry backoff in milliseconds |
-| CERTIFICAAT_HTTP_ENABLED | No | `0` | Set to `1` to accept events via native HttpListener API |
-| CERTIFICAAT_HTTP_HOST | No | `127.0.0.1` | HTTP bind host for listener mode |
-| CERTIFICAAT_HTTP_PORT | No | `8088` | HTTP bind port for listener mode |
-| CERTIFICAAT_HTTP_BEARER_TOKEN | Conditional | unset | Required when `CERTIFICAAT_HTTP_ENABLED=1` |
+---
+
+## Test workflow
+
+Run:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File tests\Run-Tests.ps1
+```
+
+Expected behavior of `tests/Run-Tests.ps1`:
+- Performs a compile check when `dotnet` is available.
+- Skips compile check when `dotnet` is missing.
+- Skips Pester-style files when Pester is unavailable.
+- Emits `[PASS]`, `[SKIP]`, `[FAIL]`, then `Summary: pass=<n> fail=<n> skip=<n>`.
+
+Interpretation:
+- `fail > 0` => non-zero exit code.
+- `skip > 0` with `fail = 0` => successful run with environment-based skips.
+
+---
+
+## Runtime environment variables (source of truth: `core/Env-Loader.psm1`)
+
+### Required keys
+
+| Name | Required | Description |
+|---|---|---|
+| `ACME_DIRECTORY` | Yes | ACME directory URL used by reconcile/bootstrap paths. |
+| `ACME_KID` | Yes | ACME EAB key identifier. |
+| `ACME_HMAC_SECRET` | Yes | ACME EAB HMAC secret. |
+| `DOMAINS` | Yes | Comma-separated domain list. |
+| `ACME_SCRIPT_PATH` | Yes | Script path passed to `wacs --installation script`. |
+| `CERTIFICAAT_CONFIG_DIR` | Yes | Directory for `certificaat.env`, device configs, and policies. |
+| `CERTIFICAAT_DROP_DIR` | Yes | Watched folder for inbound certificate event JSON. |
+| `CERTIFICAAT_STATE_DIR` | Yes | Job state storage directory. |
+| `CERTIFICAAT_LOG_DIR` | Yes | Log output directory. |
+| `CERTIFICAAT_API_KEY` | Yes | API key used by HTTP listener auth (`X-API-Key` or Bearer). |
+
+### Optional keys and defaults
+
+| Name | Default | Behavior |
+|---|---|---|
+| `CERTIFICAAT_VERIFY_MAX_ATTEMPTS` | `3` | Max verify retries. |
+| `CERTIFICAAT_ACTIVATE_TIMEOUT_MS` | `120000` | Activation timeout hint (ms). |
+| `CERTIFICAAT_DEFAULT_FANOUT` | `fail-fast` | Default policy fanout behavior. |
+| `CERTIFICAAT_SKIP_TLS_CHECK` | `0` | Set `1` to disable TLS certificate validation for connector API calls. |
+| `CERTIFICAAT_RETRY_MAX_ATTEMPTS` | `3` | Max connector operation retries. |
+| `CERTIFICAAT_RETRY_BACKOFF_MS` | `1000` | Initial backoff (ms). |
+| `CERTIFICAAT_HTTP_ENABLED` | `0` | Set `1` to enable native HttpListener input path. |
+| `CERTIFICAAT_HTTP_PREFIX` | `http://localhost:8443/` | HttpListener prefix actually consumed by `core/Http-Listener.psm1`. |
+| `CERTIFICAAT_DISABLE_ROLLBACK` | `0` | Set `1` to disable rollback execution. |
+| `CERTIFICAAT_HTTP_HOST` | `127.0.0.1` | Compatibility key; not currently used by listener startup path. |
+| `CERTIFICAAT_HTTP_PORT` | `8088` | Compatibility key; not currently used by listener startup path. |
+
+### Env file resolution order
+
+`Import-EnvFile` resolves `certificaat.env` in this order:
+1. explicit `-Path`
+2. `CERTIFICAAT_ENV_FILE`
+3. `./certificaat.env` (current working directory)
+4. `$CERTIFICAAT_CONFIG_DIR/certificaat.env`
+
+---
+
+## First-time setup (bootstrap sequence)
+
+`certificaat-setup.ps1` calls `Initialize-CertificaatConfig` immediately, so a valid env file must already exist before running setup.
+
+1. Create `certificaat.env` with all required keys.
+2. Ensure `CERTIFICAAT_CONFIG_DIR`, `CERTIFICAAT_DROP_DIR`, `CERTIFICAAT_STATE_DIR`, and `CERTIFICAAT_LOG_DIR` directories exist.
+3. Run once as administrator to register event source:
+
+   ```powershell
+   New-EventLog -LogName Application -Source Certificaat
+   ```
+
+4. Run setup UI:
+
+   ```powershell
+   .\certificaat-setup.ps1
+   ```
+
+5. Configure ACME values, devices, and deployment policies.
+
+Minimal env example:
+
+```dotenv
+ACME_DIRECTORY=https://acme-v02.api.letsencrypt.org/directory
+ACME_KID=<kid>
+ACME_HMAC_SECRET=<hmac>
+DOMAINS=example.com,www.example.com
+ACME_SCRIPT_PATH=dist\Scripts\New-CertificaatDropFile.ps1
+CERTIFICAAT_CONFIG_DIR=C:\certificaat\config
+CERTIFICAAT_DROP_DIR=C:\certificaat\drop
+CERTIFICAAT_STATE_DIR=C:\certificaat\state
+CERTIFICAAT_LOG_DIR=C:\certificaat\logs
+CERTIFICAAT_API_KEY=<strong-random-token>
+```
+
+---
 
 ## Run as scheduled task
 
@@ -54,25 +160,26 @@ New-EventLog -LogName Application -Source Certificaat
 schtasks /Create /SC MINUTE /MO 5 /TN "Certificaat-Orchestrator" /TR "powershell.exe -ExecutionPolicy Bypass -File C:\certificaat\certificaat-orchestrator.ps1" /RU "SYSTEM"
 ```
 
-## Add a new connector
-1. Add a module under `connectors/`.
-2. Export exactly six functions:
-   - `Invoke-{ConnectorType}Probe`
-   - `Invoke-{ConnectorType}Deploy`
-   - `Invoke-{ConnectorType}Bind`
-   - `Invoke-{ConnectorType}Activate`
-   - `Invoke-{ConnectorType}Verify`
-   - `Invoke-{ConnectorType}Rollback`
-3. Ensure each function accepts `-Context` and throws terminating errors on failures.
+---
 
-## Run tests
+## HTTP listener behavior
 
-```powershell
-powershell.exe -File tests\Run-Tests.ps1
-```
+When `CERTIFICAAT_HTTP_ENABLED=1`, orchestrator starts a background HttpListener job.
+
+- Prefix: `CERTIFICAAT_HTTP_PREFIX`
+- Health endpoint: `GET /health` (no auth)
+- Event endpoint: `POST /events` (auth required)
+- Job endpoints: `GET /jobs/<renewal_id>` and `GET /jobs/status/<job_id>` (auth required)
+
+Auth accepted:
+- `X-API-Key: <CERTIFICAAT_API_KEY>`
+- `Authorization: Bearer <CERTIFICAAT_API_KEY>`
+
+---
 
 ## Drop directory file format
-Each file is named `{renewal_id}_{timestamp}.json` and should contain:
+
+Each file should contain a certificate event matching `Assert-CertificateEvent` schema:
 
 ```json
 {
@@ -90,53 +197,11 @@ Each file is named `{renewal_id}_{timestamp}.json` and should contain:
 }
 ```
 
-## First-time setup
-
-1. Run: `.\certificaat-setup.ps1`
-2. Navigate to `ACME settings` — enter KID, HMAC secret, directory URL, domains.
-3. Navigate to local/remote device categories — configure each endpoint.
-4. Navigate to `Deployment policies` — assign devices to policies.
-5. Navigate to `Backup & restore` > `Create backup` — store the backup file off-machine.
-6. Exit setup. The .env and device configs are ready for the orchestrator.
-
-## Backup and restore
-
-```powershell
-# Create a backup (prompts for passphrase)
-.\certificaat-backup.ps1 -OutputPath C:\secure\certificaat-2026-04-21.certbak
-
-# Restore on a new machine (prompts for passphrase)
-.\certificaat-restore.ps1 -BackupPath \\fileserver\backups\certificaat-2026-04-21.certbak
-
-# Verify a backup is readable without restoring
-.\certificaat-restore.ps1 -BackupPath .\certificaat-2026-04-21.certbak -DryRun
-
-# Scheduled backup via Task Scheduler (passphrase from environment — see security note below)
-schtasks /create /tn "Certificaat backup" /sc WEEKLY /d MON /st 02:00 ^
-  /tr "powershell.exe -NonInteractive -File C:\certificaat\certificaat-backup.ps1 ^
-       -OutputPath \\fileserver\backups\certificaat-%DATE%.certbak ^
-       -Passphrase (ConvertTo-SecureString $env:CERTIFICAAT_BACKUP_PASSPHRASE -AsPlainText -Force)"
-```
-
-Security note on unattended backup: store the passphrase in `CERTIFICAAT_BACKUP_PASSPHRASE` as a protected environment variable on the service account, not in a script file.
-
-## Machine identity change recovery
-
-```text
-Symptoms: orchestrator logs "If the machine identity has changed, restore from backup"
-Cause:    DPAPI-encrypted secrets are unreadable after OS reinstall, domain rejoin, or
-          TPM/SID change.
-Recovery:
-  1. Install PowerShell and certificaat on the new machine.
-  2. Run: .\certificaat-restore.ps1 -BackupPath <path-to-backup>
-  3. Secrets are re-encrypted for the new machine identity automatically.
-  4. Resume normal operation.
-```
-
+---
 
 ## Integration with simple-acme
 
-Configure simple-acme Script Installation Plugin to write Certificaat drop files after each successful renewal.
+Use Script Installation Plugin to emit Certificaat drop files.
 
 ```text
 --installation Script
@@ -144,61 +209,83 @@ Configure simple-acme Script Installation Plugin to write Certificaat drop files
 --scriptparameters "'<POLICY-ID>' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
 ```
 
-
-### Idempotent installer/update reconcile
-
-Use the reconciler script to safely converge `.env` with existing simple-acme renewal state without manual JSON edits:
+### Reconcile existing simple-acme state to `.env`
 
 ```powershell
 .\certificaat-simple-acme-reconcile.ps1
 ```
 
-Behavior:
-- `create` when no matching renewal exists.
-- `no-op` when `.env` already matches renewal JSON.
-- `update` when drift is detected (runs `wacs --cancel --friendlyname <primary-domain>` then re-issues with full arguments).
-- Merges `%PROGRAMDATA%\simple-acme\settings.json` to enforce:
-  - `ScheduledTask.RenewalDays = 199`
-  - `ScheduledTask.RenewalMinimumValidDays = 16`
+Outcomes:
+- `create`: no matching renewal; creates one.
+- `no-op`: renewal already matches `.env`.
+- `update`: drift detected; runs cancel + reissue.
+
+Reconciler also enforces in `%PROGRAMDATA%\simple-acme\settings.json`:
+- `ScheduledTask.RenewalDays = 199`
+- `ScheduledTask.RenewalMinimumValidDays = 16`
 
 ### Store plugin compatibility
 
 | simple-acme StoreType | Typical StorePath value | Notes |
 |---|---|---|
-| `PfxFile` | full path to `.pfx` | Required by connectors that need direct PFX import workflows. |
-| `CertificateStore` | certificate store location | Preferred for local Windows service connectors using thumbprint bindings. |
-| `PemFiles` | folder containing PEM artifacts | Used by file-based/reverse-proxy connectors. |
-| `CentralSsl` | CCS directory path | Useful when post-processing from centralized file drops is required. |
+| `PfxFile` | Full path to `.pfx` | Required by connectors that import PFX artifacts directly. |
+| `CertificateStore` | Certificate store location | Preferred for thumbprint-first Windows connector flows. |
+| `PemFiles` | Folder with PEM artifacts | Used by file-based/reverse-proxy workflows. |
+| `CentralSsl` | CCS directory path | Useful for centralized file drop workflows. |
 
-### Store token mapping to connector input
-
-- `{StoreType}` maps to `event.store_type` and determines expected artifact shape.
-- `{StorePath}` maps to `event.store_path` and should be passed through unchanged.
-- `{CertThumbprint}` maps to `event.thumbprint` for thumbprint-first native Windows connectors.
-- `{OldCertThumbprint}` maps to `previous_artifact_ref` for rollback operations.
-- `<POLICY-ID>` is a literal string matching a `policy_id` in `policies.json`. Replace it with the actual policy ID for this renewal.
+---
 
 ## Connector reference
 
-| Connector | Category | Requirements | Rollback |
-|---|---|---|---|
-| `iis` | A (Windows-native) | IIS role | Yes |
-| `adfs` | A (Windows-native) | ADFS role | Yes |
-| `rdp_listener` | A (Windows-native) | Remote Desktop Services | Yes |
-| `rd_gateway` | A (Windows-native) | RD Gateway role | Yes |
-| `rds_full` | A (Windows-native) | RDS deployment cmdlets | Yes |
-| `ntds` | A (Windows-native) | Active Directory Domain Services | Yes |
-| `sstp` | A (Windows-native) | RemoteAccess role + optional IIS binding support | Yes |
-| `winrm` | A (Windows-native) | WinRM service | Yes |
-| `sql_server` | A (Windows-native) | SQL Server installed locally | Yes |
-| `windows_admin_center` | A (Windows-native) | Windows Admin Center installed | Yes |
-| `exchange` | C (local PSSession) | Exchange Management endpoint on localhost | Yes |
-| `f5_bigip` | B (REST) | F5 iControl REST access | Yes |
-| `citrix_adc` | B (REST) | Citrix NITRO API access | Yes |
-| `kemp` | B (REST) | Kemp REST/XML endpoint access | Yes |
-| `java_keystore` | D (external dependency) | JDK / `keytool.exe` | Stub/disabled |
-| `kemp_module` | D (external dependency) | Kemp PowerShell module | Stub/disabled |
-| `vbr_cloud_gateway` | D (external dependency) | Veeam VBR module | Stub/disabled |
-| `azure_application_gateway` | D (external dependency) | AzureRM module | Stub/disabled |
-| `azure_ad_app_proxy` | D (external dependency) | AzureAD module | Stub/disabled |
-| `sparx_procloud` | D (external dependency) | PowerShell 7 + external tooling | Stub/disabled |
+| Connector | Category | Requirements | Export style | Rollback |
+|---|---|---|---|---|
+| `iis` | A (Windows-native) | IIS role | legacy + connector aliases | Yes |
+| `adfs` | A (Windows-native) | ADFS role | legacy + connector aliases | Yes |
+| `rdp_listener` | A (Windows-native) | Remote Desktop Services | legacy + connector aliases | Yes |
+| `rd_gateway` | A (Windows-native) | RD Gateway role | legacy + connector aliases | Yes |
+| `rds_full` | A (Windows-native) | RDS deployment cmdlets | legacy + connector aliases | Yes |
+| `ntds` | A (Windows-native) | Active Directory Domain Services | legacy + connector aliases | Yes |
+| `sstp` | A (Windows-native) | RemoteAccess role (+ optional IIS binding path) | legacy + connector aliases | Yes |
+| `winrm` | A (Windows-native) | WinRM service | legacy + connector aliases | Yes |
+| `sql_server` | A (Windows-native) | SQL Server installed locally | legacy + connector aliases | Yes |
+| `windows_admin_center` | A (Windows-native) | Windows Admin Center installed | legacy + connector aliases | Yes |
+| `exchange` | C (local PSSession) | Exchange Management endpoint on localhost | legacy + connector aliases | Yes |
+| `f5_bigip` | B (REST) | F5 iControl REST access | connector-only exports | Yes |
+| `citrix_adc` | B (REST) | Citrix NITRO API access | connector-only exports | Yes |
+| `kemp` | B (REST/XML) | Kemp endpoint access | connector-only exports | Yes |
+| `java_keystore` | D (external dependency) | JDK/`keytool.exe` | not implemented in `connectors/` | Stub/disabled |
+| `kemp_module` | D (external dependency) | Kemp PowerShell module | not implemented in `connectors/` | Stub/disabled |
+| `vbr_cloud_gateway` | D (external dependency) | Veeam VBR module | not implemented in `connectors/` | Stub/disabled |
+| `azure_application_gateway` | D (external dependency) | AzureRM module | not implemented in `connectors/` | Stub/disabled |
+| `azure_ad_app_proxy` | D (external dependency) | AzureAD module | not implemented in `connectors/` | Stub/disabled |
+| `sparx_procloud` | D (external dependency) | PowerShell 7 + external tooling | not implemented in `connectors/` | Stub/disabled |
+
+---
+
+## Backup and restore
+
+```powershell
+# Create backup (prompts for passphrase if omitted)
+.\certificaat-backup.ps1 -OutputPath C:\secure\certificaat-2026-04-21.certbak
+
+# Restore backup
+.\certificaat-restore.ps1 -BackupPath \\fileserver\backups\certificaat-2026-04-21.certbak
+
+# Validate backup readability without writing files
+.\certificaat-restore.ps1 -BackupPath .\certificaat-2026-04-21.certbak -DryRun
+```
+
+---
+
+## Troubleshooting quick hits
+
+- `No certificaat.env could be resolved`:
+  - set `CERTIFICAAT_ENV_FILE`, or
+  - place `certificaat.env` in current directory, or
+  - place it under `$CERTIFICAAT_CONFIG_DIR`.
+- `Missing required environment keys`:
+  - ensure all required keys listed above are present and non-empty.
+- HTTP mode returns `401 unauthorized`:
+  - send `X-API-Key` or Bearer token matching `CERTIFICAAT_API_KEY`.
+- Reconcile fails with missing `wacs`:
+  - ensure `wacs` is installed and available on `PATH` before running `certificaat-simple-acme-reconcile.ps1`.
