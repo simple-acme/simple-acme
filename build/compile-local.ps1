@@ -10,14 +10,9 @@ Then restores and builds src/wacs.slnx.
 
 [CmdletBinding()]
 param(
-<<<<<<< codex/add-compilation-process-vpedjm
-    [string]$SolutionPath = (Join-Path (Join-Path $PSScriptRoot '..') 'src/wacs.slnx'),
-    [string]$InstallDir = (Join-Path (Join-Path $PSScriptRoot '..') '.dotnet'),
-=======
     [string]$SolutionPath = (Join-Path $PSScriptRoot '..' 'src/wacs.slnx'),
     [string]$InstallDir = (Join-Path $PSScriptRoot '..' '.dotnet'),
->>>>>>> main
-    [string]$SdkChannel = '8.0',
+    [string]$SdkChannel = '10.0',
     [switch]$ForceInstallSdk,
     [switch]$NoRestore
 )
@@ -63,14 +58,10 @@ function Install-DotNetSdk {
     Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -OutFile $installer
 
     Write-Step "Installing .NET SDK channel $Channel into $TargetPath"
-<<<<<<< codex/add-compilation-process-vpedjm
-    & $installer -Channel $Channel -InstallDir $TargetPath -NoPath
-=======
     & pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installer `
         -Channel $Channel `
         -InstallDir $TargetPath `
         -NoPath
->>>>>>> main
 
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet-install failed with exit code $LASTEXITCODE"
