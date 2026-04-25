@@ -80,14 +80,14 @@ try {
 
     Write-Host ("Backup manifest: created_at={0}, hostname={1}, devices={2}, policies={3}" -f $payload.manifest.created_at, $payload.manifest.hostname, @($payload.devices).Count, @($payload.policies).Count)
 
-    if (-not $Force) {
-        $confirm = Read-Host 'Proceed with restore? (y/N)'
-        if ($confirm -ne 'y' -and $confirm -ne 'Y') { Write-Host 'Restore cancelled.'; exit 1 }
-    }
-
     if ($DryRun) {
         Write-Host 'Dry-run complete. Backup appears readable and would be restored.'
         exit 0
+    }
+
+    if (-not $Force) {
+        $confirm = Read-Host 'Proceed with restore? (y/N)'
+        if ($confirm -ne 'y' -and $confirm -ne 'Y') { Write-Host 'Restore cancelled.'; exit 1 }
     }
 
     $targetConfigDir = if (-not [string]::IsNullOrWhiteSpace($ConfigDir)) {

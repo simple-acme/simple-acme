@@ -12,11 +12,11 @@ Import-Module "$PSScriptRoot/core/Crypto.psm1" -Force
 Import-Module "$PSScriptRoot/core/Env-Loader.psm1" -Force
 Import-Module "$PSScriptRoot/core/Config-Store.psm1" -Force
 
+$p1 = $null
+$p2 = $null
+
 try {
     if ((Test-Path -LiteralPath $OutputPath) -and -not $Force) { throw "Output path already exists: $OutputPath. Use -Force to overwrite." }
-
-    $p1 = $null
-    $p2 = $null
 
     if (-not $Passphrase) {
         $p1 = Read-Host -AsSecureString -Prompt 'Enter backup passphrase (store this securely — required for restore):'
@@ -94,13 +94,13 @@ try {
     [Array]::Clear($key, 0, $key.Length)
     [Array]::Clear($plainBytes, 0, $plainBytes.Length)
 
-    if ($p1) { $p1.Dispose() }
-    if ($p2) { $p2.Dispose() }
-
     Write-Host ("Backup created: {0} bytes, devices: {1}, timestamp: {2}" -f (Get-Item $OutputPath).Length, $devices.Count, (Get-Date).ToUniversalTime().ToString('o'))
     exit 0
 } catch {
     if ($_.Exception.Message -like '*Passphrase*' -or $_.Exception.Message -like '*required*') { exit 1 }
     Write-Error $_
     exit 2
+} finally {
+    if ($p1) { $p1.Dispose() }
+    if ($p2) { $p2.Dispose() }
 }
