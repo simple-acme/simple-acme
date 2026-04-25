@@ -1,8 +1,8 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Import-Module "$PSScriptRoot/core/Tui-Engine.psm1" -Force
-Import-Module "$PSScriptRoot/setup/Form-Runner.psm1" -Force
+Import-Module "$PSScriptRoot/core/Tui-Engine.psm1" -Force -Global
+Import-Module "$PSScriptRoot/setup/Form-Runner.psm1" -Force -Global
 . "$PSScriptRoot/setup/Menu-Tree.ps1"
 
 $envPath = if ($env:CERTIFICATE_CONFIG_DIR) {
@@ -17,7 +17,7 @@ if (-not (Test-Path -LiteralPath $envPath)) {
 }
 
 . "$PSScriptRoot/config.ps1"
-Initialize-CertificateConfig
+Initialize-CertificateConfig | Out-Null
 
 $configDir = if ($env:CERTIFICATE_CONFIG_DIR) { $env:CERTIFICATE_CONFIG_DIR } else { Join-Path $PSScriptRoot 'config' }
 if (-not (Test-Path -LiteralPath $configDir)) { New-Item -ItemType Directory -Path $configDir -Force | Out-Null }
