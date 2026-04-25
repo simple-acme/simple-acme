@@ -1,8 +1,36 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Import-Module "$PSScriptRoot/core/Tui-Engine.psm1" -Force -Global
-Import-Module "$PSScriptRoot/setup/Form-Runner.psm1" -Force -Global
+$tuiEngineModulePath = Join-Path $PSScriptRoot 'core/Tui-Engine.psm1'
+$formRunnerModulePath = Join-Path $PSScriptRoot 'setup/Form-Runner.psm1'
+
+function Assert-SetupCommandAvailable {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$CommandName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ExpectedModulePath
+    )
+
+    if (-not (Get-Command $CommandName -ErrorAction SilentlyContinue)) {
+        throw @"
+Required setup command '$CommandName' is unavailable after module import.
+Expected module path: $ExpectedModulePath
+Current script root: $PSScriptRoot
+This usually indicates a path mismatch, stale deployment, or incomplete copy.
+Run this script from a full repository checkout and confirm the module file exists at the expected path.
+"@
+    }
+}
+
+Import-Module $tuiEngineModulePath -Force -Global
+Assert-SetupCommandAvailable -CommandName 'Show-TuiMenu' -ExpectedModulePath $tuiEngineModulePath
+
+Import-Module $formRunnerModulePath -Force -Global
+Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModulePath $formRunnerModulePath
+Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeForm' -ExpectedModulePath $formRunnerModulePath
+Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyEditor' -ExpectedModulePath $formRunnerModulePath
 . "$PSScriptRoot/setup/Menu-Tree.ps1"
 
 $envPath = if ($env:CERTIFICATE_CONFIG_DIR) {
