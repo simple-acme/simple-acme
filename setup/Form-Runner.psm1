@@ -99,19 +99,19 @@ function Invoke-PolicyEditor {
 function Invoke-FirstRunWizard {
     param([Parameter(Mandatory)][string]$DefaultEnvPath)
 
-    $scriptRoot = Split-Path $DefaultEnvPath -Parent
+    $scriptRoot = Split-Path $PSScriptRoot -Parent
 
     $acmeFields = @(
         @{ Name='ACME_DIRECTORY';   Label='ACME directory URL';          Type='string'; Required=$true; Placeholder='https://acme.networking4all.com/dv'; HelpText='ACME directory endpoint' },
         @{ Name='ACME_KID';         Label='ACME KID (EAB key ID)';       Type='secret'; Required=$true; Placeholder=''; HelpText='External account binding key identifier' },
         @{ Name='ACME_HMAC_SECRET'; Label='ACME HMAC secret';            Type='secret'; Required=$true; Placeholder=''; HelpText='External account binding HMAC secret' },
-        @{ Name='DOMAINS';          Label='Domains (comma-separated)';   Type='string'; Required=$true; Placeholder='example.com,www.example.com'; HelpText='Domain list for certificate issuance' },
-        @{ Name='ACME_SCRIPT_PATH'; Label='Drop file script path';       Type='string'; Required=$true; Placeholder='C:\certificate\dist\Scripts\New-CertificateDropFile.ps1'; HelpText='Absolute path to New-CertificateDropFile.ps1' }
+        @{ Name='DOMAINS';          Label='Domains (comma-separated)';   Type='string'; Required=$true; Placeholder='example.com,www.example.com'; HelpText='Domain list for certificate issuance' }
     )
 
     $pathFields = @(
-        @{ Name='CERTIFICATE_CONFIG_DIR'; Label='Config directory'; Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'config'); HelpText='Where device configs are stored' },
         @{ Name='CERTIFICATE_DROP_DIR';   Label='Drop directory';   Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'drop');   HelpText='Watched folder for certificate events' },
+        @{ Name='ACME_SCRIPT_PATH';       Label='Drop file script path'; Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'Scripts\New-CertificateDropFile.ps1'); HelpText='Absolute path to New-CertificateDropFile.ps1' },
+        @{ Name='CERTIFICATE_CONFIG_DIR'; Label='Config directory'; Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'config'); HelpText='Where device configs are stored' },
         @{ Name='CERTIFICATE_STATE_DIR';  Label='State directory';  Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'state');  HelpText='Job state persistence directory' },
         @{ Name='CERTIFICATE_LOG_DIR';    Label='Log directory';    Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'log');    HelpText='Log output directory' }
     )
@@ -124,12 +124,13 @@ function Invoke-FirstRunWizard {
     if ($null -eq $acmeValues) { return $null }
 
     $pathDefaults = @{
-        CERTIFICATE_CONFIG_DIR = Join-Path $scriptRoot 'config'
         CERTIFICATE_DROP_DIR   = Join-Path $scriptRoot 'drop'
+        ACME_SCRIPT_PATH       = Join-Path $scriptRoot 'Scripts\New-CertificateDropFile.ps1'
+        CERTIFICATE_CONFIG_DIR = Join-Path $scriptRoot 'config'
         CERTIFICATE_STATE_DIR  = Join-Path $scriptRoot 'state'
         CERTIFICATE_LOG_DIR    = Join-Path $scriptRoot 'log'
     }
-    $pathValues = Show-TuiForm -Fields $pathFields -CurrentValues $pathDefaults -Title 'Step 2 of 2 - Directories'
+    $pathValues = Show-TuiForm -Fields $pathFields -CurrentValues $pathDefaults -Title 'Step 2 of 2 - Paths'
     if ($null -eq $pathValues) { return $null }
 
     $apiKey = [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
