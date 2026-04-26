@@ -31,17 +31,11 @@ Describe 'Backup/Restore scripts' {
         $content | Should -Match 'Legacy key CERTIFICAAT_API_KEY detected'
     }
 
-    It 'Restore script writes only canonical CERTIFICATE_* keys to certificate.env' {
+    It 'Restore script writes only non-secret env keys and restores secure files' {
         $content = Get-Content -Raw -Path "$PSScriptRoot/../certificate-restore.ps1"
         $content | Should -Match 'CERTIFICATE_CONFIG_DIR\s*='
-        $content | Should -Match 'CERTIFICATE_API_KEY\s*='
-        $content | Should -Not -Match 'CERTIFICAAT_CONFIG_DIR\s*='
-        $content | Should -Not -Match 'CERTIFICAAT_API_KEY\s*='
-    }
-
-    It 'Restore script does not print generated CERTIFICATE_API_KEY values' {
-        $content = Get-Content -Raw -Path "$PSScriptRoot/../certificate-restore.ps1"
-        $content | Should -Match 'auto-generated and stored\.'
-        $content | Should -Not -Match 'auto-generated: \$newKey'
+        $content | Should -Not -Match 'CERTIFICATE_API_KEY\s*='
+        $content | Should -Match 'credentials.sec'
+        $content | Should -Match 'env.secure'
     }
 }

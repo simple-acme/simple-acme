@@ -75,7 +75,7 @@ try {
     $parsed = Read-BackupPayload -Path $BackupPath -Passphrase $Passphrase
     $payload = $parsed.Payload
 
-    if ([string]$payload.manifest.version -ne '1.0') {
+    if ([string]$payload.manifest.version -notin @('1.0','1.1')) {
         throw "Unsupported backup manifest version '$($payload.manifest.version)'."
     }
 
@@ -117,14 +117,11 @@ try {
     $envPath = Join-Path $targetConfigDir 'certificate.env'
     Write-EnvFile -Values @{
         ACME_DIRECTORY         = [string]$payload.env.ACME_DIRECTORY
-        ACME_KID               = [string]$payload.env.ACME_KID
-        ACME_HMAC_SECRET       = [string]$payload.env.ACME_HMAC_SECRET
         DOMAINS                = [string]$payload.env.DOMAINS
         CERTIFICATE_CONFIG_DIR = [string]$targetConfigDir
         CERTIFICATE_DROP_DIR   = [string]$payload.env.CERTIFICATE_DROP_DIR
         CERTIFICATE_STATE_DIR  = [string]$payload.env.CERTIFICATE_STATE_DIR
         CERTIFICATE_LOG_DIR    = [string]$payload.env.CERTIFICATE_LOG_DIR
-        CERTIFICATE_API_KEY    = $restoredApiKey
     } -Path $envPath
 
     $failed = @()
@@ -149,6 +146,29 @@ try {
         } catch {
             $failed += [string]$deviceObj.device_id
             Write-Error "Failed restoring device '$($deviceObj.device_id)': $($_.Exception.Message)"
+        }
+    }
+
+
+    if ($payload.mappings) {
+        $mappingPath = Join-Path $targetConfigDir 'mappings.json'
+        [IO.File]::WriteAllText($mappingPath, ($payload.mappings | ConvertTo-Json -Depth 20), [Text.Encoding]::UTF8)
+    }
+
+    if ($payload.secure_config) {
+        if ($payload.secure_config.env_secure) {
+            [IO.File]::WriteAllBytes((Join-Path $targetConfigDir 'env.secure'), [Convert]::FromBase64String([string]$payload.secure_config.env_secure))
+        }
+        if ($payload.secure_config.credentials_sec) {
+            [IO.File]::WriteAllBytes((Join-Path $targetConfigDir 'credentials.sec'), [Convert]::FromBase64String([string]$payload.secure_config.credentials_sec))
+        }
+    }
+
+    if ($payload.renewals) {
+        $renewalsDir = Join-Path $targetConfigDir 'renewals'
+        if (-not (Test-Path -LiteralPath $renewalsDir)) { New-Item -ItemType Directory -Path $renewalsDir -Force | Out-Null }
+        foreach ($r in @($payload.renewals)) {
+            [IO.File]::WriteAllText((Join-Path $renewalsDir ([string]$r.file)), [string]$r.content, [Text.Encoding]::UTF8)
         }
     }
 

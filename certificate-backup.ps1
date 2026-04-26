@@ -62,10 +62,25 @@ try {
 
     $devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICATE_CONFIG_DIR
     $policiesPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'policies.json'
+    $mappingPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'mappings.json'
+    $secureEnvPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'env.secure'
+    $credPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'credentials.sec'
+    $renewalsDir = Join-Path $env:CERTIFICATE_CONFIG_DIR 'renewals'
     $policies = if (Test-Path -LiteralPath $policiesPath) { (Get-Content -Raw -Path $policiesPath -Encoding UTF8 | ConvertFrom-Json) } else { @() }
+    $mappings = if (Test-Path -LiteralPath $mappingPath) { (Get-Content -Raw -Path $mappingPath -Encoding UTF8 | ConvertFrom-Json) } else { @() }
+    $secureConfig = @{
+        env_secure = if (Test-Path -LiteralPath $secureEnvPath) { [Convert]::ToBase64String([IO.File]::ReadAllBytes($secureEnvPath)) } else { '' }
+        credentials_sec = if (Test-Path -LiteralPath $credPath) { [Convert]::ToBase64String([IO.File]::ReadAllBytes($credPath)) } else { '' }
+    }
+    $renewals = @()
+    if (Test-Path -LiteralPath $renewalsDir) {
+        foreach ($f in Get-ChildItem -LiteralPath $renewalsDir -Filter '*.json' -File) {
+            $renewals += [pscustomobject]@{ file = $f.Name; content = Get-Content -Raw -LiteralPath $f.FullName -Encoding UTF8 }
+        }
+    }
 
     $payload = @{
-        manifest = @{ created_at = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'); hostname = $env:COMPUTERNAME; version = '1.0'; contents = @('env','devices','policies') }
+        manifest = @{ created_at = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'); hostname = $env:COMPUTERNAME; version = '1.1'; contents = @('env','devices','policies','secure_config','mappings','renewals') }
         env = @{
             ACME_DIRECTORY = $envValues.ACME_DIRECTORY
             ACME_KID = $envValues.ACME_KID
@@ -79,6 +94,9 @@ try {
         }
         devices = $devices
         policies = $policies
+        mappings = $mappings
+        secure_config = $secureConfig
+        renewals = $renewals
     }
 
     $json = $payload | ConvertTo-Json -Depth 20
