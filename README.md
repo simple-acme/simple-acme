@@ -136,6 +136,8 @@ Interpretation:
    ```
 
 5. Configure ACME values, devices, and deployment policies.
+   - After saving ACME settings, setup now prompts: **Run initial ACME reconcile now? [Y/N]**.
+   - Setup also includes **Register/Repair orchestrator task** for idempotent scheduled task registration.
 
 Minimal env example:
 
@@ -215,6 +217,12 @@ Use Script Installation Plugin to emit Certificate drop files.
 .\certificate-simple-acme-reconcile.ps1
 ```
 
+Preflight-only validation (no issuance/change):
+
+```powershell
+.\certificate-simple-acme-reconcile.ps1 -PreflightOnly
+```
+
 Outcomes:
 - `create`: no matching renewal; creates one.
 - `no-op`: renewal already matches `.env`.
@@ -289,3 +297,5 @@ Reconciler also enforces in `%PROGRAMDATA%\simple-acme\settings.json`:
   - send `X-API-Key` or Bearer token matching `CERTIFICATE_API_KEY`.
 - Reconcile fails with missing `wacs`:
   - ensure `wacs` is installed and available on `PATH` before running `certificate-simple-acme-reconcile.ps1`.
+- Reconcile fails with script path validation:
+  - ensure `ACME_SCRIPT_PATH` is absolute and points to an existing script file.

@@ -4,6 +4,7 @@ $script:tuiModule = $null
 
 $tuiEngineModulePath = Join-Path $PSScriptRoot 'core/Tui-Engine.psm1'
 $formRunnerModulePath = Join-Path $PSScriptRoot 'setup/Form-Runner.psm1'
+$schedulerModulePath = Join-Path $PSScriptRoot 'core/Scheduler.psm1'
 
 function Assert-SetupCommandAvailable {
     param(
@@ -56,7 +57,58 @@ Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModul
 Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeForm' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyEditor' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 Assert-SetupCommandAvailable -CommandName 'Invoke-DeviceForm' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+$schedulerModule = Import-Module $schedulerModulePath -Force -Global -PassThru
+if ($null -eq $schedulerModule) {
+    throw "Unable to import required scheduler module from path: $schedulerModulePath"
+}
+Assert-SetupCommandAvailable -CommandName 'Ensure-OrchestratorScheduledTask' -ExpectedModulePath $schedulerModulePath -ModuleInfo $schedulerModule
 . "$PSScriptRoot/setup/Menu-Tree.ps1"
+
+function Invoke-InitialAcmeReconcilePrompt {
+    param([Parameter(Mandatory)][string]$RootDir)
+
+    $statusRow = [Math]::Max(0, [Console]::WindowHeight - 2)
+    $answer = [string](Read-Host 'Run initial ACME reconcile now? [Y/N]')
+    if ($answer.Trim().ToLowerInvariant() -notin @('y','yes')) {
+        Show-TuiStatus -Message 'Skipped ACME reconcile. Run certificate-simple-acme-reconcile.ps1 later to bootstrap issuance.' -Type Warning -Row $statusRow
+        Start-Sleep -Milliseconds 2000
+        return
+    }
+
+    try {
+        $envValues = Import-EnvFile -Force
+        Import-Module (Join-Path $RootDir 'core/Simple-Acme-Reconciler.psm1') -Force | Out-Null
+        $action = Invoke-SimpleAcmeReconcile -EnvValues $envValues
+        Show-TuiStatus -Message "ACME reconcile completed successfully (action=$action)." -Type Success -Row $statusRow
+    } catch {
+        Show-TuiStatus -Message "ACME reconcile failed: $($_.Exception.Message)" -Type Error -Row $statusRow
+    }
+    Start-Sleep -Milliseconds 2200
+}
+
+function Invoke-OrchestratorTaskRegistration {
+    param([Parameter(Mandatory)][string]$RootDir)
+
+    $statusRow = [Math]::Max(0, [Console]::WindowHeight - 2)
+    try {
+        $envValues = Import-EnvFile -Force
+        $taskName = if (-not [string]::IsNullOrWhiteSpace([string]$envValues.CERTIFICATE_TASK_NAME)) { [string]$envValues.CERTIFICATE_TASK_NAME } else { 'Certificate-Orchestrator' }
+        $interval = 5
+        if (-not [string]::IsNullOrWhiteSpace([string]$envValues.CERTIFICATE_TASK_INTERVAL_MINUTES)) {
+            if (-not [int]::TryParse([string]$envValues.CERTIFICATE_TASK_INTERVAL_MINUTES, [ref]$interval)) {
+                throw "CERTIFICATE_TASK_INTERVAL_MINUTES must be an integer. Value: '$($envValues.CERTIFICATE_TASK_INTERVAL_MINUTES)'"
+            }
+        }
+        $taskUser = if (-not [string]::IsNullOrWhiteSpace([string]$envValues.CERTIFICATE_TASK_USER)) { [string]$envValues.CERTIFICATE_TASK_USER } else { 'SYSTEM' }
+        $psExe = if (-not [string]::IsNullOrWhiteSpace([string]$envValues.CERTIFICATE_TASK_POWERSHELL)) { [string]$envValues.CERTIFICATE_TASK_POWERSHELL } else { 'powershell.exe' }
+        $scriptPath = Join-Path $RootDir 'certificate-orchestrator.ps1'
+        $result = Ensure-OrchestratorScheduledTask -TaskName $taskName -ScriptPath $scriptPath -EveryMinutes $interval -TaskUser $taskUser -PowerShellExe $psExe
+        Show-TuiStatus -Message "Scheduled task $($result.Action): $($result.TaskName) every $($result.EveryMinutes) minutes as $($result.TaskUser)." -Type Success -Row $statusRow
+    } catch {
+        Show-TuiStatus -Message "Scheduled task registration failed: $($_.Exception.Message)" -Type Error -Row $statusRow
+    }
+    Start-Sleep -Milliseconds 2200
+}
 
 $envPath = if ($env:CERTIFICATE_CONFIG_DIR) {
     Join-Path $env:CERTIFICATE_CONFIG_DIR 'certificate.env'
@@ -96,7 +148,13 @@ while ($menuStack.Count -gt 0) {
 
     Clear-TuiScreen
     switch ($selected) {
-        'acme'           { Invoke-AcmeForm -EnvFilePath $envPath | Out-Null }
+        'acme'           {
+            $result = Invoke-AcmeForm -EnvFilePath $envPath
+            if ($null -ne $result) {
+                Invoke-InitialAcmeReconcilePrompt -RootDir $PSScriptRoot
+            }
+        }
+        'task-register'  { Invoke-OrchestratorTaskRegistration -RootDir $PSScriptRoot }
         'policies'       { Invoke-PolicyEditor -ConfigDir $configDir | Out-Null }
         'policies-view'  { Invoke-PolicyEditor -ConfigDir $configDir -ViewOnly | Out-Null }
         'backup-create'  { & "$PSScriptRoot/certificate-backup.ps1" -OutputPath (Join-Path $PSScriptRoot ("certificate-{0}.certbak" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))) }
@@ -128,4 +186,3 @@ while ($menuStack.Count -gt 0) {
     }
     Clear-TuiScreen
 }
-
