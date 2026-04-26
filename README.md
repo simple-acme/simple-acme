@@ -85,11 +85,12 @@ Interpretation:
 | `ACME_HMAC_SECRET` | Yes | ACME EAB HMAC secret. |
 | `DOMAINS` | Yes | Comma-separated domain list. |
 | `ACME_SCRIPT_PATH` | Yes | Script path passed to `wacs --installation script`. |
-| `ACME_SOURCE_PLUGIN` | No | Source plugin (default `manual`). |
+| `ACME_SOURCE_PLUGIN` | No | Kept for compatibility; reconcile always issues with `--source manual`. |
 | `ACME_ORDER_PLUGIN` | No | Order plugin (default `single`). |
 | `ACME_STORE_PLUGIN` | No | Store plugin (default `certificatestore`). |
 | `ACME_ACCOUNT_NAME` | No | Optional account profile passed to `--account`. |
-| `ACME_INSTALLATION_PLUGINS` | No | Comma-separated installation plugins (default `script`). |
+| `ACME_INSTALLATION_PLUGINS` | No | Kept for compatibility; reconcile always issues with `--installation script`. |
+| `ACME_CSR_ALGORITHM` | No | CSR algorithm preference (`ec` default, with automatic RSA fallback). |
 | `ACME_SCRIPT_PARAMETERS` | No | Script parameter template. |
 | `ACME_VALIDATION_MODE` | No | Global validation mode (default `none`). |
 | `ACME_WACS_RETRY_ATTEMPTS` | No | WACS retry attempts (default `3`). |
