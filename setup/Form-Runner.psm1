@@ -15,6 +15,146 @@ function New-DeviceId {
     return "$slug-$suffix"
 }
 
+function Get-PolicyFilePath {
+    param([Parameter(Mandatory)][string]$ConfigDir)
+    Join-Path $ConfigDir 'policies.json'
+}
+
+function Get-Policies {
+    param([Parameter(Mandatory)][string]$ConfigDir)
+    $path = Get-PolicyFilePath -ConfigDir $ConfigDir
+    if (-not (Test-Path -LiteralPath $path)) { return @() }
+    $raw = Get-Content -Raw -Encoding UTF8 -Path $path | ConvertFrom-Json
+    return @($raw)
+}
+
+function Save-Policies {
+    param([Parameter(Mandatory)][string]$ConfigDir,[Parameter(Mandatory)][object[]]$Policies)
+    $path = Get-PolicyFilePath -ConfigDir $ConfigDir
+    if (-not (Test-Path -LiteralPath $ConfigDir)) { New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null }
+    $tmp = [System.IO.Path]::GetTempFileName()
+    [System.IO.File]::WriteAllText($tmp, ($Policies | ConvertTo-Json -Depth 20), [System.Text.Encoding]::UTF8)
+    Move-Item -LiteralPath $tmp -Destination $path -Force
+}
+
+function Find-PolicyById {
+    param([Parameter(Mandatory)][object[]]$Policies,[Parameter(Mandatory)][string]$PolicyId)
+    @($Policies | Where-Object { $_.policy_id -eq $PolicyId }) | Select-Object -First 1
+}
+
+function Format-PolicySummaryLines {
+    param([Parameter(Mandatory)][object[]]$Policies)
+    if (@($Policies).Count -eq 0) { return @('No deployment policies found.') }
+    $lines = @()
+    foreach ($p in $Policies) {
+        $connectors = @($p.connectors)
+        $connectorNames = @($connectors | ForEach-Object { if ($_.connector_type) { [string]$_.connector_type } elseif ($_.label) { [string]$_.label } })
+        $names = if ($connectorNames.Count -gt 0) { ($connectorNames -join ', ') } else { '-' }
+        $lines += "policy_id=$($p.policy_id) fanout=$($p.fanout_policy) quorum=$($p.quorum_threshold) connectors=$($connectors.Count) [$names]"
+    }
+    return $lines
+}
+
+function Invoke-PolicyViewer {
+    param([Parameter(Mandatory)][string]$ConfigDir)
+    $policies = @(Get-Policies -ConfigDir $ConfigDir)
+    $lines = @(Format-PolicySummaryLines -Policies $policies)
+    Clear-TuiScreen
+    $bounds = Get-TuiLayoutBounds
+    $height = [Math]::Min($bounds.ContentHeight, [Math]::Max(8, $lines.Count + 4))
+    Write-TuiBox -X $bounds.BoxX -Y $bounds.BoxY -Width $bounds.BoxWidth -Height $height -Title ' Existing deployment policies '
+    $visible = [Math]::Max(1, $height - 2)
+    for ($i=0; $i -lt [Math]::Min($visible, $lines.Count); $i++) {
+        Write-TuiAt -X ($bounds.BoxX + 2) -Y ($bounds.BoxY + 1 + $i) -Text (Get-TuiClippedText -Text $lines[$i] -Width ($bounds.BoxWidth - 4))
+    }
+    Show-TuiStatus -Message 'Press Enter/Esc to return.' -Type Info -Row $bounds.HelpRow
+    do { $k = Read-TuiKey } while ($k.Key -notin @([ConsoleKey]::Enter,[ConsoleKey]::Escape,[ConsoleKey]::Backspace))
+}
+
+function Invoke-PolicyEditor {
+    param([string]$ConfigDir)
+    $path = Get-PolicyFilePath -ConfigDir $ConfigDir
+    if (-not (Test-Path -LiteralPath $path)) { Save-Policies -ConfigDir $ConfigDir -Policies @() }
+
+    $statusRow = [Math]::Max(0,[Console]::WindowHeight - 2)
+    $policies = @(Get-Policies -ConfigDir $ConfigDir)
+    while($true){
+        $choice = Read-Host 'Policy editor: [N]ew [E]dit [D]elete [L]ist [Q]uit'
+        if($choice -match '^[Qq]'){ break }
+        if($choice -match '^[Ll]'){
+            Clear-TuiScreen
+            Invoke-PolicyViewer -ConfigDir $ConfigDir
+            $policies = @(Get-Policies -ConfigDir $ConfigDir)
+            continue
+        }
+
+        if (($choice -match '^[EeDd]') -and @($policies).Count -eq 0) {
+            Show-TuiStatus -Message 'No policies exist. Create one first.' -Type Warning -Row $statusRow
+            continue
+        }
+
+        if($choice -match '^[Nn]'){
+            $pid = Read-Host 'policy_id'
+            if ([string]::IsNullOrWhiteSpace($pid)) {
+                Show-TuiStatus -Message 'policy_id is required.' -Type Warning -Row $statusRow
+                continue
+            }
+            if ($null -ne (Find-PolicyById -Policies $policies -PolicyId $pid)) {
+                Show-TuiStatus -Message "Policy '$pid' already exists." -Type Warning -Row $statusRow
+                continue
+            }
+            $fan = Read-Host 'fanout_policy'
+            $q = 0
+            if (-not [int]::TryParse((Read-Host 'quorum_threshold'), [ref]$q)) {
+                Show-TuiStatus -Message 'quorum_threshold must be an integer.' -Type Warning -Row $statusRow
+                continue
+            }
+            $policies += [pscustomobject]@{ policy_id=$pid; fanout_policy=$fan; quorum_threshold=$q; connectors=@() }
+            Save-Policies -ConfigDir $ConfigDir -Policies $policies
+            continue
+        }
+
+        if($choice -match '^[Dd]'){
+            $pid = Read-Host 'policy_id to delete'
+            if ($null -eq (Find-PolicyById -Policies $policies -PolicyId $pid)) {
+                Show-TuiStatus -Message "Policy '$pid' was not found. Returning to editor." -Type Warning -Row $statusRow
+                continue
+            }
+            $policies = @($policies | Where-Object { $_.policy_id -ne $pid })
+            Save-Policies -ConfigDir $ConfigDir -Policies $policies
+            continue
+        }
+
+        if($choice -match '^[Ee]'){
+            $pid = Read-Host 'policy_id to edit'
+            $p = Find-PolicyById -Policies $policies -PolicyId $pid
+            if($null -eq $p){
+                Show-TuiStatus -Message "Policy '$pid' was not found. Returning to editor." -Type Warning -Row $statusRow
+                continue
+            }
+            $fan = Read-Host "fanout_policy [$($p.fanout_policy)]"
+            if (-not [string]::IsNullOrWhiteSpace($fan)) { $p.fanout_policy = $fan }
+            $qInput = Read-Host "quorum_threshold [$($p.quorum_threshold)]"
+            if (-not [string]::IsNullOrWhiteSpace($qInput)) {
+                $qParsed = 0
+                if (-not [int]::TryParse($qInput, [ref]$qParsed)) {
+                    Show-TuiStatus -Message 'Invalid quorum_threshold; keeping previous value.' -Type Warning -Row $statusRow
+                } else {
+                    $p.quorum_threshold = $qParsed
+                }
+            }
+            $conn = Read-Host 'connector types comma-separated'
+            if($conn){ $p.connectors=@($conn -split ',' | ForEach-Object { [pscustomobject]@{ connector_type=$_.Trim(); label=$_.Trim(); settings=@{} } }) }
+            Save-Policies -ConfigDir $ConfigDir -Policies $policies
+            continue
+        }
+
+        Show-TuiStatus -Message 'Invalid selection. Choose N/E/D/L/Q.' -Type Warning -Row $statusRow
+    }
+
+    return @(Get-Policies -ConfigDir $ConfigDir)
+}
+
 function Invoke-DeviceForm {
     param([Parameter(Mandatory)][string]$ConnectorType,[Parameter(Mandatory)][string]$ConfigDir)
 
@@ -27,10 +167,10 @@ function Invoke-DeviceForm {
         return $null
     }
 
-    # NOTE: For now each connector stores a single config; this keeps setup deterministic.
     $existing = Get-AllDeviceConfigs -ConfigDir $ConfigDir -SkipIntegrityFailures | Where-Object { $_.connector_type -eq $ConnectorType } | Select-Object -First 1
     $current = if ($existing) { $existing.settings } else { @{} }
 
+    Clear-TuiScreen
     try {
         $values = Show-TuiForm -Fields $schema.Fields -CurrentValues $current -Title "Configure $($schema.Label)"
     } catch {
@@ -64,6 +204,7 @@ function Invoke-AcmeForm {
     $curr = @{}
     if ($EnvFilePath -and (Test-Path -LiteralPath $EnvFilePath)) { $curr = Read-EnvFile -Path $EnvFilePath }
 
+    Clear-TuiScreen
     $values = Show-TuiForm -Fields $AcmeSchema -CurrentValues $curr -Title 'ACME settings'
     if ($null -eq $values) { return $null }
 
@@ -75,26 +216,6 @@ function Invoke-AcmeForm {
     Show-TuiStatus -Message 'ACME credentials saved to certificate.env. Ensure this file has restricted NTFS permissions.' -Type Warning -Row ([Console]::WindowHeight-2)
     return $values
 }
-
-function Invoke-PolicyEditor {
-    param([string]$ConfigDir)
-    $path = Join-Path $ConfigDir 'policies.json'
-    if (-not (Test-Path -LiteralPath $path)) {
-        $tmpInit = [System.IO.Path]::GetTempFileName(); [System.IO.File]::WriteAllText($tmpInit, '[]', [System.Text.Encoding]::UTF8); Move-Item -LiteralPath $tmpInit -Destination $path -Force
-    }
-    $policies = @((Get-Content -Raw -Encoding UTF8 -Path $path | ConvertFrom-Json))
-    while($true){
-        $choice = Read-Host 'Policy editor: [N]ew [E]dit [D]elete [L]ist [Q]uit'
-        if($choice -match '^[Qq]'){ break }
-        if($choice -match '^[Ll]'){ $policies | ForEach-Object { [Console]::WriteLine("{0} fanout={1} quorum={2}" -f $_.policy_id,$_.fanout_policy,$_.quorum_threshold) }; continue }
-        if($choice -match '^[Nn]'){ $pid=Read-Host 'policy_id'; $fan=Read-Host 'fanout_policy'; $q=Read-Host 'quorum_threshold'; $policies += [pscustomobject]@{ policy_id=$pid; fanout_policy=$fan; quorum_threshold=[int]$q; connectors=@() }; continue }
-        if($choice -match '^[Dd]'){ $pid=Read-Host 'policy_id to delete'; $policies=@($policies | Where-Object { $_.policy_id -ne $pid }); continue }
-        if($choice -match '^[Ee]'){ $pid=Read-Host 'policy_id to edit'; $p=@($policies|Where-Object{$_.policy_id -eq $pid})[0]; if($null -eq $p){continue}; $p.fanout_policy=Read-Host "fanout_policy [$($p.fanout_policy)]"; $p.quorum_threshold=[int](Read-Host "quorum_threshold [$($p.quorum_threshold)]"); $conn=Read-Host 'connector types comma-separated'; if($conn){ $p.connectors=@($conn -split ',' | ForEach-Object { [pscustomobject]@{ connector_type=$_.Trim(); label=$_.Trim(); settings=@{} } }) }; }
-    }
-    $tmp = [System.IO.Path]::GetTempFileName(); [System.IO.File]::WriteAllText($tmp, ($policies | ConvertTo-Json -Depth 20), [System.Text.Encoding]::UTF8); Move-Item -LiteralPath $tmp -Destination $path -Force
-    return $policies
-}
-
 
 function Invoke-FirstRunWizard {
     param([Parameter(Mandatory)][string]$DefaultEnvPath)
@@ -116,9 +237,7 @@ function Invoke-FirstRunWizard {
         @{ Name='CERTIFICATE_LOG_DIR';    Label='Log directory';    Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'log');    HelpText='Log output directory' }
     )
 
-    Clear-Host
-    Write-Host "`n  Certificate Setup - First Run`n" -ForegroundColor Cyan
-    Write-Host "  No certificate.env found. This wizard will guide you through initial setup.`n"
+    Clear-TuiScreen
 
     $acmeValues = Show-TuiForm -Fields $acmeFields -CurrentValues @{} -Title 'Step 1 of 2 - ACME credentials'
     if ($null -eq $acmeValues) { return $null }
@@ -161,12 +280,7 @@ function Invoke-FirstRunWizard {
         -Type Success -Row ([Math]::Max(0, [Console]::WindowHeight) - 2)
     Start-Sleep -Milliseconds 1500
 
-    Write-Host "`n  Auto-generated CERTIFICATE_API_KEY (store this securely):" -ForegroundColor Yellow
-    Write-Host "  $apiKey`n" -ForegroundColor White
-    Write-Host "  Press any key to continue to the main menu..." -ForegroundColor Gray
-    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
-
     return $envTarget
 }
 
-Export-ModuleMember -Function @('Invoke-DeviceForm','Invoke-AcmeForm','Invoke-PolicyEditor','Invoke-FirstRunWizard')
+Export-ModuleMember -Function @('Invoke-DeviceForm','Invoke-AcmeForm','Invoke-PolicyEditor','Invoke-PolicyViewer','Invoke-FirstRunWizard','Get-Policies','Find-PolicyById','Format-PolicySummaryLines')

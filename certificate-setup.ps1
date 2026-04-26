@@ -25,6 +25,7 @@ Run this script from a full repository checkout and confirm the module file exis
     }
 }
 
+
 Import-Module $tuiEngineModulePath -Force -Global
 Assert-SetupCommandAvailable -CommandName 'Show-TuiMenu' -ExpectedModulePath $tuiEngineModulePath
 Assert-SetupCommandAvailable -CommandName 'Show-TuiStatus' -ExpectedModulePath $tuiEngineModulePath
@@ -33,6 +34,7 @@ Import-Module $formRunnerModulePath -Force -Global
 Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModulePath $formRunnerModulePath
 Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeForm' -ExpectedModulePath $formRunnerModulePath
 Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyEditor' -ExpectedModulePath $formRunnerModulePath
+Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyViewer' -ExpectedModulePath $formRunnerModulePath
 Assert-SetupCommandAvailable -CommandName 'Invoke-DeviceForm' -ExpectedModulePath $formRunnerModulePath
 . "$PSScriptRoot/setup/Menu-Tree.ps1"
 
@@ -72,9 +74,11 @@ while ($menuStack.Count -gt 0) {
         continue
     }
 
+    Clear-TuiScreen
     switch ($selected) {
         'acme'           { Invoke-AcmeForm -EnvFilePath $envPath | Out-Null }
         'policies'       { Invoke-PolicyEditor -ConfigDir $configDir | Out-Null }
+        'policies-view'  { Invoke-PolicyViewer -ConfigDir $configDir | Out-Null }
         'backup-create'  { & "$PSScriptRoot/certificate-backup.ps1" -OutputPath (Join-Path $PSScriptRoot ("certificate-{0}.certbak" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))) }
         'backup-restore' {
             $path = Read-Host 'Backup path'
@@ -102,4 +106,6 @@ while ($menuStack.Count -gt 0) {
         }
         default          { Invoke-DeviceForm -ConnectorType $selected -ConfigDir $configDir | Out-Null }
     }
+    Clear-TuiScreen
 }
+
