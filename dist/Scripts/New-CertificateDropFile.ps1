@@ -14,6 +14,13 @@ if (-not $dropDir) {
     exit 1
 }
 if (-not (Test-Path $dropDir)) { New-Item -ItemType Directory -Path $dropDir -Force | Out-Null }
+
+if (-not [string]::IsNullOrWhiteSpace($OldThumbprint)) {
+    $newNorm = ($Thumbprint -replace '\s','').ToUpperInvariant()
+    $oldNorm = ($OldThumbprint -replace '\s','').ToUpperInvariant()
+    if ($newNorm -eq $oldNorm) { exit 0 }
+}
+
 $payload = [ordered]@{
     event                = 'certificate_renewed'
     renewal_id           = $RenewalId

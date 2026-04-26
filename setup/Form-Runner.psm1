@@ -208,7 +208,7 @@ function Invoke-AcmeForm {
     $values = Show-TuiForm -Fields $AcmeSchema -CurrentValues $curr -Title 'ACME settings'
     if ($null -eq $values) { return $null }
 
-    foreach ($k in @('CERTIFICATE_CONFIG_DIR','CERTIFICATE_DROP_DIR','CERTIFICATE_STATE_DIR','CERTIFICATE_LOG_DIR','CERTIFICATE_VERIFY_MAX_ATTEMPTS','CERTIFICATE_ACTIVATE_TIMEOUT_MS','CERTIFICATE_DEFAULT_FANOUT','CERTIFICATE_SKIP_TLS_CHECK')) {
+    foreach ($k in @('CERTIFICATE_CONFIG_DIR','CERTIFICATE_DROP_DIR','CERTIFICATE_STATE_DIR','CERTIFICATE_LOG_DIR','CERTIFICATE_VERIFY_MAX_ATTEMPTS','CERTIFICATE_ACTIVATE_TIMEOUT_MS','CERTIFICATE_DEFAULT_FANOUT','CERTIFICATE_SKIP_TLS_CHECK','CERTIFICATE_RETRY_MAX_ATTEMPTS','CERTIFICATE_RETRY_BACKOFF_MS','CERTIFICATE_HTTP_ENABLED','CERTIFICATE_HTTP_PREFIX','CERTIFICATE_DISABLE_ROLLBACK','CERTIFICATE_HTTP_HOST','CERTIFICATE_HTTP_PORT','CERTIFICATE_API_KEY')) {
         if ($curr.ContainsKey($k)) { $values[$k] = $curr[$k] }
     }
 
@@ -425,7 +425,16 @@ function Invoke-FirstRunWizard {
         @{ Name='ACME_DIRECTORY';   Label='ACME directory URL';          Type='string'; Required=$true; Placeholder='https://acme.networking4all.com/dv'; HelpText='ACME directory endpoint' },
         @{ Name='ACME_KID';         Label='ACME KID (EAB key ID)';       Type='secret'; Required=$true; Placeholder=''; HelpText='External account binding key identifier' },
         @{ Name='ACME_HMAC_SECRET'; Label='ACME HMAC secret';            Type='secret'; Required=$true; Placeholder=''; HelpText='External account binding HMAC secret' },
-        @{ Name='DOMAINS';          Label='Domains (comma-separated)';   Type='string'; Required=$true; Placeholder='example.com,www.example.com'; HelpText='Domain list for certificate issuance' }
+        @{ Name='DOMAINS';          Label='Domains (comma-separated)';   Type='string'; Required=$true; Placeholder='example.com,www.example.com'; HelpText='Domain list for certificate issuance' },
+        @{ Name='ACME_SOURCE_PLUGIN'; Label='Source plugin'; Type='string'; Required=$true; Placeholder='manual'; HelpText='simple-acme source plugin' },
+        @{ Name='ACME_ORDER_PLUGIN'; Label='Order plugin'; Type='string'; Required=$true; Placeholder='single'; HelpText='simple-acme order plugin' },
+        @{ Name='ACME_STORE_PLUGIN'; Label='Store plugin'; Type='string'; Required=$true; Placeholder='certificatestore'; HelpText='simple-acme store plugin' },
+        @{ Name='ACME_ACCOUNT_NAME'; Label='Account name'; Type='string'; Required=$false; Placeholder=''; HelpText='Optional ACME account name' },
+        @{ Name='ACME_INSTALLATION_PLUGINS'; Label='Installation plugins'; Type='string'; Required=$true; Placeholder='script'; HelpText='Comma-separated installation plugins' },
+        @{ Name='ACME_SCRIPT_PARAMETERS'; Label='Script parameters'; Type='string'; Required=$true; Placeholder="'default' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"; HelpText='wacs scriptparameters template' },
+        @{ Name='ACME_VALIDATION_MODE'; Label='Validation mode'; Type='string'; Required=$true; Placeholder='none'; HelpText='Locked to none' },
+        @{ Name='ACME_WACS_RETRY_ATTEMPTS'; Label='WACS retry attempts'; Type='string'; Required=$true; Placeholder='3'; HelpText='Retry attempts for wacs operations' },
+        @{ Name='ACME_WACS_RETRY_DELAY_SECONDS'; Label='WACS retry delay seconds'; Type='string'; Required=$true; Placeholder='2'; HelpText='Delay between retries' }
     )
 
     $pathFields = @(
@@ -447,6 +456,15 @@ function Invoke-FirstRunWizard {
         CERTIFICATE_CONFIG_DIR = Join-Path $scriptRoot 'config'
         CERTIFICATE_STATE_DIR  = Join-Path $scriptRoot 'state'
         CERTIFICATE_LOG_DIR    = Join-Path $scriptRoot 'log'
+        ACME_SOURCE_PLUGIN     = 'manual'
+        ACME_ORDER_PLUGIN      = 'single'
+        ACME_STORE_PLUGIN      = 'certificatestore'
+        ACME_ACCOUNT_NAME      = ''
+        ACME_INSTALLATION_PLUGINS = 'script'
+        ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
+        ACME_VALIDATION_MODE   = 'none'
+        ACME_WACS_RETRY_ATTEMPTS = '3'
+        ACME_WACS_RETRY_DELAY_SECONDS = '2'
     }
     $pathValues = Show-TuiForm -Fields $pathFields -CurrentValues $pathDefaults -Title 'Step 2 of 2 - Paths'
     if ($null -eq $pathValues) { return $null }
