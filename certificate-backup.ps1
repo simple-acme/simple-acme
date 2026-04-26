@@ -63,11 +63,18 @@ try {
     $devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICATE_CONFIG_DIR
     $policiesPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'policies.json'
     $mappingPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'mappings.json'
+    $mappingCompatPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'mapping.json'
     $secureEnvPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'env.secure'
     $credPath = Join-Path $env:CERTIFICATE_CONFIG_DIR 'credentials.sec'
     $renewalsDir = Join-Path $env:CERTIFICATE_CONFIG_DIR 'renewals'
     $policies = if (Test-Path -LiteralPath $policiesPath) { (Get-Content -Raw -Path $policiesPath -Encoding UTF8 | ConvertFrom-Json) } else { @() }
-    $mappings = if (Test-Path -LiteralPath $mappingPath) { (Get-Content -Raw -Path $mappingPath -Encoding UTF8 | ConvertFrom-Json) } else { @() }
+    $mappings = if (Test-Path -LiteralPath $mappingPath) {
+        (Get-Content -Raw -Path $mappingPath -Encoding UTF8 | ConvertFrom-Json)
+    } elseif (Test-Path -LiteralPath $mappingCompatPath) {
+        (Get-Content -Raw -Path $mappingCompatPath -Encoding UTF8 | ConvertFrom-Json)
+    } else {
+        @()
+    }
     $secureConfig = @{
         env_secure = if (Test-Path -LiteralPath $secureEnvPath) { [Convert]::ToBase64String([IO.File]::ReadAllBytes($secureEnvPath)) } else { '' }
         credentials_sec = if (Test-Path -LiteralPath $credPath) { [Convert]::ToBase64String([IO.File]::ReadAllBytes($credPath)) } else { '' }

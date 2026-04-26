@@ -350,6 +350,7 @@ function Save-SecurePlatformConfig {
     $secureEnvPath = Join-Path $ConfigDir 'env.secure'
     $credPath = Join-Path $ConfigDir 'credentials.sec'
     $mappingPath = Join-Path $ConfigDir 'mappings.json'
+    $mappingCompatPath = Join-Path $ConfigDir 'mapping.json'
 
     $envSnapshot = @{}
     foreach ($k in $Values.Keys) {
@@ -368,6 +369,9 @@ function Save-SecurePlatformConfig {
 
     if (-not (Test-Path -LiteralPath $mappingPath)) {
         @() | ConvertTo-Json | Set-Content -LiteralPath $mappingPath -Encoding UTF8
+    }
+    if (-not (Test-Path -LiteralPath $mappingCompatPath)) {
+        @() | ConvertTo-Json | Set-Content -LiteralPath $mappingCompatPath -Encoding UTF8
     }
 }
 
@@ -420,6 +424,10 @@ function Invoke-AcmeForm {
         default { }
     }
 
+    $previousExportable = ''
+    if ($curr.ContainsKey('ACME_PRIVATEKEY_EXPORTABLE')) { $previousExportable = ([string]$curr.ACME_PRIVATEKEY_EXPORTABLE).ToLowerInvariant() }
+    $previousStrategy = if ($curr.ContainsKey('ACME_PRIVATE_KEY_STRATEGY')) { ([string]$curr.ACME_PRIVATE_KEY_STRATEGY).ToLowerInvariant() } else { '' }
+
     if ($distributionMode -eq 'multi') {
         [Console]::WriteLine('')
         [Console]::WriteLine('Certificates used on multiple systems require access to the private key.')
@@ -439,8 +447,13 @@ function Invoke-AcmeForm {
         }
 
         $values.ACME_RENEWAL_MODE = 'multi-endpoint'
-        $reissueChoice = Read-MenuChoice -Prompt 'Setting changed. Apply on [1] next renewal or [2] force immediate re-issue' -Options @{ '1'='next-renewal'; '2'='force-reissue' } -DefaultKey '1'
-        $values.ACME_REISSUE_STRATEGY = $reissueChoice
+        $settingChanged = (($previousExportable -ne [string]$values.ACME_PRIVATEKEY_EXPORTABLE) -or ($previousStrategy -ne ([string]$values.ACME_PRIVATE_KEY_STRATEGY).ToLowerInvariant()))
+        if ($settingChanged) {
+            $reissueChoice = Read-MenuChoice -Prompt 'Setting changed. Apply on [1] next renewal or [2] force immediate re-issue' -Options @{ '1'='next-renewal'; '2'='force-reissue' } -DefaultKey '1'
+            $values.ACME_REISSUE_STRATEGY = $reissueChoice
+        } else {
+            $values.ACME_REISSUE_STRATEGY = 'next-renewal'
+        }
     } else {
         $values.ACME_RENEWAL_MODE = 'single-system'
         $values.ACME_PRIVATE_KEY_STRATEGY = 'local-store'
