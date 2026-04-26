@@ -15,6 +15,15 @@ $script:RequiredEnvKeys = @(
 )
 
 $script:OptionalEnvDefaults = @{
+    ACME_SOURCE_PLUGIN            = 'manual'
+    ACME_ORDER_PLUGIN             = 'single'
+    ACME_STORE_PLUGIN             = 'certificatestore'
+    ACME_ACCOUNT_NAME             = ''
+    ACME_VALIDATION_MODE          = 'none'
+    ACME_WACS_RETRY_ATTEMPTS      = '3'
+    ACME_WACS_RETRY_DELAY_SECONDS = '2'
+    ACME_INSTALLATION_PLUGINS     = 'script'
+    ACME_SCRIPT_PARAMETERS        = "'default' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
     CERTIFICATE_VERIFY_MAX_ATTEMPTS = '3'
     CERTIFICATE_ACTIVATE_TIMEOUT_MS = '120000'
     CERTIFICATE_DEFAULT_FANOUT      = 'fail-fast'

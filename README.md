@@ -85,6 +85,15 @@ Interpretation:
 | `ACME_HMAC_SECRET` | Yes | ACME EAB HMAC secret. |
 | `DOMAINS` | Yes | Comma-separated domain list. |
 | `ACME_SCRIPT_PATH` | Yes | Script path passed to `wacs --installation script`. |
+| `ACME_SOURCE_PLUGIN` | No | Source plugin (default `manual`). |
+| `ACME_ORDER_PLUGIN` | No | Order plugin (default `single`). |
+| `ACME_STORE_PLUGIN` | No | Store plugin (default `certificatestore`). |
+| `ACME_ACCOUNT_NAME` | No | Optional account profile passed to `--account`. |
+| `ACME_INSTALLATION_PLUGINS` | No | Comma-separated installation plugins (default `script`). |
+| `ACME_SCRIPT_PARAMETERS` | No | Script parameter template. |
+| `ACME_VALIDATION_MODE` | No | Global validation mode (default `none`). |
+| `ACME_WACS_RETRY_ATTEMPTS` | No | WACS retry attempts (default `3`). |
+| `ACME_WACS_RETRY_DELAY_SECONDS` | No | Delay between retries (default `2`). |
 | `CERTIFICATE_CONFIG_DIR` | Yes | Directory for `certificate.env`, device configs, and policies. |
 | `CERTIFICATE_DROP_DIR` | Yes | Watched folder for inbound certificate event JSON. |
 | `CERTIFICATE_STATE_DIR` | Yes | Job state storage directory. |
@@ -209,6 +218,9 @@ Use Script Installation Plugin to emit Certificate drop files.
 --installation Script
 --script "dist\Scripts\New-CertificateDropFile.ps1"
 --scriptparameters "'<POLICY-ID>' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
+--source manual
+--order single
+--globalvalidation none
 ```
 
 ### Reconcile existing simple-acme state to `.env`

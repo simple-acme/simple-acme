@@ -12,6 +12,7 @@ Describe 'Simple ACME reconcile preflight' {
             ACME_HMAC_SECRET = 'secret'
             DOMAINS = 'example.com,www.example.com'
             ACME_SCRIPT_PATH = $scriptFile
+            ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} {CertThumbprint} {OldCertThumbprint}"
         }
 
         $result.WacsPath | Should -Be 'C:\tools\wacs.exe'
@@ -31,6 +32,7 @@ Describe 'Simple ACME reconcile preflight' {
                 ACME_HMAC_SECRET = 'secret'
                 DOMAINS = 'example.com'
                 ACME_SCRIPT_PATH = $scriptFile
+                ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} {CertThumbprint} {OldCertThumbprint}"
             }
         } | Should -Throw '*wacs*not found*'
     }
@@ -44,6 +46,7 @@ Describe 'Simple ACME reconcile preflight' {
                 ACME_HMAC_SECRET = 'secret'
                 DOMAINS = 'example.com'
                 ACME_SCRIPT_PATH = '.\relative.ps1'
+                ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} {CertThumbprint} {OldCertThumbprint}"
             }
         } | Should -Throw '*absolute path*'
     }

@@ -96,6 +96,11 @@ function Get-RenewalSummary {
     $baseUriCandidates = Find-PropertyValues -InputObject $renewal -Names @('BaseUri')
     $kidCandidates = Find-PropertyValues -InputObject $renewal -Names @('KeyIdentifier','Kid','EabKeyIdentifier')
     $validationCandidates = Find-PropertyValues -InputObject $renewal -Names @('Plugin','Name')
+    $storeCandidates = Find-PropertyValues -InputObject $renewal -Names @('StorePlugin','StoreType','Store')
+    $accountCandidates = Find-PropertyValues -InputObject $renewal -Names @('Account','AccountName')
+    $sourceCandidates = Find-PropertyValues -InputObject $renewal -Names @('SourcePlugin','Source')
+    $orderCandidates = Find-PropertyValues -InputObject $renewal -Names @('OrderPlugin','Order')
+    $renewalIdCandidates = Find-PropertyValues -InputObject $renewal -Names @('Id','RenewalId')
     $scriptCandidates = Find-PropertyValues -InputObject $renewal -Names @('Script','ScriptFileName','Path')
 
     $hosts = Get-RenewalHosts -Renewal $renewal
@@ -103,9 +108,14 @@ function Get-RenewalSummary {
     [pscustomobject]@{
         File             = $File
         Renewal          = $renewal
+        RenewalId        = ($renewalIdCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         Hosts            = $hosts
         BaseUri          = ($baseUriCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         EabKid           = ($kidCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+        SourcePlugin     = ($sourceCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+        OrderPlugin      = ($orderCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+        StorePlugin      = ($storeCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+        AccountName      = ($accountCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         HasValidationNone = @($validationCandidates | Where-Object { $_ -is [string] -and $_.ToLowerInvariant() -eq 'none' }).Count -gt 0
         HasScriptInstallation = @($validationCandidates | Where-Object { $_ -is [string] -and $_.ToLowerInvariant() -eq 'script' }).Count -gt 0
         ScriptPaths      = @($scriptCandidates | Where-Object { $_ -is [string] })
@@ -134,6 +144,18 @@ function Compare-RenewalWithEnv {
 
     if ([string]$RenewalSummary.EabKid -ne [string]$EnvValues.ACME_KID) {
         $mismatches.Add('EAB kid')
+    }
+    if ([string]$RenewalSummary.SourcePlugin -ne [string]$EnvValues.ACME_SOURCE_PLUGIN) {
+        $mismatches.Add('Source plugin')
+    }
+    if ([string]$RenewalSummary.OrderPlugin -ne [string]$EnvValues.ACME_ORDER_PLUGIN) {
+        $mismatches.Add('Order plugin')
+    }
+    if ([string]$RenewalSummary.StorePlugin -ne [string]$EnvValues.ACME_STORE_PLUGIN) {
+        $mismatches.Add('Store plugin')
+    }
+    if ([string]$RenewalSummary.AccountName -ne [string]$EnvValues.ACME_ACCOUNT_NAME) {
+        $mismatches.Add('Account name')
     }
 
     if (-not $RenewalSummary.HasValidationNone) {
@@ -180,6 +202,15 @@ function Assert-ReconcilePreflight {
     if (-not (Test-Path -LiteralPath $scriptPath)) {
         throw "ACME_SCRIPT_PATH does not exist: '$scriptPath'"
     }
+    $scriptParameters = [string]$EnvValues.ACME_SCRIPT_PARAMETERS
+    if ([string]::IsNullOrWhiteSpace($scriptParameters)) {
+        throw 'ACME_SCRIPT_PARAMETERS must be set and non-empty.'
+    }
+    foreach ($requiredToken in @('{RenewalId}','{CertThumbprint}','{OldCertThumbprint}')) {
+        if (-not $scriptParameters.Contains($requiredToken)) {
+            throw "ACME_SCRIPT_PARAMETERS is missing required token '$requiredToken'."
+        }
+    }
 
     $domains = Get-NormalizedDomains -Domains ([string]$EnvValues.DOMAINS)
     if ($domains.Count -eq 0) {
@@ -217,24 +248,80 @@ function Ensure-SimpleAcmeSettings {
     $settings | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $settingsPath -Encoding UTF8
 }
 
+function Get-InstallationPlugins {
+    param([Parameter(Mandatory)][hashtable]$EnvValues)
+    $raw = [string]$EnvValues.ACME_INSTALLATION_PLUGINS
+    $plugins = @($raw -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+    if ($plugins.Count -eq 0) { return @('script') }
+    return $plugins
+}
+
+function Invoke-WacsWithRetry {
+    param(
+        [Parameter(Mandatory)][string[]]$Args,
+        [Parameter(Mandatory)][hashtable]$EnvValues
+    )
+
+    $attempts = 3
+    [void][int]::TryParse([string]$EnvValues.ACME_WACS_RETRY_ATTEMPTS, [ref]$attempts)
+    if ($attempts -lt 1) { $attempts = 1 }
+    $delaySeconds = 2
+    [void][int]::TryParse([string]$EnvValues.ACME_WACS_RETRY_DELAY_SECONDS, [ref]$delaySeconds)
+    if ($delaySeconds -lt 0) { $delaySeconds = 0 }
+
+    $lastExit = 0
+    for ($attempt = 1; $attempt -le $attempts; $attempt++) {
+        & wacs @Args
+        $lastExit = $LASTEXITCODE
+        if ($lastExit -eq 0) { return }
+        if ($attempt -lt $attempts) { Start-Sleep -Seconds $delaySeconds }
+    }
+
+    throw "wacs failed with exit code $lastExit after $attempts attempt(s)"
+}
+
 function Invoke-WacsIssue {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
 
+    $installPlugins = Get-InstallationPlugins -EnvValues $EnvValues
     $args = @(
         '--accepttos',
+        '--source', [string]$EnvValues.ACME_SOURCE_PLUGIN,
+        '--order', [string]$EnvValues.ACME_ORDER_PLUGIN,
         '--baseuri', [string]$EnvValues.ACME_DIRECTORY,
         '--eab-key-identifier', [string]$EnvValues.ACME_KID,
         '--eab-key', [string]$EnvValues.ACME_HMAC_SECRET,
         '--validation', 'none',
+        '--globalvalidation', [string]$EnvValues.ACME_VALIDATION_MODE,
         '--host', [string]$EnvValues.DOMAINS,
-        '--store', 'certificatestore',
-        '--installation', 'script',
+        '--store', [string]$EnvValues.ACME_STORE_PLUGIN,
         '--script', [string]$EnvValues.ACME_SCRIPT_PATH,
-        '--scriptparameters', "{RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
+        '--scriptparameters', [string]$EnvValues.ACME_SCRIPT_PARAMETERS
     )
+    if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_ACCOUNT_NAME)) {
+        $args += @('--account', [string]$EnvValues.ACME_ACCOUNT_NAME)
+    }
 
-    & wacs @args
-    if ($LASTEXITCODE -ne 0) { throw "wacs issuance failed with exit code $LASTEXITCODE" }
+    foreach ($plugin in $installPlugins) {
+        $args += @('--installation', $plugin)
+    }
+
+    Invoke-WacsWithRetry -Args $args -EnvValues $EnvValues
+}
+
+function Test-ExactDomainSetMatch {
+    param([string[]]$Requested,[string[]]$Actual)
+    $left = @($Requested | Sort-Object -Unique)
+    $right = @($Actual | Sort-Object -Unique)
+    return (($left -join ',') -eq ($right -join ','))
+}
+
+function Get-RenewalIdForCancel {
+    param([Parameter(Mandatory)]$RenewalSummary)
+    if (-not [string]::IsNullOrWhiteSpace([string]$RenewalSummary.RenewalId)) { return [string]$RenewalSummary.RenewalId }
+    $name = [string]$RenewalSummary.File.BaseName
+    if (-not [string]::IsNullOrWhiteSpace($name)) { return $name }
+    throw "Unable to determine renewal id for file '$($RenewalSummary.File.FullName)'"
 }
 
 function Write-ReconcileLog {
@@ -266,7 +353,7 @@ function Invoke-SimpleAcmeReconcile {
     $matching = @()
     foreach ($file in $allRenewalFiles) {
         $summary = Get-RenewalSummary -File $file
-        if (@($summary.Hosts | Where-Object { $domains -contains $_ }).Count -gt 0) {
+        if (Test-ExactDomainSetMatch -Requested $domains -Actual $summary.Hosts) {
             $matching += ,$summary
         }
     }
@@ -280,7 +367,7 @@ function Invoke-SimpleAcmeReconcile {
         $postMatch = @()
         foreach ($file in $allRenewalFiles) {
             $summary = Get-RenewalSummary -File $file
-            if (@($summary.Hosts | Where-Object { $domains -contains $_ }).Count -gt 0) { $postMatch += ,$summary }
+            if (Test-ExactDomainSetMatch -Requested $domains -Actual $summary.Hosts) { $postMatch += ,$summary }
         }
 
         if ($postMatch.Count -eq 0) {
@@ -310,8 +397,8 @@ function Invoke-SimpleAcmeReconcile {
     }
 
     if (-not $SkipWacs) {
-        & wacs --cancel --friendlyname $domains[0]
-        if ($LASTEXITCODE -ne 0) { throw "wacs cancel failed with exit code $LASTEXITCODE" }
+        $renewalId = Get-RenewalIdForCancel -RenewalSummary $current
+        Invoke-WacsWithRetry -Args @('--cancel', '--id', $renewalId) -EnvValues $EnvValues
         Invoke-WacsIssue -EnvValues $EnvValues
     }
 
@@ -319,7 +406,7 @@ function Invoke-SimpleAcmeReconcile {
     $postUpdate = @()
     foreach ($file in $freshFiles) {
         $summary = Get-RenewalSummary -File $file
-        if (@($summary.Hosts | Where-Object { $domains -contains $_ }).Count -gt 0) { $postUpdate += ,$summary }
+        if (Test-ExactDomainSetMatch -Requested $domains -Actual $summary.Hosts) { $postUpdate += ,$summary }
     }
 
     if ($postUpdate.Count -ne 1) {
@@ -344,7 +431,11 @@ Export-ModuleMember -Function @(
     'Get-NormalizedDomains',
     'Get-RenewalFiles',
     'Get-RenewalSummary',
+    'Get-InstallationPlugins',
+    'Get-RenewalIdForCancel',
     'Invoke-SimpleAcmeReconcile',
+    'Invoke-WacsWithRetry',
     'Invoke-WacsIssue',
+    'Test-ExactDomainSetMatch',
     'Write-ReconcileLog'
 )

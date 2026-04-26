@@ -31,6 +31,10 @@ function Invoke-TestSimpleAcmeReconciler {
             Hosts = @('example.com')
             BaseUri = 'https://acme.networking4all.com/dv'
             EabKid = 'kid-1'
+            SourcePlugin = 'manual'
+            OrderPlugin = 'single'
+            StorePlugin = 'certificatestore'
+            AccountName = ''
             HasValidationNone = $true
             HasScriptInstallation = $true
             ScriptPaths = @('C:\wrong.ps1')
@@ -40,10 +44,30 @@ function Invoke-TestSimpleAcmeReconciler {
             ACME_DIRECTORY = 'https://acme.networking4all.com/dv'
             ACME_KID = 'kid-1'
             ACME_SCRIPT_PATH = 'C:\correct.ps1'
+            ACME_SOURCE_PLUGIN = 'manual'
+            ACME_ORDER_PLUGIN = 'single'
+            ACME_STORE_PLUGIN = 'certificatestore'
+            ACME_ACCOUNT_NAME = ''
         }
 
         $result = Compare-RenewalWithEnv -RenewalSummary $summary -EnvValues $envValues
         if ($result.Matches) { throw 'Expected mismatch.' }
         if (-not ($result.Mismatches -contains 'Script path')) { throw 'Expected Script path mismatch.' }
+    }
+
+    & $Assert 'exact domain set matching rejects partial overlap' {
+        if (-not (Test-ExactDomainSetMatch -Requested @('a.example.com','b.example.com') -Actual @('b.example.com','a.example.com'))) {
+            throw 'Expected exact set match.'
+        }
+        if (Test-ExactDomainSetMatch -Requested @('a.example.com') -Actual @('a.example.com','b.example.com')) {
+            throw 'Expected partial overlap to fail exact matching.'
+        }
+    }
+
+    & $Assert 'installation plugins parse and dedupe' {
+        $plugins = Get-InstallationPlugins -EnvValues @{ ACME_INSTALLATION_PLUGINS = 'script, iis,script' }
+        if (($plugins -join ',') -ne 'script,iis') {
+            throw "Unexpected plugins: $($plugins -join ',')"
+        }
     }
 }

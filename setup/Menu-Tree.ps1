@@ -6,7 +6,16 @@ $AcmeSchema = @(
     @{ Name='ACME_KID'; Label='ACME KID'; Type='secret'; Required=$true; Placeholder=''; HelpText='ACME external account KID' },
     @{ Name='ACME_HMAC_SECRET'; Label='ACME HMAC secret'; Type='secret'; Required=$true; Placeholder=''; HelpText='ACME external account HMAC secret' },
     @{ Name='DOMAINS'; Label='Domains (comma-separated)'; Type='string'; Required=$true; Placeholder='example.com,www.example.com'; HelpText='Domain list for certificate issuance' },
-    @{ Name='ACME_SCRIPT_PATH'; Label='ACME script path'; Type='string'; Required=$true; Placeholder='C:\certificate\Scripts\New-CertificateDropFile.ps1'; HelpText='Absolute path to New-CertificateDropFile.ps1' }
+    @{ Name='ACME_SOURCE_PLUGIN'; Label='Source plugin'; Type='string'; Required=$true; Placeholder='manual'; HelpText='simple-acme source plugin (manual)' },
+    @{ Name='ACME_ORDER_PLUGIN'; Label='Order plugin'; Type='string'; Required=$true; Placeholder='single'; HelpText='simple-acme order plugin (single)' },
+    @{ Name='ACME_STORE_PLUGIN'; Label='Store plugin'; Type='string'; Required=$true; Placeholder='certificatestore'; HelpText='simple-acme store plugin' },
+    @{ Name='ACME_ACCOUNT_NAME'; Label='Account name'; Type='string'; Required=$false; Placeholder=''; HelpText='Optional ACME account name override' },
+    @{ Name='ACME_SCRIPT_PATH'; Label='ACME script path'; Type='string'; Required=$true; Placeholder='C:\certificate\Scripts\New-CertificateDropFile.ps1'; HelpText='Absolute path to New-CertificateDropFile.ps1' },
+    @{ Name='ACME_SCRIPT_PARAMETERS'; Label='Script parameters'; Type='string'; Required=$true; Placeholder=\"'default' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}\"; HelpText='wacs scriptparameters template' },
+    @{ Name='ACME_VALIDATION_MODE'; Label='Validation mode'; Type='string'; Required=$true; Placeholder='none'; HelpText='Locked to none' },
+    @{ Name='ACME_INSTALLATION_PLUGINS'; Label='Installation plugins'; Type='string'; Required=$true; Placeholder='script'; HelpText='Comma-separated installation plugins' },
+    @{ Name='ACME_WACS_RETRY_ATTEMPTS'; Label='WACS retry attempts'; Type='string'; Required=$true; Placeholder='3'; HelpText='Retry attempts for wacs operations' },
+    @{ Name='ACME_WACS_RETRY_DELAY_SECONDS'; Label='WACS retry delay seconds'; Type='string'; Required=$true; Placeholder='2'; HelpText='Delay between wacs retries' }
 )
 
 $CertificateMenuTree = @{
