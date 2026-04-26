@@ -350,6 +350,7 @@ function Save-SecurePlatformConfig {
     $secureEnvPath = Join-Path $ConfigDir 'env.secure'
     $credPath = Join-Path $ConfigDir 'credentials.sec'
     $mappingPath = Join-Path $ConfigDir 'mappings.json'
+    $mappingCompatPath = Join-Path $ConfigDir 'mapping.json'
 
     $envSnapshot = @{}
     foreach ($k in $Values.Keys) {
@@ -368,6 +369,9 @@ function Save-SecurePlatformConfig {
 
     if (-not (Test-Path -LiteralPath $mappingPath)) {
         @() | ConvertTo-Json | Set-Content -LiteralPath $mappingPath -Encoding UTF8
+    }
+    if (-not (Test-Path -LiteralPath $mappingCompatPath)) {
+        @() | ConvertTo-Json | Set-Content -LiteralPath $mappingCompatPath -Encoding UTF8
     }
 }
 
@@ -444,6 +448,10 @@ function Invoke-AcmeForm {
     $values.ACME_ACCOUNT_NAME = ''
     $values.ACME_SCRIPT_PARAMETERS = '{CertThumbprint} -RenewalId {RenewalId}'
     $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) (Get-ConnectorScriptByIntent -TargetIntent $target))
+
+    $previousExportable = ''
+    if ($curr.ContainsKey('ACME_PRIVATEKEY_EXPORTABLE')) { $previousExportable = ([string]$curr.ACME_PRIVATEKEY_EXPORTABLE).ToLowerInvariant() }
+    $previousStrategy = if ($curr.ContainsKey('ACME_PRIVATE_KEY_STRATEGY')) { ([string]$curr.ACME_PRIVATE_KEY_STRATEGY).ToLowerInvariant() } else { '' }
 
     if ($distributionMode -eq 'multi') {
         [Console]::WriteLine('')

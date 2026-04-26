@@ -152,7 +152,9 @@ try {
 
     if ($payload.mappings) {
         $mappingPath = Join-Path $targetConfigDir 'mappings.json'
+        $mappingCompatPath = Join-Path $targetConfigDir 'mapping.json'
         [IO.File]::WriteAllText($mappingPath, ($payload.mappings | ConvertTo-Json -Depth 20), [Text.Encoding]::UTF8)
+        [IO.File]::WriteAllText($mappingCompatPath, ($payload.mappings | ConvertTo-Json -Depth 20), [Text.Encoding]::UTF8)
     }
 
     if ($payload.secure_config) {
