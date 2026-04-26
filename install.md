@@ -96,6 +96,9 @@ cd C:\certificate
 .\certificate-setup.ps1
 ```
 
+After ACME settings are saved, setup prompts whether to run initial reconcile immediately.  
+Use **Register/Repair orchestrator task** in setup to automatically create/update the orchestrator scheduled task.
+
 Use the menu to configure:
 - **ACME settings** (env-backed)
 - **Local Windows services / Network appliances** connector settings
@@ -123,6 +126,13 @@ cd C:\certificate
 .\certificate-simple-acme-reconcile.ps1
 ```
 
+Preflight-only mode:
+
+```powershell
+cd C:\certificate
+.\certificate-simple-acme-reconcile.ps1 -PreflightOnly
+```
+
 Possible outcomes:
 - `create`
 - `no-op`
@@ -146,6 +156,8 @@ cd C:\certificate
 ```cmd
 schtasks /Create /SC MINUTE /MO 5 /TN "Certificate-Orchestrator" /TR "powershell.exe -ExecutionPolicy Bypass -File C:\certificate\certificate-orchestrator.ps1" /RU "SYSTEM"
 ```
+
+Manual `schtasks` remains a fallback; setup can now register/repair this task automatically.
 
 ---
 

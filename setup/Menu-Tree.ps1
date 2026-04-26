@@ -21,6 +21,7 @@ $CertificateMenuTree = @{
         @{ Label='Not available - stubs'; Key='stubs'; Type='submenu'; Items=@(@{Label='Nginx';Key='nginx';Type='device-form'},@{Label='Apache';Key='apache';Type='device-form'},@{Label='HAProxy';Key='haproxy';Type='device-form'},@{Label='Palo Alto';Key='palo_alto';Type='device-form'},@{Label='Fortigate';Key='fortigate';Type='device-form'},@{Label='Sophos';Key='sophos';Type='device-form'},@{Label='Check Point';Key='check_point';Type='device-form'},@{Label='Barracuda';Key='barracuda';Type='device-form'},@{Label='Java KeyStore (info)';Key='java_keystore_info';Type='action'},@{Label='VBR Cloud Gateway (info)';Key='vbr_cloud_gateway_info';Type='action'},@{Label='Azure Application Gateway (info)';Key='azure_application_gateway_info';Type='action'},@{Label='Azure AD App Proxy (info)';Key='azure_ad_app_proxy_info';Type='action'},@{Key='back';Label='.. Back';Type='back'})},
         @{ Label='Deployment policies'; Key='policies'; Type='action' },
         @{ Label='View existing policies'; Key='policies-view'; Type='action' },
+        @{ Label='Register/Repair orchestrator task'; Key='task-register'; Type='action' },
         @{ Label='Backup / Restore'; Key='backup'; Type='submenu'; Items=@(@{ Label='Create backup'; Key='backup-create'; Type='action' },@{ Label='Restore from backup'; Key='backup-restore'; Type='action' },@{ Label='Verify backup'; Key='backup-verify'; Type='action' },@{Key='back';Label='.. Back';Type='back'})},
         @{ Label='Exit'; Key='exit'; Type='action' }
     )

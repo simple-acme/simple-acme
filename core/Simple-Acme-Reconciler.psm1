@@ -155,6 +155,44 @@ function Compare-RenewalWithEnv {
     }
 }
 
+function Assert-ReconcilePreflight {
+    param([Parameter(Mandatory)][hashtable]$EnvValues)
+
+    $wacsCommand = Get-Command 'wacs' -ErrorAction SilentlyContinue
+    if ($null -eq $wacsCommand) {
+        throw "Required executable 'wacs' was not found on PATH. Install simple-acme/wacs and retry."
+    }
+
+    $missing = @()
+    foreach ($key in @('ACME_DIRECTORY','ACME_KID','ACME_HMAC_SECRET','DOMAINS','ACME_SCRIPT_PATH')) {
+        if (-not $EnvValues.ContainsKey($key) -or [string]::IsNullOrWhiteSpace([string]$EnvValues[$key])) {
+            $missing += $key
+        }
+    }
+    if ($missing.Count -gt 0) {
+        throw "Missing required environment values for reconcile: $($missing -join ', ')"
+    }
+
+    $scriptPath = [string]$EnvValues.ACME_SCRIPT_PATH
+    if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
+        throw "ACME_SCRIPT_PATH must be an absolute path. Current value: '$scriptPath'"
+    }
+    if (-not (Test-Path -LiteralPath $scriptPath)) {
+        throw "ACME_SCRIPT_PATH does not exist: '$scriptPath'"
+    }
+
+    $domains = Get-NormalizedDomains -Domains ([string]$EnvValues.DOMAINS)
+    if ($domains.Count -eq 0) {
+        throw "DOMAINS did not contain any valid hostnames. Current value: '$($EnvValues.DOMAINS)'"
+    }
+
+    return [pscustomobject]@{
+        WacsPath = [string]$wacsCommand.Source
+        DomainCount = $domains.Count
+        ScriptPath = $scriptPath
+    }
+}
+
 function Ensure-SimpleAcmeSettings {
     param([string]$SimpleAcmeDir = (Join-Path $env:ProgramData 'simple-acme'))
 
@@ -301,6 +339,7 @@ function Invoke-SimpleAcmeReconcile {
 
 Export-ModuleMember -Function @(
     'Compare-RenewalWithEnv',
+    'Assert-ReconcilePreflight',
     'Ensure-SimpleAcmeSettings',
     'Get-NormalizedDomains',
     'Get-RenewalFiles',
