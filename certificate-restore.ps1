@@ -1,6 +1,4 @@
 #Requires -Version 5.1
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
 
 param(
     [Parameter(Mandatory)][string]$BackupPath,
@@ -9,6 +7,9 @@ param(
     [switch]$DryRun,
     [switch]$Force
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 Import-Module "$PSScriptRoot/core/Crypto.psm1" -Force
 Import-Module "$PSScriptRoot/core/Env-Loader.psm1" -Force

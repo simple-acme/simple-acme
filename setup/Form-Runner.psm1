@@ -291,7 +291,8 @@ function Test-QuorumThreshold {
 }
 
 function Show-PoliciesView {
-    param([Parameter(Mandatory)][object[]]$Policies)
+    param([object[]]$Policies = @())
+    $Policies = @($Policies)
     if ($Policies.Count -eq 0) {
         [Console]::WriteLine('No deployment policies exist yet.')
         return
