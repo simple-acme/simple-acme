@@ -9,9 +9,21 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Import-Module "$PSScriptRoot/core/Crypto.psm1" -Force
+$cryptoModulePath = Join-Path $PSScriptRoot 'core/Crypto.psm1'
+$cryptoModule = Import-Module $cryptoModulePath -Force -PassThru
 Import-Module "$PSScriptRoot/core/Env-Loader.psm1" -Force
 Import-Module "$PSScriptRoot/core/Config-Store.psm1" -Force
+
+$plainTextCommand = Get-Command 'ConvertTo-PlainText' -ErrorAction SilentlyContinue
+if ($null -eq $plainTextCommand -or [string]::IsNullOrWhiteSpace([string]$plainTextCommand.Source) -or $plainTextCommand.Source -ne $cryptoModule.Name) {
+    throw @"
+Required command 'ConvertTo-PlainText' is unavailable after importing Crypto module.
+Expected module path: $cryptoModulePath
+Resolved module path: $($cryptoModule.Path)
+Current script root: $PSScriptRoot
+Re-deploy the setup modules and ensure you are running certificate-backup.ps1 from the correct repository root.
+"@
+}
 
 $p1 = $null
 $p2 = $null
@@ -22,8 +34,8 @@ try {
     if (-not $Passphrase) {
         $p1 = Read-Host -AsSecureString -Prompt 'Enter backup passphrase (store this securely — required for restore):'
         $p2 = Read-Host -AsSecureString -Prompt 'Confirm backup passphrase'
-        $s1 = ConvertTo-PlainText -SecureString $p1
-        $s2 = ConvertTo-PlainText -SecureString $p2
+        $s1 = & "$($cryptoModule.Name)\ConvertTo-PlainText" -SecureString $p1
+        $s2 = & "$($cryptoModule.Name)\ConvertTo-PlainText" -SecureString $p2
         if ($s1 -ne $s2) { Write-Error 'Passphrase confirmation did not match.'; exit 1 }
         $Passphrase = $p1
     }
