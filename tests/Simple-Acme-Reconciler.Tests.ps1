@@ -47,6 +47,8 @@ function Invoke-TestSimpleAcmeReconciler {
             ACME_SOURCE_PLUGIN = 'manual'
             ACME_ORDER_PLUGIN = 'single'
             ACME_STORE_PLUGIN = 'certificatestore'
+            ACME_VALIDATION_MODE = 'none'
+            ACME_INSTALLATION_PLUGINS = 'script'
             ACME_ACCOUNT_NAME = ''
         }
 
@@ -64,9 +66,9 @@ function Invoke-TestSimpleAcmeReconciler {
         }
     }
 
-    & $Assert 'installation plugin is always script-only' {
+    & $Assert 'installation plugins are parsed and normalized' {
         $plugins = Get-InstallationPlugins -EnvValues @{ ACME_INSTALLATION_PLUGINS = 'script, iis,script' }
-        if (($plugins -join ',') -ne 'script') {
+        if (($plugins -join ',') -ne 'iis,script') {
             throw "Unexpected plugins: $($plugins -join ',')"
         }
     }

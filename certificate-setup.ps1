@@ -80,10 +80,45 @@ function Invoke-InitialAcmeReconcilePrompt {
         Import-Module (Join-Path $RootDir 'core/Simple-Acme-Reconciler.psm1') -Force | Out-Null
         $action = Invoke-SimpleAcmeReconcile -EnvValues $envValues
         Show-TuiStatus -Message "ACME reconcile completed successfully (action=$action)." -Type Success -Row $statusRow
+        Invoke-PostSetupValidation -RootDir $RootDir -EnvValues $envValues
     } catch {
         Show-TuiStatus -Message "ACME reconcile failed: $($_.Exception.Message)" -Type Error -Row $statusRow
     }
     Start-Sleep -Milliseconds 2200
+}
+
+function Invoke-PostSetupValidation {
+    param(
+        [Parameter(Mandatory)][string]$RootDir,
+        [Parameter(Mandatory)][hashtable]$EnvValues
+    )
+
+    $statusRow = [Math]::Max(0, [Console]::WindowHeight - 2)
+    try {
+        Import-Module (Join-Path $RootDir 'core/Simple-Acme-Reconciler.psm1') -Force | Out-Null
+        $domains = Get-NormalizedDomains -Domains ([string]$EnvValues.DOMAINS)
+        $renewals = @()
+        foreach ($file in Get-RenewalFiles) {
+            $summary = Get-RenewalSummary -File $file
+            if (Test-ExactDomainSetMatch -Requested $domains -Actual $summary.Hosts) { $renewals += ,$summary }
+        }
+        if ($renewals.Count -lt 1) { throw 'No renewal JSON found for configured domains.' }
+        $compare = Compare-RenewalWithEnv -RenewalSummary $renewals[0] -EnvValues $EnvValues
+        if (-not $compare.Matches) { throw "Renewal JSON plugin mismatch: $($compare.Mismatches -join ', ')" }
+
+        $taskName = if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.CERTIFICATE_TASK_NAME)) { [string]$EnvValues.CERTIFICATE_TASK_NAME } else { 'Certificate-Orchestrator' }
+        $scheduledTaskExists = $true
+        if (Get-Command -Name Get-ScheduledTask -ErrorAction SilentlyContinue) {
+            $task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+            $scheduledTaskExists = ($null -ne $task)
+        }
+        if (-not $scheduledTaskExists) { throw "Scheduled task '$taskName' was not found." }
+
+        Show-TuiStatus -Message 'Post-setup validation passed (renewal JSON, plugins, script wiring, scheduled task).' -Type Success -Row $statusRow
+    } catch {
+        Show-TuiStatus -Message "Post-setup validation warning: $($_.Exception.Message)" -Type Warning -Row $statusRow
+    }
+    Start-Sleep -Milliseconds 1500
 }
 
 function Invoke-OrchestratorTaskRegistration {

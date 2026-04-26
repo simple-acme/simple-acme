@@ -11,6 +11,11 @@ Describe 'Simple ACME reconcile preflight' {
             ACME_KID = 'kid'
             ACME_HMAC_SECRET = 'secret'
             DOMAINS = 'example.com,www.example.com'
+            ACME_SOURCE_PLUGIN = 'manual'
+            ACME_ORDER_PLUGIN = 'single'
+            ACME_STORE_PLUGIN = 'certificatestore'
+            ACME_VALIDATION_MODE = 'none'
+            ACME_INSTALLATION_PLUGINS = 'script'
             ACME_SCRIPT_PATH = $scriptFile
             ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} {CertThumbprint} {OldCertThumbprint}"
         }
@@ -31,6 +36,11 @@ Describe 'Simple ACME reconcile preflight' {
                 ACME_KID = 'kid'
                 ACME_HMAC_SECRET = 'secret'
                 DOMAINS = 'example.com'
+                ACME_SOURCE_PLUGIN = 'manual'
+                ACME_ORDER_PLUGIN = 'single'
+                ACME_STORE_PLUGIN = 'certificatestore'
+                ACME_VALIDATION_MODE = 'none'
+                ACME_INSTALLATION_PLUGINS = 'script'
                 ACME_SCRIPT_PATH = $scriptFile
                 ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} {CertThumbprint} {OldCertThumbprint}"
             }
@@ -45,6 +55,11 @@ Describe 'Simple ACME reconcile preflight' {
                 ACME_KID = 'kid'
                 ACME_HMAC_SECRET = 'secret'
                 DOMAINS = 'example.com'
+                ACME_SOURCE_PLUGIN = 'manual'
+                ACME_ORDER_PLUGIN = 'single'
+                ACME_STORE_PLUGIN = 'certificatestore'
+                ACME_VALIDATION_MODE = 'none'
+                ACME_INSTALLATION_PLUGINS = 'script'
                 ACME_SCRIPT_PATH = '.\relative.ps1'
                 ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} {CertThumbprint} {OldCertThumbprint}"
             }
