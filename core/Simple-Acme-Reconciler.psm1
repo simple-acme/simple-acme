@@ -105,6 +105,7 @@ function Get-RenewalSummary {
 
     $hosts = Get-RenewalHosts -Renewal $renewal
 
+    $normalizedValidationCandidates = @($validationCandidates | Where-Object { $_ -is [string] } | ForEach-Object { $_.Trim().ToLowerInvariant() })
     [pscustomobject]@{
         File             = $File
         Renewal          = $renewal
@@ -116,8 +117,8 @@ function Get-RenewalSummary {
         OrderPlugin      = ($orderCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         StorePlugin      = ($storeCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         AccountName      = ($accountCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
-        HasValidationNone = @($validationCandidates | Where-Object { $_ -is [string] -and $_.ToLowerInvariant() -eq 'none' }).Count -gt 0
-        HasScriptInstallation = @($validationCandidates | Where-Object { $_ -is [string] -and $_.ToLowerInvariant() -eq 'script' }).Count -gt 0
+        HasValidationNone = @($normalizedValidationCandidates | Where-Object { $_ -eq 'none' }).Count -gt 0
+        HasScriptInstallation = @($normalizedValidationCandidates | Where-Object { $_ -eq 'script' }).Count -gt 0
         ScriptPaths      = @($scriptCandidates | Where-Object { $_ -is [string] })
     }
 }
@@ -145,7 +146,7 @@ function Compare-RenewalWithEnv {
     if ([string]$RenewalSummary.EabKid -ne [string]$EnvValues.ACME_KID) {
         $mismatches.Add('EAB kid')
     }
-    if ([string]$RenewalSummary.SourcePlugin -ne [string]$EnvValues.ACME_SOURCE_PLUGIN) {
+    if ([string]$RenewalSummary.SourcePlugin -ne 'manual') {
         $mismatches.Add('Source plugin')
     }
     if ([string]$RenewalSummary.OrderPlugin -ne [string]$EnvValues.ACME_ORDER_PLUGIN) {
@@ -158,20 +159,16 @@ function Compare-RenewalWithEnv {
         $mismatches.Add('Account name')
     }
 
-    $expectedValidation = [string]$EnvValues.ACME_VALIDATION_MODE
-    if ($expectedValidation -eq 'none' -and -not $RenewalSummary.HasValidationNone) {
+    if (-not $RenewalSummary.HasValidationNone) {
         $mismatches.Add('Validation plugin none')
     }
 
-    $expectedInstallations = Get-InstallationPlugins -EnvValues $EnvValues
-    if ($expectedInstallations -contains 'script' -and -not $RenewalSummary.HasScriptInstallation) {
+    if (-not $RenewalSummary.HasScriptInstallation) {
         $mismatches.Add('Installation plugin script')
     }
-    if ($expectedInstallations -contains 'script') {
-        $normalizedScriptPaths = @($RenewalSummary.ScriptPaths | ForEach-Object { [string]$_ })
-        if (-not ($normalizedScriptPaths -contains $expectedScriptPath)) {
-            $mismatches.Add('Script path')
-        }
+    $normalizedScriptPaths = @($RenewalSummary.ScriptPaths | ForEach-Object { [string]$_ })
+    if (-not ($normalizedScriptPaths -contains $expectedScriptPath)) {
+        $mismatches.Add('Script path')
     }
 
     return [pscustomobject]@{
@@ -187,6 +184,11 @@ function Assert-ReconcilePreflight {
     if ($null -eq $wacsCommand) {
         throw "Required executable 'wacs' was not found on PATH. Install simple-acme/wacs and retry."
     }
+    $detectedVersion = Get-WacsVersion -EnvValues $EnvValues
+    $minimumVersion = [version]'2.2'
+    if ($detectedVersion -lt $minimumVersion) {
+        throw "Unsupported simple-acme/wacs version '$detectedVersion'. Minimum supported version is '$minimumVersion'."
+    }
 
     $missing = @()
     foreach ($key in @('ACME_DIRECTORY','DOMAINS','ACME_SOURCE_PLUGIN','ACME_ORDER_PLUGIN','ACME_STORE_PLUGIN','ACME_VALIDATION_MODE')) {
@@ -198,7 +200,7 @@ function Assert-ReconcilePreflight {
         throw "Missing required environment values for reconcile: $($missing -join ', ')"
     }
 
-    $installPlugins = Get-InstallationPlugins -EnvValues $EnvValues
+    $installPlugins = @('script')
     $scriptPath = [string]$EnvValues.ACME_SCRIPT_PATH
     if ($installPlugins -contains 'script') {
         if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
@@ -217,6 +219,20 @@ function Assert-ReconcilePreflight {
             }
         }
     }
+    $requiredRolesRaw = [string]$EnvValues.CERTIFICATE_REQUIRED_WINDOWS_ROLES
+    if (-not [string]::IsNullOrWhiteSpace($requiredRolesRaw) -and (Get-Command -Name Get-WindowsFeature -ErrorAction SilentlyContinue)) {
+        $requiredRoles = @(
+            $requiredRolesRaw -split ',' |
+                ForEach-Object { $_.Trim() } |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        )
+        foreach ($role in $requiredRoles) {
+            $feature = Get-WindowsFeature -Name $role -ErrorAction SilentlyContinue
+            if ($null -eq $feature -or -not $feature.Installed) {
+                throw "Required Windows role/feature '$role' is not installed."
+            }
+        }
+    }
 
     $domains = Get-NormalizedDomains -Domains ([string]$EnvValues.DOMAINS)
     if ($domains.Count -eq 0) {
@@ -225,6 +241,7 @@ function Assert-ReconcilePreflight {
 
     return [pscustomobject]@{
         WacsPath = [string]$wacsCommand.Source
+        WacsVersion = [string]$detectedVersion
         DomainCount = $domains.Count
         ScriptPath = $scriptPath
         InstallationPlugins = $installPlugins
@@ -257,14 +274,7 @@ function Ensure-SimpleAcmeSettings {
 
 function Get-InstallationPlugins {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
-    $raw = [string]$EnvValues.ACME_INSTALLATION_PLUGINS
-    if ([string]::IsNullOrWhiteSpace($raw)) { return @('script') }
-    return @(
-        $raw -split ',' |
-            ForEach-Object { $_.Trim().ToLowerInvariant() } |
-            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-            Sort-Object -Unique
-    )
+    return @('script')
 }
 
 function Get-CsrAlgorithms {
@@ -307,6 +317,30 @@ function Invoke-WacsWithRetry {
     throw "wacs failed with exit code $lastExit after $attempts attempt(s)"
 }
 
+function Get-WacsVersion {
+    param([hashtable]$EnvValues)
+
+    $fromEnv = ''
+    if ($null -ne $EnvValues -and $EnvValues.ContainsKey('ACME_WACS_VERSION')) {
+        $fromEnv = [string]$EnvValues.ACME_WACS_VERSION
+    }
+    $versionOutput = if (-not [string]::IsNullOrWhiteSpace($fromEnv)) {
+        $fromEnv
+    } else {
+        (& wacs --version 2>$null | Select-Object -First 1)
+    }
+
+    if ([string]::IsNullOrWhiteSpace([string]$versionOutput)) {
+        throw 'Unable to detect simple-acme/wacs version.'
+    }
+
+    $versionMatch = [regex]::Match([string]$versionOutput, '(\d+\.\d+\.\d+|\d+\.\d+)')
+    if (-not $versionMatch.Success) {
+        throw "Unable to parse simple-acme/wacs version from output: '$versionOutput'."
+    }
+    return [version]$versionMatch.Groups[1].Value
+}
+
 function Invoke-WacsIssue {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
 
@@ -314,11 +348,11 @@ function Invoke-WacsIssue {
     $csrAlgorithms = Get-CsrAlgorithms -EnvValues $EnvValues
     $args = @(
         '--accepttos',
-        '--source', [string]$EnvValues.ACME_SOURCE_PLUGIN,
+        '--source', 'manual',
         '--order', [string]$EnvValues.ACME_ORDER_PLUGIN,
         '--baseuri', [string]$EnvValues.ACME_DIRECTORY,
-        '--validation', [string]$EnvValues.ACME_VALIDATION_MODE,
-        '--globalvalidation', [string]$EnvValues.ACME_VALIDATION_MODE,
+        '--validation', 'none',
+        '--globalvalidation', 'none',
         '--host', [string]$EnvValues.DOMAINS,
         '--store', [string]$EnvValues.ACME_STORE_PLUGIN
     )
@@ -364,9 +398,7 @@ function Test-ExactDomainSetMatch {
 function Get-RenewalIdForCancel {
     param([Parameter(Mandatory)]$RenewalSummary)
     if (-not [string]::IsNullOrWhiteSpace([string]$RenewalSummary.RenewalId)) { return [string]$RenewalSummary.RenewalId }
-    $name = [string]$RenewalSummary.File.BaseName
-    if (-not [string]::IsNullOrWhiteSpace($name)) { return $name }
-    throw "Unable to determine renewal id for file '$($RenewalSummary.File.FullName)'"
+    throw "Unable to determine renewal id from renewal JSON file '$($RenewalSummary.File.FullName)'"
 }
 
 function Write-ReconcileLog {
@@ -479,6 +511,7 @@ Export-ModuleMember -Function @(
     'Get-InstallationPlugins',
     'Get-RenewalIdForCancel',
     'Invoke-SimpleAcmeReconcile',
+    'Get-WacsVersion',
     'Invoke-WacsWithRetry',
     'Invoke-WacsIssue',
     'Test-ExactDomainSetMatch',

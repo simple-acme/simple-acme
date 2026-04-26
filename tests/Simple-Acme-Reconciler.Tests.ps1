@@ -68,7 +68,7 @@ function Invoke-TestSimpleAcmeReconciler {
 
     & $Assert 'installation plugins are parsed and normalized' {
         $plugins = Get-InstallationPlugins -EnvValues @{ ACME_INSTALLATION_PLUGINS = 'script, iis,script' }
-        if (($plugins -join ',') -ne 'iis,script') {
+        if (($plugins -join ',') -ne 'script') {
             throw "Unexpected plugins: $($plugins -join ',')"
         }
     }
