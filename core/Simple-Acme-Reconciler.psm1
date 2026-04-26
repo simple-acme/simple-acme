@@ -104,17 +104,23 @@ function Get-RenewalSummary {
     $renewal = Get-Content -LiteralPath $File.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
     $baseUriCandidates = Find-PropertyValues -InputObject $renewal -Names @('BaseUri')
     $kidCandidates = Find-PropertyValues -InputObject $renewal -Names @('KeyIdentifier','Kid','EabKeyIdentifier')
-    $validationCandidates = Find-PropertyValues -InputObject $renewal -Names @('Plugin','Name')
+    $validationCandidates = Find-PropertyValues -InputObject $renewal -Names @('Plugin','Name','ValidationPlugin')
     $storeCandidates = Find-PropertyValues -InputObject $renewal -Names @('StorePlugin','StoreType','Store')
+    $installationCandidates = Find-PropertyValues -InputObject $renewal -Names @('InstallationPlugin','InstallationPlugins','Installation')
     $accountCandidates = Find-PropertyValues -InputObject $renewal -Names @('Account','AccountName')
     $sourceCandidates = Find-PropertyValues -InputObject $renewal -Names @('SourcePlugin','Source')
     $orderCandidates = Find-PropertyValues -InputObject $renewal -Names @('OrderPlugin','Order')
     $renewalIdCandidates = Find-PropertyValues -InputObject $renewal -Names @('Id','RenewalId')
     $scriptCandidates = Find-PropertyValues -InputObject $renewal -Names @('Script','ScriptFileName','Path')
+    $csrCandidates = Find-PropertyValues -InputObject $renewal -Names @('CsrPlugin','Csr')
+    $keyTypeCandidates = Find-PropertyValues -InputObject $renewal -Names @('KeyType','KeyAlgorithm','Algorithm')
 
     $hosts = Get-RenewalHosts -Renewal $renewal
 
     $normalizedValidationCandidates = @($validationCandidates | Where-Object { $_ -is [string] } | ForEach-Object { $_.Trim().ToLowerInvariant() })
+    $normalizedStoreCandidates = @($storeCandidates | Where-Object { $_ -is [string] } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+    $normalizedInstallCandidates = @($installationCandidates | Where-Object { $_ -is [string] } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+
     [pscustomobject]@{
         File             = $File
         Renewal          = $renewal
@@ -124,12 +130,27 @@ function Get-RenewalSummary {
         EabKid           = ($kidCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         SourcePlugin     = ($sourceCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         OrderPlugin      = ($orderCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
-        StorePlugin      = ($storeCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+        StorePlugin      = ($normalizedStoreCandidates | Select-Object -First 1)
+        StorePlugins     = $normalizedStoreCandidates
+        InstallationPlugins = $normalizedInstallCandidates
         AccountName      = ($accountCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         HasValidationNone = @($normalizedValidationCandidates | Where-Object { $_ -eq 'none' }).Count -gt 0
-        HasScriptInstallation = @($normalizedValidationCandidates | Where-Object { $_ -eq 'script' }).Count -gt 0
+        HasScriptInstallation = @($normalizedInstallCandidates | Where-Object { $_ -eq 'script' }).Count -gt 0
         ScriptPaths      = @($scriptCandidates | Where-Object { $_ -is [string] })
+        CsrPlugin        = ($csrCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+        KeyType          = ($keyTypeCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
     }
+}
+
+function Get-NormalizedCsvValues {
+    param([string]$InputText)
+    if ([string]::IsNullOrWhiteSpace($InputText)) { return @() }
+    return @(
+        $InputText -split ',' |
+            ForEach-Object { $_.Trim().ToLowerInvariant() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            Sort-Object -Unique
+    )
 }
 
 function Compare-RenewalWithEnv {
@@ -161,7 +182,9 @@ function Compare-RenewalWithEnv {
     if ([string]$RenewalSummary.OrderPlugin -ne [string]$EnvValues.ACME_ORDER_PLUGIN) {
         $mismatches.Add('Order plugin')
     }
-    if ([string]$RenewalSummary.StorePlugin -ne [string]$EnvValues.ACME_STORE_PLUGIN) {
+    $expectedStores = Get-NormalizedCsvValues -InputText ([string]$EnvValues.ACME_STORE_PLUGIN)
+    $actualStores = @($RenewalSummary.StorePlugins | Sort-Object -Unique)
+    if (($expectedStores -join ',') -ne ($actualStores -join ',')) {
         $mismatches.Add('Store plugin')
     }
     if ([string]$RenewalSummary.AccountName -ne [string]$EnvValues.ACME_ACCOUNT_NAME) {
@@ -172,12 +195,27 @@ function Compare-RenewalWithEnv {
         $mismatches.Add('Validation plugin none')
     }
 
-    if (-not $RenewalSummary.HasScriptInstallation) {
-        $mismatches.Add('Installation plugin script')
+    $expectedInstallers = Get-InstallationPlugins -EnvValues $EnvValues
+    $actualInstallers = @($RenewalSummary.InstallationPlugins | Sort-Object -Unique)
+    if (($expectedInstallers -join ',') -ne ($actualInstallers -join ',')) {
+        $mismatches.Add('Installation plugins')
     }
     $normalizedScriptPaths = @($RenewalSummary.ScriptPaths | ForEach-Object { [string]$_ })
     if (-not ($normalizedScriptPaths -contains $expectedScriptPath)) {
         $mismatches.Add('Script path')
+    }
+
+    $requestedCsr = (Get-CsrAlgorithms -EnvValues $EnvValues | Select-Object -First 1)
+    if (-not [string]::IsNullOrWhiteSpace($requestedCsr) -and -not [string]::IsNullOrWhiteSpace([string]$RenewalSummary.CsrPlugin)) {
+        if ([string]$RenewalSummary.CsrPlugin -ne $requestedCsr) {
+            $mismatches.Add('CSR plugin')
+        }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_KEY_TYPE) -and -not [string]::IsNullOrWhiteSpace([string]$RenewalSummary.KeyType)) {
+        if ([string]$RenewalSummary.KeyType -ne [string]$EnvValues.ACME_KEY_TYPE) {
+            $mismatches.Add('Key type')
+        }
     }
 
     return [pscustomobject]@{
@@ -218,8 +256,12 @@ function Assert-ReconcilePreflight {
     if ([string]$EnvValues.ACME_VALIDATION_MODE -ne 'none') {
         throw "ACME_VALIDATION_MODE must be 'none' for hardened pipeline compatibility."
     }
+    $storePlugins = Get-NormalizedCsvValues -InputText ([string]$EnvValues.ACME_STORE_PLUGIN)
+    if (-not ($storePlugins -contains 'certificatestore')) {
+        throw "ACME_STORE_PLUGIN must include 'certificatestore' for hardened pipeline compatibility."
+    }
 
-    $installPlugins = @('script')
+    $installPlugins = Get-InstallationPlugins -EnvValues $EnvValues
     $scriptPath = [string]$EnvValues.ACME_SCRIPT_PATH
     if ($installPlugins -contains 'script') {
         if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
@@ -299,7 +341,24 @@ function Ensure-SimpleAcmeSettings {
 
 function Get-InstallationPlugins {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
-    return @('script')
+
+    $raw = [string]$EnvValues.ACME_INSTALLATION_PLUGINS
+    if ([string]::IsNullOrWhiteSpace($raw)) {
+        return @('script')
+    }
+
+    $valid = @('script','iis')
+    $plugins = Get-NormalizedCsvValues -InputText $raw
+    if ($plugins.Count -eq 0) {
+        throw 'ACME_INSTALLATION_PLUGINS does not contain any valid values.'
+    }
+
+    $unknown = @($plugins | Where-Object { $valid -notcontains $_ })
+    if ($unknown.Count -gt 0) {
+        throw "ACME_INSTALLATION_PLUGINS contains unsupported values: $($unknown -join ', ')"
+    }
+
+    return $plugins
 }
 
 function Get-CsrAlgorithms {
@@ -332,14 +391,73 @@ function Invoke-WacsWithRetry {
     if ($delaySeconds -lt 0) { $delaySeconds = 0 }
 
     $lastExit = 0
+    $baseDelaySeconds = $delaySeconds
     for ($attempt = 1; $attempt -le $attempts; $attempt++) {
-        & wacs @Args
+        $allOutput = @(& wacs @Args 2>&1)
+        if ($allOutput.Count -gt 0) {
+            foreach ($line in $allOutput) {
+                if ($line -is [System.Management.Automation.ErrorRecord]) {
+                    Write-Error $line
+                    continue
+                }
+                Write-Host ([string]$line)
+            }
+            $warnings = @($allOutput | Where-Object { [string]$_ -match '(?i)\bwarning\b|partial success' })
+            if ($warnings.Count -gt 0) {
+                throw "wacs output contains warning/partial-success markers: $($warnings[0])"
+            }
+        }
         $lastExit = $LASTEXITCODE
         if ($lastExit -eq 0) { return }
-        if ($attempt -lt $attempts) { Start-Sleep -Seconds $delaySeconds }
+        if ($attempt -lt $attempts) {
+            $effectiveDelay = [math]::Pow(2, ($attempt - 1)) * $baseDelaySeconds
+            Start-Sleep -Seconds ([int][math]::Ceiling($effectiveDelay))
+        }
     }
 
     throw "wacs failed with exit code $lastExit after $attempts attempt(s)"
+}
+
+function Wait-RenewalFileRemoval {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [int]$TimeoutSeconds = 30
+    )
+
+    $deadline = (Get-Date).ToUniversalTime().AddSeconds($TimeoutSeconds)
+    while ((Get-Date).ToUniversalTime() -lt $deadline) {
+        if (-not (Test-Path -LiteralPath $Path)) {
+            return
+        }
+        Start-Sleep -Milliseconds 300
+    }
+    throw "Timed out waiting for renewal file to be removed: $Path"
+}
+
+function New-ReconcileConfigHash {
+    param([Parameter(Mandatory)][hashtable]$EnvValues)
+
+    $domains = Get-NormalizedDomains -Domains ([string]$EnvValues.DOMAINS)
+    $installers = Get-InstallationPlugins -EnvValues $EnvValues
+    $stores = Get-NormalizedCsvValues -InputText ([string]$EnvValues.ACME_STORE_PLUGIN)
+    $hashInput = @(
+        "domains=$($domains -join ',')"
+        "validation=$([string]$EnvValues.ACME_VALIDATION_MODE)"
+        "csr=$([string]$EnvValues.ACME_CSR_ALGORITHM)"
+        "keytype=$([string]$EnvValues.ACME_KEY_TYPE)"
+        "script=$([string]$EnvValues.ACME_SCRIPT_PATH)"
+        "installation=$($installers -join ',')"
+        "store=$($stores -join ',')"
+    ) -join '|'
+
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($hashInput)
+        $hash = $sha.ComputeHash($bytes)
+        return [System.BitConverter]::ToString($hash).Replace('-', '').ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
 }
 
 function Get-WacsVersion {
@@ -370,6 +488,11 @@ function Invoke-WacsIssue {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
 
     $installPlugins = Get-InstallationPlugins -EnvValues $EnvValues
+    $storePlugins = Get-NormalizedCsvValues -InputText ([string]$EnvValues.ACME_STORE_PLUGIN)
+    if (-not ($storePlugins -contains 'certificatestore')) {
+        $storePlugins += 'certificatestore'
+        $storePlugins = @($storePlugins | Sort-Object -Unique)
+    }
     $csrAlgorithms = Get-CsrAlgorithms -EnvValues $EnvValues
     $args = @(
         '--accepttos',
@@ -378,9 +501,11 @@ function Invoke-WacsIssue {
         '--baseuri', [string]$EnvValues.ACME_DIRECTORY,
         '--validation', 'none',
         '--globalvalidation', 'none',
-        '--host', [string]$EnvValues.DOMAINS,
-        '--store', [string]$EnvValues.ACME_STORE_PLUGIN
+        '--host', [string]$EnvValues.DOMAINS
     )
+    foreach ($storePlugin in $storePlugins) {
+        $args += @('--store', $storePlugin)
+    }
     if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_KID)) {
         $args += @('--eab-key-identifier', [string]$EnvValues.ACME_KID)
     }
@@ -435,7 +560,21 @@ function Write-ReconcileLog {
     )
 
     $timestamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
-    Write-Host ("{0} action={1} domains={2} result={3} message={4}" -f $timestamp, $Action, ($Domains -join ','), $Result, $Message)
+    $entry = [ordered]@{
+        timestamp = $timestamp
+        action = $Action
+        domains = @($Domains)
+        result = $Result
+        message = $Message
+    }
+    $serialized = $entry | ConvertTo-Json -Compress -Depth 5
+    Write-Host $serialized
+    $logDir = [string][Environment]::GetEnvironmentVariable('CERTIFICATE_LOG_DIR')
+    if (-not [string]::IsNullOrWhiteSpace($logDir)) {
+        if (-not (Test-Path -LiteralPath $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+        $logPath = Join-Path $logDir ("reconcile-{0}.log" -f (Get-Date).ToUniversalTime().ToString('yyyyMMdd'))
+        Add-Content -LiteralPath $logPath -Value $serialized -Encoding UTF8
+    }
 }
 
 function Invoke-SimpleAcmeReconcile {
@@ -446,6 +585,15 @@ function Invoke-SimpleAcmeReconcile {
     )
 
     Assert-ReconcilePreflight -EnvValues $EnvValues | Out-Null
+    $lockName = 'Global\SimpleAcmeReconcileLock'
+    $mutex = New-Object System.Threading.Mutex($false, $lockName)
+    $hasLock = $false
+    try {
+        $hasLock = $mutex.WaitOne([TimeSpan]::FromMinutes(5))
+        if (-not $hasLock) {
+            throw 'Another reconcile run is in progress (lock timeout).'
+        }
+
     if ($DryRun) {
         Write-ReconcileLog -Action 'no-op' -Domains (Get-NormalizedDomains -Domains $EnvValues.DOMAINS) -Result 'success' -Message 'Dry-run preflight passed; no wacs actions executed.'
         return 'dry-run'
@@ -507,7 +655,9 @@ function Invoke-SimpleAcmeReconcile {
 
     if (-not $SkipWacs) {
         $renewalId = Get-RenewalIdForCancel -RenewalSummary $current
+        $cancelPath = $current.File.FullName
         Invoke-WacsWithRetry -Args @('--cancel', '--id', $renewalId) -EnvValues $EnvValues
+        Wait-RenewalFileRemoval -Path $cancelPath
         Invoke-WacsIssue -EnvValues $EnvValues
     }
 
@@ -531,6 +681,12 @@ function Invoke-SimpleAcmeReconcile {
 
     Write-ReconcileLog -Action 'update' -Domains $domains -Result 'success' -Message 'Renewal was recreated safely.'
     return 'update'
+    } finally {
+        if ($hasLock) {
+            [void]$mutex.ReleaseMutex()
+        }
+        $mutex.Dispose()
+    }
 }
 
 Export-ModuleMember -Function @(
@@ -546,6 +702,9 @@ Export-ModuleMember -Function @(
     'Get-WacsVersion',
     'Invoke-WacsWithRetry',
     'Invoke-WacsIssue',
+    'Get-NormalizedCsvValues',
+    'Wait-RenewalFileRemoval',
+    'New-ReconcileConfigHash',
     'Test-ExactDomainSetMatch',
     'Write-ReconcileLog'
 )
