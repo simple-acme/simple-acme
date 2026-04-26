@@ -307,4 +307,18 @@ function Show-TuiForm {
 
 function Show-TuiProgress { param([string]$Label,[int]$Row,[ValidateSet('Spinner','Done','Failed')][string]$State='Spinner'); Show-TuiStatus -Row $Row -Type Info -Message $Label }
 
-Export-ModuleMember -Function @('Clear-TuiScreen','Write-TuiAt','Write-TuiBox','Read-TuiKey','Show-TuiStatus','Show-TuiMenu','Show-TuiForm','Show-TuiProgress') -Variable @('TuiColors','TuiLayout')
+Export-ModuleMember `
+    -Function @(
+        'Clear-TuiScreen'
+        'Write-TuiAt'
+        'Write-TuiBox'
+        'Read-TuiKey'
+        'Show-TuiStatus'
+        'Show-TuiMenu'
+        'Show-TuiForm'
+        'Show-TuiProgress'
+    ) `
+    -Variable @(
+        'TuiColors'
+        'TuiLayout'
+    )
