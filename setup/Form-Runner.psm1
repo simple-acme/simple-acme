@@ -177,7 +177,7 @@ Re-run installer or verify installation.
 "@
     }
 
-    return (Resolve-Path -LiteralPath $scriptPath -ErrorAction Stop).Path
+    return [string](Convert-Path -LiteralPath $scriptPath -ErrorAction Stop)
 }
 
 function New-DeviceId {
