@@ -1,4 +1,5 @@
 Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 $script:CertificateEventSchema = @{
     event                = [string]
