@@ -96,6 +96,7 @@ try {
     } elseif ($payload.env.CERTIFICATE_CONFIG_DIR) {
         [string]$payload.env.CERTIFICATE_CONFIG_DIR
     } elseif ($payload.env.CERTIFICAAT_CONFIG_DIR) {
+        Write-Warning 'Legacy key CERTIFICAAT_CONFIG_DIR detected. Migrate to CERTIFICATE_CONFIG_DIR.'
         [string]$payload.env.CERTIFICAAT_CONFIG_DIR
     } else {
         Read-Host 'Enter target config directory'
@@ -105,10 +106,11 @@ try {
     $restoredApiKey = if ($payload.env.CERTIFICATE_API_KEY) {
         [string]$payload.env.CERTIFICATE_API_KEY
     } elseif ($payload.env.CERTIFICAAT_API_KEY) {
+        Write-Warning 'Legacy key CERTIFICAAT_API_KEY detected. Migrate to CERTIFICATE_API_KEY.'
         [string]$payload.env.CERTIFICAAT_API_KEY
     } else {
         $newKey = [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
-        Write-Warning "Backup did not contain CERTIFICATE_API_KEY. A new key has been auto-generated: $newKey"
+        Write-Warning 'Backup did not contain CERTIFICATE_API_KEY. A new key has been auto-generated and stored.'
         $newKey
     }
 

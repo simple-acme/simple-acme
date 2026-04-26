@@ -15,6 +15,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)00-secret-scan.ps1">
+      <Filter>BuildSteps</Filter>
+    </None>
     <None Include="$(MSBuildThisFileDirectory)01-helpers.ps1">
       <Filter>BuildSteps</Filter>
     </None>

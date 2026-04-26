@@ -56,9 +56,13 @@ pwsh -NoLogo -NoProfile -File build/compile-local.ps1 -PublishMain -Runtime win-
 
 ## Test workflow
 
-Run:
+Run lint + tests:
 
 ```powershell
+# ScriptAnalyzer (same settings CI uses)
+Invoke-ScriptAnalyzer -Path .\*.ps1,.\build\*.ps1,.\core\*.psm1,.\setup\*.ps1,.\setup\*.psm1,.\tests\*.ps1 -Recurse -Settings .\PSScriptAnalyzerSettings.psd1
+
+# full QA test runner
 powershell.exe -ExecutionPolicy Bypass -File tests\Run-Tests.ps1
 ```
 
