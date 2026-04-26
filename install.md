@@ -218,4 +218,4 @@ You will be prompted for the passphrase. On a new machine:
 - Device secret fields (passwords, tokens) are re-encrypted using the new machine's Windows DPAPI.
 - Run `.\certificate-setup.ps1` after restore to verify connector connectivity.
 
-> **Important:** If the backup predates this version, `CERTIFICATE_API_KEY` may be absent. In that case, a new key is auto-generated and printed — update any callers that use the old key.
+> **Important:** If the backup predates this version, `CERTIFICATE_API_KEY` may be absent. In that case, a new key is auto-generated and stored in certificate.env (value is not printed) — update any callers that use the old key.

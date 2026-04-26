@@ -1,6 +1,37 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+
+function Invoke-ScriptAnalyzerCheck {
+    Write-Host '[INFO] ScriptAnalyzer check: linting PowerShell scripts.'
+
+    $module = Get-Module -ListAvailable -Name PSScriptAnalyzer | Select-Object -First 1
+    if (-not $module) {
+        Write-Host '[SKIP] ScriptAnalyzer check :: PSScriptAnalyzer is unavailable in this environment.'
+        return
+    }
+
+    $settingsPath = Join-Path $PSScriptRoot '..' 'PSScriptAnalyzerSettings.psd1'
+    if (-not (Test-Path -LiteralPath $settingsPath)) {
+        throw "ScriptAnalyzer settings file not found at $settingsPath"
+    }
+
+    $analysisTargets = @(
+        (Join-Path $PSScriptRoot '..' '*.ps1'),
+        (Join-Path $PSScriptRoot '..' 'build/*.ps1'),
+        (Join-Path $PSScriptRoot '..' 'core/*.psm1'),
+        (Join-Path $PSScriptRoot '..' 'setup/*.ps1'),
+        (Join-Path $PSScriptRoot '..' 'setup/*.psm1'),
+        (Join-Path $PSScriptRoot '*.ps1')
+    )
+
+    $results = @(Invoke-ScriptAnalyzer -Path $analysisTargets -Settings $settingsPath -Recurse)
+    if ($results.Count -gt 0) {
+        $results | Format-Table -AutoSize RuleName, Severity, ScriptName, Line, Message | Out-Host
+        throw "ScriptAnalyzer reported $($results.Count) issue(s)."
+    }
+}
+
 function Invoke-CompileCheck {
     Write-Host '[INFO] Compile check: validating .NET projects before running tests.'
 
@@ -22,6 +53,7 @@ function Invoke-CompileCheck {
     }
 }
 
+Invoke-ScriptAnalyzerCheck
 Invoke-CompileCheck
 
 $testFiles = @(Get-ChildItem -Path $PSScriptRoot -Filter '*.Tests.ps1' | Sort-Object Name)

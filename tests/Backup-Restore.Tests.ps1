@@ -22,4 +22,26 @@ Describe 'Backup/Restore scripts' {
     It 'Restore script exposes Test-BackupIntegrity' {
         (Get-Content -Raw -Path "$PSScriptRoot/../certificate-restore.ps1") | Should -Match 'function Test-BackupIntegrity'
     }
+
+    It 'Restore script prefers canonical CERTIFICATE_* keys and supports legacy fallback with warning' {
+        $content = Get-Content -Raw -Path "$PSScriptRoot/../certificate-restore.ps1"
+        $content | Should -Match '\$payload\.env\.CERTIFICATE_CONFIG_DIR'
+        $content | Should -Match '\$payload\.env\.CERTIFICATE_API_KEY'
+        $content | Should -Match 'Legacy key CERTIFICAAT_CONFIG_DIR detected'
+        $content | Should -Match 'Legacy key CERTIFICAAT_API_KEY detected'
+    }
+
+    It 'Restore script writes only canonical CERTIFICATE_* keys to certificate.env' {
+        $content = Get-Content -Raw -Path "$PSScriptRoot/../certificate-restore.ps1"
+        $content | Should -Match 'CERTIFICATE_CONFIG_DIR\s*='
+        $content | Should -Match 'CERTIFICATE_API_KEY\s*='
+        $content | Should -Not -Match 'CERTIFICAAT_CONFIG_DIR\s*='
+        $content | Should -Not -Match 'CERTIFICAAT_API_KEY\s*='
+    }
+
+    It 'Restore script does not print generated CERTIFICATE_API_KEY values' {
+        $content = Get-Content -Raw -Path "$PSScriptRoot/../certificate-restore.ps1"
+        $content | Should -Match 'auto-generated and stored\.'
+        $content | Should -Not -Match 'auto-generated: \$newKey'
+    }
 }

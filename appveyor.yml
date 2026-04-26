@@ -46,6 +46,7 @@ clone_script:
 before_build:
   - cmd: dotnet --version
   - ps: cd $env:APPVEYOR_BUILD_FOLDER\build\
+  - ps: .\00-secret-scan.ps1
   - ps: . .\01-helpers.ps1
 
 build_script:
