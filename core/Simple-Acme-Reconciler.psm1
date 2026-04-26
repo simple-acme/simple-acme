@@ -145,7 +145,7 @@ function Compare-RenewalWithEnv {
     if ([string]$RenewalSummary.EabKid -ne [string]$EnvValues.ACME_KID) {
         $mismatches.Add('EAB kid')
     }
-    if ([string]$RenewalSummary.SourcePlugin -ne 'manual') {
+    if ([string]$RenewalSummary.SourcePlugin -ne [string]$EnvValues.ACME_SOURCE_PLUGIN) {
         $mismatches.Add('Source plugin')
     }
     if ([string]$RenewalSummary.OrderPlugin -ne [string]$EnvValues.ACME_ORDER_PLUGIN) {
@@ -158,17 +158,20 @@ function Compare-RenewalWithEnv {
         $mismatches.Add('Account name')
     }
 
-    if (-not $RenewalSummary.HasValidationNone) {
+    $expectedValidation = [string]$EnvValues.ACME_VALIDATION_MODE
+    if ($expectedValidation -eq 'none' -and -not $RenewalSummary.HasValidationNone) {
         $mismatches.Add('Validation plugin none')
     }
 
-    if (-not $RenewalSummary.HasScriptInstallation) {
+    $expectedInstallations = Get-InstallationPlugins -EnvValues $EnvValues
+    if ($expectedInstallations -contains 'script' -and -not $RenewalSummary.HasScriptInstallation) {
         $mismatches.Add('Installation plugin script')
     }
-
-    $normalizedScriptPaths = @($RenewalSummary.ScriptPaths | ForEach-Object { [string]$_ })
-    if (-not ($normalizedScriptPaths -contains $expectedScriptPath)) {
-        $mismatches.Add('Script path')
+    if ($expectedInstallations -contains 'script') {
+        $normalizedScriptPaths = @($RenewalSummary.ScriptPaths | ForEach-Object { [string]$_ })
+        if (-not ($normalizedScriptPaths -contains $expectedScriptPath)) {
+            $mismatches.Add('Script path')
+        }
     }
 
     return [pscustomobject]@{
@@ -186,7 +189,7 @@ function Assert-ReconcilePreflight {
     }
 
     $missing = @()
-    foreach ($key in @('ACME_DIRECTORY','ACME_KID','ACME_HMAC_SECRET','DOMAINS','ACME_SCRIPT_PATH')) {
+    foreach ($key in @('ACME_DIRECTORY','DOMAINS','ACME_SOURCE_PLUGIN','ACME_ORDER_PLUGIN','ACME_STORE_PLUGIN','ACME_VALIDATION_MODE')) {
         if (-not $EnvValues.ContainsKey($key) -or [string]::IsNullOrWhiteSpace([string]$EnvValues[$key])) {
             $missing += $key
         }
@@ -195,20 +198,23 @@ function Assert-ReconcilePreflight {
         throw "Missing required environment values for reconcile: $($missing -join ', ')"
     }
 
+    $installPlugins = Get-InstallationPlugins -EnvValues $EnvValues
     $scriptPath = [string]$EnvValues.ACME_SCRIPT_PATH
-    if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
-        throw "ACME_SCRIPT_PATH must be an absolute path. Current value: '$scriptPath'"
-    }
-    if (-not (Test-Path -LiteralPath $scriptPath)) {
-        throw "ACME_SCRIPT_PATH does not exist: '$scriptPath'"
-    }
-    $scriptParameters = [string]$EnvValues.ACME_SCRIPT_PARAMETERS
-    if ([string]::IsNullOrWhiteSpace($scriptParameters)) {
-        throw 'ACME_SCRIPT_PARAMETERS must be set and non-empty.'
-    }
-    foreach ($requiredToken in @('{RenewalId}','{CertThumbprint}','{OldCertThumbprint}')) {
-        if (-not $scriptParameters.Contains($requiredToken)) {
-            throw "ACME_SCRIPT_PARAMETERS is missing required token '$requiredToken'."
+    if ($installPlugins -contains 'script') {
+        if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
+            throw "ACME_SCRIPT_PATH must be an absolute path. Current value: '$scriptPath'"
+        }
+        if (-not (Test-Path -LiteralPath $scriptPath)) {
+            throw "ACME_SCRIPT_PATH does not exist: '$scriptPath'"
+        }
+        $scriptParameters = [string]$EnvValues.ACME_SCRIPT_PARAMETERS
+        if ([string]::IsNullOrWhiteSpace($scriptParameters)) {
+            throw 'ACME_SCRIPT_PARAMETERS must be set and non-empty.'
+        }
+        foreach ($requiredToken in @('{RenewalId}','{CertThumbprint}','{OldCertThumbprint}')) {
+            if (-not $scriptParameters.Contains($requiredToken)) {
+                throw "ACME_SCRIPT_PARAMETERS is missing required token '$requiredToken'."
+            }
         }
     }
 
@@ -221,6 +227,7 @@ function Assert-ReconcilePreflight {
         WacsPath = [string]$wacsCommand.Source
         DomainCount = $domains.Count
         ScriptPath = $scriptPath
+        InstallationPlugins = $installPlugins
     }
 }
 
@@ -250,7 +257,14 @@ function Ensure-SimpleAcmeSettings {
 
 function Get-InstallationPlugins {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
-    return @('script')
+    $raw = [string]$EnvValues.ACME_INSTALLATION_PLUGINS
+    if ([string]::IsNullOrWhiteSpace($raw)) { return @('script') }
+    return @(
+        $raw -split ',' |
+            ForEach-Object { $_.Trim().ToLowerInvariant() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            Sort-Object -Unique
+    )
 }
 
 function Get-CsrAlgorithms {
@@ -300,24 +314,29 @@ function Invoke-WacsIssue {
     $csrAlgorithms = Get-CsrAlgorithms -EnvValues $EnvValues
     $args = @(
         '--accepttos',
-        '--source', 'manual',
+        '--source', [string]$EnvValues.ACME_SOURCE_PLUGIN,
         '--order', [string]$EnvValues.ACME_ORDER_PLUGIN,
         '--baseuri', [string]$EnvValues.ACME_DIRECTORY,
-        '--eab-key-identifier', [string]$EnvValues.ACME_KID,
-        '--eab-key', [string]$EnvValues.ACME_HMAC_SECRET,
-        '--validation', 'none',
+        '--validation', [string]$EnvValues.ACME_VALIDATION_MODE,
         '--globalvalidation', [string]$EnvValues.ACME_VALIDATION_MODE,
         '--host', [string]$EnvValues.DOMAINS,
-        '--store', [string]$EnvValues.ACME_STORE_PLUGIN,
-        '--script', [string]$EnvValues.ACME_SCRIPT_PATH,
-        '--scriptparameters', [string]$EnvValues.ACME_SCRIPT_PARAMETERS
+        '--store', [string]$EnvValues.ACME_STORE_PLUGIN
     )
+    if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_KID)) {
+        $args += @('--eab-key-identifier', [string]$EnvValues.ACME_KID)
+    }
+    if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_HMAC_SECRET)) {
+        $args += @('--eab-key', [string]$EnvValues.ACME_HMAC_SECRET)
+    }
     if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_ACCOUNT_NAME)) {
         $args += @('--account', [string]$EnvValues.ACME_ACCOUNT_NAME)
     }
 
     foreach ($plugin in $installPlugins) {
         $args += @('--installation', $plugin)
+    }
+    if ($installPlugins -contains 'script') {
+        $args += @('--script', [string]$EnvValues.ACME_SCRIPT_PATH, '--scriptparameters', [string]$EnvValues.ACME_SCRIPT_PARAMETERS)
     }
 
     $lastError = $null
