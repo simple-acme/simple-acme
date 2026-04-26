@@ -104,6 +104,21 @@ Describe 'Env loader' {
         { Import-EnvFile -Path $script:path -Force } | Should -Not -Throw
     }
 
+    It 'AllowIncomplete mode permits setup bootstrap with missing runtime script keys' {
+        @(
+            'ACME_DIRECTORY=https://acme-v02.api.letsencrypt.org/directory',
+            'DOMAINS=example.com',
+            'ACME_INSTALLATION_PLUGINS=script',
+            'CERTIFICATE_CONFIG_DIR=C:\cfg',
+            'CERTIFICATE_DROP_DIR=C:\drop',
+            'CERTIFICATE_STATE_DIR=C:\state',
+            'CERTIFICATE_LOG_DIR=C:\log',
+            'CERTIFICATE_API_KEY=apikey'
+        ) | Set-Content -Path $script:path -Encoding UTF8
+
+        { Import-EnvFile -Path $script:path -Force -AllowIncomplete } | Should -Not -Throw
+    }
+
     It 'Write round-trips through Read-EnvFile' {
         $vals = @{ A='1'; B='2=3'; C='with # hash' }
         Write-EnvFile -Values $vals -Path $script:path

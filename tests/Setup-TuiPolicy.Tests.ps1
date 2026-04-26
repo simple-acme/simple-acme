@@ -98,4 +98,10 @@ Describe 'Setup TUI and policy reliability' {
         $runnerRaw | Should -Match ([regex]::Escape(('Placeholder="' + $expectedPlaceholder + '"')) )
     }
 
+    It 'Setup bootstrap initializes config in AllowIncomplete mode before menu renders' {
+        $setupPath = Join-Path $PSScriptRoot '../certificate-setup.ps1'
+        $setupRaw = Get-Content -LiteralPath $setupPath -Raw
+        $setupRaw | Should -Match 'Initialize-CertificateConfig\s+-AllowIncomplete'
+    }
+
 }
