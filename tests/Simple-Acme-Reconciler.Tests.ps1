@@ -37,7 +37,9 @@ function Invoke-TestSimpleAcmeReconciler {
             AccountName = ''
             HasValidationNone = $true
             HasScriptInstallation = $true
+            InstallationPlugins = @('script')
             ScriptPaths = @('C:\wrong.ps1')
+            StorePlugins = @('certificatestore')
         }
         $envValues = @{
             DOMAINS = 'example.com'
@@ -68,8 +70,35 @@ function Invoke-TestSimpleAcmeReconciler {
 
     & $Assert 'installation plugins are parsed and normalized' {
         $plugins = Get-InstallationPlugins -EnvValues @{ ACME_INSTALLATION_PLUGINS = 'script, iis,script' }
-        if (($plugins -join ',') -ne 'script') {
+        if (($plugins -join ',') -ne 'iis,script') {
             throw "Unexpected plugins: $($plugins -join ',')"
+        }
+    }
+
+    & $Assert 'config hash is deterministic for equivalent values' {
+        $envA = @{
+            DOMAINS = 'b.example.com, a.example.com'
+            ACME_VALIDATION_MODE = 'none'
+            ACME_CSR_ALGORITHM = 'ec'
+            ACME_KEY_TYPE = 'ec'
+            ACME_SCRIPT_PATH = 'C:\scripts\install.ps1'
+            ACME_INSTALLATION_PLUGINS = 'script,iis'
+            ACME_STORE_PLUGIN = 'certificatestore'
+        }
+        $envB = @{
+            DOMAINS = 'a.example.com,b.example.com'
+            ACME_VALIDATION_MODE = 'none'
+            ACME_CSR_ALGORITHM = 'ec'
+            ACME_KEY_TYPE = 'ec'
+            ACME_SCRIPT_PATH = 'C:\scripts\install.ps1'
+            ACME_INSTALLATION_PLUGINS = 'iis,script'
+            ACME_STORE_PLUGIN = 'certificatestore'
+        }
+
+        $hashA = New-ReconcileConfigHash -EnvValues $envA
+        $hashB = New-ReconcileConfigHash -EnvValues $envB
+        if ($hashA -ne $hashB) {
+            throw "Expected deterministic hash but got '$hashA' and '$hashB'."
         }
     }
 }
