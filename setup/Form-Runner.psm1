@@ -217,6 +217,204 @@ function Invoke-AcmeForm {
     return $values
 }
 
+function Get-PolicyFilePath {
+    param([Parameter(Mandatory)][string]$ConfigDir)
+    return (Join-Path $ConfigDir 'policies.json')
+}
+
+function Read-Policies {
+    param([Parameter(Mandatory)][string]$ConfigDir)
+    $path = Get-PolicyFilePath -ConfigDir $ConfigDir
+    if (-not (Test-Path -LiteralPath $path)) {
+        $tmpInit = [System.IO.Path]::GetTempFileName()
+        [System.IO.File]::WriteAllText($tmpInit, '[]', [System.Text.Encoding]::UTF8)
+        Move-Item -LiteralPath $tmpInit -Destination $path -Force
+    }
+
+    $raw = Get-Content -Raw -Encoding UTF8 -Path $path
+    try {
+        return @($raw | ConvertFrom-Json)
+    } catch {
+        throw "Failed to parse policies.json. Fix JSON format before continuing. File: $path. Error: $($_.Exception.Message)"
+    }
+}
+
+function Save-Policies {
+    param(
+        [Parameter(Mandatory)][string]$ConfigDir,
+        [Parameter(Mandatory)][object[]]$Policies
+    )
+    $path = Get-PolicyFilePath -ConfigDir $ConfigDir
+    $tmp = [System.IO.Path]::GetTempFileName()
+    [System.IO.File]::WriteAllText($tmp, ($Policies | ConvertTo-Json -Depth 20), [System.Text.Encoding]::UTF8)
+    Move-Item -LiteralPath $tmp -Destination $path -Force
+}
+
+function Test-FanoutPolicyValue {
+    param([Parameter(Mandatory)][string]$FanoutPolicy)
+    return @('fail-fast','best-effort','quorum') -contains $FanoutPolicy
+}
+
+function Test-QuorumThreshold {
+    param(
+        [string]$FanoutPolicy,
+        [string]$ThresholdText,
+        [int]$ConnectorCount = 0
+    )
+
+    $isQuorum = ([string]$FanoutPolicy).ToLowerInvariant() -eq 'quorum'
+    if (-not $isQuorum) {
+        return @{ IsValid = $true; Value = $null; Warning = $null; Error = $null }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ThresholdText)) {
+        return @{ IsValid = $false; Value = $null; Warning = $null; Error = 'quorum_threshold is required when fanout_policy is quorum.' }
+    }
+
+    $parsed = 0
+    if (-not [int]::TryParse($ThresholdText, [ref]$parsed)) {
+        return @{ IsValid = $false; Value = $null; Warning = $null; Error = 'quorum_threshold must be a whole number.' }
+    }
+    if ($parsed -lt 1) {
+        return @{ IsValid = $false; Value = $null; Warning = $null; Error = 'quorum_threshold must be greater than or equal to 1.' }
+    }
+    if ($ConnectorCount -gt 0 -and $parsed -gt $ConnectorCount) {
+        return @{ IsValid = $false; Value = $null; Warning = $null; Error = "quorum_threshold ($parsed) cannot exceed connector count ($ConnectorCount)." }
+    }
+
+    $warning = $null
+    if ($ConnectorCount -eq 0) {
+        $warning = 'No connectors are assigned yet. quorum_threshold >= 1 is accepted but will not be enforceable until connectors are configured.'
+    }
+
+    return @{ IsValid = $true; Value = $parsed; Warning = $warning; Error = $null }
+}
+
+function Show-PoliciesView {
+    param([Parameter(Mandatory)][object[]]$Policies)
+    if ($Policies.Count -eq 0) {
+        [Console]::WriteLine('No deployment policies exist yet.')
+        return
+    }
+
+    foreach ($policy in $Policies) {
+        $connectors = @($policy.connectors)
+        $connectorNames = @($connectors | ForEach-Object {
+            if ($_.PSObject.Properties.Match('label').Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$_.label)) { [string]$_.label } else { [string]$_.connector_type }
+        }) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        $connectorLabel = if ($connectorNames.Count -gt 0) { $connectorNames -join ', ' } else { '(none)' }
+        [Console]::WriteLine("policy_id={0} fanout={1} quorum={2} connectors={3} [{4}]" -f $policy.policy_id, $policy.fanout_policy, $policy.quorum_threshold, $connectors.Count, $connectorLabel)
+    }
+}
+
+function Invoke-PolicyEditor {
+    param(
+        [string]$ConfigDir,
+        [switch]$ViewOnly
+    )
+
+    $policies = Read-Policies -ConfigDir $ConfigDir
+    if ($ViewOnly) {
+        Show-PoliciesView -Policies $policies
+        return $policies
+    }
+
+    while($true){
+        $choice = Read-Host 'Policy editor: [N]ew [E]dit [D]elete [V]iew [Q]uit'
+        if($choice -match '^[Qq]'){ break }
+
+        if($choice -match '^[Vv]'){
+            Show-PoliciesView -Policies $policies
+            continue
+        }
+
+        if(($choice -match '^[EeDd]') -and $policies.Count -eq 0){
+            Write-Warning 'No policies exist. Routing to create policy flow.'
+            $choice = 'N'
+        }
+
+        if($choice -match '^[Nn]'){
+            $pid = Read-Host 'policy_id'
+            if ([string]::IsNullOrWhiteSpace($pid)) { Write-Warning 'policy_id is required.'; continue }
+
+            $fanoutHelp = 'fanout_policy [fail-fast | best-effort | quorum]'
+            $fanout = ''
+            while (-not (Test-FanoutPolicyValue -FanoutPolicy $fanout)) {
+                $fanout = ([string](Read-Host $fanoutHelp)).Trim().ToLowerInvariant()
+                if (-not (Test-FanoutPolicyValue -FanoutPolicy $fanout)) {
+                    Write-Warning "Invalid fanout_policy '$fanout'. Accepted values: fail-fast, best-effort, quorum."
+                }
+            }
+
+            $connectors = @()
+            $thresholdText = Read-Host 'quorum_threshold (required only for quorum)'
+            $validation = Test-QuorumThreshold -FanoutPolicy $fanout -ThresholdText $thresholdText -ConnectorCount $connectors.Count
+            while (-not $validation.IsValid) {
+                Write-Warning $validation.Error
+                $thresholdText = Read-Host 'quorum_threshold (required only for quorum)'
+                $validation = Test-QuorumThreshold -FanoutPolicy $fanout -ThresholdText $thresholdText -ConnectorCount $connectors.Count
+            }
+            if ($validation.Warning) { Write-Warning $validation.Warning }
+
+            $policies += [pscustomobject]@{
+                policy_id = $pid
+                fanout_policy = $fanout
+                quorum_threshold = $validation.Value
+                connectors = @()
+            }
+            continue
+        }
+
+        if($choice -match '^[Dd]'){
+            $pid=Read-Host 'policy_id to delete'
+            if ([string]::IsNullOrWhiteSpace($pid)) { Write-Warning 'policy_id is required.'; continue }
+            $existingCount = $policies.Count
+            $policies=@($policies | Where-Object { $_.policy_id -ne $pid })
+            if ($policies.Count -eq $existingCount) { Write-Warning "Policy '$pid' not found. Returning to editor."; continue }
+            continue
+        }
+
+        if($choice -match '^[Ee]'){
+            $pid=Read-Host 'policy_id to edit'
+            $p=@($policies|Where-Object{$_.policy_id -eq $pid}) | Select-Object -First 1
+            if($null -eq $p){ Write-Warning "Policy '$pid' not found. Returning to editor."; continue }
+
+            $fanoutInput = Read-Host "fanout_policy [$($p.fanout_policy)] (accepted: fail-fast | best-effort | quorum)"
+            $fanout = if ([string]::IsNullOrWhiteSpace($fanoutInput)) { [string]$p.fanout_policy } else { $fanoutInput.Trim().ToLowerInvariant() }
+            while (-not (Test-FanoutPolicyValue -FanoutPolicy $fanout)) {
+                Write-Warning "Invalid fanout_policy '$fanout'. Accepted values: fail-fast, best-effort, quorum."
+                $fanout = ([string](Read-Host 'fanout_policy')).Trim().ToLowerInvariant()
+            }
+
+            $conn=Read-Host 'connector types comma-separated (optional)'
+            $connectorCount = @($p.connectors).Count
+            if($conn){
+                $p.connectors=@($conn -split ',' | ForEach-Object { [pscustomobject]@{ connector_type=$_.Trim(); label=$_.Trim(); settings=@{} } })
+                $connectorCount = @($p.connectors).Count
+            }
+
+            $currentThresholdText = if ($null -ne $p.quorum_threshold) { [string]$p.quorum_threshold } else { '' }
+            $qInput = Read-Host "quorum_threshold [$currentThresholdText] (required only for quorum)"
+            $thresholdText = if ([string]::IsNullOrWhiteSpace($qInput)) { $currentThresholdText } else { $qInput }
+            $validation = Test-QuorumThreshold -FanoutPolicy $fanout -ThresholdText $thresholdText -ConnectorCount $connectorCount
+            while (-not $validation.IsValid) {
+                Write-Warning $validation.Error
+                $thresholdText = Read-Host 'quorum_threshold (required only for quorum)'
+                $validation = Test-QuorumThreshold -FanoutPolicy $fanout -ThresholdText $thresholdText -ConnectorCount $connectorCount
+            }
+            if ($validation.Warning) { Write-Warning $validation.Warning }
+
+            $p.fanout_policy = $fanout
+            $p.quorum_threshold = $validation.Value
+            continue
+        }
+    }
+
+    Save-Policies -ConfigDir $ConfigDir -Policies $policies
+    return $policies
+}
+
+
 function Invoke-FirstRunWizard {
     param([Parameter(Mandatory)][string]$DefaultEnvPath)
 
@@ -283,4 +481,4 @@ function Invoke-FirstRunWizard {
     return $envTarget
 }
 
-Export-ModuleMember -Function @('Invoke-DeviceForm','Invoke-AcmeForm','Invoke-PolicyEditor','Invoke-PolicyViewer','Invoke-FirstRunWizard','Get-Policies','Find-PolicyById','Format-PolicySummaryLines')
+Export-ModuleMember -Function @('Invoke-DeviceForm','Invoke-AcmeForm','Invoke-PolicyEditor','Invoke-FirstRunWizard','Test-FanoutPolicyValue','Test-QuorumThreshold','Show-PoliciesView','Read-Policies')
