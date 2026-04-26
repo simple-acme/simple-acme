@@ -12,10 +12,6 @@ $TuiLayout = @{
     MarginX = 2
     HeaderRows = 3
     FooterRows = 3
-}
-
-$TuiLayout = @{
-    MarginX = 2
     HeaderY = 1
     ContentTop = 3
     ContentBottomPadding = 4
@@ -307,4 +303,20 @@ function Show-TuiForm {
 
 function Show-TuiProgress { param([string]$Label,[int]$Row,[ValidateSet('Spinner','Done','Failed')][string]$State='Spinner'); Show-TuiStatus -Row $Row -Type Info -Message $Label }
 
-Export-ModuleMember -Function @('Clear-TuiScreen','Write-TuiAt','Write-TuiBox','Read-TuiKey','Show-TuiStatus','Show-TuiMenu','Show-TuiForm','Show-TuiProgress') -Variable @('TuiColors','TuiLayout')
+$exports = @{
+    Function = @(
+        'Clear-TuiScreen'
+        'Write-TuiAt'
+        'Write-TuiBox'
+        'Read-TuiKey'
+        'Show-TuiStatus'
+        'Show-TuiMenu'
+        'Show-TuiForm'
+        'Show-TuiProgress'
+    )
+    Variable = @(
+        'TuiColors'
+        'TuiLayout'
+    )
+}
+Export-ModuleMember @exports

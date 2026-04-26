@@ -2,6 +2,32 @@ Import-Module "$PSScriptRoot/../core/Tui-Engine.psm1" -Force
 Import-Module "$PSScriptRoot/../setup/Form-Runner.psm1" -Force
 
 Describe 'Setup TUI and policy reliability' {
+    It 'Tui layout defines required keys and is not reassigned' {
+        $modulePath = Join-Path $PSScriptRoot '../core/Tui-Engine.psm1'
+        $raw = Get-Content -LiteralPath $modulePath -Raw
+        ([regex]::Matches($raw, '(?m)^\$TuiLayout\s*=\s*@\{')).Count | Should -Be 1
+
+        $requiredKeys = @(
+            'MinWidth'
+            'MinHeight'
+            'MarginX'
+            'HeaderRows'
+            'FooterRows'
+            'HeaderY'
+            'ContentTop'
+            'ContentBottomPadding'
+            'LabelWidth'
+            'MinBoxWidth'
+            'MaxBoxWidth'
+            'FieldRowsMax'
+            'StatusRows'
+        )
+
+        foreach ($key in $requiredKeys) {
+            $TuiLayout.ContainsKey($key) | Should -BeTrue
+        }
+    }
+
     It 'Show-TuiForm does not call Read-Host' {
         $modulePath = Join-Path $PSScriptRoot '../core/Tui-Engine.psm1'
         $raw = Get-Content -LiteralPath $modulePath -Raw
