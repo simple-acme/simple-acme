@@ -73,7 +73,8 @@ try {
     }
     $tmp = Join-Path $dropDir "$([guid]::NewGuid()).tmp"
     $dst = [System.IO.Path]::ChangeExtension($tmp, '.json')
-    [System.IO.File]::WriteAllText($tmp, ($payload | ConvertTo-Json -Compress), [System.Text.Encoding]::UTF8)
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($tmp, ($payload | ConvertTo-Json -Compress), $utf8NoBom)
     Move-Item -Path $tmp -Destination $dst -Force
     exit 0
 } catch {
