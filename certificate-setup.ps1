@@ -57,6 +57,7 @@ Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModul
 Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeForm' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyEditor' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 Assert-SetupCommandAvailable -CommandName 'Invoke-DeviceForm' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+Assert-SetupCommandAvailable -CommandName 'Invoke-ManageCertificatesMenu' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 $schedulerModule = Import-Module $schedulerModulePath -Force -Global -PassThru
 if ($null -eq $schedulerModule) {
     throw "Unable to import required scheduler module from path: $schedulerModulePath"
@@ -183,6 +184,13 @@ while ($menuStack.Count -gt 0) {
 
     Clear-TuiScreen
     switch ($selected) {
+        'setup-new'      {
+            $result = Invoke-AcmeForm -EnvFilePath $envPath
+            if ($null -ne $result) {
+                Invoke-InitialAcmeReconcilePrompt -RootDir $PSScriptRoot
+            }
+        }
+        'manage-certs'   { Invoke-ManageCertificatesMenu -ConfigDir $configDir }
         'acme'           {
             $result = Invoke-AcmeForm -EnvFilePath $envPath
             if ($null -ne $result) {
@@ -217,7 +225,10 @@ while ($menuStack.Count -gt 0) {
             Show-TuiStatus -Message 'Azure AD App Proxy connector is disabled: requires AzureAD module.' -Type Warning -Row ([Console]::WindowHeight-2)
             Start-Sleep -Milliseconds 1800
         }
-        default          { Invoke-DeviceForm -ConnectorType $selected -ConfigDir $configDir | Out-Null }
+        default          {
+            Show-TuiStatus -Message "No action implemented for '$selected'." -Type Warning -Row ([Console]::WindowHeight-2)
+            Start-Sleep -Milliseconds 1200
+        }
     }
     Clear-TuiScreen
 }
