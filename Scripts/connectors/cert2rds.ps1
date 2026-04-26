@@ -26,7 +26,14 @@ $apply = {
 
 $verify = {
     param($endpoint, $cert)
-    return $true
+    if (([string]$endpoint.method).ToLowerInvariant() -eq 'winrm') {
+        $thumb = Invoke-Command -ComputerName ([string]$endpoint.host) -ScriptBlock {
+            (Get-RDCertificate -Role RDGateway -ErrorAction Stop).Thumbprint
+        } -ErrorAction Stop
+        return (($thumb -replace '\s','').ToUpperInvariant() -eq $cert.Thumbprint)
+    }
+    $localThumb = (Get-RDCertificate -Role RDGateway -ErrorAction Stop).Thumbprint
+    return (($localThumb -replace '\s','').ToUpperInvariant() -eq $cert.Thumbprint)
 }
 
 Invoke-ConnectorPipeline -CertThumbprint $CertThumbprint -Apply $apply -Verify $verify -Endpoints $endpoints
