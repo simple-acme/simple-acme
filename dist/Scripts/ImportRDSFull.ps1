@@ -42,7 +42,7 @@ param(
     [string]$NewCertThumbprint,
     [Parameter(Position=1,Mandatory=$false)]
     [string]$RDCB,
-    [Parameter(Position=3,Mandatory=$false)]
+    [Parameter(Position=2,Mandatory=$false)]
     [string]$OldCertThumbprint
 
 )
@@ -65,14 +65,31 @@ function Get-CurrentRdsGatewayThumbprint {
     return ([string]$value).Trim().ToUpperInvariant()
 }
 
+function Get-RdsRoleThumbprint {
+    param(
+        [Parameter(Mandatory=$true)]
+        [ValidateSet('RDGateway','RDWebAccess','RDPublishing','RDRedirector')]
+        [string]$Role,
+        [Parameter(Mandatory=$false)]
+        [string]$ConnectionBroker
+    )
+
+    $queryArgs = @{ Role = $Role; ErrorAction = 'Stop' }
+    if (-not [string]::IsNullOrWhiteSpace($ConnectionBroker)) {
+        $queryArgs.ConnectionBroker = $ConnectionBroker
+    }
+
+    $entry = Get-RDCertificate @queryArgs
+    return ([string]$entry.Thumbprint).Trim().ToUpperInvariant()
+}
+
 $ErrorActionPreference = 'Stop'
 $RDCBPS = $null
-$tempPfxPath = $null
 
 try {
-    $feature = Get-WindowsFeature -Name RDS-Gateway -ErrorAction Stop
-    if (-not $feature.Installed) {
-        throw 'RDS role validation failed: RDS-Gateway feature is not installed.'
+    $gatewayService = Get-Service -Name TSGateway -ErrorAction Stop
+    if (-not $gatewayService) {
+        throw 'RDS role validation failed: TSGateway service not found.'
     }
 
     if ($RDCB -ne $LocalHost) { $RDCBPS = New-PSSession -ComputerName $RDCB }
@@ -87,50 +104,72 @@ try {
     if (-not $CertInStore) {
         throw "Cert thumbprint '$NewCertThumbprint' not found in Cert:\LocalMachine\My."
     }
+    if (-not $CertInStore.HasPrivateKey) {
+        throw "Certificate '$NewCertThumbprint' does not contain a private key."
+    }
 
     $currentThumbprint = Get-CurrentRdsGatewayThumbprint
     $newThumbprint = ([string]$CertInStore.Thumbprint).Trim().ToUpperInvariant()
-    if ($currentThumbprint -eq $newThumbprint) {
+    $roles = @('RDGateway','RDWebAccess','RDPublishing','RDRedirector')
+    $allRolesMatch = $true
+    foreach ($role in $roles) {
+        $existingRoleThumbprint = Get-RdsRoleThumbprint -Role $role -ConnectionBroker $RDCB
+        if ($existingRoleThumbprint -ne $newThumbprint) {
+            $allRolesMatch = $false
+            break
+        }
+    }
+
+    if ($currentThumbprint -eq $newThumbprint -and $allRolesMatch) {
         "RDS binding already uses thumbprint $newThumbprint. No changes required."
         exit 0
     }
 
-    Set-Item -Path RDS:\GatewayServer\SSLCertificate\Thumbprint -Value $CertInStore.Thumbprint -ErrorAction Stop
-    Restart-TSGatewayService
-    "Cert thumbprint set to RD Gateway listener and service restarted"
-
     wmic /namespace:\\root\cimv2\TerminalServices PATH Win32_TSGeneralSetting Set SSLCertificateSHA1Hash="$($CertInStore.Thumbprint)"
     "Cert thumbprint set to RDP listener"
 
-    Add-Type -AssemblyName 'System.Web'
-    $tempPasswordPfx = [System.Web.Security.Membership]::GeneratePassword(10, 5) | ConvertTo-SecureString -Force -AsPlainText
-    $tempPfxPath = New-TemporaryFile | Rename-Item -PassThru -NewName { $_.name -Replace '\.tmp$','.pfx' }
-    (Export-PfxCertificate -Cert $CertInStore -FilePath $tempPfxPath -Force -NoProperties -Password $tempPasswordPfx) | Out-Null
-
-    Set-RDCertificate -Role RDPublishing -ImportPath $tempPfxPath -Password $tempPasswordPfx -ConnectionBroker $RDCB -Force
-    "RDPublishing Certificate for RDS was set"
-
-    Set-RDCertificate -Role RDWebAccess -ImportPath $tempPfxPath -Password $tempPasswordPfx -ConnectionBroker $RDCB -Force
-    "RDWebAccess Certificate for RDS was set"
-
-    Set-RDCertificate -Role RDRedirector -ImportPath $tempPfxPath -Password $tempPasswordPfx -ConnectionBroker $RDCB -Force
-    "RDRedirector Certificate for RDS was set"
+    Set-RDCertificate -Role RDGateway -Thumbprint $newThumbprint -ConnectionBroker $RDCB -Force -ErrorAction Stop
+    Set-RDCertificate -Role RDWebAccess -Thumbprint $newThumbprint -ConnectionBroker $RDCB -Force -ErrorAction Stop
+    Set-RDCertificate -Role RDPublishing -Thumbprint $newThumbprint -ConnectionBroker $RDCB -Force -ErrorAction Stop
+    Set-RDCertificate -Role RDRedirector -Thumbprint $newThumbprint -ConnectionBroker $RDCB -Force -ErrorAction Stop
+    "Certificates applied to all RDS roles"
 
     if ((Get-Command -Module RDWebClientManagement | Measure-Object).Count -eq 0) {
         "RDWebClient not installed, skipping"
     } else {
-        Remove-RDWebClientBrokerCert
-        Import-RDWebClientBrokerCert -Path $tempPfxPath -Password $tempPasswordPfx
+        Remove-RDWebClientBrokerCert -ErrorAction SilentlyContinue
+        $rdWebImportCommand = Get-Command -Name Import-RDWebClientBrokerCert -ErrorAction Stop
+        if ($rdWebImportCommand.Parameters.ContainsKey('CertificateThumbprint')) {
+            Import-RDWebClientBrokerCert -CertificateThumbprint $newThumbprint -ErrorAction Stop
+        } else {
+            Add-Type -AssemblyName 'System.Web'
+            $tempPasswordPfx = [System.Web.Security.Membership]::GeneratePassword(10, 5) | ConvertTo-SecureString -Force -AsPlainText
+            $tempPfxPath = New-TemporaryFile | Rename-Item -PassThru -NewName { $_.name -Replace '\.tmp$','.pfx' }
+            (Export-PfxCertificate -Cert $CertInStore -FilePath $tempPfxPath -Force -NoProperties -Password $tempPasswordPfx) | Out-Null
+            Import-RDWebClientBrokerCert -Path $tempPfxPath -Password $tempPasswordPfx -ErrorAction Stop
+            Remove-Item -Path $tempPfxPath -ErrorAction SilentlyContinue
+        }
         "RDWebClient Certificate for RDS was set"
     }
 
-    Set-RDCertificate -Role RDGateway -ImportPath $tempPfxPath -Password $tempPasswordPfx -ConnectionBroker $RDCB -Force
+    Set-Item -Path RDS:\GatewayServer\SSLCertificate\Thumbprint -Value $newThumbprint -ErrorAction Stop
     Restart-TSGatewayService
-    "RDGateway Certificate for RDS was set"
+    try {
+        & iisreset | Out-Null
+    } catch {
+        Write-Warning "iisreset encountered an issue: $($_.Exception.Message)"
+    }
+    "Services restarted"
 
     $appliedGatewayThumbprint = Get-CurrentRdsGatewayThumbprint
     if ($appliedGatewayThumbprint -ne $newThumbprint) {
         throw "Post-deploy validation failed: RD Gateway thumbprint is '$appliedGatewayThumbprint', expected '$newThumbprint'."
+    }
+    foreach ($role in $roles) {
+        $appliedRoleThumbprint = Get-RdsRoleThumbprint -Role $role -ConnectionBroker $RDCB
+        if ($appliedRoleThumbprint -ne $newThumbprint) {
+            throw "Post-deploy validation failed: role '$role' thumbprint is '$appliedRoleThumbprint', expected '$newThumbprint'."
+        }
     }
     $tsGatewayService = Get-Service TSGateway -ErrorAction Stop
     if ($tsGatewayService.Status -ne 'Running') {
@@ -152,9 +191,6 @@ try {
     Write-Error "RDS deployment failed: $($_.Exception.Message)"
     exit 1
 } finally {
-    if ($tempPfxPath -and (Test-Path -LiteralPath $tempPfxPath)) {
-        Remove-Item -Path $tempPfxPath -ErrorAction SilentlyContinue
-    }
     if ($RDCBPS) {
         Remove-PSSession $RDCBPS
     }
