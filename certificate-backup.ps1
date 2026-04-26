@@ -32,7 +32,7 @@ try {
     if ((Test-Path -LiteralPath $OutputPath) -and -not $Force) { throw "Output path already exists: $OutputPath. Use -Force to overwrite." }
 
     if (-not $Passphrase) {
-        $p1 = Read-Host -AsSecureString -Prompt 'Enter backup passphrase (store this securely — required for restore):'
+        $p1 = Read-Host -AsSecureString -Prompt 'Enter backup passphrase (store this securely - required for restore):'
         $p2 = Read-Host -AsSecureString -Prompt 'Confirm backup passphrase'
         $s1 = & "$($cryptoModule.Name)\ConvertTo-PlainText" -SecureString $p1
         $s2 = & "$($cryptoModule.Name)\ConvertTo-PlainText" -SecureString $p2

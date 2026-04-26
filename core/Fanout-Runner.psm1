@@ -78,7 +78,7 @@ function Invoke-FanoutRunner {
         $connectorFile = Join-Path (Split-Path $PSScriptRoot -Parent) "connectors/$($config.connector_type.Replace('_','-')).psm1"
         if (-not (Test-Path $connectorFile)) {
             Update-ConnectorJobStep -JobId $new.job_id -Step 'probe' -Status 'failed' -StateDir $StateDir -ErrorDetail "connector_not_implemented:$($new.connector_type)" | Out-Null
-            Write-CertificateLog -Level Warning -Message "No connector for '$($new.connector_type)' — job failed cleanly"
+            Write-CertificateLog -Level Warning -Message "No connector for '$($new.connector_type)' - job failed cleanly"
             return
         }
         Import-Module $connectorFile -Force

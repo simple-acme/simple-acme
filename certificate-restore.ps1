@@ -69,7 +69,7 @@ function Test-BackupIntegrity {
 
 try {
     if (-not $Passphrase) {
-        $Passphrase = Read-Host -AsSecureString -Prompt 'Enter backup passphrase (store this securely — required for restore):'
+        $Passphrase = Read-Host -AsSecureString -Prompt 'Enter backup passphrase (store this securely - required for restore):'
     }
 
     $parsed = Read-BackupPayload -Path $BackupPath -Passphrase $Passphrase
