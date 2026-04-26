@@ -1,3 +1,5 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 # OpenIIS80FWrule.ps1 - Opens port 80 for HTTP traffic by enabling the firewall rule
 
 # Define the specific rule name for HTTP traffic

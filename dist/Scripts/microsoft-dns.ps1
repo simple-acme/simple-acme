@@ -1,3 +1,5 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 Import-module dnsserver
 $computername = "localhost"
 $action = $args[0]

@@ -1,3 +1,5 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 # CloseIIS80FWrule.ps1 - Closes port 80 for HTTP traffic by blocking the firewall rule
 
 # Define the specific rule name for HTTP traffic

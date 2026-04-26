@@ -1,4 +1,6 @@
-﻿<#
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+<#
 .SYNOPSIS
 Imports a cert from WASC renewal into KEMP Loadmaster.
 .DESCRIPTION

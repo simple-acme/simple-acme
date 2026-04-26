@@ -24,19 +24,25 @@ function Write-HttpJson {
 
 function Get-JobById {
     param([string]$StateDir,[string]$JobId)
-    $path = Join-Path $StateDir "jobs/$JobId.json"
+    $path = Join-Path $StateDir "$JobId.json"
     if (-not (Test-Path -LiteralPath $path)) { return $null }
     Get-Content -Raw -Encoding UTF8 -Path $path | ConvertFrom-Json
 }
 
 function Get-JobsByRenewalId {
     param([string]$StateDir,[string]$RenewalId)
-    $dir = Join-Path $StateDir 'jobs'
+    $dir = $StateDir
     if (-not (Test-Path -LiteralPath $dir)) { return @() }
     @(Get-ChildItem -LiteralPath $dir -Filter '*.json' | ForEach-Object {
         $j = Get-Content -Raw -Encoding UTF8 -Path $_.FullName | ConvertFrom-Json
         if ($j.renewal_id -eq $RenewalId) { $j }
     })
+}
+
+function Get-EventFingerprint {
+    param($EventObject)
+    if ($null -eq $EventObject) { return '' }
+    return ('{0}|{1}|{2}' -f [string]$EventObject.renewal_id,[string]$EventObject.deployment_policy_id,[string]$EventObject.domain)
 }
 
 function Start-CertificateHttpListener {
@@ -51,6 +57,7 @@ function Start-CertificateHttpListener {
     $listener.Start()
     Write-CertificateLog -Level Info -Message "HTTP listener started on $prefix"
 
+    $recentEvents = @{}
     while ($listener.IsListening) {
         $context = $listener.GetContext()
         try {
@@ -67,6 +74,13 @@ function Start-CertificateHttpListener {
                 $reader = New-Object System.IO.StreamReader($context.Request.InputStream, $context.Request.ContentEncoding)
                 $raw = $reader.ReadToEnd(); $reader.Dispose()
                 $obj = $raw | ConvertFrom-Json
+                $fingerprint = Get-EventFingerprint -EventObject $obj
+                $now = (Get-Date).ToUniversalTime()
+                if ($recentEvents.ContainsKey($fingerprint) -and $recentEvents[$fingerprint].AddSeconds(10) -gt $now) {
+                    Write-HttpJson -Response $context.Response -StatusCode 202 -Body @{ accepted=$true; deduped=$true }
+                    continue
+                }
+                $recentEvents[$fingerprint] = $now
                 $tmp = Join-Path $DropDir "$([guid]::NewGuid()).tmp"
                 $dst = [System.IO.Path]::ChangeExtension($tmp, '.json')
                 [System.IO.File]::WriteAllText($tmp, ($obj | ConvertTo-Json -Compress), [System.Text.Encoding]::UTF8)

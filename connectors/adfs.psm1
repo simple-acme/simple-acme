@@ -55,8 +55,12 @@ function Invoke-AdfsActivate { param([hashtable]$Context)
     @{ success = $true; detail = 'ADFS service restarted.' }
 }
 function Invoke-AdfsVerify { param([hashtable]$Context)
-    $cert = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq [string]$Context.artifact_ref } | Select-Object -First 1
-    @{ verified = [bool]($null -ne $cert); detail = 'Certificate exists in LocalMachine\\My.' }
+    $thumb = ([string]$Context.artifact_ref).Replace(' ','').ToUpperInvariant()
+    $svc = Get-AdfsCertificate -CertificateType Service-Communications
+    $ssl = Get-AdfsSslCertificate
+    $svcMatch = ([string]$svc.Thumbprint).Replace(' ','').ToUpperInvariant() -eq $thumb
+    $sslMatch = ([string]$ssl.Thumbprint).Replace(' ','').ToUpperInvariant() -eq $thumb
+    @{ verified = ($svcMatch -and $sslMatch); detail = 'ADFS Service-Communications and SSL bindings verified.' }
 }
 function Invoke-AdfsRollback { param([hashtable]$Context)
     $old = Get-AdfsThumbprint -Context $Context -UsePrevious

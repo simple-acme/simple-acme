@@ -55,7 +55,7 @@ function Get-GuidedPipelineTemplate {
             $base.ACME_SOURCE_PLUGIN = 'manual'
             $base.ACME_VALIDATION_MODE = $ValidationMode
             $base.ACME_INSTALLATION_PLUGINS = 'script'
-            $base.ACME_SCRIPT_PATH = Join-Path (Split-Path $PSScriptRoot -Parent) 'dist/Scripts/ImportRDSFull.ps1'
+            $base.ACME_SCRIPT_PATH = Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/ImportRDSFull.ps1'
             $base.ACME_SCRIPT_PARAMETERS = $script:DefaultScriptParameters
         }
         default {
@@ -124,17 +124,12 @@ function Assert-AcmeSetupValues {
         }
     }
 
-    $Values.ACME_SOURCE_PLUGIN = 'manual'
-    $Values.ACME_ORDER_PLUGIN = 'single'
-    $Values.ACME_VALIDATION_MODE = 'none'
-    $Values.ACME_INSTALLATION_PLUGINS = 'script'
-
     $installations = @([string]$Values.ACME_INSTALLATION_PLUGINS -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
     if ($installations -contains 'script') {
         $scriptPath = [string]$Values.ACME_SCRIPT_PATH
         if ([string]::IsNullOrWhiteSpace($scriptPath)) { throw 'Script installation selected but ACME_SCRIPT_PATH is empty.' }
         if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
-            $scriptPath = [System.IO.Path]::GetFullPath((Join-Path (Split-Path $PSScriptRoot -Parent) $scriptPath))
+            $scriptPath = Resolve-AbsoluteSetupPath -PathValue $scriptPath
             $Values.ACME_SCRIPT_PATH = $scriptPath
         }
         if (-not (Test-Path -LiteralPath $scriptPath)) { throw "Script installation selected but script path does not exist: $scriptPath" }
@@ -145,6 +140,13 @@ function Assert-AcmeSetupValues {
         if ([string]::IsNullOrWhiteSpace([string]$Values.ACME_KID)) { throw 'Provider requires EAB. ACME_KID is required.' }
         if ([string]::IsNullOrWhiteSpace([string]$Values.ACME_HMAC_SECRET)) { throw 'Provider requires EAB. ACME_HMAC_SECRET is required.' }
     }
+}
+
+function Resolve-AbsoluteSetupPath {
+    param([Parameter(Mandatory)][string]$PathValue)
+    if ([string]::IsNullOrWhiteSpace($PathValue)) { return $PathValue }
+    if ([System.IO.Path]::IsPathRooted($PathValue)) { return [System.IO.Path]::GetFullPath($PathValue) }
+    return [System.IO.Path]::GetFullPath((Join-Path (Split-Path $PSScriptRoot -Parent) $PathValue))
 }
 
 function New-DeviceId {
@@ -406,7 +408,7 @@ function Invoke-AcmeForm {
                 $addScript = Read-MenuChoice -Prompt 'Add optional deployment script? [1=No,2=Yes]' -Options @{ '1'='no'; '2'='yes' } -DefaultKey '1'
                 if ($addScript -eq 'yes') {
                     $values.ACME_INSTALLATION_PLUGINS = 'script'
-                    $defaultScript = if ($curr.ContainsKey('ACME_SCRIPT_PATH')) { [string]$curr.ACME_SCRIPT_PATH } else { Join-Path (Split-Path $PSScriptRoot -Parent) 'dist/Scripts/New-CertificateDropFile.ps1' }
+                    $defaultScript = if ($curr.ContainsKey('ACME_SCRIPT_PATH')) { [string]$curr.ACME_SCRIPT_PATH } else { Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/New-CertificateDropFile.ps1' }
                     $values.ACME_SCRIPT_PATH = [string](Read-Host "Script path [$defaultScript]")
                     if ([string]::IsNullOrWhiteSpace($values.ACME_SCRIPT_PATH)) { $values.ACME_SCRIPT_PATH = $defaultScript }
                     $values.ACME_SCRIPT_PARAMETERS = [string](Read-Host "Script parameters [$script:DefaultScriptParameters]")
@@ -414,15 +416,16 @@ function Invoke-AcmeForm {
                 }
             }
         } else {
-            $source = [string](Read-Host 'Source plugin')
+            $source = [string](Read-Host 'Source plugin [manual]')
             $order = [string](Read-Host 'Order plugin [single]')
             $store = [string](Read-Host 'Store plugin [certificatestore]')
-            $install = [string](Read-Host 'Installation plugin(s) comma-separated')
-            $values.ACME_SOURCE_PLUGIN = 'manual'
-            $values.ACME_ORDER_PLUGIN = 'single'
+            $install = [string](Read-Host 'Installation plugin(s) comma-separated [script]')
+            $validation = [string](Read-Host 'Validation mode [none]')
+            $values.ACME_SOURCE_PLUGIN = if ([string]::IsNullOrWhiteSpace($source)) { 'manual' } else { $source }
+            $values.ACME_ORDER_PLUGIN = if ([string]::IsNullOrWhiteSpace($order)) { 'single' } else { $order }
             $values.ACME_STORE_PLUGIN = if ([string]::IsNullOrWhiteSpace($store)) { 'certificatestore' } else { $store }
-            $values.ACME_INSTALLATION_PLUGINS = 'script'
-            $values.ACME_VALIDATION_MODE = 'none'
+            $values.ACME_INSTALLATION_PLUGINS = if ([string]::IsNullOrWhiteSpace($install)) { 'script' } else { $install }
+            $values.ACME_VALIDATION_MODE = if ([string]::IsNullOrWhiteSpace($validation)) { 'none' } else { $validation }
             if ($values.ACME_INSTALLATION_PLUGINS -match 'script') {
                 $defaultScript = if ($curr.ContainsKey('ACME_SCRIPT_PATH')) { [string]$curr.ACME_SCRIPT_PATH } else { '' }
                 $values.ACME_SCRIPT_PATH = [string](Read-Host "Script path [$defaultScript]")
@@ -471,12 +474,12 @@ function Invoke-AcmeForm {
         'wacs',
         "--baseuri $($values.ACME_DIRECTORY)",
         "--account $($values.ACME_ACCOUNT_NAME)",
-        '--source manual',
-        '--order single',
-        '--validation none',
-        '--globalvalidation none',
+        "--source $($values.ACME_SOURCE_PLUGIN)",
+        "--order $($values.ACME_ORDER_PLUGIN)",
+        "--validation $($values.ACME_VALIDATION_MODE)",
+        "--globalvalidation $($values.ACME_VALIDATION_MODE)",
         "--store $($values.ACME_STORE_PLUGIN)",
-        '--installation script',
+        "--installation $($values.ACME_INSTALLATION_PLUGINS)",
         "--host $($values.DOMAINS)"
     )
     if ($values.ACME_INSTALLATION_PLUGINS -match 'script') {
@@ -491,7 +494,7 @@ function Invoke-AcmeForm {
     return $values
 }
 
-function Get-PolicyFilePath {
+function Get-PolicyFilePathLegacy {
     param([Parameter(Mandatory)][string]$ConfigDir)
     return (Join-Path $ConfigDir 'policies.json')
 }
@@ -513,7 +516,7 @@ function Read-Policies {
     }
 }
 
-function Save-Policies {
+function Save-PoliciesLegacy {
     param(
         [Parameter(Mandatory)][string]$ConfigDir,
         [Parameter(Mandatory)][object[]]$Policies
@@ -582,7 +585,7 @@ function Show-PoliciesView {
     }
 }
 
-function Invoke-PolicyEditor {
+function Invoke-PolicyEditorLegacy {
     param(
         [string]$ConfigDir,
         [switch]$ViewOnly
@@ -697,8 +700,8 @@ function Invoke-FirstRunWizard {
 
     $acmeFields = @(
         @{ Name='ACME_DIRECTORY';   Label='ACME directory URL';          Type='string'; Required=$true; Placeholder='https://acme.networking4all.com/dv'; HelpText='ACME directory endpoint' },
-        @{ Name='ACME_KID';         Label='ACME KID (EAB key ID)';       Type='secret'; Required=$true; Placeholder=''; HelpText='External account binding key identifier' },
-        @{ Name='ACME_HMAC_SECRET'; Label='ACME HMAC secret';            Type='secret'; Required=$true; Placeholder=''; HelpText='External account binding HMAC secret' },
+        @{ Name='ACME_KID';         Label='ACME KID (EAB key ID)';       Type='secret'; Required=$false; Placeholder=''; HelpText='External account binding key identifier' },
+        @{ Name='ACME_HMAC_SECRET'; Label='ACME HMAC secret';            Type='secret'; Required=$false; Placeholder=''; HelpText='External account binding HMAC secret' },
         @{ Name='DOMAINS';          Label='Domains (comma-separated)';   Type='string'; Required=$true; Placeholder='example.com,www.example.com'; HelpText='Domain list for certificate issuance' },
         @{ Name='ACME_SOURCE_PLUGIN'; Label='Source plugin'; Type='string'; Required=$true; Placeholder='manual'; HelpText='simple-acme source plugin' },
         @{ Name='ACME_ORDER_PLUGIN'; Label='Order plugin'; Type='string'; Required=$true; Placeholder='single'; HelpText='simple-acme order plugin' },
@@ -750,22 +753,28 @@ function Invoke-FirstRunWizard {
     foreach ($k in $pathValues.Keys) { $all[$k] = $pathValues[$k] }
     $all['CERTIFICATE_API_KEY'] = $apiKey
 
-    foreach ($dir in @($pathValues.CERTIFICATE_CONFIG_DIR, $pathValues.CERTIFICATE_DROP_DIR,
-                        $pathValues.CERTIFICATE_STATE_DIR, $pathValues.CERTIFICATE_LOG_DIR)) {
+    foreach ($pathKey in @('CERTIFICATE_CONFIG_DIR','CERTIFICATE_DROP_DIR','CERTIFICATE_STATE_DIR','CERTIFICATE_LOG_DIR','ACME_SCRIPT_PATH')) {
+        if ($all.ContainsKey($pathKey) -and -not [string]::IsNullOrWhiteSpace([string]$all[$pathKey])) {
+            $all[$pathKey] = Resolve-AbsoluteSetupPath -PathValue ([string]$all[$pathKey])
+        }
+    }
+
+    foreach ($dir in @($all.CERTIFICATE_CONFIG_DIR, $all.CERTIFICATE_DROP_DIR,
+                        $all.CERTIFICATE_STATE_DIR, $all.CERTIFICATE_LOG_DIR)) {
         if ($dir -and -not (Test-Path -LiteralPath $dir)) {
             New-Item -ItemType Directory -Path $dir -Force | Out-Null
         }
     }
 
-    $envTarget = Join-Path $pathValues.CERTIFICATE_CONFIG_DIR 'certificate.env'
+    $envTarget = Join-Path $all.CERTIFICATE_CONFIG_DIR 'certificate.env'
     Write-EnvFile -Values $all -Path $envTarget
-    $policiesPath = Join-Path $pathValues.CERTIFICATE_CONFIG_DIR 'policies.json'
+    $policiesPath = Join-Path $all.CERTIFICATE_CONFIG_DIR 'policies.json'
     if (-not (Test-Path -LiteralPath $policiesPath)) {
         $tmp = [System.IO.Path]::GetTempFileName()
         [System.IO.File]::WriteAllText($tmp, '[]', [System.Text.Encoding]::UTF8)
         Move-Item -LiteralPath $tmp -Destination $policiesPath -Force
     }
-    [Environment]::SetEnvironmentVariable('CERTIFICATE_CONFIG_DIR', $pathValues.CERTIFICATE_CONFIG_DIR)
+    [Environment]::SetEnvironmentVariable('CERTIFICATE_CONFIG_DIR', $all.CERTIFICATE_CONFIG_DIR)
 
     Show-TuiStatus -Message "Wizard complete. certificate.env saved to: $envTarget" `
         -Type Success -Row ([Math]::Max(0, [Console]::WindowHeight) - 2)

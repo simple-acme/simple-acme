@@ -1,3 +1,5 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 <#
 .SYNOPSIS
 Imports a cert from WASC renewal into Exchange services, this script also runs commands needed to enable the certificate for use on Hybrid Exchange.
