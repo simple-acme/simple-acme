@@ -12,41 +12,6 @@ $TuiLayout = @{
     MarginX = 2
     HeaderRows = 3
     FooterRows = 3
-    HeaderY = 1
-    ContentTop = 3
-    ContentBottomPadding = 4
-    LabelWidth = 24
-    MinBoxWidth = 40
-    MaxBoxWidth = 110
-    FieldRowsMax = 12
-    StatusRows = 2
-}
-
-function Get-TuiLayoutBounds {
-    $width = [Math]::Max(1, [Console]::WindowWidth)
-    $height = [Math]::Max(1, [Console]::WindowHeight)
-    $contentHeight = [Math]::Max(4, $height - $TuiLayout.ContentTop - $TuiLayout.ContentBottomPadding)
-    $boxWidth = [Math]::Max($TuiLayout.MinBoxWidth, [Math]::Min($TuiLayout.MaxBoxWidth, $width - ($TuiLayout.MarginX * 2)))
-    $boxX = [Math]::Max(0, [Math]::Floor(($width - $boxWidth) / 2))
-    return @{
-        Width = $width
-        Height = $height
-        BoxX = $boxX
-        BoxY = $TuiLayout.ContentTop
-        BoxWidth = [Math]::Min($boxWidth, $width)
-        ContentHeight = $contentHeight
-        StatusRow = [Math]::Max(0, $height - 2)
-        HelpRow = [Math]::Max(0, $height - 1)
-    }
-}
-
-function Get-TuiClippedText {
-    param([string]$Text,[int]$Width)
-    $safeText = if ($null -eq $Text) { '' } else { [string]$Text }
-    if ($Width -le 0) { return '' }
-    if ($safeText.Length -le $Width) { return $safeText }
-    if ($Width -le 3) { return '.' * $Width }
-    return $safeText.Substring(0, $Width - 3) + '...'
 }
 
 function Clear-TuiScreen { [Console]::BackgroundColor = $TuiColors.Background; [Console]::Clear(); [Console]::SetCursorPosition(0,0) }
@@ -225,7 +190,7 @@ function Show-TuiForm {
         $layout = Get-TuiFormLayout -FieldCount $Fields.Count
         Clear-TuiScreen
         Write-TuiBox -X $layout.X -Y $layout.Y -Width $layout.Width -Height $layout.Height -Title $Title
-        Write-TuiAt -X ($layout.X + 2) -Y ($layout.Y + 1) -Text '↑/↓ navigate  Enter edit/select  F10 save  Esc cancel' -Fg $TuiColors.Accent
+        Write-TuiAt -X ($layout.X + 2) -Y ($layout.Y + 1) -Text 'Up/Down navigate  Enter edit/select  F10 save  Esc cancel' -Fg $TuiColors.Accent
 
         for ($i = 0; $i -lt $Fields.Count; $i++) {
             $field = $Fields[$i]
@@ -303,20 +268,18 @@ function Show-TuiForm {
 
 function Show-TuiProgress { param([string]$Label,[int]$Row,[ValidateSet('Spinner','Done','Failed')][string]$State='Spinner'); Show-TuiStatus -Row $Row -Type Info -Message $Label }
 
-$exports = @{
-    Function = @(
-        'Clear-TuiScreen'
-        'Write-TuiAt'
-        'Write-TuiBox'
-        'Read-TuiKey'
-        'Show-TuiStatus'
-        'Show-TuiMenu'
-        'Show-TuiForm'
+Export-ModuleMember `
+    -Function @(
+        'Clear-TuiScreen',
+        'Write-TuiAt',
+        'Write-TuiBox',
+        'Read-TuiKey',
+        'Show-TuiStatus',
+        'Show-TuiMenu',
+        'Show-TuiForm',
         'Show-TuiProgress'
-    )
-    Variable = @(
-        'TuiColors'
+    ) `
+    -Variable @(
+        'TuiColors',
         'TuiLayout'
     )
-}
-Export-ModuleMember @exports
