@@ -371,6 +371,36 @@ function Save-SecurePlatformConfig {
     }
 }
 
+function Save-RenewalMapping {
+    param(
+        [Parameter(Mandatory)][string]$ConfigDir,
+        [Parameter(Mandatory)][hashtable]$Mapping
+    )
+
+    $mappingPath = Join-Path $ConfigDir 'mappings.json'
+    $entries = @()
+    if (Test-Path -LiteralPath $mappingPath) {
+        $entries = @(Get-Content -Raw -LiteralPath $mappingPath -Encoding UTF8 | ConvertFrom-Json)
+    }
+
+    $entries = @($entries | Where-Object { $_.renewalId -ne $Mapping.renewalId })
+    $entries += [pscustomobject]$Mapping
+    $entries | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $mappingPath -Encoding UTF8
+}
+
+function Get-ConnectorScriptByIntent {
+    param([Parameter(Mandatory)][string]$TargetIntent)
+    switch ($TargetIntent) {
+        'rds' { return 'Scripts/connectors/cert2rds.ps1' }
+        'iis' { return 'Scripts/connectors/cert2iis.ps1' }
+        'mail' { return 'Scripts/connectors/cert2mail.ps1' }
+        'firewall' { return 'Scripts/connectors/cert2fw.ps1' }
+        'waf' { return 'Scripts/connectors/cert2waf.ps1' }
+        'custom' { return 'Scripts/connectors/cert2waf.ps1' }
+        default { throw "Unsupported target intent: $TargetIntent" }
+    }
+}
+
 function Invoke-AcmeForm {
     param([string]$EnvFilePath)
 
@@ -378,24 +408,26 @@ function Invoke-AcmeForm {
     if ($EnvFilePath -and (Test-Path -LiteralPath $EnvFilePath)) { $curr = Read-EnvFile -Path $EnvFilePath }
 
     [Console]::WriteLine('')
-    [Console]::WriteLine('Noob-first installer')
-    [Console]::WriteLine('Step 1: What do you want to secure?')
-    [Console]::WriteLine('[1] RDS Gateway')
-    [Console]::WriteLine('[2] IIS Website')
-    [Console]::WriteLine('[3] Network Appliance')
-    [Console]::WriteLine('[4] Custom')
-    $target = Read-MenuChoice -Prompt 'Target' -Options @{ '1'='rds'; '2'='iis'; '3'='appliance'; '4'='custom' } -DefaultKey '1'
+    [Console]::WriteLine('What do you want to secure?')
+    [Console]::WriteLine('[1] Remote Desktop Gateway (RDS)')
+    [Console]::WriteLine('[2] Website (IIS)')
+    [Console]::WriteLine('[3] Mail server (SMTP/IMAP/POP3)')
+    [Console]::WriteLine('[4] Firewall / VPN')
+    [Console]::WriteLine('[5] Load balancer / WAF')
+    [Console]::WriteLine('[6] Custom system')
+    $target = Read-MenuChoice -Prompt 'Target' -Options @{ '1'='rds'; '2'='iis'; '3'='mail'; '4'='firewall'; '5'='waf'; '6'='custom' } -DefaultKey '1'
 
     [Console]::WriteLine('')
-    [Console]::WriteLine('Step 2: Where is this system?')
-    [Console]::WriteLine('[1] Local')
-    [Console]::WriteLine('[2] Remote')
-    $location = Read-MenuChoice -Prompt 'Location' -Options @{ '1'='local'; '2'='remote' } -DefaultKey '1'
+    [Console]::WriteLine('Where is this system located?')
+    [Console]::WriteLine('[1] This server')
+    [Console]::WriteLine('[2] Another server / device')
+    [Console]::WriteLine('[3] Multiple systems (cluster / farm)')
+    $location = Read-MenuChoice -Prompt 'Location' -Options @{ '1'='this-server'; '2'='another-server'; '3'='cluster-farm' } -DefaultKey '1'
 
     [Console]::WriteLine('')
-    [Console]::WriteLine('Step 3: Will this certificate be used on more than one system?')
-    [Console]::WriteLine('[1] No (single-system mode)')
-    [Console]::WriteLine('[2] Yes (multi-system mode)')
+    [Console]::WriteLine('Will this certificate be used on more than one system?')
+    [Console]::WriteLine('[1] No — only this system (recommended, most secure)')
+    [Console]::WriteLine('[2] Yes — multiple systems (RDS farm, firewall, etc.)')
     $distributionMode = Read-MenuChoice -Prompt 'Distribution' -Options @{ '1'='single'; '2'='multi' } -DefaultKey '1'
 
     $values = @{}
@@ -410,36 +442,36 @@ function Invoke-AcmeForm {
     $values.ACME_INSTALLATION_PLUGINS = 'script'
     $values.ACME_VALIDATION_MODE = 'http-01'
     $values.ACME_ACCOUNT_NAME = ''
-    $values.ACME_SCRIPT_PARAMETERS = '{CertThumbprint}'
-    $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/connectors/cert2iis.ps1')
-
-    switch ($target) {
-        'rds' { $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/connectors/cert2rds.ps1') }
-        'iis' { $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/connectors/cert2iis.ps1') }
-        'appliance' { $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/connectors/cert2kemp.ps1') }
-        default { }
-    }
+    $values.ACME_SCRIPT_PARAMETERS = '{CertThumbprint} -RenewalId {RenewalId}'
+    $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) (Get-ConnectorScriptByIntent -TargetIntent $target))
 
     if ($distributionMode -eq 'multi') {
         [Console]::WriteLine('')
         [Console]::WriteLine('Certificates used on multiple systems require access to the private key.')
-        [Console]::WriteLine('[1] Enable exportable keys (Windows-based deployments)')
-        [Console]::WriteLine('[2] Use PFX distribution (recommended for appliances and remote systems)')
+        [Console]::WriteLine('Choose distribution method:')
+        [Console]::WriteLine('[1] Windows systems (enable exportable key)')
+        [Console]::WriteLine('[2] Appliances / mixed systems (use PFX distribution) [recommended]')
         $multiChoice = Read-MenuChoice -Prompt 'Multi-system key mode' -Options @{ '1'='exportable'; '2'='pfx' } -DefaultKey '2'
+        [Console]::WriteLine('Enabling exportable keys reduces security because private keys can be transferred.')
+        $continue = Read-MenuChoice -Prompt 'Continue? [1] Yes [2] No' -Options @{ '1'='yes'; '2'='no' } -DefaultKey '2'
+        if ($continue -eq 'no') { throw 'Setup cancelled by user.' }
 
         if ($multiChoice -eq 'exportable') {
-            [Console]::WriteLine('WARNING: If you enable exportable keys, private keys can be transferred to other systems. This reduces security.')
             $values.ACME_PRIVATE_KEY_STRATEGY = 'exportable-store'
             $values.ACME_STORE_PLUGIN = 'certificatestore'
             $values.ACME_PRIVATEKEY_EXPORTABLE = 'true'
+            $values.Store_CertificateStore_PrivateKeyExportable = 'true'
         } else {
             $values.ACME_PRIVATE_KEY_STRATEGY = 'pfx-distribution'
             $values.ACME_STORE_PLUGIN = 'pfxfile'
             $values.ACME_PRIVATEKEY_EXPORTABLE = 'false'
+            $values.Store_CertificateStore_PrivateKeyExportable = 'false'
+            $values.ACME_INSTALLATION_PLUGINS = 'script,pfxfile'
         }
 
         $values.ACME_RENEWAL_MODE = 'multi-endpoint'
-        $reissueChoice = Read-MenuChoice -Prompt 'Setting changed. Apply on [1] next renewal or [2] force immediate re-issue' -Options @{ '1'='next-renewal'; '2'='force-reissue' } -DefaultKey '1'
+        [Console]::WriteLine('This setting only applies to new certificates.')
+        $reissueChoice = Read-MenuChoice -Prompt '[1] Apply on next renewal [2] Re-issue certificate now' -Options @{ '1'='next-renewal'; '2'='force-reissue' } -DefaultKey '1'
         $values.ACME_REISSUE_STRATEGY = $reissueChoice
     } else {
         $values.ACME_RENEWAL_MODE = 'single-system'
@@ -473,8 +505,57 @@ function Invoke-AcmeForm {
     Write-EnvFile -Values $publicValues -Path $EnvFilePath
     Save-SecurePlatformConfig -ConfigDir $values.CERTIFICATE_CONFIG_DIR -Values $values
 
+    $renewalId = [guid]::NewGuid().ToString('N')
+    $endpointHost = if ($location -eq 'this-server') { $env:COMPUTERNAME } else { [string](Read-Host 'Primary endpoint host name') }
+    if ([string]::IsNullOrWhiteSpace($endpointHost)) { $endpointHost = $env:COMPUTERNAME }
+    $method = if ($location -eq 'this-server') { 'local' } else { 'winrm' }
+    $mapping = @{
+        renewalId = $renewalId
+        connector = $target
+        endpoints = @([pscustomobject]@{ host = $endpointHost; method = $method })
+    }
+    if ($location -eq 'cluster-farm') {
+        $extra = [string](Read-Host 'Additional hosts (comma-separated)')
+        foreach ($host in @($extra -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })) {
+            $mapping.endpoints += [pscustomobject]@{ host = $host; method = 'winrm' }
+        }
+    }
+    Save-RenewalMapping -ConfigDir $values.CERTIFICATE_CONFIG_DIR -Mapping $mapping
+
     Show-TuiStatus -Message 'Saved secure configuration: env.secure + credentials.sec + mappings.json.' -Type Success -Row ([Console]::WindowHeight-2)
     return $values
+}
+
+function Invoke-ManageCertificatesMenu {
+    param([Parameter(Mandatory)][string]$ConfigDir)
+
+    $mappingPath = Join-Path $ConfigDir 'mappings.json'
+    if (-not (Test-Path -LiteralPath $mappingPath)) {
+        Show-TuiStatus -Message 'No configured certificates were found.' -Type Warning -Row ([Console]::WindowHeight-2)
+        Start-Sleep -Milliseconds 1500
+        return
+    }
+    $mappings = @(Get-Content -Raw -LiteralPath $mappingPath -Encoding UTF8 | ConvertFrom-Json)
+    [Console]::WriteLine('[1] View configured certificates')
+    [Console]::WriteLine('[2] Re-issue certificate')
+    [Console]::WriteLine('[3] Change deployment targets')
+    [Console]::WriteLine('[4] Test deployment')
+    [Console]::WriteLine('[5] Remove certificate')
+    $choice = Read-MenuChoice -Prompt 'Manage' -Options @{ '1'='view'; '2'='reissue'; '3'='targets'; '4'='test'; '5'='remove' } -DefaultKey '1'
+    switch ($choice) {
+        'view' {
+            foreach ($m in $mappings) { [Console]::WriteLine("renewalId=$($m.renewalId) connector=$($m.connector) endpoints=$(@($m.endpoints).Count)") }
+        }
+        'reissue' { [Console]::WriteLine('Use simple-acme renew command for immediate issuance based on renewalId.') }
+        'targets' { [Console]::WriteLine('Re-run setup for this intent to change endpoint mapping deterministically.') }
+        'test' { [Console]::WriteLine('Run certificate-orchestrator.ps1 to test deployment verification.') }
+        'remove' {
+            $id = [string](Read-Host 'renewalId to remove')
+            $filtered = @($mappings | Where-Object { $_.renewalId -ne $id })
+            $filtered | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $mappingPath -Encoding UTF8
+        }
+    }
+    Start-Sleep -Milliseconds 1200
 }
 
 function Get-PolicyFilePathLegacy {
@@ -771,4 +852,4 @@ function Invoke-FirstRunWizard {
     return $envTarget
 }
 
-Export-ModuleMember -Function @('Invoke-DeviceForm','Invoke-AcmeForm','Invoke-PolicyEditor','Invoke-FirstRunWizard','Test-FanoutPolicyValue','Test-QuorumThreshold','Show-PoliciesView','Read-Policies')
+Export-ModuleMember -Function @('Invoke-DeviceForm','Invoke-AcmeForm','Invoke-PolicyEditor','Invoke-FirstRunWizard','Test-FanoutPolicyValue','Test-QuorumThreshold','Show-PoliciesView','Read-Policies','Invoke-ManageCertificatesMenu')
