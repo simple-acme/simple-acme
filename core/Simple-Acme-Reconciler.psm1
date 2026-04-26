@@ -12,6 +12,15 @@ function Get-NormalizedDomains {
     )
 }
 
+function Test-ValidDomainName {
+    param([Parameter(Mandatory)][string]$Domain)
+    $candidate = $Domain.Trim().ToLowerInvariant()
+    if ([string]::IsNullOrWhiteSpace($candidate)) { return $false }
+    if ($candidate.Length -gt 253) { return $false }
+    if ($candidate -notmatch '^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$') { return $false }
+    return $true
+}
+
 function Get-RenewalFiles {
     param([string]$SimpleAcmeDir = (Join-Path $env:ProgramData 'simple-acme'))
 
@@ -200,6 +209,16 @@ function Assert-ReconcilePreflight {
         throw "Missing required environment values for reconcile: $($missing -join ', ')"
     }
 
+    if ([string]$EnvValues.ACME_SOURCE_PLUGIN -ne 'manual') {
+        throw "ACME_SOURCE_PLUGIN must be 'manual' for hardened pipeline compatibility."
+    }
+    if ([string]$EnvValues.ACME_ORDER_PLUGIN -ne 'single') {
+        throw "ACME_ORDER_PLUGIN must be 'single' for hardened pipeline compatibility."
+    }
+    if ([string]$EnvValues.ACME_VALIDATION_MODE -ne 'none') {
+        throw "ACME_VALIDATION_MODE must be 'none' for hardened pipeline compatibility."
+    }
+
     $installPlugins = @('script')
     $scriptPath = [string]$EnvValues.ACME_SCRIPT_PATH
     if ($installPlugins -contains 'script') {
@@ -238,6 +257,11 @@ function Assert-ReconcilePreflight {
     if ($domains.Count -eq 0) {
         throw "DOMAINS did not contain any valid hostnames. Current value: '$($EnvValues.DOMAINS)'"
     }
+    foreach ($domain in $domains) {
+        if (-not (Test-ValidDomainName -Domain $domain)) {
+            throw "Invalid domain format in DOMAINS: '$domain'"
+        }
+    }
 
     return [pscustomobject]@{
         WacsPath = [string]$wacsCommand.Source
@@ -269,7 +293,8 @@ function Ensure-SimpleAcmeSettings {
     $settings.ScheduledTask.RenewalDays = 199
     $settings.ScheduledTask.RenewalMinimumValidDays = 16
 
-    $settings | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $settingsPath -Encoding UTF8
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($settingsPath, ($settings | ConvertTo-Json -Depth 12), $utf8NoBom)
 }
 
 function Get-InstallationPlugins {
@@ -349,7 +374,7 @@ function Invoke-WacsIssue {
     $args = @(
         '--accepttos',
         '--source', 'manual',
-        '--order', [string]$EnvValues.ACME_ORDER_PLUGIN,
+        '--order', 'single',
         '--baseuri', [string]$EnvValues.ACME_DIRECTORY,
         '--validation', 'none',
         '--globalvalidation', 'none',
@@ -416,8 +441,15 @@ function Write-ReconcileLog {
 function Invoke-SimpleAcmeReconcile {
     param(
         [Parameter(Mandatory)][hashtable]$EnvValues,
-        [switch]$SkipWacs
+        [switch]$SkipWacs,
+        [switch]$DryRun
     )
+
+    Assert-ReconcilePreflight -EnvValues $EnvValues | Out-Null
+    if ($DryRun) {
+        Write-ReconcileLog -Action 'no-op' -Domains (Get-NormalizedDomains -Domains $EnvValues.DOMAINS) -Result 'success' -Message 'Dry-run preflight passed; no wacs actions executed.'
+        return 'dry-run'
+    }
 
     $domains = Get-NormalizedDomains -Domains $EnvValues.DOMAINS
     if ($domains.Count -eq 0) {

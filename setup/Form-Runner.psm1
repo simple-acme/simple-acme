@@ -117,10 +117,26 @@ function Assert-AcmeSetupValues {
         throw 'RDS Gateway target selected but role RDS-Gateway is not installed.'
     }
 
+    $domains = @([string]$Values.DOMAINS -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
+    foreach ($domain in $domains) {
+        if ($domain -notmatch '^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$') {
+            throw "Invalid domain format: $domain"
+        }
+    }
+
+    $Values.ACME_SOURCE_PLUGIN = 'manual'
+    $Values.ACME_ORDER_PLUGIN = 'single'
+    $Values.ACME_VALIDATION_MODE = 'none'
+    $Values.ACME_INSTALLATION_PLUGINS = 'script'
+
     $installations = @([string]$Values.ACME_INSTALLATION_PLUGINS -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
     if ($installations -contains 'script') {
         $scriptPath = [string]$Values.ACME_SCRIPT_PATH
         if ([string]::IsNullOrWhiteSpace($scriptPath)) { throw 'Script installation selected but ACME_SCRIPT_PATH is empty.' }
+        if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
+            $scriptPath = [System.IO.Path]::GetFullPath((Join-Path (Split-Path $PSScriptRoot -Parent) $scriptPath))
+            $Values.ACME_SCRIPT_PATH = $scriptPath
+        }
         if (-not (Test-Path -LiteralPath $scriptPath)) { throw "Script installation selected but script path does not exist: $scriptPath" }
         if ([string]::IsNullOrWhiteSpace([string]$Values.ACME_SCRIPT_PARAMETERS)) { throw 'Script installation selected but ACME_SCRIPT_PARAMETERS is empty.' }
     }
@@ -389,7 +405,7 @@ function Invoke-AcmeForm {
             if ($target -eq 'iis') {
                 $addScript = Read-MenuChoice -Prompt 'Add optional deployment script? [1=No,2=Yes]' -Options @{ '1'='no'; '2'='yes' } -DefaultKey '1'
                 if ($addScript -eq 'yes') {
-                    $values.ACME_INSTALLATION_PLUGINS = 'iis,script'
+                    $values.ACME_INSTALLATION_PLUGINS = 'script'
                     $defaultScript = if ($curr.ContainsKey('ACME_SCRIPT_PATH')) { [string]$curr.ACME_SCRIPT_PATH } else { Join-Path (Split-Path $PSScriptRoot -Parent) 'dist/Scripts/New-CertificateDropFile.ps1' }
                     $values.ACME_SCRIPT_PATH = [string](Read-Host "Script path [$defaultScript]")
                     if ([string]::IsNullOrWhiteSpace($values.ACME_SCRIPT_PATH)) { $values.ACME_SCRIPT_PATH = $defaultScript }
@@ -402,11 +418,11 @@ function Invoke-AcmeForm {
             $order = [string](Read-Host 'Order plugin [single]')
             $store = [string](Read-Host 'Store plugin [certificatestore]')
             $install = [string](Read-Host 'Installation plugin(s) comma-separated')
-            $values.ACME_SOURCE_PLUGIN = if ([string]::IsNullOrWhiteSpace($source)) { 'manual' } else { $source }
-            $values.ACME_ORDER_PLUGIN = if ([string]::IsNullOrWhiteSpace($order)) { 'single' } else { $order }
+            $values.ACME_SOURCE_PLUGIN = 'manual'
+            $values.ACME_ORDER_PLUGIN = 'single'
             $values.ACME_STORE_PLUGIN = if ([string]::IsNullOrWhiteSpace($store)) { 'certificatestore' } else { $store }
-            $values.ACME_INSTALLATION_PLUGINS = if ([string]::IsNullOrWhiteSpace($install)) { 'script' } else { $install }
-            $values.ACME_VALIDATION_MODE = $validationMode
+            $values.ACME_INSTALLATION_PLUGINS = 'script'
+            $values.ACME_VALIDATION_MODE = 'none'
             if ($values.ACME_INSTALLATION_PLUGINS -match 'script') {
                 $defaultScript = if ($curr.ContainsKey('ACME_SCRIPT_PATH')) { [string]$curr.ACME_SCRIPT_PATH } else { '' }
                 $values.ACME_SCRIPT_PATH = [string](Read-Host "Script path [$defaultScript]")
@@ -455,11 +471,12 @@ function Invoke-AcmeForm {
         'wacs',
         "--baseuri $($values.ACME_DIRECTORY)",
         "--account $($values.ACME_ACCOUNT_NAME)",
-        "--source $($values.ACME_SOURCE_PLUGIN)",
-        "--order $($values.ACME_ORDER_PLUGIN)",
-        "--validation $($values.ACME_VALIDATION_MODE)",
+        '--source manual',
+        '--order single',
+        '--validation none',
+        '--globalvalidation none',
         "--store $($values.ACME_STORE_PLUGIN)",
-        "--installation $($values.ACME_INSTALLATION_PLUGINS)",
+        '--installation script',
         "--host $($values.DOMAINS)"
     )
     if ($values.ACME_INSTALLATION_PLUGINS -match 'script') {

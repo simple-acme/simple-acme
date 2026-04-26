@@ -46,6 +46,8 @@ param(
     [string]$OldCertThumbprint
 
 )
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 $LocalHost = (Get-WmiObject win32_computersystem).DNSHostName+"."+(Get-WmiObject win32_computersystem).Domain
 if (-not $PSBoundParameters.ContainsKey('RDCB')) {$RDCB = (Get-WmiObject win32_computersystem).DNSHostName+"."+(Get-WmiObject win32_computersystem).Domain} 
 function Restart-TSGatewayService {
@@ -83,7 +85,6 @@ function Get-RdsRoleThumbprint {
     return ([string]$entry.Thumbprint).Trim().ToUpperInvariant()
 }
 
-$ErrorActionPreference = 'Stop'
 $RDCBPS = $null
 
 try {
