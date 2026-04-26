@@ -1,3 +1,5 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 <#
 .SYNOPSIS
 Imports a cert from win-acme (WACS) renewal into an Azure Application Gateway instance.

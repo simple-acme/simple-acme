@@ -51,6 +51,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+Import-Module "$PSScriptRoot/../../core/Native-Process.psm1" -Force
 
 function Write-Step([string]$Message) {
     Write-Host "[certificate-rdsgw] $Message"
@@ -72,6 +74,7 @@ function Ensure-PfxPassword {
 }
 
 function Invoke-SimpleAcme {
+    if (-not [System.IO.Path]::IsPathRooted($WacsPath)) { $WacsPath = [System.IO.Path]::GetFullPath((Join-Path (Get-Location).Path $WacsPath)) }
     if (-not (Test-Path -LiteralPath $WacsPath)) {
         throw "wacs executable not found at: $WacsPath"
     }
@@ -106,9 +109,11 @@ function Invoke-SimpleAcme {
     }
 
     Write-Step "Requesting/renewing certificate via simple-acme"
-    $proc = Start-Process -FilePath $WacsPath -ArgumentList $args -Wait -NoNewWindow -PassThru
-    if ($proc.ExitCode -ne 0) {
-        throw "simple-acme exited with code $($proc.ExitCode)"
+    $result = Invoke-NativeProcess -FilePath $WacsPath -ArgumentList $args -TimeoutSeconds 600
+    foreach ($line in $result.OutputLines) { Write-Host $line }
+    if (-not $result.Succeeded) {
+        if ($result.TimedOut) { throw 'simple-acme invocation timed out.' }
+        throw "simple-acme exited with code $($result.ExitCode)"
     }
 }
 
@@ -137,6 +142,7 @@ function Export-And-ImportPfx {
         [SecureString]$Password
     )
 
+    if (-not [System.IO.Path]::IsPathRooted($PfxPath)) { $script:PfxPath = [System.IO.Path]::GetFullPath((Join-Path (Get-Location).Path $PfxPath)) }
     Write-Step "Exporting PFX to $PfxPath"
     Export-PfxCertificate -Cert $Certificate -FilePath $PfxPath -Password $Password -Force | Out-Null
 

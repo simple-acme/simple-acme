@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+Import-Module "$PSScriptRoot/Native-Process.psm1" -Force
 
 function Get-NormalizedDomains {
     param([Parameter(Mandatory)][string]$Domains)
@@ -28,7 +29,7 @@ function Get-RenewalFiles {
         return @()
     }
 
-    return @(Get-ChildItem -LiteralPath $SimpleAcmeDir -Filter 'acme-v02.api*.renewal.json' -File -ErrorAction SilentlyContinue)
+    return @(Get-ChildItem -LiteralPath $SimpleAcmeDir -Filter '*.renewal.json' -File -ErrorAction SilentlyContinue)
 }
 
 function Find-PropertyValues {
@@ -98,6 +99,25 @@ function Get-RenewalHosts {
     return @($hostValues | Sort-Object -Unique)
 }
 
+
+function Get-NestedValue {
+    param([Parameter(Mandatory)]$InputObject,[Parameter(Mandatory)][string[]]$Path)
+    $current = $InputObject
+    foreach ($part in $Path) {
+        if ($null -eq $current) { return $null }
+        $prop = $current.PSObject.Properties[$part]
+        if ($null -eq $prop) { return $null }
+        $current = $prop.Value
+    }
+    return $current
+}
+
+function Get-RenewalSummarySafe {
+    param([Parameter(Mandatory)][System.IO.FileInfo]$File)
+    try { return Get-RenewalSummary -File $File }
+    catch { Write-Warning "Skipping malformed renewal JSON '$($File.FullName)': $($_.Exception.Message)"; return $null }
+}
+
 function Get-RenewalSummary {
     param([Parameter(Mandatory)][System.IO.FileInfo]$File)
 
@@ -118,7 +138,7 @@ function Get-RenewalSummary {
     $sourceCandidates = Find-PropertyValues -InputObject $renewal -Names @('SourcePlugin','Source')
     $orderCandidates = Find-PropertyValues -InputObject $renewal -Names @('OrderPlugin','Order')
     $renewalIdCandidates = Find-PropertyValues -InputObject $renewal -Names @('Id','RenewalId')
-    $scriptCandidates = Find-PropertyValues -InputObject $renewal -Names @('Script','ScriptFileName','Path')
+    $scriptCandidates = Find-PropertyValues -InputObject $renewal -Names @('Script','ScriptFileName')
     $csrCandidates = Find-PropertyValues -InputObject $renewal -Names @('CsrPlugin','Csr')
     $keyTypeCandidates = Find-PropertyValues -InputObject $renewal -Names @('KeyType','KeyAlgorithm','Algorithm')
 
@@ -253,8 +273,9 @@ function Assert-ReconcilePreflight {
     }
     $detectedVersion = Get-WacsVersion -EnvValues $EnvValues
     $minimumVersion = [version]'2.2'
+    $testedRangeNote = 'Tested with simple-acme/wacs 2.2.x through 2.4.x.'
     if ($detectedVersion -lt $minimumVersion) {
-        throw "Unsupported simple-acme/wacs version '$detectedVersion'. Minimum supported version is '$minimumVersion'."
+        throw "Unsupported simple-acme/wacs version '$detectedVersion'. Minimum supported version is '$minimumVersion'. $testedRangeNote"
     }
 
     $missing = @()
@@ -414,7 +435,8 @@ function Get-CsrAlgorithms {
 function Invoke-WacsWithRetry {
     param(
         [Parameter(Mandatory)][string[]]$Args,
-        [Parameter(Mandatory)][hashtable]$EnvValues
+        [Parameter(Mandatory)][hashtable]$EnvValues,
+        [int]$TimeoutSeconds = 300
     )
 
     $attempts = 3
@@ -424,36 +446,24 @@ function Invoke-WacsWithRetry {
     [void][int]::TryParse([string]$EnvValues.ACME_WACS_RETRY_DELAY_SECONDS, [ref]$delaySeconds)
     if ($delaySeconds -lt 0) { $delaySeconds = 0 }
 
-    $lastExit = 0
-    $baseDelaySeconds = $delaySeconds
+    $wacsPath = (Get-Command 'wacs' -ErrorAction Stop).Source
+    if (-not [System.IO.Path]::IsPathRooted([string]$wacsPath)) {
+        throw "Resolved wacs path is not absolute: '$wacsPath'"
+    }
+
+    $last = $null
     for ($attempt = 1; $attempt -le $attempts; $attempt++) {
-        $allOutput = @(& wacs @Args 2>&1)
-        if ($allOutput.Count -gt 0) {
-            foreach ($line in $allOutput) {
-                if ($line -is [System.Management.Automation.ErrorRecord]) {
-                    Write-Error $line
-                    continue
-                }
-                Write-Host ([string]$line)
-            }
-            $warnings = @($allOutput | Where-Object { [string]$_ -match '(?i)\bwarning\b|partial success' })
-            if ($warnings.Count -gt 0) {
-                throw "wacs output contains warning/partial-success markers: $($warnings[0])"
-            }
-            $errors = @($allOutput | Where-Object { [string]$_ -match '(?i)\berror\b|\bfatal\b|\bexception\b|\bfailed\b' })
-            if ($errors.Count -gt 0) {
-                throw "wacs output contains error markers: $($errors[0])"
-            }
-        }
-        $lastExit = $LASTEXITCODE
-        if ($lastExit -eq 0) { return }
+        $last = Invoke-NativeProcess -FilePath $wacsPath -ArgumentList $Args -TimeoutSeconds $TimeoutSeconds -FatalPatterns @('(?i)\bfatal\b')
+        foreach ($line in $last.OutputLines) { Write-Host ([string]$line) }
+        if ($last.Succeeded) { return $last }
         if ($attempt -lt $attempts) {
-            $effectiveDelay = [math]::Pow(2, ($attempt - 1)) * $baseDelaySeconds
+            $effectiveDelay = [math]::Pow(2, ($attempt - 1)) * $delaySeconds
             Start-Sleep -Seconds ([int][math]::Ceiling($effectiveDelay))
         }
     }
 
-    throw "wacs failed with exit code $lastExit after $attempts attempt(s)"
+    if ($last.TimedOut) { throw "wacs timed out after $attempts attempt(s)." }
+    throw "wacs failed with exit code $($last.ExitCode) after $attempts attempt(s)."
 }
 
 function Wait-RenewalFileRemoval {
@@ -508,7 +518,7 @@ function Get-WacsVersion {
     $versionOutput = if (-not [string]::IsNullOrWhiteSpace($fromEnv)) {
         $fromEnv
     } else {
-        (& wacs --version 2>$null | Select-Object -First 1)
+        (Invoke-NativeProcess -FilePath (Get-Command 'wacs' -ErrorAction Stop).Source -ArgumentList @('--version') -TimeoutSeconds 30).OutputLines | Select-Object -First 1
     }
 
     if ([string]::IsNullOrWhiteSpace([string]$versionOutput)) {
@@ -541,9 +551,7 @@ function Invoke-WacsIssue {
         '--globalvalidation', 'none',
         '--host', [string]$EnvValues.DOMAINS
     )
-    foreach ($storePlugin in $storePlugins) {
-        $args += @('--store', $storePlugin)
-    }
+    $args += @('--store', ($storePlugins -join ','))
     if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_KID)) {
         $args += @('--eab-key-identifier', [string]$EnvValues.ACME_KID)
     }
@@ -554,9 +562,7 @@ function Invoke-WacsIssue {
         $args += @('--account', [string]$EnvValues.ACME_ACCOUNT_NAME)
     }
 
-    foreach ($plugin in $installPlugins) {
-        $args += @('--installation', $plugin)
-    }
+    $args += @('--installation', ($installPlugins -join ','))
     if ($installPlugins -contains 'script') {
         $args += @('--script', [string]$EnvValues.ACME_SCRIPT_PATH, '--scriptparameters', [string]$EnvValues.ACME_SCRIPT_PARAMETERS)
     }
@@ -576,6 +582,7 @@ function Invoke-WacsIssue {
     throw 'wacs issuance failed for unknown reason.'
 }
 
+# Regression guard: exact-set comparison must stay strict (no subset/superset acceptance).
 function Test-ExactDomainSetMatch {
     param([string[]]$Requested,[string[]]$Actual)
     $left = @($Requested | Sort-Object -Unique)
@@ -659,7 +666,8 @@ function Invoke-SimpleAcmeReconcile {
     $allRenewalFiles = Get-RenewalFiles
     $matching = @()
     foreach ($file in $allRenewalFiles) {
-        $summary = Get-RenewalSummary -File $file
+        $summary = Get-RenewalSummarySafe -File $file
+        if ($null -eq $summary) { continue }
         if (Test-ExactDomainSetMatch -Requested $domains -Actual $summary.Hosts) {
             $matching += ,$summary
         }
@@ -673,12 +681,14 @@ function Invoke-SimpleAcmeReconcile {
 
         $postMatch = @()
         foreach ($file in $allRenewalFiles) {
-            $summary = Get-RenewalSummary -File $file
+            $summary = Get-RenewalSummarySafe -File $file
+            if ($null -eq $summary) { continue }
             if (Test-ExactDomainSetMatch -Requested $domains -Actual $summary.Hosts) { $postMatch += ,$summary }
         }
 
         if ($postMatch.Count -eq 0) {
             Write-ReconcileLog -Action 'create' -Domains $domains -Result 'failure' -Message 'No matching renewal file found after issuance.'
+            if ($allRenewalFiles.Count -gt 0) { throw 'No matching renewal file found after issuance; at least one renewal file may be malformed.' }
             throw 'No matching renewal file found after issuance.'
         }
 
@@ -706,6 +716,7 @@ function Invoke-SimpleAcmeReconcile {
     if (-not $SkipWacs) {
         $renewalId = Get-RenewalIdForCancel -RenewalSummary $current
         $cancelPath = $current.File.FullName
+        # Regression guard: keep cancellation by renewal id (`--cancel --id <renewal-id>`).
         Invoke-WacsWithRetry -Args @('--cancel', '--id', $renewalId) -EnvValues $EnvValues
         Wait-RenewalFileRemoval -Path $cancelPath
         Start-Sleep -Seconds 2
@@ -715,7 +726,8 @@ function Invoke-SimpleAcmeReconcile {
     $freshFiles = Get-RenewalFiles
     $postUpdate = @()
     foreach ($file in $freshFiles) {
-        $summary = Get-RenewalSummary -File $file
+        $summary = Get-RenewalSummarySafe -File $file
+        if ($null -eq $summary) { continue }
         if (Test-ExactDomainSetMatch -Requested $domains -Actual $summary.Hosts) { $postUpdate += ,$summary }
     }
 
@@ -746,6 +758,7 @@ Export-ModuleMember -Function @(
     'Get-NormalizedDomains',
     'Get-RenewalFiles',
     'Get-RenewalSummary',
+    'Get-RenewalSummarySafe',
     'Get-InstallationPlugins',
     'Get-RenewalIdForCancel',
     'Invoke-SimpleAcmeReconcile',

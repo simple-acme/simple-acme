@@ -62,8 +62,15 @@ function Invoke-IisActivate { param([hashtable]$Context)
 
 function Invoke-IisVerify { param([hashtable]$Context)
     $thumb = [string]$Context.artifact_ref
-    $cert = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $thumb } | Select-Object -First 1
-    @{ verified = [bool]($null -ne $cert); detail = 'Certificate presence verified in LocalMachine\\My.' }
+    $host = [string]$Context.config.settings.host
+    if ([string]::IsNullOrWhiteSpace($host)) { $host = '' }
+    $portRaw = [string]$Context.config.settings.port
+    $port = if ([string]::IsNullOrWhiteSpace($portRaw)) { 443 } else { [int]$portRaw }
+    $bindingPath = "IIS:\SslBindings\0.0.0.0!$port!$host"
+    $binding = if (Test-Path $bindingPath) { Get-Item -LiteralPath $bindingPath -ErrorAction SilentlyContinue } else { $null }
+    $boundThumb = if ($binding) { [string]$binding.Thumbprint } else { '' }
+    $verified = (-not [string]::IsNullOrWhiteSpace($boundThumb) -and $boundThumb.Replace(' ','').ToUpperInvariant() -eq $thumb.Replace(' ','').ToUpperInvariant())
+    @{ verified = $verified; detail = 'IIS SSL binding thumbprint verified.' }
 }
 
 function Invoke-IisRollback { param([hashtable]$Context)

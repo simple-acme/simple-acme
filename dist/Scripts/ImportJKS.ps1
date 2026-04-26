@@ -1,4 +1,6 @@
-﻿<#
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+<#
 .SYNOPSIS
 Add a win-acme renewal to a Java keystore
 

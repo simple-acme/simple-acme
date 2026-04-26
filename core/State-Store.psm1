@@ -6,15 +6,29 @@ function Get-UtcTimestamp {
     (Get-Date).ToUniversalTime().ToString('o')
 }
 
+function Enter-StateStoreLock {
+    param([Parameter(Mandatory)][string]$StateDir)
+    $name = 'Global\simple_acme_state_' + ([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($StateDir)).Replace('=','').Replace('/','_').Replace('+','-'))
+    $mutex = New-Object System.Threading.Mutex($false, $name)
+    if (-not $mutex.WaitOne(30000)) { throw "Timed out acquiring state store lock for '$StateDir'." }
+    return $mutex
+}
+
 function Save-ConnectorJob {
     param([hashtable]$Job, [string]$StateDir)
     if (-not (Test-Path -LiteralPath $StateDir)) { New-Item -ItemType Directory -Path $StateDir -Force | Out-Null }
     Assert-ConnectorJobRecord -Job $Job
 
-    $tmp = Join-Path $StateDir "$($Job.job_id).tmp"
-    $final = Join-Path $StateDir "$($Job.job_id).json"
-    $Job | ConvertTo-Json -Depth 10 | Set-Content -Path $tmp -Encoding UTF8
-    Move-Item -Path $tmp -Destination $final -Force
+    $lock = Enter-StateStoreLock -StateDir $StateDir
+    try {
+        $tmp = Join-Path $StateDir "$($Job.job_id).tmp"
+        $final = Join-Path $StateDir "$($Job.job_id).json"
+        $Job | ConvertTo-Json -Depth 10 | Set-Content -Path $tmp -Encoding UTF8
+        Move-Item -Path $tmp -Destination $final -Force
+    } finally {
+        $lock.ReleaseMutex() | Out-Null
+        $lock.Dispose()
+    }
 }
 
 function Get-ConnectorJob {

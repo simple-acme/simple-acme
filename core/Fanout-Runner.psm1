@@ -104,7 +104,15 @@ function Invoke-FanoutRunner {
     }
 
     $bg = @(); foreach ($entry in $jobs) { $bg += ,(Start-ConnectorBackgroundJob -Job $entry.job -Event $Event -Config $entry.config -StateDir $StateDir) }
-    Wait-Job -Job $bg | Out-Null; $null = $bg | Receive-Job; $bg | Remove-Job -Force
+    $waitSeconds = 300
+    $done = Wait-Job -Job $bg -Timeout $waitSeconds
+    if ($done.Count -lt $bg.Count) {
+        foreach ($h in @($bg | Where-Object { $_.State -eq 'Running' })) { Stop-Job -Job $h -Force | Out-Null }
+        $bg | Remove-Job -Force
+        throw "Timed out waiting for connector background jobs after $waitSeconds seconds."
+    }
+    $null = $bg | Receive-Job
+    $bg | Remove-Job -Force
 
     $all = Get-ConnectorJobsByRenewal -RenewalId $Event.renewal_id -StateDir $StateDir
     $succeeded = @($all | Where-Object { $_.status -eq 'succeeded' })

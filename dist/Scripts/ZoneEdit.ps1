@@ -1,3 +1,5 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 <#
 .SYNOPSIS
 Add or remove a DNS TXT record in Zone Edit

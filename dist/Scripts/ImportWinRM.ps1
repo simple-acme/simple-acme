@@ -1,3 +1,5 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 <#
 .SYNOPSIS
 Imports a cert from WACS renewal into any WinRM HTTPS listeners

@@ -66,7 +66,6 @@ try {
         not_before           = ''
         not_after            = ''
         old_thumbprint       = $oldNorm
-        cache_password       = $CachePassword
         store_path           = $storeLocation
         store_type           = $storeName
         timestamp            = (Get-Date -Format 'o')

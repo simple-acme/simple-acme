@@ -97,11 +97,22 @@ function Process-EventData {
     Invoke-FanoutRunner -Event $EventData -Policy $policy -StateDir $StateDir
 }
 
+function Acquire-DropFileLock {
+    param([Parameter(Mandatory)][string]$Path)
+    $processingDir = Join-Path ([System.IO.Path]::GetDirectoryName($Path)) 'processing'
+    if (-not (Test-Path -LiteralPath $processingDir)) { New-Item -ItemType Directory -Path $processingDir -Force | Out-Null }
+    $lockedPath = Join-Path $processingDir ([System.IO.Path]::GetFileName($Path))
+    Move-Item -LiteralPath $Path -Destination $lockedPath -ErrorAction Stop
+    return $lockedPath
+}
+
 function Process-DropFile {
     param([string]$Path,[string]$DropDir,[string]$StateDir)
     Start-Sleep -Milliseconds 500
     try {
-        $rawJson = Get-Content -Raw -Encoding UTF8 -Path $Path
+        if (-not (Test-Path -LiteralPath $Path)) { return }
+        $lockedPath = Acquire-DropFileLock -Path $Path
+        $rawJson = Get-Content -Raw -Encoding UTF8 -Path $lockedPath
         if ([string]::IsNullOrWhiteSpace($rawJson)) { throw "Drop file '$Path' is empty." }
         $eventData = ConvertTo-Hashtable -InputObject ($rawJson | ConvertFrom-Json)
         if ($null -eq $eventData) { throw "Drop file '$Path' did not contain a JSON object." }
@@ -109,11 +120,11 @@ function Process-DropFile {
 
         $processed = Join-Path $DropDir 'processed'
         if (-not (Test-Path $processed)) { New-Item -ItemType Directory -Path $processed -Force | Out-Null }
-        Move-Item -Path $Path -Destination (Join-Path $processed ([IO.Path]::GetFileName($Path))) -Force
+        Move-Item -Path $lockedPath -Destination (Join-Path $processed ([IO.Path]::GetFileName($lockedPath))) -Force
     } catch {
         $failed = Join-Path $DropDir 'failed'
         if (-not (Test-Path $failed)) { New-Item -ItemType Directory -Path $failed -Force | Out-Null }
-        if (Test-Path $Path) { Move-Item -Path $Path -Destination (Join-Path $failed ([IO.Path]::GetFileName($Path))) -Force }
+        if ($lockedPath -and (Test-Path $lockedPath)) { Move-Item -Path $lockedPath -Destination (Join-Path $failed ([IO.Path]::GetFileName($lockedPath))) -Force }
         Write-CertificateLog -Level 'ERROR' -Message "Failed processing drop file '$Path': $($_.Exception.ToString())"
     }
 }
