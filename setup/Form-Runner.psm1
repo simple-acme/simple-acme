@@ -339,6 +339,38 @@ function Invoke-DeviceForm {
     return $device
 }
 
+function Save-SecurePlatformConfig {
+    param(
+        [Parameter(Mandatory)][string]$ConfigDir,
+        [Parameter(Mandatory)][hashtable]$Values
+    )
+
+    if (-not (Test-Path -LiteralPath $ConfigDir)) { New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null }
+
+    $secureEnvPath = Join-Path $ConfigDir 'env.secure'
+    $credPath = Join-Path $ConfigDir 'credentials.sec'
+    $mappingPath = Join-Path $ConfigDir 'mappings.json'
+
+    $envSnapshot = @{}
+    foreach ($k in $Values.Keys) {
+        if ($k -notin @('ACME_KID','ACME_HMAC_SECRET','CERTIFICATE_API_KEY')) {
+            $envSnapshot[$k] = [string]$Values[$k]
+        }
+    }
+    $envSnapshot | Export-Clixml -Path $secureEnvPath
+
+    $credObject = [pscustomobject]@{
+        ACME_KID = ConvertTo-SecureString ([string]$Values.ACME_KID) -AsPlainText -Force
+        ACME_HMAC_SECRET = ConvertTo-SecureString ([string]$Values.ACME_HMAC_SECRET) -AsPlainText -Force
+        CERTIFICATE_API_KEY = ConvertTo-SecureString ([string]$Values.CERTIFICATE_API_KEY) -AsPlainText -Force
+    }
+    $credObject | Export-Clixml -Path $credPath
+
+    if (-not (Test-Path -LiteralPath $mappingPath)) {
+        @() | ConvertTo-Json | Set-Content -LiteralPath $mappingPath -Encoding UTF8
+    }
+}
+
 function Invoke-AcmeForm {
     param([string]$EnvFilePath)
 
@@ -346,151 +378,102 @@ function Invoke-AcmeForm {
     if ($EnvFilePath -and (Test-Path -LiteralPath $EnvFilePath)) { $curr = Read-EnvFile -Path $EnvFilePath }
 
     [Console]::WriteLine('')
-    [Console]::WriteLine('Select setup mode:')
-    [Console]::WriteLine('')
-    [Console]::WriteLine('[1] Guided (recommended)')
-    [Console]::WriteLine('[2] Advanced (expert)')
-    [Console]::WriteLine('')
+    [Console]::WriteLine('Noob-first installer')
+    [Console]::WriteLine('Step 1: What do you want to secure?')
+    [Console]::WriteLine('[1] RDS Gateway')
+    [Console]::WriteLine('[2] IIS Website')
+    [Console]::WriteLine('[3] Network Appliance')
+    [Console]::WriteLine('[4] Custom')
+    $target = Read-MenuChoice -Prompt 'Target' -Options @{ '1'='rds'; '2'='iis'; '3'='appliance'; '4'='custom' } -DefaultKey '1'
 
-    $mode = Read-MenuChoice -Prompt 'Mode' -Options @{ '1'='guided'; '2'='advanced' } -DefaultKey '1'
+    [Console]::WriteLine('')
+    [Console]::WriteLine('Step 2: Where is this system?')
+    [Console]::WriteLine('[1] Local')
+    [Console]::WriteLine('[2] Remote')
+    $location = Read-MenuChoice -Prompt 'Location' -Options @{ '1'='local'; '2'='remote' } -DefaultKey '1'
+
+    [Console]::WriteLine('')
+    [Console]::WriteLine('Step 3: Will this certificate be used on more than one system?')
+    [Console]::WriteLine('[1] No (single-system mode)')
+    [Console]::WriteLine('[2] Yes (multi-system mode)')
+    $distributionMode = Read-MenuChoice -Prompt 'Distribution' -Options @{ '1'='single'; '2'='multi' } -DefaultKey '1'
+
     $values = @{}
-    if ($mode -eq 'guided') {
+    $providerDefaults = Get-ProviderDefaults -Provider 'letsencrypt'
+    $values.DOMAINS = Read-DomainsInput
+    $values.ACME_DIRECTORY = [string]$providerDefaults.ACME_DIRECTORY
+    $values.ACME_KID = if ($curr.ContainsKey('ACME_KID')) { [string]$curr.ACME_KID } else { '' }
+    $values.ACME_HMAC_SECRET = if ($curr.ContainsKey('ACME_HMAC_SECRET')) { [string]$curr.ACME_HMAC_SECRET } else { '' }
+    $values.ACME_REQUIRES_EAB = '0'
+    $values.ACME_SOURCE_PLUGIN = 'manual'
+    $values.ACME_ORDER_PLUGIN = 'single'
+    $values.ACME_INSTALLATION_PLUGINS = 'script'
+    $values.ACME_VALIDATION_MODE = 'http-01'
+    $values.ACME_ACCOUNT_NAME = ''
+    $values.ACME_SCRIPT_PARAMETERS = '{CertThumbprint}'
+    $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/connectors/cert2iis.ps1')
+
+    switch ($target) {
+        'rds' { $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/connectors/cert2rds.ps1') }
+        'iis' { $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/connectors/cert2iis.ps1') }
+        'appliance' { $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/connectors/cert2kemp.ps1') }
+        default { }
+    }
+
+    if ($distributionMode -eq 'multi') {
         [Console]::WriteLine('')
-        [Console]::WriteLine('What do you want to secure?')
-        [Console]::WriteLine('[1] IIS website')
-        [Console]::WriteLine('[2] RDS Gateway')
-        [Console]::WriteLine('[3] Other / custom')
-        $target = Read-MenuChoice -Prompt 'Target' -Options @{ '1'='iis'; '2'='rds'; '3'='custom' } -DefaultKey '1'
+        [Console]::WriteLine('Certificates used on multiple systems require access to the private key.')
+        [Console]::WriteLine('[1] Enable exportable keys (Windows-based deployments)')
+        [Console]::WriteLine('[2] Use PFX distribution (recommended for appliances and remote systems)')
+        $multiChoice = Read-MenuChoice -Prompt 'Multi-system key mode' -Options @{ '1'='exportable'; '2'='pfx' } -DefaultKey '2'
 
-        [Console]::WriteLine('')
-        [Console]::WriteLine('Certificate provider:')
-        [Console]::WriteLine('[1] Networking4All (recommended)')
-        [Console]::WriteLine("[2] Let's Encrypt")
-        [Console]::WriteLine('[3] Custom ACME server')
-        $provider = Read-MenuChoice -Prompt 'Provider' -Options @{ '1'='networking4all'; '2'='letsencrypt'; '3'='custom' } -DefaultKey '1'
-        $providerDefaults = Get-ProviderDefaults -Provider $provider
-
-        $domains = Read-DomainsInput
-        $values.DOMAINS = $domains
-        $values.ACME_DIRECTORY = if ($provider -eq 'custom') { [string](Read-Host 'ACME directory URL') } else { [string]$providerDefaults.ACME_DIRECTORY }
-
-        if ([bool]$providerDefaults.RequiresEab) {
-            $values.ACME_KID = [string](Read-Host 'Enter KID')
-            $values.ACME_HMAC_SECRET = [string](Read-Host 'Enter HMAC key')
-            $values.ACME_REQUIRES_EAB = '1'
+        if ($multiChoice -eq 'exportable') {
+            [Console]::WriteLine('WARNING: If you enable exportable keys, private keys can be transferred to other systems. This reduces security.')
+            $values.ACME_PRIVATE_KEY_STRATEGY = 'exportable-store'
+            $values.ACME_STORE_PLUGIN = 'certificatestore'
+            $values.ACME_PRIVATEKEY_EXPORTABLE = 'true'
         } else {
-            $values.ACME_KID = if ($curr.ContainsKey('ACME_KID')) { [string]$curr.ACME_KID } else { '' }
-            $values.ACME_HMAC_SECRET = if ($curr.ContainsKey('ACME_HMAC_SECRET')) { [string]$curr.ACME_HMAC_SECRET } else { '' }
-            $values.ACME_REQUIRES_EAB = '0'
+            $values.ACME_PRIVATE_KEY_STRATEGY = 'pfx-distribution'
+            $values.ACME_STORE_PLUGIN = 'pfxfile'
+            $values.ACME_PRIVATEKEY_EXPORTABLE = 'false'
         }
 
-        $validationMode = [string]$providerDefaults.ForceValidation
-        if ([string]::IsNullOrWhiteSpace($validationMode)) {
-            if ($target -eq 'iis') {
-                $validationMode = 'http-01'
-            } else {
-                if ($provider -eq 'letsencrypt') {
-                    $validationMode = Read-MenuChoice -Prompt 'Validation mode [1=http-01,2=dns-01,3=tls-alpn-01]' -Options @{
-                        '1'='http-01'; '2'='dns-01'; '3'='tls-alpn-01'
-                    } -DefaultKey '1'
-                } else {
-                    $validationMode = Read-MenuChoice -Prompt 'Validation mode [1=http-01,2=dns-01,3=tls-alpn-01,4=none]' -Options @{
-                        '1'='http-01'; '2'='dns-01'; '3'='tls-alpn-01'; '4'='none'
-                    } -DefaultKey '4'
-                }
-            }
-        }
-
-        if ($target -in @('iis','rds')) {
-            $pipeline = Get-GuidedPipelineTemplate -TargetSystem $target -ValidationMode $validationMode
-            foreach ($key in $pipeline.Keys) { $values[$key] = [string]$pipeline[$key] }
-            if ($target -eq 'iis') {
-                $addScript = Read-MenuChoice -Prompt 'Add optional deployment script? [1=No,2=Yes]' -Options @{ '1'='no'; '2'='yes' } -DefaultKey '1'
-                if ($addScript -eq 'yes') {
-                    $values.ACME_INSTALLATION_PLUGINS = 'script'
-                    $defaultScript = if ($curr.ContainsKey('ACME_SCRIPT_PATH')) { [string]$curr.ACME_SCRIPT_PATH } else { Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/New-CertificateDropFile.ps1' }
-                    $values.ACME_SCRIPT_PATH = [string](Read-Host "Script path [$defaultScript]")
-                    if ([string]::IsNullOrWhiteSpace($values.ACME_SCRIPT_PATH)) { $values.ACME_SCRIPT_PATH = $defaultScript }
-                    $values.ACME_SCRIPT_PARAMETERS = [string](Read-Host "Script parameters [$script:DefaultScriptParameters]")
-                    if ([string]::IsNullOrWhiteSpace($values.ACME_SCRIPT_PARAMETERS)) { $values.ACME_SCRIPT_PARAMETERS = $script:DefaultScriptParameters }
-                }
-            }
-        } else {
-            $source = [string](Read-Host 'Source plugin [manual]')
-            $order = [string](Read-Host 'Order plugin [single]')
-            $store = [string](Read-Host 'Store plugin [certificatestore]')
-            $install = [string](Read-Host 'Installation plugin(s) comma-separated [script]')
-            $validation = [string](Read-Host 'Validation mode [none]')
-            $values.ACME_SOURCE_PLUGIN = if ([string]::IsNullOrWhiteSpace($source)) { 'manual' } else { $source }
-            $values.ACME_ORDER_PLUGIN = if ([string]::IsNullOrWhiteSpace($order)) { 'single' } else { $order }
-            $values.ACME_STORE_PLUGIN = if ([string]::IsNullOrWhiteSpace($store)) { 'certificatestore' } else { $store }
-            $values.ACME_INSTALLATION_PLUGINS = if ([string]::IsNullOrWhiteSpace($install)) { 'script' } else { $install }
-            $values.ACME_VALIDATION_MODE = if ([string]::IsNullOrWhiteSpace($validation)) { 'none' } else { $validation }
-            if ($values.ACME_INSTALLATION_PLUGINS -match 'script') {
-                $defaultScript = if ($curr.ContainsKey('ACME_SCRIPT_PATH')) { [string]$curr.ACME_SCRIPT_PATH } else { '' }
-                $values.ACME_SCRIPT_PATH = [string](Read-Host "Script path [$defaultScript]")
-                if ([string]::IsNullOrWhiteSpace($values.ACME_SCRIPT_PATH)) { $values.ACME_SCRIPT_PATH = $defaultScript }
-                $values.ACME_SCRIPT_PARAMETERS = [string](Read-Host "Script parameters [$script:DefaultScriptParameters]")
-                if ([string]::IsNullOrWhiteSpace($values.ACME_SCRIPT_PARAMETERS)) { $values.ACME_SCRIPT_PARAMETERS = $script:DefaultScriptParameters }
-            } else {
-                $values.ACME_SCRIPT_PATH = ''
-                $values.ACME_SCRIPT_PARAMETERS = ''
-            }
-        }
-
-        $values.ACME_TARGET_SYSTEM = $target
+        $values.ACME_RENEWAL_MODE = 'multi-endpoint'
+        $reissueChoice = Read-MenuChoice -Prompt 'Setting changed. Apply on [1] next renewal or [2] force immediate re-issue' -Options @{ '1'='next-renewal'; '2'='force-reissue' } -DefaultKey '1'
+        $values.ACME_REISSUE_STRATEGY = $reissueChoice
     } else {
-        Clear-TuiScreen
-        $values = Show-TuiForm -Fields $AcmeSchema -CurrentValues $curr -Title 'ACME settings (advanced)'
-        if ($null -eq $values) { return $null }
-        $values.ACME_TARGET_SYSTEM = if ($curr.ContainsKey('ACME_TARGET_SYSTEM')) { [string]$curr.ACME_TARGET_SYSTEM } else { 'custom' }
-        $values.ACME_REQUIRES_EAB = if ($curr.ContainsKey('ACME_REQUIRES_EAB')) { [string]$curr.ACME_REQUIRES_EAB } else { '0' }
+        $values.ACME_RENEWAL_MODE = 'single-system'
+        $values.ACME_PRIVATE_KEY_STRATEGY = 'local-store'
+        $values.ACME_STORE_PLUGIN = 'certificatestore'
+        $values.ACME_PRIVATEKEY_EXPORTABLE = 'false'
+        $values.ACME_REISSUE_STRATEGY = 'next-renewal'
     }
 
-    if ([string]::IsNullOrWhiteSpace([string]$values.ACME_ACCOUNT_NAME)) { $values.ACME_ACCOUNT_NAME = '' }
-    foreach ($k in (Get-SafeDefaultPipeline).Keys) {
-        if ([string]::IsNullOrWhiteSpace([string]$values[$k])) { $values[$k] = [string](Get-SafeDefaultPipeline)[$k] }
+    $values.ACME_TARGET_SYSTEM = $target
+    $values.ACME_TARGET_LOCATION = $location
+    $values.ACME_WACS_RETRY_ATTEMPTS = '3'
+    $values.ACME_WACS_RETRY_DELAY_SECONDS = '2'
+
+    $configDir = if ($curr.ContainsKey('CERTIFICATE_CONFIG_DIR')) { [string]$curr.CERTIFICATE_CONFIG_DIR } elseif ($env:CERTIFICATE_CONFIG_DIR) { [string]$env:CERTIFICATE_CONFIG_DIR } else { Join-Path (Split-Path $PSScriptRoot -Parent) 'config' }
+    $values.CERTIFICATE_CONFIG_DIR = Resolve-AbsoluteSetupPath -PathValue $configDir
+
+    if (-not $curr.ContainsKey('CERTIFICATE_API_KEY')) {
+        $values.CERTIFICATE_API_KEY = [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
+    } else {
+        $values.CERTIFICATE_API_KEY = [string]$curr.CERTIFICATE_API_KEY
     }
+
     Assert-AcmeSetupValues -Values $values
 
-    $summaryLines = @(
-        '',
-        'Summary:',
-        '',
-        "Target: $($values.ACME_TARGET_SYSTEM)",
-        "Domains: $($values.DOMAINS)",
-        "Provider: $($values.ACME_DIRECTORY)",
-        "Validation: $($values.ACME_VALIDATION_MODE)",
-        "Deployment: $($values.ACME_INSTALLATION_PLUGINS)"
-    )
-    if ($values.ACME_INSTALLATION_PLUGINS -match 'script') {
-        $summaryLines += "Script: $($values.ACME_SCRIPT_PATH)"
+    $publicValues = @{}
+    foreach ($k in $values.Keys) {
+        if ($k -notin @('ACME_KID','ACME_HMAC_SECRET','CERTIFICATE_API_KEY')) { $publicValues[$k] = $values[$k] }
     }
-    $summaryLines | ForEach-Object { [Console]::WriteLine($_) }
-    $proceed = [string](Read-Host 'Proceed? [Y/N]')
-    if ($proceed.Trim().ToLowerInvariant() -notin @('y','yes')) { return $null }
 
-    $wacsPreview = @(
-        'wacs',
-        "--baseuri $($values.ACME_DIRECTORY)",
-        "--account $($values.ACME_ACCOUNT_NAME)",
-        "--source $($values.ACME_SOURCE_PLUGIN)",
-        "--order $($values.ACME_ORDER_PLUGIN)",
-        "--validation $($values.ACME_VALIDATION_MODE)",
-        "--globalvalidation $($values.ACME_VALIDATION_MODE)",
-        "--store $($values.ACME_STORE_PLUGIN)",
-        "--installation $($values.ACME_INSTALLATION_PLUGINS)",
-        "--host $($values.DOMAINS)"
-    )
-    if ($values.ACME_INSTALLATION_PLUGINS -match 'script') {
-        $wacsPreview += @("--script $($values.ACME_SCRIPT_PATH)", "--scriptparameters $($values.ACME_SCRIPT_PARAMETERS)")
-    }
-    [Console]::WriteLine('')
-    [Console]::WriteLine('Generated pipeline:')
-    [Console]::WriteLine(($wacsPreview -join " `n  "))
+    Write-EnvFile -Values $publicValues -Path $EnvFilePath
+    Save-SecurePlatformConfig -ConfigDir $values.CERTIFICATE_CONFIG_DIR -Values $values
 
-    Write-EnvFile -Values $values -Path $EnvFilePath
-    Show-TuiStatus -Message 'ACME credentials saved to certificate.env. Ensure this file has restricted NTFS permissions.' -Type Warning -Row ([Console]::WindowHeight-2)
+    Show-TuiStatus -Message 'Saved secure configuration: env.secure + credentials.sec + mappings.json.' -Type Success -Row ([Console]::WindowHeight-2)
     return $values
 }
 
@@ -767,7 +750,12 @@ function Invoke-FirstRunWizard {
     }
 
     $envTarget = Join-Path $all.CERTIFICATE_CONFIG_DIR 'certificate.env'
-    Write-EnvFile -Values $all -Path $envTarget
+    $public = @{}
+    foreach ($k in $all.Keys) {
+        if ($k -notin @('ACME_KID','ACME_HMAC_SECRET','CERTIFICATE_API_KEY')) { $public[$k] = $all[$k] }
+    }
+    Write-EnvFile -Values $public -Path $envTarget
+    Save-SecurePlatformConfig -ConfigDir $all.CERTIFICATE_CONFIG_DIR -Values $all
     $policiesPath = Join-Path $all.CERTIFICATE_CONFIG_DIR 'policies.json'
     if (-not (Test-Path -LiteralPath $policiesPath)) {
         $tmp = [System.IO.Path]::GetTempFileName()

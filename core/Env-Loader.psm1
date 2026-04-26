@@ -38,6 +38,40 @@ $script:OptionalEnvDefaults = @{
     CERTIFICATE_HTTP_PORT           = '8088'
 }
 
+
+function ConvertFrom-SecureStringToPlainText {
+    param([Parameter(Mandatory)][Security.SecureString]$SecureString)
+    $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString)
+    try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
+}
+
+function Import-SecureOverlay {
+    param([Parameter(Mandatory)][hashtable]$Values)
+
+    $configDir = if ($Values.ContainsKey('CERTIFICATE_CONFIG_DIR')) { [string]$Values.CERTIFICATE_CONFIG_DIR } else { [Environment]::GetEnvironmentVariable('CERTIFICATE_CONFIG_DIR') }
+    if ([string]::IsNullOrWhiteSpace($configDir)) { return $Values }
+
+    $secureEnvPath = Join-Path $configDir 'env.secure'
+    if (Test-Path -LiteralPath $secureEnvPath) {
+        $secureEnv = Import-Clixml -Path $secureEnvPath
+        if ($secureEnv -is [System.Collections.IDictionary]) {
+            foreach ($k in $secureEnv.Keys) { $Values[$k] = [string]$secureEnv[$k] }
+        }
+    }
+
+    $credPath = Join-Path $configDir 'credentials.sec'
+    if (Test-Path -LiteralPath $credPath) {
+        $creds = Import-Clixml -Path $credPath
+        foreach ($k in @('ACME_KID','ACME_HMAC_SECRET','CERTIFICATE_API_KEY')) {
+            if ($creds.PSObject.Properties.Name -contains $k -and $creds.$k -is [Security.SecureString]) {
+                $Values[$k] = ConvertFrom-SecureStringToPlainText -SecureString $creds.$k
+            }
+        }
+    }
+
+    return $Values
+}
+
 function Resolve-EnvPath {
     param([string]$Path = '')
 
@@ -92,6 +126,7 @@ function Import-EnvFile {
 
     $resolved = Resolve-EnvPath -Path $Path
     $values = Read-EnvFile -Path $resolved
+    $values = Import-SecureOverlay -Values $values
 
     $missing = @($script:RequiredEnvKeys | Where-Object { -not $values.ContainsKey($_) -or [string]::IsNullOrWhiteSpace([string]$values[$_]) })
     if ($missing.Count -gt 0) {
@@ -145,7 +180,6 @@ function Write-EnvFile {
 
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add($Header)
-    $lines.Add('# NOTE: ACME_KID and ACME_HMAC_SECRET are plaintext in this file; protect with NTFS ACLs.')
     $lines.Add('')
 
     foreach ($key in ($Values.Keys | Sort-Object)) {

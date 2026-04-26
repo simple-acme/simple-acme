@@ -12,7 +12,8 @@ Describe 'Env loader' {
             'CERTIFICATE_CONFIG_DIR=C:\cfg',
             'CERTIFICATE_DROP_DIR=C:\drop',
             'CERTIFICATE_STATE_DIR=C:\state',
-            'CERTIFICATE_LOG_DIR=C:\log'
+            'CERTIFICATE_LOG_DIR=C:\log',
+            'CERTIFICATE_API_KEY=apikey'
         ) | Set-Content -Path $script:path -Encoding UTF8
     }
 
@@ -38,7 +39,7 @@ Describe 'Env loader' {
 
     It 'Import missing required lists all in one error' {
         @('ACME_DIRECTORY=x') | Set-Content -Path $script:path -Encoding UTF8
-        { Import-EnvFile -Path $script:path -Force } | Should -Throw '*ACME_KID*ACME_HMAC_SECRET*DOMAINS*ACME_SCRIPT_PATH*'
+        { Import-EnvFile -Path $script:path -Force } | Should -Throw '*ACME_KID*ACME_HMAC_SECRET*DOMAINS*ACME_SCRIPT_PATH*CERTIFICATE_API_KEY*'
     }
 
     It 'Import applies optional defaults' {
