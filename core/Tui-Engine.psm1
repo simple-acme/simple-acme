@@ -95,7 +95,7 @@ function Show-TuiMenu {
             Write-TuiAt -X ($bounds.BoxX + 2) -Y ($bounds.BoxY + 1 + $row) -Text $line.PadRight($bounds.BoxWidth - 4) -Fg $fg -Bg $bg
         }
 
-        Show-TuiStatus -Message '↑/↓ move  Enter select  Esc back' -Type Info -Row $bounds.HelpRow
+        Show-TuiStatus -Message 'Up/Down move  Enter select  Esc back' -Type Info -Row $bounds.HelpRow
         $k = Read-TuiKey
         switch ($k.Key) {
             'UpArrow' { $selected = if ($selected -le 0) { $items.Count-1 } else { $selected-1 } }
