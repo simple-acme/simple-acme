@@ -2,9 +2,9 @@
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-Import-Module "$PSScriptRoot/../core/Tui-Engine.psm1" -Force
-Import-Module "$PSScriptRoot/../core/Config-Store.psm1" -Force
-Import-Module "$PSScriptRoot/../core/Env-Loader.psm1" -Force
+Import-Module "$PSScriptRoot/../core/Tui-Engine.psm1" -Force -Global
+Import-Module "$PSScriptRoot/../core/Config-Store.psm1" -Force -Global
+Import-Module "$PSScriptRoot/../core/Env-Loader.psm1" -Force -Global
 . "$PSScriptRoot/Device-Schemas.ps1"
 . "$PSScriptRoot/Menu-Tree.ps1"
 
