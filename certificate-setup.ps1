@@ -11,13 +11,29 @@ function Assert-SetupCommandAvailable {
         [string]$CommandName,
 
         [Parameter(Mandatory = $true)]
-        [string]$ExpectedModulePath
+        [string]$ExpectedModulePath,
+
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.PSModuleInfo]$ModuleInfo
     )
 
-    if (-not (Get-Command $CommandName -ErrorAction SilentlyContinue)) {
+    $moduleCommand = $ModuleInfo.ExportedCommands[$CommandName]
+    if ($null -eq $moduleCommand) {
+        throw @"
+Required setup command '$CommandName' was not exported by module '$($ModuleInfo.Name)'.
+Expected module path: $ExpectedModulePath
+Resolved module path: $($ModuleInfo.Path)
+Current script root: $PSScriptRoot
+Re-deploy the setup modules and ensure you are running certificate-setup.ps1 from the correct repository root.
+"@
+    }
+
+    $resolved = Get-Command $CommandName -ErrorAction SilentlyContinue
+    if ($null -eq $resolved -or [string]::IsNullOrWhiteSpace([string]$resolved.Source) -or $resolved.Source -ne $ModuleInfo.Name) {
         throw @"
 Required setup command '$CommandName' is unavailable after module import.
 Expected module path: $ExpectedModulePath
+Resolved module path: $($ModuleInfo.Path)
 Current script root: $PSScriptRoot
 This usually indicates a path mismatch, stale deployment, or incomplete copy.
 Run this script from a full repository checkout and confirm the module file exists at the expected path.
@@ -25,15 +41,21 @@ Run this script from a full repository checkout and confirm the module file exis
     }
 }
 
-Import-Module $tuiEngineModulePath -Force -Global
-Assert-SetupCommandAvailable -CommandName 'Show-TuiMenu' -ExpectedModulePath $tuiEngineModulePath
-Assert-SetupCommandAvailable -CommandName 'Show-TuiStatus' -ExpectedModulePath $tuiEngineModulePath
+$tuiModule = Import-Module $tuiEngineModulePath -Force -Global -PassThru
+if ($null -eq $tuiModule) {
+    throw "Unable to import required TUI module from path: $tuiEngineModulePath"
+}
+Assert-SetupCommandAvailable -CommandName 'Show-TuiMenu' -ExpectedModulePath $tuiEngineModulePath -ModuleInfo $tuiModule
+Assert-SetupCommandAvailable -CommandName 'Show-TuiStatus' -ExpectedModulePath $tuiEngineModulePath -ModuleInfo $tuiModule
 
-Import-Module $formRunnerModulePath -Force -Global
-Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModulePath $formRunnerModulePath
-Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeForm' -ExpectedModulePath $formRunnerModulePath
-Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyEditor' -ExpectedModulePath $formRunnerModulePath
-Assert-SetupCommandAvailable -CommandName 'Invoke-DeviceForm' -ExpectedModulePath $formRunnerModulePath
+$formRunnerModule = Import-Module $formRunnerModulePath -Force -Global -PassThru
+if ($null -eq $formRunnerModule) {
+    throw "Unable to import required setup module from path: $formRunnerModulePath"
+}
+Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeForm' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyEditor' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+Assert-SetupCommandAvailable -CommandName 'Invoke-DeviceForm' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 . "$PSScriptRoot/setup/Menu-Tree.ps1"
 
 $envPath = if ($env:CERTIFICATE_CONFIG_DIR) {
@@ -75,6 +97,7 @@ while ($menuStack.Count -gt 0) {
     switch ($selected) {
         'acme'           { Invoke-AcmeForm -EnvFilePath $envPath | Out-Null }
         'policies'       { Invoke-PolicyEditor -ConfigDir $configDir | Out-Null }
+        'policies-view'  { Invoke-PolicyEditor -ConfigDir $configDir -ViewOnly | Out-Null }
         'backup-create'  { & "$PSScriptRoot/certificate-backup.ps1" -OutputPath (Join-Path $PSScriptRoot ("certificate-{0}.certbak" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))) }
         'backup-restore' {
             $path = Read-Host 'Backup path'
