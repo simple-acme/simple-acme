@@ -18,6 +18,7 @@ Describe 'Simple ACME reconcile preflight' {
             ACME_INSTALLATION_PLUGINS = 'script'
             ACME_SCRIPT_PATH = $scriptFile
             ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} {CertThumbprint} {OldCertThumbprint}"
+            ACME_WACS_VERSION = '2.3.0'
         }
 
         $result.WacsPath | Should -Be 'C:\tools\wacs.exe'
@@ -43,6 +44,7 @@ Describe 'Simple ACME reconcile preflight' {
                 ACME_INSTALLATION_PLUGINS = 'script'
                 ACME_SCRIPT_PATH = $scriptFile
                 ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} {CertThumbprint} {OldCertThumbprint}"
+                ACME_WACS_VERSION = '2.3.0'
             }
         } | Should -Throw '*wacs*not found*'
     }
@@ -62,6 +64,7 @@ Describe 'Simple ACME reconcile preflight' {
                 ACME_INSTALLATION_PLUGINS = 'script'
                 ACME_SCRIPT_PATH = '.\relative.ps1'
                 ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} {CertThumbprint} {OldCertThumbprint}"
+                ACME_WACS_VERSION = '2.3.0'
             }
         } | Should -Throw '*absolute path*'
     }
