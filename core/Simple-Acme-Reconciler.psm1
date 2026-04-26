@@ -101,7 +101,14 @@ function Get-RenewalHosts {
 function Get-RenewalSummary {
     param([Parameter(Mandatory)][System.IO.FileInfo]$File)
 
-    $renewal = Get-Content -LiteralPath $File.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+    try {
+        $renewal = Get-Content -LiteralPath $File.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+    } catch {
+        throw "Failed to parse renewal JSON '$($File.FullName)': $($_.Exception.Message)"
+    }
+    if ($null -eq $renewal) {
+        throw "Renewal JSON '$($File.FullName)' parsed as null."
+    }
     $baseUriCandidates = Find-PropertyValues -InputObject $renewal -Names @('BaseUri')
     $kidCandidates = Find-PropertyValues -InputObject $renewal -Names @('KeyIdentifier','Kid','EabKeyIdentifier')
     $validationCandidates = Find-PropertyValues -InputObject $renewal -Names @('Plugin','Name','ValidationPlugin')
@@ -121,15 +128,28 @@ function Get-RenewalSummary {
     $normalizedStoreCandidates = @($storeCandidates | Where-Object { $_ -is [string] } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
     $normalizedInstallCandidates = @($installationCandidates | Where-Object { $_ -is [string] } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
 
+    $resolvedRenewalId = ($renewalIdCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+    $resolvedSourcePlugin = ($sourceCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+    $resolvedOrderPlugin = ($orderCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+    if ([string]::IsNullOrWhiteSpace([string]$resolvedRenewalId)) {
+        throw "Renewal JSON '$($File.FullName)' did not contain a usable renewal identifier."
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$resolvedSourcePlugin)) {
+        throw "Renewal JSON '$($File.FullName)' did not contain source plugin metadata."
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$resolvedOrderPlugin)) {
+        throw "Renewal JSON '$($File.FullName)' did not contain order plugin metadata."
+    }
+
     [pscustomobject]@{
         File             = $File
         Renewal          = $renewal
-        RenewalId        = ($renewalIdCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+        RenewalId        = $resolvedRenewalId
         Hosts            = $hosts
         BaseUri          = ($baseUriCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         EabKid           = ($kidCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
-        SourcePlugin     = ($sourceCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
-        OrderPlugin      = ($orderCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
+        SourcePlugin     = $resolvedSourcePlugin
+        OrderPlugin      = $resolvedOrderPlugin
         StorePlugin      = ($normalizedStoreCandidates | Select-Object -First 1)
         StorePlugins     = $normalizedStoreCandidates
         InstallationPlugins = $normalizedInstallCandidates
@@ -267,9 +287,12 @@ function Assert-ReconcilePreflight {
         if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
             throw "ACME_SCRIPT_PATH must be an absolute path. Current value: '$scriptPath'"
         }
-        if (-not (Test-Path -LiteralPath $scriptPath)) {
+        $resolvedScriptPath = Resolve-Path -LiteralPath $scriptPath -ErrorAction SilentlyContinue
+        if ($null -eq $resolvedScriptPath) {
             throw "ACME_SCRIPT_PATH does not exist: '$scriptPath'"
         }
+        $scriptPath = [string]$resolvedScriptPath.Path
+        $EnvValues.ACME_SCRIPT_PATH = $scriptPath
         $scriptParameters = [string]$EnvValues.ACME_SCRIPT_PARAMETERS
         if ([string]::IsNullOrWhiteSpace($scriptParameters)) {
             throw 'ACME_SCRIPT_PARAMETERS must be set and non-empty.'
@@ -277,6 +300,13 @@ function Assert-ReconcilePreflight {
         foreach ($requiredToken in @('{RenewalId}','{CertThumbprint}','{OldCertThumbprint}')) {
             if (-not $scriptParameters.Contains($requiredToken)) {
                 throw "ACME_SCRIPT_PARAMETERS is missing required token '$requiredToken'."
+            }
+        }
+        $allowedTokens = @('{RenewalId}','{CertThumbprint}','{OldCertThumbprint}')
+        $allTokens = [regex]::Matches($scriptParameters, '\{[^}]+\}') | ForEach-Object { $_.Value }
+        foreach ($token in $allTokens) {
+            if ($allowedTokens -notcontains $token) {
+                throw "ACME_SCRIPT_PARAMETERS contains unsupported token '$token'."
             }
         }
     }
@@ -324,7 +354,11 @@ function Ensure-SimpleAcmeSettings {
     $settingsPath = Join-Path $SimpleAcmeDir 'settings.json'
     $settings = @{}
     if (Test-Path -LiteralPath $settingsPath) {
-        $existing = Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
+        try {
+            $existing = Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
+        } catch {
+            throw "Failed to parse settings JSON '$settingsPath': $($_.Exception.Message)"
+        }
         if ($existing) { $settings = $existing }
     }
 
@@ -405,6 +439,10 @@ function Invoke-WacsWithRetry {
             $warnings = @($allOutput | Where-Object { [string]$_ -match '(?i)\bwarning\b|partial success' })
             if ($warnings.Count -gt 0) {
                 throw "wacs output contains warning/partial-success markers: $($warnings[0])"
+            }
+            $errors = @($allOutput | Where-Object { [string]$_ -match '(?i)\berror\b|\bfatal\b|\bexception\b|\bfailed\b' })
+            if ($errors.Count -gt 0) {
+                throw "wacs output contains error markers: $($errors[0])"
             }
         }
         $lastExit = $LASTEXITCODE
@@ -585,13 +623,25 @@ function Invoke-SimpleAcmeReconcile {
     )
 
     Assert-ReconcilePreflight -EnvValues $EnvValues | Out-Null
-    $lockName = 'Global\SimpleAcmeReconcileLock'
-    $mutex = New-Object System.Threading.Mutex($false, $lockName)
+    $simpleAcmeDir = Join-Path $env:ProgramData 'simple-acme'
+    if (-not (Test-Path -LiteralPath $simpleAcmeDir)) {
+        New-Item -ItemType Directory -Path $simpleAcmeDir -Force | Out-Null
+    }
+    $lockFilePath = Join-Path $simpleAcmeDir 'reconcile.lock'
+    $lockFileStream = $null
     $hasLock = $false
     try {
-        $hasLock = $mutex.WaitOne([TimeSpan]::FromMinutes(5))
+        $deadline = (Get-Date).ToUniversalTime().AddMinutes(5)
+        while ((Get-Date).ToUniversalTime() -lt $deadline -and -not $hasLock) {
+            try {
+                $lockFileStream = [System.IO.File]::Open($lockFilePath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+                $hasLock = $true
+            } catch {
+                Start-Sleep -Milliseconds 300
+            }
+        }
         if (-not $hasLock) {
-            throw 'Another reconcile run is in progress (lock timeout).'
+            throw "Another reconcile run is in progress (could not acquire file lock '$lockFilePath')."
         }
 
     if ($DryRun) {
@@ -658,6 +708,7 @@ function Invoke-SimpleAcmeReconcile {
         $cancelPath = $current.File.FullName
         Invoke-WacsWithRetry -Args @('--cancel', '--id', $renewalId) -EnvValues $EnvValues
         Wait-RenewalFileRemoval -Path $cancelPath
+        Start-Sleep -Seconds 2
         Invoke-WacsIssue -EnvValues $EnvValues
     }
 
@@ -682,10 +733,9 @@ function Invoke-SimpleAcmeReconcile {
     Write-ReconcileLog -Action 'update' -Domains $domains -Result 'success' -Message 'Renewal was recreated safely.'
     return 'update'
     } finally {
-        if ($hasLock) {
-            [void]$mutex.ReleaseMutex()
+        if ($null -ne $lockFileStream) {
+            $lockFileStream.Dispose()
         }
-        $mutex.Dispose()
     }
 }
 
