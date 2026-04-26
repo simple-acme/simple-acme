@@ -94,6 +94,7 @@ while ($menuStack.Count -gt 0) {
         continue
     }
 
+    Clear-TuiScreen
     switch ($selected) {
         'acme'           { Invoke-AcmeForm -EnvFilePath $envPath | Out-Null }
         'policies'       { Invoke-PolicyEditor -ConfigDir $configDir | Out-Null }
@@ -125,4 +126,6 @@ while ($menuStack.Count -gt 0) {
         }
         default          { Invoke-DeviceForm -ConnectorType $selected -ConfigDir $configDir | Out-Null }
     }
+    Clear-TuiScreen
 }
+
