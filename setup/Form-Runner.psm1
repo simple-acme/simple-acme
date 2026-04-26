@@ -1,6 +1,7 @@
 . "$PSScriptRoot/Device-Schemas.ps1"
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+[Console]::OutputEncoding = [System.Text.Encoding]::ASCII
 
 Import-Module "$PSScriptRoot/../core/Tui-Engine.psm1" -Force -Global
 Import-Module "$PSScriptRoot/../core/Config-Store.psm1" -Force -Global
@@ -147,6 +148,36 @@ function Resolve-AbsoluteSetupPath {
     if ([string]::IsNullOrWhiteSpace($PathValue)) { return $PathValue }
     if ([System.IO.Path]::IsPathRooted($PathValue)) { return [System.IO.Path]::GetFullPath($PathValue) }
     return [System.IO.Path]::GetFullPath((Join-Path (Split-Path $PSScriptRoot -Parent) $PathValue))
+}
+
+function Resolve-DeploymentScriptPath {
+    param([Parameter(Mandatory)][string]$ScriptFileName)
+    $scriptRoot = if (-not [string]::IsNullOrWhiteSpace($MyInvocation.MyCommand.Path)) {
+        Split-Path -Parent $MyInvocation.MyCommand.Path
+    } else {
+        Split-Path $PSScriptRoot -Parent
+    }
+
+    $scriptPath = Join-Path $scriptRoot "Scripts\\$ScriptFileName"
+
+    if (-not (Test-Path -LiteralPath $scriptPath)) {
+        throw @"
+Required deployment script not found.
+
+Expected:
+$scriptPath
+
+Check:
+
+* Scripts folder location
+* Installation directory
+
+Tip:
+Re-run installer or verify installation.
+"@
+    }
+
+    return (Resolve-Path -LiteralPath $scriptPath -ErrorAction Stop).Path
 }
 
 function New-DeviceId {
@@ -395,12 +426,12 @@ function Save-RenewalMapping {
 function Get-ConnectorScriptByIntent {
     param([Parameter(Mandatory)][string]$TargetIntent)
     switch ($TargetIntent) {
-        'rds' { return 'Scripts/connectors/cert2rds.ps1' }
-        'iis' { return 'Scripts/connectors/cert2iis.ps1' }
-        'mail' { return 'Scripts/connectors/cert2mail.ps1' }
-        'firewall' { return 'Scripts/connectors/cert2fw.ps1' }
-        'waf' { return 'Scripts/connectors/cert2waf.ps1' }
-        'custom' { return 'Scripts/connectors/cert2waf.ps1' }
+        'rds' { return 'cert2rds.ps1' }
+        'iis' { return 'cert2iis.ps1' }
+        'mail' { return 'cert2mail.ps1' }
+        'firewall' { return 'cert2fw.ps1' }
+        'waf' { return 'cert2waf.ps1' }
+        'custom' { return 'cert2waf.ps1' }
         default { throw "Unsupported target intent: $TargetIntent" }
     }
 }
@@ -430,8 +461,8 @@ function Invoke-AcmeForm {
 
     [Console]::WriteLine('')
     [Console]::WriteLine('Will this certificate be used on more than one system?')
-    [Console]::WriteLine('[1] No — only this system (recommended, most secure)')
-    [Console]::WriteLine('[2] Yes — multiple systems (RDS farm, firewall, etc.)')
+    [Console]::WriteLine('[1] No - only this system (recommended, most secure)')
+    [Console]::WriteLine('[2] Yes - multiple systems (RDS farm, firewall, etc.)')
     $distributionMode = Read-MenuChoice -Prompt 'Distribution' -Options @{ '1'='single'; '2'='multi' } -DefaultKey '1'
 
     $values = @{}
@@ -447,7 +478,7 @@ function Invoke-AcmeForm {
     $values.ACME_VALIDATION_MODE = 'http-01'
     $values.ACME_ACCOUNT_NAME = ''
     $values.ACME_SCRIPT_PARAMETERS = '{CertThumbprint} -RenewalId {RenewalId}'
-    $values.ACME_SCRIPT_PATH = Resolve-AbsoluteSetupPath -PathValue (Join-Path (Split-Path $PSScriptRoot -Parent) (Get-ConnectorScriptByIntent -TargetIntent $target))
+    $values.ACME_SCRIPT_PATH = Resolve-DeploymentScriptPath -ScriptFileName (Get-ConnectorScriptByIntent -TargetIntent $target)
 
     $previousExportable = ''
     if ($curr.ContainsKey('ACME_PRIVATEKEY_EXPORTABLE')) { $previousExportable = ([string]$curr.ACME_PRIVATEKEY_EXPORTABLE).ToLowerInvariant() }
