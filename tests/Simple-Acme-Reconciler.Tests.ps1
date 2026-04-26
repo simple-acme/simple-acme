@@ -64,9 +64,9 @@ function Invoke-TestSimpleAcmeReconciler {
         }
     }
 
-    & $Assert 'installation plugins parse and dedupe' {
+    & $Assert 'installation plugin is always script-only' {
         $plugins = Get-InstallationPlugins -EnvValues @{ ACME_INSTALLATION_PLUGINS = 'script, iis,script' }
-        if (($plugins -join ',') -ne 'script,iis') {
+        if (($plugins -join ',') -ne 'script') {
             throw "Unexpected plugins: $($plugins -join ',')"
         }
     }

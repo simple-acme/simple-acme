@@ -145,7 +145,7 @@ function Compare-RenewalWithEnv {
     if ([string]$RenewalSummary.EabKid -ne [string]$EnvValues.ACME_KID) {
         $mismatches.Add('EAB kid')
     }
-    if ([string]$RenewalSummary.SourcePlugin -ne [string]$EnvValues.ACME_SOURCE_PLUGIN) {
+    if ([string]$RenewalSummary.SourcePlugin -ne 'manual') {
         $mismatches.Add('Source plugin')
     }
     if ([string]$RenewalSummary.OrderPlugin -ne [string]$EnvValues.ACME_ORDER_PLUGIN) {
@@ -250,10 +250,23 @@ function Ensure-SimpleAcmeSettings {
 
 function Get-InstallationPlugins {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
-    $raw = [string]$EnvValues.ACME_INSTALLATION_PLUGINS
-    $plugins = @($raw -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
-    if ($plugins.Count -eq 0) { return @('script') }
-    return $plugins
+    return @('script')
+}
+
+function Get-CsrAlgorithms {
+    param([Parameter(Mandatory)][hashtable]$EnvValues)
+
+    $preferred = [string]$EnvValues.ACME_CSR_ALGORITHM
+    if ([string]::IsNullOrWhiteSpace($preferred)) {
+        return @('ec','rsa')
+    }
+
+    $normalized = $preferred.Trim().ToLowerInvariant()
+    switch ($normalized) {
+        'ec' { return @('ec','rsa') }
+        'rsa' { return @('rsa') }
+        default { throw "Unsupported ACME_CSR_ALGORITHM value '$preferred'. Supported values: ec, rsa." }
+    }
 }
 
 function Invoke-WacsWithRetry {
@@ -284,9 +297,10 @@ function Invoke-WacsIssue {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
 
     $installPlugins = Get-InstallationPlugins -EnvValues $EnvValues
+    $csrAlgorithms = Get-CsrAlgorithms -EnvValues $EnvValues
     $args = @(
         '--accepttos',
-        '--source', [string]$EnvValues.ACME_SOURCE_PLUGIN,
+        '--source', 'manual',
         '--order', [string]$EnvValues.ACME_ORDER_PLUGIN,
         '--baseuri', [string]$EnvValues.ACME_DIRECTORY,
         '--eab-key-identifier', [string]$EnvValues.ACME_KID,
@@ -306,7 +320,19 @@ function Invoke-WacsIssue {
         $args += @('--installation', $plugin)
     }
 
-    Invoke-WacsWithRetry -Args $args -EnvValues $EnvValues
+    $lastError = $null
+    foreach ($algorithm in $csrAlgorithms) {
+        try {
+            Invoke-WacsWithRetry -Args ($args + @('--csr', $algorithm)) -EnvValues $EnvValues
+            return
+        } catch {
+            $lastError = $_
+            Write-Warning "wacs issuance with CSR '$algorithm' failed: $($_.Exception.Message)"
+        }
+    }
+
+    if ($null -ne $lastError) { throw $lastError }
+    throw 'wacs issuance failed for unknown reason.'
 }
 
 function Test-ExactDomainSetMatch {
