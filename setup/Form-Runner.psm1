@@ -56,8 +56,8 @@ function Get-GuidedPipelineTemplate {
             $base.ACME_SOURCE_PLUGIN = 'manual'
             $base.ACME_VALIDATION_MODE = $ValidationMode
             $base.ACME_INSTALLATION_PLUGINS = 'script'
-            $base.ACME_SCRIPT_PATH = Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/ImportRDSFull.ps1'
-            $base.ACME_SCRIPT_PARAMETERS = $script:DefaultScriptParameters
+            $base.ACME_SCRIPT_PATH = Resolve-DeploymentScriptPath -ScriptFileName 'cert2rds.ps1'
+            $base.ACME_SCRIPT_PARAMETERS = '{CertThumbprint}'
         }
         default {
             throw "Unsupported guided target '$TargetSystem'."
@@ -152,32 +152,33 @@ function Resolve-AbsoluteSetupPath {
 
 function Resolve-DeploymentScriptPath {
     param([Parameter(Mandatory)][string]$ScriptFileName)
-    $scriptRoot = if (-not [string]::IsNullOrWhiteSpace($MyInvocation.MyCommand.Path)) {
-        Split-Path -Parent $MyInvocation.MyCommand.Path
-    } else {
-        Split-Path $PSScriptRoot -Parent
+    if ([string]::IsNullOrWhiteSpace($ScriptFileName)) {
+        throw 'Deployment script file name is empty.'
     }
 
-    $scriptPath = Join-Path $scriptRoot "Scripts\\$ScriptFileName"
+    if ([System.IO.Path]::IsPathRooted($ScriptFileName)) {
+        $candidate = $ScriptFileName
+    } else {
+        $projectRoot = Split-Path $PSScriptRoot -Parent
+        $candidate = Join-Path $projectRoot (Join-Path 'Scripts' $ScriptFileName)
+    }
 
-    if (-not (Test-Path -LiteralPath $scriptPath)) {
+    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
         throw @"
 Required deployment script not found.
 
 Expected:
-$scriptPath
+$candidate
 
-Check:
+Deployment scripts must be located in:
+<project-root>\Scripts\n
 
-* Scripts folder location
-* Installation directory
-
-Tip:
-Re-run installer or verify installation.
+Current requested script:
+$ScriptFileName
 "@
     }
 
-    return [string](Convert-Path -LiteralPath $scriptPath -ErrorAction Stop)
+    return [string](Convert-Path -LiteralPath $candidate -ErrorAction Stop)
 }
 
 function New-DeviceId {
@@ -428,10 +429,10 @@ function Get-ConnectorScriptByIntent {
     switch ($TargetIntent) {
         'rds' { return 'cert2rds.ps1' }
         'iis' { return 'cert2iis.ps1' }
-        'mail' { return 'cert2mail.ps1' }
-        'firewall' { return 'cert2fw.ps1' }
-        'waf' { return 'cert2waf.ps1' }
-        'custom' { return 'cert2waf.ps1' }
+        'mail' { throw 'This target type is not implemented yet.' }
+        'firewall' { throw 'This target type is not implemented yet.' }
+        'waf' { throw 'This target type is not implemented yet.' }
+        'custom' { throw 'This target type is not implemented yet.' }
         default { throw "Unsupported target intent: $TargetIntent" }
     }
 }
@@ -477,8 +478,16 @@ function Invoke-AcmeForm {
     $values.ACME_INSTALLATION_PLUGINS = 'script'
     $values.ACME_VALIDATION_MODE = 'http-01'
     $values.ACME_ACCOUNT_NAME = ''
-    $values.ACME_SCRIPT_PARAMETERS = '{CertThumbprint} -RenewalId {RenewalId}'
-    $values.ACME_SCRIPT_PATH = Resolve-DeploymentScriptPath -ScriptFileName (Get-ConnectorScriptByIntent -TargetIntent $target)
+    $values.ACME_SCRIPT_PARAMETERS = '{CertThumbprint}'
+    $selectedScriptPath = Resolve-DeploymentScriptPath -ScriptFileName (Get-ConnectorScriptByIntent -TargetIntent $target)
+    $values.ACME_SCRIPT_PATH = $selectedScriptPath
+    if ($curr.ContainsKey('ACME_SCRIPT_PATH')) {
+        $existingScriptPath = Resolve-AbsoluteSetupPath -PathValue ([string]$curr.ACME_SCRIPT_PATH)
+        $sameTarget = $curr.ContainsKey('ACME_TARGET_SYSTEM') -and ([string]$curr.ACME_TARGET_SYSTEM).ToLowerInvariant() -eq $target
+        if ($sameTarget -and -not [string]::IsNullOrWhiteSpace($existingScriptPath) -and (Test-Path -LiteralPath $existingScriptPath -PathType Leaf)) {
+            $values.ACME_SCRIPT_PATH = $existingScriptPath
+        }
+    }
 
     $previousExportable = ''
     if ($curr.ContainsKey('ACME_PRIVATEKEY_EXPORTABLE')) { $previousExportable = ([string]$curr.ACME_PRIVATEKEY_EXPORTABLE).ToLowerInvariant() }

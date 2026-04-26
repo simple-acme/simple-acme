@@ -3,10 +3,7 @@ Set-StrictMode -Version Latest
 
 $script:RequiredEnvKeys = @(
     'ACME_DIRECTORY',
-    'ACME_KID',
-    'ACME_HMAC_SECRET',
     'DOMAINS',
-    'ACME_SCRIPT_PATH',
     'CERTIFICATE_CONFIG_DIR',
     'CERTIFICATE_DROP_DIR',
     'CERTIFICATE_STATE_DIR',
@@ -129,6 +126,29 @@ function Import-EnvFile {
     $values = Import-SecureOverlay -Values $values
 
     $missing = @($script:RequiredEnvKeys | Where-Object { -not $values.ContainsKey($_) -or [string]::IsNullOrWhiteSpace([string]$values[$_]) })
+    $requiresEab = $values.ContainsKey('ACME_REQUIRES_EAB') -and [string]$values.ACME_REQUIRES_EAB -eq '1'
+    if ($requiresEab) {
+        foreach ($key in @('ACME_KID','ACME_HMAC_SECRET')) {
+            if (-not $values.ContainsKey($key) -or [string]::IsNullOrWhiteSpace([string]$values[$key])) {
+                $missing += $key
+            }
+        }
+    }
+
+    $installationPlugins = @()
+    if ($values.ContainsKey('ACME_INSTALLATION_PLUGINS')) {
+        $installationPlugins = @([string]$values.ACME_INSTALLATION_PLUGINS -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
+    } elseif ($script:OptionalEnvDefaults.ContainsKey('ACME_INSTALLATION_PLUGINS')) {
+        $installationPlugins = @([string]$script:OptionalEnvDefaults.ACME_INSTALLATION_PLUGINS -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
+    }
+    if ($installationPlugins -contains 'script') {
+        foreach ($key in @('ACME_SCRIPT_PATH','ACME_SCRIPT_PARAMETERS')) {
+            if (-not $values.ContainsKey($key) -or [string]::IsNullOrWhiteSpace([string]$values[$key])) {
+                $missing += $key
+            }
+        }
+    }
+    $missing = @($missing | Select-Object -Unique)
     if ($missing.Count -gt 0) {
         throw "Missing required environment keys in '$resolved': $($missing -join ', ')"
     }
