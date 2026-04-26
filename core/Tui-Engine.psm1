@@ -14,6 +14,45 @@ $TuiLayout = @{
     FooterRows = 3
 }
 
+$TuiLayout = @{
+    MarginX = 2
+    HeaderY = 1
+    ContentTop = 3
+    ContentBottomPadding = 4
+    LabelWidth = 24
+    MinBoxWidth = 40
+    MaxBoxWidth = 110
+    FieldRowsMax = 12
+    StatusRows = 2
+}
+
+function Get-TuiLayoutBounds {
+    $width = [Math]::Max(1, [Console]::WindowWidth)
+    $height = [Math]::Max(1, [Console]::WindowHeight)
+    $contentHeight = [Math]::Max(4, $height - $TuiLayout.ContentTop - $TuiLayout.ContentBottomPadding)
+    $boxWidth = [Math]::Max($TuiLayout.MinBoxWidth, [Math]::Min($TuiLayout.MaxBoxWidth, $width - ($TuiLayout.MarginX * 2)))
+    $boxX = [Math]::Max(0, [Math]::Floor(($width - $boxWidth) / 2))
+    return @{
+        Width = $width
+        Height = $height
+        BoxX = $boxX
+        BoxY = $TuiLayout.ContentTop
+        BoxWidth = [Math]::Min($boxWidth, $width)
+        ContentHeight = $contentHeight
+        StatusRow = [Math]::Max(0, $height - 2)
+        HelpRow = [Math]::Max(0, $height - 1)
+    }
+}
+
+function Get-TuiClippedText {
+    param([string]$Text,[int]$Width)
+    $safeText = if ($null -eq $Text) { '' } else { [string]$Text }
+    if ($Width -le 0) { return '' }
+    if ($safeText.Length -le $Width) { return $safeText }
+    if ($Width -le 3) { return '.' * $Width }
+    return $safeText.Substring(0, $Width - 3) + '...'
+}
+
 function Clear-TuiScreen { [Console]::BackgroundColor = $TuiColors.Background; [Console]::Clear(); [Console]::SetCursorPosition(0,0) }
 function Read-TuiKey { [Console]::ReadKey($true) }
 function Write-TuiAt {
@@ -74,20 +113,34 @@ function Show-TuiMenu {
     )
     $selected = 0
     while ($true) {
+        $bounds = Get-TuiLayoutBounds
+        $items = @($Menu.Items)
+        $boxHeight = [Math]::Min($bounds.ContentHeight, [Math]::Max(8, $items.Count + 4))
         Clear-TuiScreen
-        Write-TuiBox -X $X -Y ($Y-2) -Width ([Math]::Min(90,[Console]::WindowWidth-4)) -Height ([Math]::Max(8,$Menu.Items.Count+4)) -Title $Menu.Title
-        for ($i=0; $i -lt $Menu.Items.Count; $i++) {
-            $item = $Menu.Items[$i]
-            $bg = if ($i -eq $selected) { $TuiColors.HighlightBg } else { $TuiColors.Background }
-            $fg = if ($i -eq $selected) { $TuiColors.Highlight } else { $TuiColors.Text }
-            Write-TuiAt -X ($X+2) -Y ($Y+$i) -Text ($item.Label.PadRight(45)) -Fg $fg -Bg $bg
+        Write-TuiAt -X $TuiLayout.MarginX -Y $TuiLayout.HeaderY -Text (Get-TuiClippedText -Text $Menu.Title -Width ($bounds.Width - ($TuiLayout.MarginX * 2))) -Fg $TuiColors.Title
+        Write-TuiBox -X $bounds.BoxX -Y $bounds.BoxY -Width $bounds.BoxWidth -Height $boxHeight -Title ' Menu '
+
+        $visibleRows = [Math]::Max(1, $boxHeight - 2)
+        $topIndex = [Math]::Max(0, [Math]::Min($selected - [Math]::Floor($visibleRows / 2), [Math]::Max(0, $items.Count - $visibleRows)))
+        for ($row=0; $row -lt $visibleRows; $row++) {
+            $i = $topIndex + $row
+            if ($i -ge $items.Count) { break }
+            $item = $items[$i]
+            $isSelected = $i -eq $selected
+            $bg = if ($isSelected) { $TuiColors.HighlightBg } else { $TuiColors.Background }
+            $fg = if ($isSelected) { $TuiColors.Highlight } else { $TuiColors.Text }
+            $prefix = if ($item.Type -eq 'submenu') { '> ' } else { '  ' }
+            $line = Get-TuiClippedText -Text ($prefix + $item.Label) -Width ($bounds.BoxWidth - 4)
+            Write-TuiAt -X ($bounds.BoxX + 2) -Y ($bounds.BoxY + 1 + $row) -Text $line.PadRight($bounds.BoxWidth - 4) -Fg $fg -Bg $bg
         }
+
+        Show-TuiStatus -Message '↑/↓ move  Enter select  Esc back' -Type Info -Row $bounds.HelpRow
         $k = Read-TuiKey
         switch ($k.Key) {
-            'UpArrow' { $selected = if ($selected -le 0) { $Menu.Items.Count-1 } else { $selected-1 } }
-            'DownArrow' { $selected = if ($selected -ge $Menu.Items.Count-1) { 0 } else { $selected+1 } }
+            'UpArrow' { $selected = if ($selected -le 0) { $items.Count-1 } else { $selected-1 } }
+            'DownArrow' { $selected = if ($selected -ge $items.Count-1) { 0 } else { $selected+1 } }
             'Enter' {
-                $item = $Menu.Items[$selected]
+                $item = $items[$selected]
                 if ($item.Type -eq 'back') { return $null }
                 if ($item.Type -eq 'submenu') {
                     if ($DisableSubmenuRecursion) { return $item.Key }
