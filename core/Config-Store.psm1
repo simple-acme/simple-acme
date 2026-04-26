@@ -1,4 +1,5 @@
 Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 Import-Module "$PSScriptRoot/Crypto.psm1" -Force
 

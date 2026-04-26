@@ -1,4 +1,5 @@
 Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/Types.ps1"
 
 function Get-UtcTimestamp {

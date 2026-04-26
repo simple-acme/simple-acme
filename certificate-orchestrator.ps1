@@ -9,6 +9,35 @@ Import-Module "$PSScriptRoot/core/Config-Store.psm1" -Force
 Import-Module "$PSScriptRoot/core/Http-Listener.psm1" -Force
 . "$PSScriptRoot/core/Types.ps1"
 
+function Assert-OrchestratorInputs {
+    param(
+        [Parameter(Mandatory)][string]$DropDir,
+        [Parameter(Mandatory)][string]$StateDir
+    )
+
+    $domains = [Environment]::GetEnvironmentVariable('DOMAINS')
+    if ([string]::IsNullOrWhiteSpace($domains)) {
+        throw 'Missing config: DOMAINS'
+    }
+    foreach ($domain in ($domains -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+        if ($domain -notmatch '^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$') {
+            throw "Invalid domain format in DOMAINS: '$domain'"
+        }
+    }
+
+    foreach ($pathValue in @($DropDir, $StateDir)) {
+        if ([string]::IsNullOrWhiteSpace($pathValue)) {
+            throw 'CERTIFICATE_DROP_DIR and CERTIFICATE_STATE_DIR must be non-empty.'
+        }
+        if (-not [System.IO.Path]::IsPathRooted($pathValue)) {
+            throw "Directory path must be absolute: '$pathValue'"
+        }
+        if (-not (Test-Path -LiteralPath $pathValue)) {
+            New-Item -ItemType Directory -Path $pathValue -Force | Out-Null
+        }
+    }
+}
+
 function Resolve-DeploymentPolicy {
     param([string]$PolicyId)
     $policyFile = if (-not [string]::IsNullOrWhiteSpace($env:CERTIFICATE_CONFIG_DIR) -and
@@ -21,7 +50,11 @@ function Resolve-DeploymentPolicy {
         Write-CertificateLog -Level Warn -Message "policies.json not found at '$policyFile'. Run certificate-setup.ps1 and configure at least one deployment policy before processing events."
         return $null
     }
-    $raw = Get-Content -Raw -Encoding UTF8 -Path $policyFile | ConvertFrom-Json
+    $rawText = Get-Content -Raw -Encoding UTF8 -Path $policyFile
+    if ([string]::IsNullOrWhiteSpace($rawText)) {
+        throw "Policy file '$policyFile' is empty."
+    }
+    $raw = $rawText | ConvertFrom-Json
     $policies = ConvertTo-Hashtable -InputObject $raw
     if (-not $policies -or @($policies).Count -eq 0) {
         Write-CertificateLog -Level Warn -Message "policies.json exists but contains no policies. Run certificate-setup.ps1 and add at least one deployment policy."
@@ -68,7 +101,10 @@ function Process-DropFile {
     param([string]$Path,[string]$DropDir,[string]$StateDir)
     Start-Sleep -Milliseconds 500
     try {
-        $eventData = ConvertTo-Hashtable -InputObject (Get-Content -Raw -Encoding UTF8 -Path $Path | ConvertFrom-Json)
+        $rawJson = Get-Content -Raw -Encoding UTF8 -Path $Path
+        if ([string]::IsNullOrWhiteSpace($rawJson)) { throw "Drop file '$Path' is empty." }
+        $eventData = ConvertTo-Hashtable -InputObject ($rawJson | ConvertFrom-Json)
+        if ($null -eq $eventData) { throw "Drop file '$Path' did not contain a JSON object." }
         Process-EventData -EventData $eventData -StateDir $StateDir
 
         $processed = Join-Path $DropDir 'processed'
@@ -83,42 +119,43 @@ function Process-DropFile {
 }
 
 try {
-    Initialize-CertificateConfig
-} catch {
-    Write-CertificateLog -Level 'ERROR' -Message "Configuration validation failed: $($_.Exception.Message)"
-    exit 2
-}
+    Write-Output 'Starting certificate orchestrator.'
+    Initialize-CertificateConfig | Out-Null
 
-$DropDir = $env:CERTIFICATE_DROP_DIR
-$StateDir = $env:CERTIFICATE_STATE_DIR
+    $DropDir = $env:CERTIFICATE_DROP_DIR
+    $StateDir = $env:CERTIFICATE_STATE_DIR
+    Assert-OrchestratorInputs -DropDir $DropDir -StateDir $StateDir
 
-$devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICATE_CONFIG_DIR -SkipIntegrityFailures
-if ($devices.Count -eq 0) {
-    throw 'No device configs loaded. Failing startup because orchestrator cannot safely deploy without configured connectors.'
-}
-Resume-PendingJobs -StateDir $StateDir
+    $devices = Get-AllDeviceConfigs -ConfigDir $env:CERTIFICATE_CONFIG_DIR -SkipIntegrityFailures
+    if ($devices.Count -eq 0) {
+        throw 'No device configs loaded. Failing startup because orchestrator cannot safely deploy without configured connectors.'
+    }
+    Resume-PendingJobs -StateDir $StateDir
 
+    $useHttp = [Environment]::GetEnvironmentVariable('CERTIFICATE_HTTP_ENABLED')
+    if ($useHttp -eq '1') {
+        Start-Job -ArgumentList $PSScriptRoot,$DropDir,$StateDir -ScriptBlock {
+            param($root,$drop,$state)
+            Import-Module (Join-Path $root 'core/Logger.psm1') -Force
+            Import-Module (Join-Path $root 'core/Http-Listener.psm1') -Force
+            Start-CertificateHttpListener -DropDir $drop -StateDir $state
+        } | Out-Null
+    }
 
+    $watcher = New-Object System.IO.FileSystemWatcher
+    $watcher.Path = $DropDir
+    $watcher.Filter = '*.json'
+    $watcher.EnableRaisingEvents = $true
 
-$useHttp = [Environment]::GetEnvironmentVariable('CERTIFICATE_HTTP_ENABLED')
-if ($useHttp -eq '1') {
-    Start-Job -ArgumentList $PSScriptRoot,$DropDir,$StateDir -ScriptBlock {
-        param($root,$drop,$state)
-        Import-Module (Join-Path $root 'core/Logger.psm1') -Force
-        Import-Module (Join-Path $root 'core/Http-Listener.psm1') -Force
-        Start-CertificateHttpListener -DropDir $drop -StateDir $state
+    Write-Output "Watching drop directory: $DropDir"
+    $msgData = @{ StateDir=$StateDir; DropDir=$DropDir }
+    Register-ObjectEvent -InputObject $watcher -EventName Created -MessageData $msgData -Action {
+        $d = $Event.MessageData
+        Process-DropFile -Path $Event.SourceEventArgs.FullPath -DropDir $d.DropDir -StateDir $d.StateDir
     } | Out-Null
+
+    while ($true) { Wait-Event -Timeout 5 | Out-Null }
+} catch {
+    Write-Error $_
+    exit 1
 }
-
-$watcher = New-Object System.IO.FileSystemWatcher
-$watcher.Path = $DropDir
-$watcher.Filter = '*.json'
-$watcher.EnableRaisingEvents = $true
-
-$msgData = @{ StateDir=$StateDir; DropDir=$DropDir }
-Register-ObjectEvent -InputObject $watcher -EventName Created -MessageData $msgData -Action {
-    $d = $Event.MessageData
-    Process-DropFile -Path $Event.SourceEventArgs.FullPath -DropDir $d.DropDir -StateDir $d.StateDir
-} | Out-Null
-
-while ($true) { Wait-Event -Timeout 5 | Out-Null }

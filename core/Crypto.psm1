@@ -1,4 +1,5 @@
 Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 $script:DpapiEntropy = [System.Text.Encoding]::UTF8.GetBytes('certificate-dpapi-entropy-v1')
 
