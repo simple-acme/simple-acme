@@ -83,4 +83,19 @@ Describe 'Setup TUI and policy reliability' {
         $lines[0] | Should -Match 'policy_id=alpha'
         $lines[1] | Should -Match 'connectors=2'
     }
+
+    It 'Menu ACME script-parameters placeholder uses valid PowerShell quoting' {
+        $menuPath = Join-Path $PSScriptRoot '../setup/Menu-Tree.ps1'
+        $runnerPath = Join-Path $PSScriptRoot '../setup/Form-Runner.psm1'
+        $menuRaw = Get-Content -LiteralPath $menuPath -Raw
+        $runnerRaw = Get-Content -LiteralPath $runnerPath -Raw
+
+        $expectedPlaceholder = "'default' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
+
+        $menuRaw | Should -Match ([regex]::Escape("Name='ACME_SCRIPT_PARAMETERS'"))
+        $menuRaw | Should -Not -Match ([regex]::Escape('Placeholder=\"'))
+        $menuRaw | Should -Match ([regex]::Escape(('Placeholder="' + $expectedPlaceholder + '"')) )
+        $runnerRaw | Should -Match ([regex]::Escape(('Placeholder="' + $expectedPlaceholder + '"')) )
+    }
+
 }
