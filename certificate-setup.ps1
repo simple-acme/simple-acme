@@ -158,7 +158,7 @@ if (-not (Test-Path -LiteralPath $envPath)) {
 }
 
 . "$PSScriptRoot/config.ps1"
-Initialize-CertificateConfig | Out-Null
+Initialize-CertificateConfig -AllowIncomplete | Out-Null
 
 $configDir = if ($env:CERTIFICATE_CONFIG_DIR) { $env:CERTIFICATE_CONFIG_DIR } else { Join-Path $PSScriptRoot 'config' }
 if (-not (Test-Path -LiteralPath $configDir)) { New-Item -ItemType Directory -Path $configDir -Force | Out-Null }
