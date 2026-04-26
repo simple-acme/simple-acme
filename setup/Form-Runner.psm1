@@ -53,7 +53,7 @@ function Get-GuidedPipelineTemplate {
         }
         'rds' {
             $base.ACME_SOURCE_PLUGIN = 'manual'
-            $base.ACME_VALIDATION_MODE = 'none'
+            $base.ACME_VALIDATION_MODE = $ValidationMode
             $base.ACME_INSTALLATION_PLUGINS = 'script'
             $base.ACME_SCRIPT_PATH = Join-Path (Split-Path $PSScriptRoot -Parent) 'dist/Scripts/ImportRDSFull.ps1'
             $base.ACME_SCRIPT_PARAMETERS = $script:DefaultScriptParameters
@@ -370,12 +370,16 @@ function Invoke-AcmeForm {
         if ([string]::IsNullOrWhiteSpace($validationMode)) {
             if ($target -eq 'iis') {
                 $validationMode = 'http-01'
-            } elseif ($target -eq 'rds') {
-                $validationMode = 'none'
             } else {
-                $validationMode = Read-MenuChoice -Prompt 'Validation mode [1=http-01,2=dns-01,3=tls-alpn-01,4=none]' -Options @{
-                    '1'='http-01'; '2'='dns-01'; '3'='tls-alpn-01'; '4'='none'
-                } -DefaultKey '4'
+                if ($provider -eq 'letsencrypt') {
+                    $validationMode = Read-MenuChoice -Prompt 'Validation mode [1=http-01,2=dns-01,3=tls-alpn-01]' -Options @{
+                        '1'='http-01'; '2'='dns-01'; '3'='tls-alpn-01'
+                    } -DefaultKey '1'
+                } else {
+                    $validationMode = Read-MenuChoice -Prompt 'Validation mode [1=http-01,2=dns-01,3=tls-alpn-01,4=none]' -Options @{
+                        '1'='http-01'; '2'='dns-01'; '3'='tls-alpn-01'; '4'='none'
+                    } -DefaultKey '4'
+                }
             }
         }
 
