@@ -6,6 +6,13 @@ $TuiColors = @{
     Background=[ConsoleColor]::Black; Text=[ConsoleColor]::Gray; Highlight=[ConsoleColor]::White; HighlightBg=[ConsoleColor]::DarkCyan
     Title=[ConsoleColor]::Cyan; Accent=[ConsoleColor]::DarkCyan; Error=[ConsoleColor]::Red; Success=[ConsoleColor]::Green; Warning=[ConsoleColor]::Yellow
 }
+$TuiLayout = @{
+    MinWidth = 72
+    MinHeight = 20
+    MarginX = 2
+    HeaderRows = 3
+    FooterRows = 3
+}
 
 function Clear-TuiScreen { [Console]::BackgroundColor = $TuiColors.Background; [Console]::Clear(); [Console]::SetCursorPosition(0,0) }
 function Read-TuiKey { [Console]::ReadKey($true) }
@@ -96,35 +103,155 @@ function Show-TuiMenu {
     }
 }
 
+function Get-TuiFormLayout {
+    param(
+        [int]$FieldCount
+    )
+
+    $windowWidth = [Console]::WindowWidth
+    $windowHeight = [Console]::WindowHeight
+    $minWidth = [Math]::Max(40, $TuiLayout.MinWidth)
+    $minHeight = [Math]::Max(12, $TuiLayout.MinHeight)
+    if ($windowWidth -lt $minWidth -or $windowHeight -lt $minHeight) {
+        throw "Console window is too small for form rendering. Current: ${windowWidth}x${windowHeight}. Required minimum: ${minWidth}x${minHeight}."
+    }
+
+    $margin = [Math]::Max(1, $TuiLayout.MarginX)
+    $width = [Math]::Max(40, [Math]::Min(100, $windowWidth - ($margin * 2)))
+    $height = [Math]::Max(12, [Math]::Min($windowHeight - 2, $FieldCount + $TuiLayout.HeaderRows + $TuiLayout.FooterRows + 5))
+    $x = [Math]::Max(0, [Math]::Floor(($windowWidth - $width) / 2))
+    $y = [Math]::Max(0, [Math]::Floor(($windowHeight - $height) / 2))
+    return @{
+        X = $x
+        Y = $y
+        Width = $width
+        Height = $height
+        ContentStartRow = $y + $TuiLayout.HeaderRows
+        HelpRow = $y + $height - 3
+        StatusRow = $y + $height - 2
+    }
+}
+
+function Read-TuiLineInput {
+    param(
+        [string]$InitialValue = '',
+        [int]$MaxLength = 1024,
+        [bool]$MaskInput = $false
+    )
+
+    $buffer = if ($null -eq $InitialValue) { '' } else { [string]$InitialValue }
+    while ($true) {
+        $key = Read-TuiKey
+        switch ($key.Key) {
+            'Enter' { return @{ Accepted = $true; Value = $buffer } }
+            'Escape' { return @{ Accepted = $false; Value = $InitialValue } }
+            'Backspace' {
+                if ($buffer.Length -gt 0) {
+                    $buffer = $buffer.Substring(0, $buffer.Length - 1)
+                }
+            }
+            default {
+                if (-not [char]::IsControl($key.KeyChar) -and $buffer.Length -lt $MaxLength) {
+                    $buffer += [string]$key.KeyChar
+                }
+            }
+        }
+        $display = if ($MaskInput) { ''.PadLeft($buffer.Length, '*') } else { $buffer }
+        $padWidth = [Math]::Max(1, [Math]::Min([Math]::Max(1, [Console]::WindowWidth - [Console]::CursorLeft - 1), $MaxLength))
+        [Console]::Write(("`r{0}" -f $display.PadRight($padWidth)))
+    }
+}
+
 function Show-TuiForm {
     param([Parameter(Mandatory)][hashtable[]]$Fields,[hashtable]$CurrentValues=@{},[string]$Title='Configure device')
-    $result = @{}
+
+    $values = @{}
     foreach ($f in $Fields) {
-        $label = $f.Label
-        $existing = if ($CurrentValues.ContainsKey($f.Name)) { [string]$CurrentValues[$f.Name] } else { '' }
-        if ($f.Type -eq 'choice') {
-            $choices = @($f.Choices)
-            for($i=0;$i -lt $choices.Count;$i++){ [Console]::WriteLine(("[{0}] {1}" -f ($i+1),$choices[$i])) }
-            $selection = Read-Host "$label (number)"
-            $index = 0
-            if(-not [int]::TryParse($selection,[ref]$index) -or $index -lt 1 -or $index -gt $choices.Count){ throw "Invalid choice for $label" }
-            $result[$f.Name] = [string]$choices[$index-1]
-            continue
-        }
-        if ($f.Type -eq 'secret') {
-            $secure = Read-Host -Prompt $label -AsSecureString
-            $input = [System.Net.NetworkCredential]::new('',$secure).Password
-        } else {
-            $prompt = if ($existing) { "$label [$existing]" } else { $label }
-            $input = Read-Host -Prompt $prompt
-            if ([string]::IsNullOrEmpty($input)) { $input = $existing }
-        }
-        if ($f.Required -and [string]::IsNullOrWhiteSpace($input)) { throw "Field '$($f.Name)' is required." }
-        $result[$f.Name] = $input
+        $defaultValue = if ($CurrentValues.ContainsKey($f.Name)) { $CurrentValues[$f.Name] } elseif ($f.ContainsKey('Placeholder')) { $f.Placeholder } else { '' }
+        $values[$f.Name] = [string]$defaultValue
     }
-    $result
+
+    $selected = 0
+    while ($true) {
+        $layout = Get-TuiFormLayout -FieldCount $Fields.Count
+        Clear-TuiScreen
+        Write-TuiBox -X $layout.X -Y $layout.Y -Width $layout.Width -Height $layout.Height -Title $Title
+        Write-TuiAt -X ($layout.X + 2) -Y ($layout.Y + 1) -Text '↑/↓ navigate  Enter edit/select  F10 save  Esc cancel' -Fg $TuiColors.Accent
+
+        for ($i = 0; $i -lt $Fields.Count; $i++) {
+            $field = $Fields[$i]
+            $isSelected = $i -eq $selected
+            $labelText = ("{0}{1}" -f $field.Label, $(if ($field.Required) { ' *' } else { '' }))
+            $fieldValue = [string]$values[$field.Name]
+            if ($field.Type -eq 'secret' -and -not [string]::IsNullOrEmpty($fieldValue)) {
+                $fieldValue = ''.PadLeft($fieldValue.Length, '*')
+            }
+            if ([string]::IsNullOrWhiteSpace($fieldValue) -and $field.ContainsKey('Placeholder')) {
+                $fieldValue = "<$($field.Placeholder)>"
+            }
+
+            $rowY = $layout.ContentStartRow + $i
+            $fg = if ($isSelected) { $TuiColors.Highlight } else { $TuiColors.Text }
+            $bg = if ($isSelected) { $TuiColors.HighlightBg } else { $TuiColors.Background }
+            Write-TuiAt -X ($layout.X + 2) -Y $rowY -Text ($labelText.PadRight(32)) -Fg $fg -Bg $bg
+            Write-TuiAt -X ($layout.X + 35) -Y $rowY -Text ($fieldValue.PadRight([Math]::Max(1, $layout.Width - 38))) -Fg $fg -Bg $bg
+        }
+
+        $helpText = if ($Fields[$selected].ContainsKey('HelpText')) { [string]$Fields[$selected].HelpText } else { '' }
+        Show-TuiStatus -Message $helpText -Type Info -Row $layout.HelpRow
+        Show-TuiStatus -Message '' -Type Info -Row $layout.StatusRow
+
+        $key = Read-TuiKey
+        switch ($key.Key) {
+            'UpArrow' { $selected = if ($selected -le 0) { $Fields.Count - 1 } else { $selected - 1 } }
+            'DownArrow' { $selected = if ($selected -ge $Fields.Count - 1) { 0 } else { $selected + 1 } }
+            'Escape' { return $null }
+            'F10' {
+                $missing = @()
+                foreach ($field in $Fields) {
+                    if ($field.Required -and [string]::IsNullOrWhiteSpace([string]$values[$field.Name])) {
+                        $missing += [string]$field.Label
+                    }
+                }
+                if ($missing.Count -gt 0) {
+                    Show-TuiStatus -Message ("Required fields missing: {0}" -f ($missing -join ', ')) -Type Error -Row $layout.StatusRow
+                    Start-Sleep -Milliseconds 1400
+                    continue
+                }
+                return $values
+            }
+            'Enter' {
+                $activeField = $Fields[$selected]
+                if ($activeField.Type -eq 'choice') {
+                    $choices = @($activeField.Choices)
+                    if ($choices.Count -eq 0) {
+                        Show-TuiStatus -Message "No choices configured for $($activeField.Label)." -Type Error -Row $layout.StatusRow
+                        Start-Sleep -Milliseconds 1000
+                        continue
+                    }
+                    $currentIndex = [Array]::IndexOf($choices, [string]$values[$activeField.Name])
+                    if ($currentIndex -lt 0) { $currentIndex = 0 }
+                    $values[$activeField.Name] = [string]$choices[(($currentIndex + 1) % $choices.Count)]
+                    continue
+                }
+
+                $promptX = $layout.X + 2
+                $promptY = $layout.StatusRow
+                $currentValue = [string]$values[$activeField.Name]
+                $promptLabel = "Edit $($activeField.Label): "
+                $mask = $activeField.Type -eq 'secret'
+                $maxInput = [Math]::Max(8, $layout.Width - $promptLabel.Length - 6)
+                Write-TuiAt -X $promptX -Y $promptY -Text ($promptLabel.PadRight($layout.Width - 4)) -Fg $TuiColors.Accent
+                [Console]::SetCursorPosition($promptX + $promptLabel.Length, $promptY)
+                $lineEdit = Read-TuiLineInput -InitialValue $currentValue -MaskInput:$mask -MaxLength $maxInput
+                if ($lineEdit.Accepted) {
+                    $values[$activeField.Name] = [string]$lineEdit.Value
+                }
+            }
+        }
+    }
 }
 
 function Show-TuiProgress { param([string]$Label,[int]$Row,[ValidateSet('Spinner','Done','Failed')][string]$State='Spinner'); Show-TuiStatus -Row $Row -Type Info -Message $Label }
 
-Export-ModuleMember -Function @('Clear-TuiScreen','Write-TuiAt','Write-TuiBox','Read-TuiKey','Show-TuiStatus','Show-TuiMenu','Show-TuiForm','Show-TuiProgress') -Variable TuiColors
+Export-ModuleMember -Function @('Clear-TuiScreen','Write-TuiAt','Write-TuiBox','Read-TuiKey','Show-TuiStatus','Show-TuiMenu','Show-TuiForm','Show-TuiProgress') -Variable @('TuiColors','TuiLayout')
