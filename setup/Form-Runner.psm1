@@ -1639,23 +1639,41 @@ function Invoke-FirstRunWizard {
     return $DefaultEnvPath
 }
 
-Export-ModuleMember -Function @(
-    'Invoke-DeviceForm',
-    'Invoke-AcmeForm',
-    'Invoke-AcmeSettingsMenu',
-    'Invoke-PolicyEditor',
-    'Invoke-PolicyViewer',
-    'Invoke-FirstRunWizard',
-    'Test-FanoutPolicyValue',
-    'Test-QuorumThreshold',
-    'Show-PoliciesView',
-    'Read-Policies',
-    'Invoke-ManageCertificatesMenu',
-    'Get-SimpleAcmeLogLocations',
-    'Show-SimpleAcmeDiagnosticSummary',
-    'Invoke-ViewLogsDiagnostics'
-    ,'Wait-ForOperatorReturn',
-    'Resolve-EabCredentialsForSetup',
-    'Assert-SavedEnvMatchesSetup',
-    'Get-ProviderDefaults'
-)
+$FunctionsToExport = New-Object System.Collections.Generic.List[string]
+
+$FunctionsToExport.Add('Invoke-DeviceForm')
+$FunctionsToExport.Add('Invoke-AcmeForm')
+$FunctionsToExport.Add('Invoke-AcmeSettingsMenu')
+$FunctionsToExport.Add('Invoke-ManageCertificatesMenu')
+$FunctionsToExport.Add('Invoke-PolicyEditor')
+$FunctionsToExport.Add('Invoke-PolicyViewer')
+$FunctionsToExport.Add('Invoke-FirstRunWizard')
+$FunctionsToExport.Add('Get-Policies')
+$FunctionsToExport.Add('Save-Policies')
+$FunctionsToExport.Add('Read-Policies')
+$FunctionsToExport.Add('Show-PoliciesView')
+$FunctionsToExport.Add('Test-FanoutPolicyValue')
+$FunctionsToExport.Add('Test-QuorumThreshold')
+$FunctionsToExport.Add('Resolve-DeploymentScriptPath')
+$FunctionsToExport.Add('Get-ProviderDefaults')
+$FunctionsToExport.Add('Resolve-EabCredentialsForSetup')
+$FunctionsToExport.Add('Assert-SavedEnvMatchesSetup')
+$FunctionsToExport.Add('Wait-ForOperatorReturn')
+$FunctionsToExport.Add('Get-SimpleAcmeLogLocations')
+$FunctionsToExport.Add('Get-SimpleAcmeLatestLogFile')
+$FunctionsToExport.Add('Get-SimpleAcmeLogDiagnostics')
+$FunctionsToExport.Add('Show-SimpleAcmeDiagnosticSummary')
+$FunctionsToExport.Add('Invoke-ViewLogsDiagnostics')
+
+$MissingExports = @()
+foreach ($fn in $FunctionsToExport) {
+    if (-not (Get-Command -Name $fn -CommandType Function -ErrorAction SilentlyContinue)) {
+        $MissingExports += $fn
+    }
+}
+
+if ($MissingExports.Count -gt 0) {
+    throw ('Export list contains missing function(s): ' + ($MissingExports -join ', '))
+}
+
+Export-ModuleMember -Function ([string[]]$FunctionsToExport.ToArray())
