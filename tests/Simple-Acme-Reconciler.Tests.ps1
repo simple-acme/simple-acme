@@ -101,4 +101,52 @@ function Invoke-TestSimpleAcmeReconciler {
             throw "Expected deterministic hash but got '$hashA' and '$hashB'."
         }
     }
+
+    & $Assert 'wacs resolver prefers ACME_WACS_PATH and supports package-local exe names' {
+        $root = Split-Path $PSScriptRoot -Parent
+        $wacsPath = Join-Path $root 'wacs.exe'
+        $simpleAcmePath = Join-Path $root 'simple-acme.exe'
+        $hadWacs = Test-Path -LiteralPath $wacsPath
+        $hadSimpleAcme = Test-Path -LiteralPath $simpleAcmePath
+        $backupWacs = ''
+        $backupSimpleAcme = ''
+
+        try {
+            if ($hadWacs) {
+                $backupWacs = [System.IO.File]::ReadAllText($wacsPath, [System.Text.Encoding]::UTF8)
+            }
+            if ($hadSimpleAcme) {
+                $backupSimpleAcme = [System.IO.File]::ReadAllText($simpleAcmePath, [System.Text.Encoding]::UTF8)
+            }
+
+            [System.IO.File]::WriteAllText($simpleAcmePath, 'placeholder', [System.Text.Encoding]::UTF8)
+            $resolvedPackageLocal = Resolve-WacsExecutablePath -EnvValues @{}
+            if ($resolvedPackageLocal -ne $simpleAcmePath) {
+                throw "Expected package-local simple-acme.exe, got '$resolvedPackageLocal'"
+            }
+
+            [System.IO.File]::WriteAllText($wacsPath, 'placeholder', [System.Text.Encoding]::UTF8)
+            $resolvedWacs = Resolve-WacsExecutablePath -EnvValues @{}
+            if ($resolvedWacs -ne $wacsPath) {
+                throw "Expected package-local wacs.exe, got '$resolvedWacs'"
+            }
+
+            $resolvedOverride = Resolve-WacsExecutablePath -EnvValues @{ ACME_WACS_PATH = $simpleAcmePath }
+            if ($resolvedOverride -ne $simpleAcmePath) {
+                throw "Expected ACME_WACS_PATH override, got '$resolvedOverride'"
+            }
+        } finally {
+            if ($hadWacs) {
+                [System.IO.File]::WriteAllText($wacsPath, $backupWacs, [System.Text.Encoding]::UTF8)
+            } elseif (Test-Path -LiteralPath $wacsPath) {
+                Remove-Item -LiteralPath $wacsPath -Force -ErrorAction SilentlyContinue
+            }
+
+            if ($hadSimpleAcme) {
+                [System.IO.File]::WriteAllText($simpleAcmePath, $backupSimpleAcme, [System.Text.Encoding]::UTF8)
+            } elseif (Test-Path -LiteralPath $simpleAcmePath) {
+                Remove-Item -LiteralPath $simpleAcmePath -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
 }
