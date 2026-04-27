@@ -139,6 +139,7 @@ function Get-RenewalSummary {
     $orderCandidates = Find-PropertyValues -InputObject $renewal -Names @('OrderPlugin','Order')
     $renewalIdCandidates = Find-PropertyValues -InputObject $renewal -Names @('Id','RenewalId')
     $scriptCandidates = Find-PropertyValues -InputObject $renewal -Names @('Script','ScriptFileName')
+    $scriptParameterCandidates = Find-PropertyValues -InputObject $renewal -Names @('ScriptParameters','Parameters')
     $csrCandidates = Find-PropertyValues -InputObject $renewal -Names @('CsrPlugin','Csr')
     $keyTypeCandidates = Find-PropertyValues -InputObject $renewal -Names @('KeyType','KeyAlgorithm','Algorithm')
 
@@ -177,6 +178,7 @@ function Get-RenewalSummary {
         HasValidationNone = @($normalizedValidationCandidates | Where-Object { $_ -eq 'none' }).Count -gt 0
         HasScriptInstallation = @($normalizedInstallCandidates | Where-Object { $_ -eq 'script' }).Count -gt 0
         ScriptPaths      = @($scriptCandidates | Where-Object { $_ -is [string] })
+        ScriptParameters = @($scriptParameterCandidates | Where-Object { $_ -is [string] })
         CsrPlugin        = ($csrCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
         KeyType          = ($keyTypeCandidates | Where-Object { $_ -is [string] } | Select-Object -First 1)
     }
@@ -222,7 +224,7 @@ function Compare-RenewalWithEnv {
     if ([string]$RenewalSummary.OrderPlugin -ne [string]$EnvValues.ACME_ORDER_PLUGIN) {
         $mismatches.Add('Order plugin')
     }
-    $expectedStores = Get-NormalizedCsvValues -InputText ([string]$EnvValues.ACME_STORE_PLUGIN)
+    $expectedStores = @('certificatestore')
     $actualStores = @($RenewalSummary.StorePlugins | Sort-Object -Unique)
     if (($expectedStores -join ',') -ne ($actualStores -join ',')) {
         $mismatches.Add('Store plugin')
@@ -235,7 +237,7 @@ function Compare-RenewalWithEnv {
         $mismatches.Add('Validation plugin none')
     }
 
-    $expectedInstallers = Get-InstallationPlugins -EnvValues $EnvValues
+    $expectedInstallers = @('script')
     $actualInstallers = @($RenewalSummary.InstallationPlugins | Sort-Object -Unique)
     if (($expectedInstallers -join ',') -ne ($actualInstallers -join ',')) {
         $mismatches.Add('Installation plugins')
@@ -243,6 +245,10 @@ function Compare-RenewalWithEnv {
     $normalizedScriptPaths = @($RenewalSummary.ScriptPaths | ForEach-Object { [string]$_ })
     if (-not ($normalizedScriptPaths -contains $expectedScriptPath)) {
         $mismatches.Add('Script path')
+    }
+    $normalizedScriptParameters = @($RenewalSummary.ScriptParameters | ForEach-Object { [string]$_ })
+    if (-not ($normalizedScriptParameters -contains '{CertThumbprint}')) {
+        $mismatches.Add('Script parameters')
     }
 
     $requestedCsr = (Get-CsrAlgorithms -EnvValues $EnvValues | Select-Object -First 1)
@@ -279,7 +285,7 @@ function Assert-ReconcilePreflight {
     }
 
     $missing = @()
-    foreach ($key in @('ACME_DIRECTORY','DOMAINS','ACME_SOURCE_PLUGIN','ACME_ORDER_PLUGIN','ACME_STORE_PLUGIN','ACME_VALIDATION_MODE')) {
+    foreach ($key in @('ACME_DIRECTORY','DOMAINS')) {
         if (-not $EnvValues.ContainsKey($key) -or [string]::IsNullOrWhiteSpace([string]$EnvValues[$key])) {
             $missing += $key
         }
@@ -288,49 +294,16 @@ function Assert-ReconcilePreflight {
         throw "Missing required environment values for reconcile: $($missing -join ', ')"
     }
 
-    if ([string]$EnvValues.ACME_SOURCE_PLUGIN -ne 'manual') {
-        throw "ACME_SOURCE_PLUGIN must be 'manual' for hardened pipeline compatibility."
+    $defaultScriptPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'Scripts/cert2rds.ps1'
+    $scriptPath = if ($EnvValues.ContainsKey('ACME_SCRIPT_PATH') -and -not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_SCRIPT_PATH)) { [string]$EnvValues.ACME_SCRIPT_PATH } else { $defaultScriptPath }
+    if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
+        $scriptPath = [System.IO.Path]::GetFullPath((Join-Path (Split-Path $PSScriptRoot -Parent) $scriptPath))
     }
-    if ([string]$EnvValues.ACME_ORDER_PLUGIN -ne 'single') {
-        throw "ACME_ORDER_PLUGIN must be 'single' for hardened pipeline compatibility."
+    if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) {
+        throw "Script installation path does not exist: '$scriptPath'"
     }
-    if ([string]$EnvValues.ACME_VALIDATION_MODE -ne 'none') {
-        throw "ACME_VALIDATION_MODE must be 'none' for hardened pipeline compatibility."
-    }
-    $storePlugins = Get-NormalizedCsvValues -InputText ([string]$EnvValues.ACME_STORE_PLUGIN)
-    if (-not ($storePlugins -contains 'certificatestore')) {
-        throw "ACME_STORE_PLUGIN must include 'certificatestore' for hardened pipeline compatibility."
-    }
-
-    $installPlugins = Get-InstallationPlugins -EnvValues $EnvValues
-    $scriptPath = [string]$EnvValues.ACME_SCRIPT_PATH
-    if ($installPlugins -contains 'script') {
-        if (-not [System.IO.Path]::IsPathRooted($scriptPath)) {
-            throw "ACME_SCRIPT_PATH must be an absolute path. Current value: '$scriptPath'"
-        }
-        $resolvedScriptPath = Resolve-Path -LiteralPath $scriptPath -ErrorAction SilentlyContinue
-        if ($null -eq $resolvedScriptPath) {
-            throw "ACME_SCRIPT_PATH does not exist: '$scriptPath'"
-        }
-        $scriptPath = [string]$resolvedScriptPath.Path
-        $EnvValues.ACME_SCRIPT_PATH = $scriptPath
-        $scriptParameters = [string]$EnvValues.ACME_SCRIPT_PARAMETERS
-        if ([string]::IsNullOrWhiteSpace($scriptParameters)) {
-            throw 'ACME_SCRIPT_PARAMETERS must be set and non-empty.'
-        }
-        foreach ($requiredToken in @('{RenewalId}','{CertThumbprint}','{OldCertThumbprint}')) {
-            if (-not $scriptParameters.Contains($requiredToken)) {
-                throw "ACME_SCRIPT_PARAMETERS is missing required token '$requiredToken'."
-            }
-        }
-        $allowedTokens = @('{RenewalId}','{CertThumbprint}','{OldCertThumbprint}')
-        $allTokens = [regex]::Matches($scriptParameters, '\{[^}]+\}') | ForEach-Object { $_.Value }
-        foreach ($token in $allTokens) {
-            if ($allowedTokens -notcontains $token) {
-                throw "ACME_SCRIPT_PARAMETERS contains unsupported token '$token'."
-            }
-        }
-    }
+    $EnvValues.ACME_SCRIPT_PATH = $scriptPath
+    $EnvValues.ACME_SCRIPT_PARAMETERS = '{CertThumbprint}'
     $requiredRolesRaw = [string]$EnvValues.CERTIFICATE_REQUIRED_WINDOWS_ROLES
     if (-not [string]::IsNullOrWhiteSpace($requiredRolesRaw) -and (Get-Command -Name Get-WindowsFeature -ErrorAction SilentlyContinue)) {
         $requiredRoles = @(
@@ -361,12 +334,15 @@ function Assert-ReconcilePreflight {
         WacsVersion = [string]$detectedVersion
         DomainCount = $domains.Count
         ScriptPath = $scriptPath
-        InstallationPlugins = $installPlugins
+        InstallationPlugins = @('script')
     }
 }
 
 function Ensure-SimpleAcmeSettings {
-    param([string]$SimpleAcmeDir = (Join-Path $env:ProgramData 'simple-acme'))
+    param(
+        [string]$SimpleAcmeDir = (Join-Path $env:ProgramData 'simple-acme'),
+        [hashtable]$EnvValues
+    )
 
     if (-not (Test-Path -LiteralPath $SimpleAcmeDir)) {
         New-Item -ItemType Directory -Path $SimpleAcmeDir -Force | Out-Null
@@ -389,6 +365,21 @@ function Ensure-SimpleAcmeSettings {
 
     $settings.ScheduledTask.RenewalDays = 199
     $settings.ScheduledTask.RenewalMinimumValidDays = 16
+
+    if (-not $settings.ContainsKey('Store') -or $null -eq $settings.Store) { $settings.Store = @{} }
+    if (-not $settings.Store.ContainsKey('CertificateStore') -or $null -eq $settings.Store.CertificateStore) {
+        $settings.Store.CertificateStore = @{}
+    }
+    $requiresExportable = $false
+    if ($null -ne $EnvValues) {
+        $targetSystem = [string]$EnvValues.TARGET_SYSTEM
+        $targetLocation = [string]$EnvValues.TARGET_LOCATION
+        $explicitExportable = [string]$EnvValues.ACME_PRIVATEKEY_EXPORTABLE
+        if ($targetSystem -eq 'rds' -or $targetLocation -eq 'cluster-farm' -or $targetLocation -eq 'another-server' -or $explicitExportable -eq 'true') {
+            $requiresExportable = $true
+        }
+    }
+    $settings.Store.CertificateStore.PrivateKeyExportable = $requiresExportable
 
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($settingsPath, ($settings | ConvertTo-Json -Depth 12), $utf8NoBom)
@@ -535,12 +526,7 @@ function Get-WacsVersion {
 function Invoke-WacsIssue {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
 
-    $installPlugins = Get-InstallationPlugins -EnvValues $EnvValues
-    $storePlugins = Get-NormalizedCsvValues -InputText ([string]$EnvValues.ACME_STORE_PLUGIN)
-    if (-not ($storePlugins -contains 'certificatestore')) {
-        $storePlugins += 'certificatestore'
-        $storePlugins = @($storePlugins | Sort-Object -Unique)
-    }
+    $storePlugins = @('certificatestore')
     $csrAlgorithms = Get-CsrAlgorithms -EnvValues $EnvValues
     $args = @(
         '--accepttos',
@@ -552,20 +538,18 @@ function Invoke-WacsIssue {
         '--host', [string]$EnvValues.DOMAINS
     )
     $args += @('--store', ($storePlugins -join ','))
-    if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_KID)) {
+    if ([string]$EnvValues.ACME_REQUIRES_EAB -eq '1' -and -not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_KID)) {
         $args += @('--eab-key-identifier', [string]$EnvValues.ACME_KID)
     }
-    if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_HMAC_SECRET)) {
+    if ([string]$EnvValues.ACME_REQUIRES_EAB -eq '1' -and -not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_HMAC_SECRET)) {
         $args += @('--eab-key', [string]$EnvValues.ACME_HMAC_SECRET)
     }
     if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_ACCOUNT_NAME)) {
         $args += @('--account', [string]$EnvValues.ACME_ACCOUNT_NAME)
     }
 
-    $args += @('--installation', ($installPlugins -join ','))
-    if ($installPlugins -contains 'script') {
-        $args += @('--script', [string]$EnvValues.ACME_SCRIPT_PATH, '--scriptparameters', [string]$EnvValues.ACME_SCRIPT_PARAMETERS)
-    }
+    $args += @('--installation', 'script')
+    $args += @('--script', [string]$EnvValues.ACME_SCRIPT_PATH, '--scriptparameters', '{CertThumbprint}')
 
     $lastError = $null
     foreach ($algorithm in $csrAlgorithms) {
@@ -661,7 +645,7 @@ function Invoke-SimpleAcmeReconcile {
         throw 'DOMAINS did not contain any valid host names.'
     }
 
-    Ensure-SimpleAcmeSettings
+    Ensure-SimpleAcmeSettings -EnvValues $EnvValues
 
     $allRenewalFiles = Get-RenewalFiles
     $matching = @()

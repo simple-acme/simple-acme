@@ -107,15 +107,7 @@ function Invoke-PostSetupValidation {
         $compare = Compare-RenewalWithEnv -RenewalSummary $renewals[0] -EnvValues $EnvValues
         if (-not $compare.Matches) { throw "Renewal JSON plugin mismatch: $($compare.Mismatches -join ', ')" }
 
-        $taskName = if (-not [string]::IsNullOrWhiteSpace([string]$EnvValues.CERTIFICATE_TASK_NAME)) { [string]$EnvValues.CERTIFICATE_TASK_NAME } else { 'Certificate-Orchestrator' }
-        $scheduledTaskExists = $true
-        if (Get-Command -Name Get-ScheduledTask -ErrorAction SilentlyContinue) {
-            $task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-            $scheduledTaskExists = ($null -ne $task)
-        }
-        if (-not $scheduledTaskExists) { throw "Scheduled task '$taskName' was not found." }
-
-        Show-TuiStatus -Message 'Post-setup validation passed (renewal JSON, plugins, script wiring, scheduled task).' -Type Success -Row $statusRow
+        Show-TuiStatus -Message 'Post-setup validation passed (renewal JSON, plugins, and script wiring).' -Type Success -Row $statusRow
     } catch {
         Show-TuiStatus -Message "Post-setup validation warning: $($_.Exception.Message)" -Type Warning -Row $statusRow
     }
@@ -146,15 +138,12 @@ function Invoke-OrchestratorTaskRegistration {
     Start-Sleep -Milliseconds 2200
 }
 
-$envPath = if ($env:CERTIFICATE_CONFIG_DIR) {
+$envPath = if ($env:CERTIFICATE_ENV_FILE) {
+    [string]$env:CERTIFICATE_ENV_FILE
+} elseif ($env:CERTIFICATE_CONFIG_DIR) {
     Join-Path $env:CERTIFICATE_CONFIG_DIR 'certificate.env'
 } else {
     Join-Path $PSScriptRoot 'certificate.env'
-}
-
-if (-not (Test-Path -LiteralPath $envPath)) {
-    $envPath = Invoke-FirstRunWizard -DefaultEnvPath $envPath
-    if (-not $envPath) { exit 0 }
 }
 
 . "$PSScriptRoot/config.ps1"

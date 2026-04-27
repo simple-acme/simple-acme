@@ -473,10 +473,11 @@ function Invoke-AcmeForm {
     $values.ACME_KID = if ($curr.ContainsKey('ACME_KID')) { [string]$curr.ACME_KID } else { '' }
     $values.ACME_HMAC_SECRET = if ($curr.ContainsKey('ACME_HMAC_SECRET')) { [string]$curr.ACME_HMAC_SECRET } else { '' }
     $values.ACME_REQUIRES_EAB = '0'
+    $values.ACME_PROVIDER = 'letsencrypt'
     $values.ACME_SOURCE_PLUGIN = 'manual'
     $values.ACME_ORDER_PLUGIN = 'single'
     $values.ACME_INSTALLATION_PLUGINS = 'script'
-    $values.ACME_VALIDATION_MODE = 'http-01'
+    $values.ACME_VALIDATION_MODE = 'none'
     $values.ACME_ACCOUNT_NAME = ''
     $values.ACME_SCRIPT_PARAMETERS = '{CertThumbprint}'
     $selectedScriptPath = Resolve-DeploymentScriptPath -ScriptFileName (Get-ConnectorScriptByIntent -TargetIntent $target)
@@ -529,80 +530,43 @@ function Invoke-AcmeForm {
         $values.ACME_REISSUE_STRATEGY = 'next-renewal'
     }
 
+    $values.TARGET_SYSTEM = $target
+    $values.TARGET_LOCATION = $location
     $values.ACME_TARGET_SYSTEM = $target
     $values.ACME_TARGET_LOCATION = $location
     $values.ACME_WACS_RETRY_ATTEMPTS = '3'
     $values.ACME_WACS_RETRY_DELAY_SECONDS = '2'
 
-    $configDir = if ($curr.ContainsKey('CERTIFICATE_CONFIG_DIR')) { [string]$curr.CERTIFICATE_CONFIG_DIR } elseif ($env:CERTIFICATE_CONFIG_DIR) { [string]$env:CERTIFICATE_CONFIG_DIR } else { Join-Path (Split-Path $PSScriptRoot -Parent) 'config' }
-    $values.CERTIFICATE_CONFIG_DIR = Resolve-AbsoluteSetupPath -PathValue $configDir
-
-    if (-not $curr.ContainsKey('CERTIFICATE_API_KEY')) {
-        $values.CERTIFICATE_API_KEY = [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
-    } else {
-        $values.CERTIFICATE_API_KEY = [string]$curr.CERTIFICATE_API_KEY
-    }
-
     Assert-AcmeSetupValues -Values $values
 
     $publicValues = @{}
     foreach ($k in $values.Keys) {
-        if ($k -notin @('ACME_KID','ACME_HMAC_SECRET','CERTIFICATE_API_KEY')) { $publicValues[$k] = $values[$k] }
+        if ($k -notin @('ACME_KID','ACME_HMAC_SECRET')) { $publicValues[$k] = $values[$k] }
     }
 
     Write-EnvFile -Values $publicValues -Path $EnvFilePath
-    Save-SecurePlatformConfig -ConfigDir $values.CERTIFICATE_CONFIG_DIR -Values $values
-
-    $renewalId = [guid]::NewGuid().ToString('N')
-    $endpointHost = if ($location -eq 'this-server') { $env:COMPUTERNAME } else { [string](Read-Host 'Primary endpoint host name') }
-    if ([string]::IsNullOrWhiteSpace($endpointHost)) { $endpointHost = $env:COMPUTERNAME }
-    $method = if ($location -eq 'this-server') { 'local' } else { 'winrm' }
-    $mapping = @{
-        renewalId = $renewalId
-        connector = $target
-        endpoints = @([pscustomobject]@{ host = $endpointHost; method = $method })
-    }
-    if ($location -eq 'cluster-farm') {
-        $extra = [string](Read-Host 'Additional hosts (comma-separated)')
-        foreach ($host in @($extra -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })) {
-            $mapping.endpoints += [pscustomobject]@{ host = $host; method = 'winrm' }
-        }
-    }
-    Save-RenewalMapping -ConfigDir $values.CERTIFICATE_CONFIG_DIR -Mapping $mapping
-
-    Show-TuiStatus -Message 'Saved secure configuration: env.secure + credentials.sec + mappings.json.' -Type Success -Row ([Console]::WindowHeight-2)
+    Show-TuiStatus -Message 'Saved bootstrap certificate.env for initial simple-acme setup.' -Type Success -Row ([Console]::WindowHeight-2)
     return $values
 }
 
 function Invoke-ManageCertificatesMenu {
     param([Parameter(Mandatory)][string]$ConfigDir)
 
-    $mappingPath = Join-Path $ConfigDir 'mappings.json'
-    if (-not (Test-Path -LiteralPath $mappingPath)) {
-        Show-TuiStatus -Message 'No configured certificates were found.' -Type Warning -Row ([Console]::WindowHeight-2)
-        Start-Sleep -Milliseconds 1500
+    $simpleAcmeDir = Join-Path $env:ProgramData 'simple-acme'
+    $renewals = @()
+    if (Test-Path -LiteralPath $simpleAcmeDir) {
+        $renewals = @(Get-ChildItem -LiteralPath $simpleAcmeDir -Filter '*.renewal.json' -File -ErrorAction SilentlyContinue)
+    }
+    if ($renewals.Count -eq 0) {
+        Show-TuiStatus -Message 'No simple-acme renewals found yet.' -Type Warning -Row ([Console]::WindowHeight-2)
+        Start-Sleep -Milliseconds 1200
         return
     }
-    $mappings = @(Get-Content -Raw -LiteralPath $mappingPath -Encoding UTF8 | ConvertFrom-Json)
-    [Console]::WriteLine('[1] View configured certificates')
-    [Console]::WriteLine('[2] Re-issue certificate')
-    [Console]::WriteLine('[3] Change deployment targets')
-    [Console]::WriteLine('[4] Test deployment')
-    [Console]::WriteLine('[5] Remove certificate')
-    $choice = Read-MenuChoice -Prompt 'Manage' -Options @{ '1'='view'; '2'='reissue'; '3'='targets'; '4'='test'; '5'='remove' } -DefaultKey '1'
-    switch ($choice) {
-        'view' {
-            foreach ($m in $mappings) { [Console]::WriteLine("renewalId=$($m.renewalId) connector=$($m.connector) endpoints=$(@($m.endpoints).Count)") }
-        }
-        'reissue' { [Console]::WriteLine('Use simple-acme renew command for immediate issuance based on renewalId.') }
-        'targets' { [Console]::WriteLine('Re-run setup for this intent to change endpoint mapping deterministically.') }
-        'test' { [Console]::WriteLine('Run certificate-orchestrator.ps1 to test deployment verification.') }
-        'remove' {
-            $id = [string](Read-Host 'renewalId to remove')
-            $filtered = @($mappings | Where-Object { $_.renewalId -ne $id })
-            $filtered | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $mappingPath -Encoding UTF8
-        }
-    }
+
+    [Console]::WriteLine('Existing simple-acme renewal files:')
+    foreach ($renewal in $renewals) { [Console]::WriteLine(" - $($renewal.Name)") }
+    [Console]::WriteLine('')
+    [Console]::WriteLine('Use "wacs --renew" for runtime renewal operations.')
     Start-Sleep -Milliseconds 1200
 }
 
@@ -811,93 +775,40 @@ function Invoke-FirstRunWizard {
     $scriptRoot = Split-Path $PSScriptRoot -Parent
 
     $acmeFields = @(
-        @{ Name='ACME_DIRECTORY';   Label='ACME directory URL';          Type='string'; Required=$true; Placeholder='https://acme.networking4all.com/dv'; HelpText='ACME directory endpoint' },
-        @{ Name='ACME_KID';         Label='ACME KID (EAB key ID)';       Type='secret'; Required=$false; Placeholder=''; HelpText='External account binding key identifier' },
-        @{ Name='ACME_HMAC_SECRET'; Label='ACME HMAC secret';            Type='secret'; Required=$false; Placeholder=''; HelpText='External account binding HMAC secret' },
-        @{ Name='DOMAINS';          Label='Domains (comma-separated)';   Type='string'; Required=$true; Placeholder='example.com,www.example.com'; HelpText='Domain list for certificate issuance' },
-        @{ Name='ACME_SOURCE_PLUGIN'; Label='Source plugin'; Type='string'; Required=$true; Placeholder='manual'; HelpText='simple-acme source plugin' },
-        @{ Name='ACME_ORDER_PLUGIN'; Label='Order plugin'; Type='string'; Required=$true; Placeholder='single'; HelpText='simple-acme order plugin' },
-        @{ Name='ACME_STORE_PLUGIN'; Label='Store plugin'; Type='string'; Required=$true; Placeholder='certificatestore'; HelpText='simple-acme store plugin' },
-        @{ Name='ACME_ACCOUNT_NAME'; Label='Account name'; Type='string'; Required=$false; Placeholder=''; HelpText='Optional ACME account name' },
-        @{ Name='ACME_INSTALLATION_PLUGINS'; Label='Installation plugins'; Type='string'; Required=$true; Placeholder='script'; HelpText='Comma-separated installation plugins' },
-        @{ Name='ACME_SCRIPT_PARAMETERS'; Label='Script parameters'; Type='string'; Required=$true; Placeholder="'default' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"; HelpText='wacs scriptparameters template' },
-        @{ Name='ACME_VALIDATION_MODE'; Label='Validation mode'; Type='string'; Required=$true; Placeholder='none'; HelpText='Locked to none' },
-        @{ Name='ACME_WACS_RETRY_ATTEMPTS'; Label='WACS retry attempts'; Type='string'; Required=$true; Placeholder='3'; HelpText='Retry attempts for wacs operations' },
-        @{ Name='ACME_WACS_RETRY_DELAY_SECONDS'; Label='WACS retry delay seconds'; Type='string'; Required=$true; Placeholder='2'; HelpText='Delay between retries' }
-    )
-
-    $pathFields = @(
-        @{ Name='CERTIFICATE_DROP_DIR';   Label='Drop directory';   Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'drop');   HelpText='Watched folder for certificate events' },
-        @{ Name='ACME_SCRIPT_PATH';       Label='Drop file script path'; Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'Scripts\New-CertificateDropFile.ps1'); HelpText='Absolute path to New-CertificateDropFile.ps1' },
-        @{ Name='CERTIFICATE_CONFIG_DIR'; Label='Config directory'; Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'config'); HelpText='Where device configs are stored' },
-        @{ Name='CERTIFICATE_STATE_DIR';  Label='State directory';  Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'state');  HelpText='Job state persistence directory' },
-        @{ Name='CERTIFICATE_LOG_DIR';    Label='Log directory';    Type='string'; Required=$true; Placeholder=(Join-Path $scriptRoot 'log');    HelpText='Log output directory' }
+        @{ Name='ACME_PROVIDER';    Label='ACME provider';              Type='string'; Required=$false; Placeholder='letsencrypt'; HelpText='Provider label for operator reference' },
+        @{ Name='ACME_DIRECTORY';   Label='ACME directory URL';         Type='string'; Required=$true; Placeholder='https://acme-v02.api.letsencrypt.org/directory'; HelpText='ACME directory endpoint' },
+        @{ Name='ACME_REQUIRES_EAB';Label='Requires EAB (0/1)';         Type='string'; Required=$false; Placeholder='0'; HelpText='Set 1 only when provider requires EAB' },
+        @{ Name='ACME_KID';         Label='ACME KID (EAB key ID)';      Type='secret'; Required=$false; Placeholder=''; HelpText='External account binding key identifier' },
+        @{ Name='ACME_HMAC_SECRET'; Label='ACME HMAC secret';           Type='secret'; Required=$false; Placeholder=''; HelpText='External account binding HMAC secret' },
+        @{ Name='DOMAINS';          Label='Domains (comma-separated)';  Type='string'; Required=$true; Placeholder='example.com,www.example.com'; HelpText='Domain list for certificate issuance' },
+        @{ Name='TARGET_SYSTEM';    Label='Target system';              Type='string'; Required=$false; Placeholder='rds'; HelpText='phase 1 targets: rds or iis' },
+        @{ Name='TARGET_LOCATION';  Label='Target location';            Type='string'; Required=$false; Placeholder='this-server'; HelpText='this-server, another-server, or cluster-farm' },
+        @{ Name='ACME_ACCOUNT_NAME';Label='Account name';               Type='string'; Required=$false; Placeholder=''; HelpText='Optional ACME account name' },
+        @{ Name='ACME_CSR_ALGORITHM';Label='CSR algorithm';             Type='string'; Required=$false; Placeholder='ec'; HelpText='ec (default) or rsa' },
+        @{ Name='ACME_PRIVATEKEY_EXPORTABLE';Label='Private key exportable'; Type='string'; Required=$false; Placeholder='false'; HelpText='Only true for multi-system or export workflows' }
     )
 
     Clear-TuiScreen
 
-    $acmeValues = Show-TuiForm -Fields $acmeFields -CurrentValues @{} -Title 'Step 1 of 2 - ACME credentials'
+    $acmeValues = Show-TuiForm -Fields $acmeFields -CurrentValues @{} -Title 'Bootstrap certificate.env (phase 1)'
     if ($null -eq $acmeValues) { return $null }
-
-    $pathDefaults = @{
-        CERTIFICATE_DROP_DIR   = Join-Path $scriptRoot 'drop'
-        ACME_SCRIPT_PATH       = Join-Path $scriptRoot 'Scripts\New-CertificateDropFile.ps1'
-        CERTIFICATE_CONFIG_DIR = Join-Path $scriptRoot 'config'
-        CERTIFICATE_STATE_DIR  = Join-Path $scriptRoot 'state'
-        CERTIFICATE_LOG_DIR    = Join-Path $scriptRoot 'log'
-        ACME_SOURCE_PLUGIN     = 'manual'
-        ACME_ORDER_PLUGIN      = 'single'
-        ACME_STORE_PLUGIN      = 'certificatestore'
-        ACME_ACCOUNT_NAME      = ''
-        ACME_INSTALLATION_PLUGINS = 'script'
-        ACME_SCRIPT_PARAMETERS = "'default' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
-        ACME_VALIDATION_MODE   = 'none'
-        ACME_WACS_RETRY_ATTEMPTS = '3'
-        ACME_WACS_RETRY_DELAY_SECONDS = '2'
-    }
-    $pathValues = Show-TuiForm -Fields $pathFields -CurrentValues $pathDefaults -Title 'Step 2 of 2 - Paths'
-    if ($null -eq $pathValues) { return $null }
-
-    $apiKey = [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
 
     $all = @{}
     foreach ($k in $acmeValues.Keys) { $all[$k] = $acmeValues[$k] }
-    foreach ($k in $pathValues.Keys) { $all[$k] = $pathValues[$k] }
-    $all['CERTIFICATE_API_KEY'] = $apiKey
+    if (-not $all.ContainsKey('ACME_PROVIDER') -or [string]::IsNullOrWhiteSpace([string]$all.ACME_PROVIDER)) { $all.ACME_PROVIDER = 'letsencrypt' }
+    if (-not $all.ContainsKey('ACME_REQUIRES_EAB') -or [string]::IsNullOrWhiteSpace([string]$all.ACME_REQUIRES_EAB)) { $all.ACME_REQUIRES_EAB = '0' }
+    if (-not $all.ContainsKey('TARGET_SYSTEM') -or [string]::IsNullOrWhiteSpace([string]$all.TARGET_SYSTEM)) { $all.TARGET_SYSTEM = 'rds' }
+    if (-not $all.ContainsKey('TARGET_LOCATION') -or [string]::IsNullOrWhiteSpace([string]$all.TARGET_LOCATION)) { $all.TARGET_LOCATION = 'this-server' }
+    if (-not $all.ContainsKey('ACME_CSR_ALGORITHM') -or [string]::IsNullOrWhiteSpace([string]$all.ACME_CSR_ALGORITHM)) { $all.ACME_CSR_ALGORITHM = 'ec' }
+    if (-not $all.ContainsKey('ACME_PRIVATEKEY_EXPORTABLE') -or [string]::IsNullOrWhiteSpace([string]$all.ACME_PRIVATEKEY_EXPORTABLE)) { $all.ACME_PRIVATEKEY_EXPORTABLE = 'false' }
 
-    foreach ($pathKey in @('CERTIFICATE_CONFIG_DIR','CERTIFICATE_DROP_DIR','CERTIFICATE_STATE_DIR','CERTIFICATE_LOG_DIR','ACME_SCRIPT_PATH')) {
-        if ($all.ContainsKey($pathKey) -and -not [string]::IsNullOrWhiteSpace([string]$all[$pathKey])) {
-            $all[$pathKey] = Resolve-AbsoluteSetupPath -PathValue ([string]$all[$pathKey])
-        }
-    }
+    Write-EnvFile -Values $all -Path $DefaultEnvPath
 
-    foreach ($dir in @($all.CERTIFICATE_CONFIG_DIR, $all.CERTIFICATE_DROP_DIR,
-                        $all.CERTIFICATE_STATE_DIR, $all.CERTIFICATE_LOG_DIR)) {
-        if ($dir -and -not (Test-Path -LiteralPath $dir)) {
-            New-Item -ItemType Directory -Path $dir -Force | Out-Null
-        }
-    }
-
-    $envTarget = Join-Path $all.CERTIFICATE_CONFIG_DIR 'certificate.env'
-    $public = @{}
-    foreach ($k in $all.Keys) {
-        if ($k -notin @('ACME_KID','ACME_HMAC_SECRET','CERTIFICATE_API_KEY')) { $public[$k] = $all[$k] }
-    }
-    Write-EnvFile -Values $public -Path $envTarget
-    Save-SecurePlatformConfig -ConfigDir $all.CERTIFICATE_CONFIG_DIR -Values $all
-    $policiesPath = Join-Path $all.CERTIFICATE_CONFIG_DIR 'policies.json'
-    if (-not (Test-Path -LiteralPath $policiesPath)) {
-        $tmp = [System.IO.Path]::GetTempFileName()
-        [System.IO.File]::WriteAllText($tmp, '[]', [System.Text.Encoding]::UTF8)
-        Move-Item -LiteralPath $tmp -Destination $policiesPath -Force
-    }
-    [Environment]::SetEnvironmentVariable('CERTIFICATE_CONFIG_DIR', $all.CERTIFICATE_CONFIG_DIR)
-
-    Show-TuiStatus -Message "Wizard complete. certificate.env saved to: $envTarget" `
+    Show-TuiStatus -Message "Wizard complete. certificate.env saved to: $DefaultEnvPath" `
         -Type Success -Row ([Math]::Max(0, [Console]::WindowHeight) - 2)
     Start-Sleep -Milliseconds 1500
 
-    return $envTarget
+    return $DefaultEnvPath
 }
 
 Export-ModuleMember -Function @('Invoke-DeviceForm','Invoke-AcmeForm','Invoke-PolicyEditor','Invoke-FirstRunWizard','Test-FanoutPolicyValue','Test-QuorumThreshold','Show-PoliciesView','Read-Policies','Invoke-ManageCertificatesMenu')
