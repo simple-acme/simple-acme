@@ -22,6 +22,7 @@ try {
     $envValues = Import-EnvFile -Force
     $preflight = Assert-ReconcilePreflight -EnvValues $envValues
     Write-Output "preflight ok: wacs=$($preflight.WacsPath) domains=$($preflight.DomainCount) script=$($preflight.ScriptPath)"
+    Write-SimpleAcmeLogDiagnosticSummary
     if ($PreflightOnly) {
         Write-Output 'preflight only mode: reconcile skipped.'
         exit 0
@@ -30,6 +31,7 @@ try {
     Write-Output "simple-acme reconcile complete: $action"
     exit 0
 } catch {
+    Write-SimpleAcmeLogDiagnosticSummary
     Write-Error $_
     exit 1
 } finally {

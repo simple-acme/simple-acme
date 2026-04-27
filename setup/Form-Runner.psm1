@@ -260,8 +260,8 @@ function Find-PolicyById {
 }
 
 function Format-PolicySummaryLines {
-    param([Parameter(Mandatory)][object[]]$Policies)
-    if (@($Policies).Count -eq 0) { return @('No deployment policies found.') }
+    param([AllowEmptyCollection()][object[]]$Policies = @())
+    if (@($Policies).Count -eq 0) { return @() }
     $lines = @()
     foreach ($p in $Policies) {
         $connectors = @($p.connectors)
@@ -276,6 +276,9 @@ function Invoke-PolicyViewer {
     param([Parameter(Mandatory)][string]$ConfigDir)
     $policies = @(Get-Policies -ConfigDir $ConfigDir)
     $lines = @(Format-PolicySummaryLines -Policies $policies)
+    if ($lines.Count -eq 0) {
+        $lines = @('No deployment policies found.')
+    }
     Clear-TuiScreen
     $bounds = Get-TuiLayoutBounds
     $height = [Math]::Min($bounds.ContentHeight, [Math]::Max(8, $lines.Count + 4))
@@ -285,7 +288,401 @@ function Invoke-PolicyViewer {
         Write-TuiAt -X ($bounds.BoxX + 2) -Y ($bounds.BoxY + 1 + $i) -Text (Get-TuiClippedText -Text $lines[$i] -Width ($bounds.BoxWidth - 4))
     }
     Show-TuiStatus -Message 'Press Enter/Esc to return.' -Type Info -Row $bounds.HelpRow
-    do { $k = Read-TuiKey } while ($k.Key -notin @([ConsoleKey]::Enter,[ConsoleKey]::Escape,[ConsoleKey]::Backspace))
+    Wait-ForOperatorReturn
+}
+
+function Resolve-ProjectRoot {
+    param([string]$EnvFilePath)
+    if (-not [string]::IsNullOrWhiteSpace([string]$EnvFilePath)) {
+        $resolvedEnvPath = Resolve-AbsoluteSetupPath -PathValue $EnvFilePath
+        return [System.IO.Path]::GetFullPath((Split-Path -Path $resolvedEnvPath -Parent))
+    }
+    return (Split-Path $PSScriptRoot -Parent)
+}
+
+function Get-SimpleAcmeDataRoot {
+    return (Join-Path $env:ProgramData 'simple-acme')
+}
+
+function Get-SimpleAcmeSettingsPaths {
+    $baseDir = Get-SimpleAcmeDataRoot
+    $paths = New-Object System.Collections.Generic.List[string]
+    $rootSettings = Join-Path $baseDir 'settings.json'
+    if (Test-Path -LiteralPath $rootSettings -PathType Leaf) { $paths.Add((Convert-Path -LiteralPath $rootSettings -ErrorAction Stop)) }
+    if (Test-Path -LiteralPath $baseDir -PathType Container) {
+        foreach ($child in @(Get-ChildItem -LiteralPath $baseDir -Directory -ErrorAction SilentlyContinue)) {
+            $childSettings = Join-Path $child.FullName 'settings.json'
+            if (Test-Path -LiteralPath $childSettings -PathType Leaf) {
+                $paths.Add((Convert-Path -LiteralPath $childSettings -ErrorAction Stop))
+            }
+        }
+    }
+    return @($paths | Select-Object -Unique)
+}
+
+function Read-SimpleAcmeSettings {
+    param([Parameter(Mandatory)][string]$Path)
+    try {
+        $json = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+    } catch {
+        throw "Failed to parse simple-acme settings '$Path': $($_.Exception.Message)"
+    }
+    return $json
+}
+
+function ConvertTo-HashtableRecursiveLocal {
+    param($InputObject)
+    if ($null -eq $InputObject) { return $null }
+    if ($InputObject -is [System.Collections.IDictionary]) {
+        $hash = @{}
+        foreach ($key in $InputObject.Keys) {
+            $hash[[string]$key] = ConvertTo-HashtableRecursiveLocal -InputObject $InputObject[$key]
+        }
+        return $hash
+    }
+    if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
+        $hash = @{}
+        foreach ($prop in $InputObject.PSObject.Properties) {
+            $hash[$prop.Name] = ConvertTo-HashtableRecursiveLocal -InputObject $prop.Value
+        }
+        return $hash
+    }
+    if ($InputObject -is [System.Collections.IEnumerable] -and -not ($InputObject -is [string])) {
+        $items = @()
+        foreach ($item in $InputObject) { $items += ConvertTo-HashtableRecursiveLocal -InputObject $item }
+        return $items
+    }
+    return $InputObject
+}
+
+function Mask-EnvDisplayValue {
+    param(
+        [Parameter(Mandatory)][string]$Name,
+        [AllowNull()][string]$Value
+    )
+    if ($Name -in @('ACME_HMAC_SECRET','CERTIFICATE_API_KEY')) {
+        if ([string]::IsNullOrWhiteSpace([string]$Value)) { return '' }
+        return '********'
+    }
+    return [string]$Value
+}
+
+function Get-SimpleAcmeLogLocations {
+    param([string]$ProjectRoot)
+    $result = [ordered]@{
+        WrapperCandidates = @()
+        WrapperExisting = @()
+        SimpleAcmeDirectories = @()
+    }
+
+    $projectRootResolved = if ([string]::IsNullOrWhiteSpace([string]$ProjectRoot)) { Split-Path $PSScriptRoot -Parent } else { [System.IO.Path]::GetFullPath($ProjectRoot) }
+    $wrapperCandidates = @(
+        (Join-Path $projectRootResolved 'log'),
+        (Join-Path $projectRootResolved 'logs')
+    )
+    $result.WrapperCandidates = @($wrapperCandidates | Select-Object -Unique)
+    $result.WrapperExisting = @($wrapperCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Container } | ForEach-Object { Convert-Path -LiteralPath $_ -ErrorAction Stop } | Select-Object -Unique)
+
+    $baseDir = Get-SimpleAcmeDataRoot
+    $locations = New-Object System.Collections.Generic.List[string]
+    $rootLog = Join-Path $baseDir 'Log'
+    if (Test-Path -LiteralPath $rootLog -PathType Container) { $locations.Add((Convert-Path -LiteralPath $rootLog -ErrorAction Stop)) }
+    if (Test-Path -LiteralPath $baseDir -PathType Container) {
+        foreach ($child in @(Get-ChildItem -LiteralPath $baseDir -Directory -ErrorAction SilentlyContinue)) {
+            $candidate = Join-Path $child.FullName 'Log'
+            if (Test-Path -LiteralPath $candidate -PathType Container) {
+                $locations.Add((Convert-Path -LiteralPath $candidate -ErrorAction Stop))
+            }
+        }
+    }
+    $result.SimpleAcmeDirectories = @($locations | Select-Object -Unique)
+    return [pscustomobject]$result
+}
+
+function Get-SimpleAcmeLatestLogFile {
+    param([string[]]$LogDirectories)
+    $files = @()
+    foreach ($dir in @($LogDirectories)) {
+        if (Test-Path -LiteralPath $dir -PathType Container) {
+            $files += @(Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc -Descending)
+        }
+    }
+    if ($files.Count -eq 0) { return $null }
+    return ($files | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1)
+}
+
+function Get-SimpleAcmeLogDiagnostics {
+    param([string]$LatestLogPath)
+    if ([string]::IsNullOrWhiteSpace([string]$LatestLogPath) -or -not (Test-Path -LiteralPath $LatestLogPath -PathType Leaf)) {
+        return [pscustomobject]@{
+            LogPath = $LatestLogPath
+            WarningCount = 0
+            ErrorCount = 0
+            HasAssemblyLoadErrors = $false
+            WarningLines = @()
+            ErrorLines = @()
+            LastLines = @()
+        }
+    }
+    $lines = @(Get-Content -LiteralPath $LatestLogPath -Encoding UTF8 -ErrorAction SilentlyContinue)
+    $warningLines = @($lines | Where-Object { $_ -match '\[WARN\]' })
+    $errorLines = @($lines | Where-Object { $_ -match '\[EROR\]' })
+    $assemblyErrors = @($errorLines | Where-Object { $_ -match 'Error loading assembly' })
+    $last50 = @()
+    if ($lines.Count -gt 50) { $last50 = @($lines[($lines.Count - 50)..($lines.Count - 1)]) } else { $last50 = $lines }
+    return [pscustomobject]@{
+        LogPath = $LatestLogPath
+        WarningCount = $warningLines.Count
+        ErrorCount = $errorLines.Count
+        HasAssemblyLoadErrors = ($assemblyErrors.Count -gt 0)
+        WarningLines = $warningLines
+        ErrorLines = $errorLines
+        LastLines = $last50
+    }
+}
+
+function Show-SimpleAcmeDiagnosticSummary {
+    param(
+        [string]$ProjectRoot,
+        [switch]$ShowNoobAdvice
+    )
+    $locations = Get-SimpleAcmeLogLocations -ProjectRoot $ProjectRoot
+    $latest = Get-SimpleAcmeLatestLogFile -LogDirectories $locations.SimpleAcmeDirectories
+    if ($null -eq $latest) {
+        [Console]::WriteLine('simple-acme diagnostics: no log files found yet under ProgramData\simple-acme.')
+        return
+    }
+    $diag = Get-SimpleAcmeLogDiagnostics -LatestLogPath $latest.FullName
+    [Console]::WriteLine("simple-acme diagnostics: errors=$($diag.ErrorCount) warnings=$($diag.WarningCount) latest=$($latest.FullName)")
+    if ($diag.HasAssemblyLoadErrors) {
+        [Console]::WriteLine('simple-acme logged assembly load errors. This may indicate blocked DLLs, incompatible bundle files, or optional plugin load failures. Inspect:')
+        [Console]::WriteLine($latest.FullName)
+        if ($ShowNoobAdvice) {
+            [Console]::WriteLine('Advice (do not run automatically): Get-ChildItem C:\certificaat -Recurse | Unblock-File')
+        }
+    }
+}
+
+function Invoke-ViewLogsDiagnostics {
+    param([string]$ProjectRoot)
+    $locations = Get-SimpleAcmeLogLocations -ProjectRoot $ProjectRoot
+    [Console]::WriteLine('')
+    [Console]::WriteLine('Logs / diagnostics')
+    [Console]::WriteLine('-------------------')
+    [Console]::WriteLine('Wrapper log directories:')
+    foreach ($candidate in @($locations.WrapperCandidates)) {
+        $exists = if ($locations.WrapperExisting -contains $candidate -or $locations.WrapperExisting -contains (Resolve-AbsoluteSetupPath -PathValue $candidate)) { 'exists' } else { 'missing' }
+        [Console]::WriteLine(" - $candidate [$exists]")
+    }
+    [Console]::WriteLine('')
+    [Console]::WriteLine('simple-acme log directories:')
+    if (@($locations.SimpleAcmeDirectories).Count -eq 0) {
+        [Console]::WriteLine(' - none discovered under ProgramData\simple-acme yet.')
+        Wait-ForOperatorReturn
+        return
+    }
+    foreach ($dir in @($locations.SimpleAcmeDirectories)) { [Console]::WriteLine(" - $dir") }
+
+    $latest = Get-SimpleAcmeLatestLogFile -LogDirectories $locations.SimpleAcmeDirectories
+    if ($null -eq $latest) {
+        [Console]::WriteLine('')
+        [Console]::WriteLine('No log files found in discovered simple-acme log directories.')
+        Wait-ForOperatorReturn
+        return
+    }
+
+    $diag = Get-SimpleAcmeLogDiagnostics -LatestLogPath $latest.FullName
+    [Console]::WriteLine('')
+    [Console]::WriteLine("Newest log file: $($latest.FullName)")
+    [Console]::WriteLine("Warnings found: $($diag.WarningCount)")
+    [Console]::WriteLine("Errors found: $($diag.ErrorCount)")
+    if ($diag.HasAssemblyLoadErrors) {
+        [Console]::WriteLine('Assembly load errors were detected in this log.')
+    }
+    [Console]::WriteLine('')
+    [Console]::WriteLine('Last 50 lines:')
+    [Console]::WriteLine('--------------')
+    foreach ($line in @($diag.LastLines)) { [Console]::WriteLine([string]$line) }
+    Wait-ForOperatorReturn
+}
+
+function Invoke-AcmeSettingsMenu {
+    param([Parameter(Mandatory)][string]$EnvFilePath)
+
+    while ($true) {
+        [Console]::WriteLine('')
+        [Console]::WriteLine('ACME settings')
+        [Console]::WriteLine('[1] View current bootstrap certificate.env')
+        [Console]::WriteLine('[2] View simple-acme settings.json')
+        [Console]::WriteLine('[3] View renewal files')
+        [Console]::WriteLine('[4] Edit bootstrap ACME provider/directory/EAB values')
+        [Console]::WriteLine('[5] Set private key export setting')
+        [Console]::WriteLine('[6] Back')
+        $choice = Read-SetupChoice -Prompt 'ACME settings' -Options @{
+            '1'='view-bootstrap'
+            '2'='view-settings'
+            '3'='view-renewals'
+            '4'='edit-bootstrap'
+            '5'='set-exportable'
+            '6'='back'
+        } -DefaultKey '6'
+
+        if ($choice -in @('back','__CANCEL__','__BACK__')) { return }
+
+        switch ($choice) {
+            'view-bootstrap' {
+                [Console]::WriteLine('')
+                [Console]::WriteLine("Bootstrap env file: $EnvFilePath")
+                if (-not (Test-Path -LiteralPath $EnvFilePath -PathType Leaf)) {
+                    [Console]::WriteLine('certificate.env not found.')
+                    Wait-ForOperatorReturn
+                    continue
+                }
+                $envValues = Read-EnvFile -Path $EnvFilePath
+                foreach ($name in @($envValues.Keys | Sort-Object)) {
+                    $displayValue = Mask-EnvDisplayValue -Name [string]$name -Value ([string]$envValues[$name])
+                    [Console]::WriteLine("$name=$displayValue")
+                }
+                Wait-ForOperatorReturn
+            }
+            'view-settings' {
+                [Console]::WriteLine('')
+                $settingsPaths = @(Get-SimpleAcmeSettingsPaths)
+                if ($settingsPaths.Count -eq 0) {
+                    [Console]::WriteLine('simple-acme settings.json not found yet; it may be created after first wacs run.')
+                    Wait-ForOperatorReturn
+                    continue
+                }
+                foreach ($path in $settingsPaths) {
+                    [Console]::WriteLine("settings.json: $path")
+                    try {
+                        $settings = Read-SimpleAcmeSettings -Path $path
+                        $renewalDays = $null
+                        $renewalMinValid = $null
+                        $privateExportable = $null
+                        if ($settings.PSObject.Properties['ScheduledTask']) {
+                            $renewalDays = $settings.ScheduledTask.RenewalDays
+                            $renewalMinValid = $settings.ScheduledTask.RenewalMinimumValidDays
+                        }
+                        if ($settings.PSObject.Properties['Store'] -and $settings.Store.PSObject.Properties['CertificateStore']) {
+                            $privateExportable = $settings.Store.CertificateStore.PrivateKeyExportable
+                        }
+                        [Console]::WriteLine(" - ScheduledTask.RenewalDays=$renewalDays")
+                        [Console]::WriteLine(" - ScheduledTask.RenewalMinimumValidDays=$renewalMinValid")
+                        if ($null -ne $privateExportable) {
+                            [Console]::WriteLine(" - Store.CertificateStore.PrivateKeyExportable=$privateExportable")
+                        } else {
+                            [Console]::WriteLine(' - Store.CertificateStore.PrivateKeyExportable=(not present)')
+                        }
+                    } catch {
+                        [Console]::WriteLine(" - warning: $($_.Exception.Message)")
+                    }
+                }
+                Wait-ForOperatorReturn
+            }
+            'view-renewals' {
+                $baseDir = Get-SimpleAcmeDataRoot
+                [Console]::WriteLine('')
+                [Console]::WriteLine("Renewal file discovery root: $baseDir")
+                if (-not (Test-Path -LiteralPath $baseDir -PathType Container)) {
+                    [Console]::WriteLine('simple-acme data directory not found yet.')
+                    Wait-ForOperatorReturn
+                    continue
+                }
+                $files = @(Get-ChildItem -LiteralPath $baseDir -Filter '*.renewal.json' -File -Recurse -ErrorAction SilentlyContinue)
+                if ($files.Count -eq 0) {
+                    [Console]::WriteLine('No renewal JSON files found.')
+                    Wait-ForOperatorReturn
+                    continue
+                }
+                foreach ($file in $files) {
+                    [Console]::WriteLine("file: $($file.FullName)")
+                    try {
+                        $obj = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+                        $rawHosts = @()
+                        if ($obj.PSObject.Properties['Identifiers']) { $rawHosts += @($obj.Identifiers) }
+                        if ($obj.PSObject.Properties['Host']) { $rawHosts += @([string]$obj.Host -split ',') }
+                        if ($obj.PSObject.Properties['Hosts']) { $rawHosts += @($obj.Hosts) }
+                        $hosts = @($rawHosts | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Sort-Object -Unique)
+
+                        $scriptPath = '(none)'
+                        if ($obj.PSObject.Properties['Installation'] -and $obj.Installation.PSObject.Properties['Plugin']) {
+                            $installPlugin = [string]$obj.Installation.Plugin
+                        } else {
+                            $installPlugin = '(unknown)'
+                        }
+                        if ($obj.PSObject.Properties['Installation'] -and $obj.Installation.PSObject.Properties['PluginOptions'] -and $obj.Installation.PluginOptions.PSObject.Properties['Script']) {
+                            $scriptPath = [string]$obj.Installation.PluginOptions.Script
+                        }
+
+                        [Console]::WriteLine(" - domains/hosts: $(if ($hosts.Count -gt 0) { $hosts -join ',' } else { '(unknown)' })")
+                        [Console]::WriteLine(" - script path: $scriptPath")
+                        [Console]::WriteLine(" - installation plugin: $installPlugin")
+                    } catch {
+                        [Console]::WriteLine(" - warning: malformed JSON ($($_.Exception.Message))")
+                    }
+                }
+                Wait-ForOperatorReturn
+            }
+            'edit-bootstrap' {
+                $allowed = @('ACME_PROVIDER','ACME_DIRECTORY','ACME_REQUIRES_EAB','ACME_KID','ACME_HMAC_SECRET','ACME_ACCOUNT_NAME')
+                $envValues = @{}
+                if (Test-Path -LiteralPath $EnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $EnvFilePath }
+                foreach ($name in $allowed) {
+                    $current = if ($envValues.ContainsKey($name)) { [string]$envValues[$name] } else { '' }
+                    $promptCurrent = Mask-EnvDisplayValue -Name $name -Value $current
+                    $updated = [string](Read-Host "$name [$promptCurrent]")
+                    if (-not [string]::IsNullOrWhiteSpace($updated)) {
+                        $envValues[$name] = $updated
+                    } elseif (-not $envValues.ContainsKey($name)) {
+                        $envValues[$name] = ''
+                    }
+                }
+                Write-EnvFile -Values $envValues -Path $EnvFilePath
+                [Console]::WriteLine('Updated bootstrap ACME fields in certificate.env.')
+                Wait-ForOperatorReturn
+            }
+            'set-exportable' {
+                $settingsPaths = @(Get-SimpleAcmeSettingsPaths)
+                $targetSettingsPath = ''
+                if ($settingsPaths.Count -gt 0) {
+                    $targetSettingsPath = $settingsPaths[0]
+                } else {
+                    $targetSettingsPath = Join-Path (Get-SimpleAcmeDataRoot) 'settings.json'
+                }
+
+                if (-not (Test-Path -LiteralPath (Split-Path $targetSettingsPath -Parent))) {
+                    New-Item -ItemType Directory -Path (Split-Path $targetSettingsPath -Parent) -Force | Out-Null
+                }
+
+                $settings = @{}
+                if (Test-Path -LiteralPath $targetSettingsPath -PathType Leaf) {
+                    try {
+                        $existingObj = Get-Content -LiteralPath $targetSettingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
+                        $settings = ConvertTo-HashtableRecursiveLocal -InputObject $existingObj
+                    } catch {
+                        [Console]::WriteLine("warning: failed to parse existing settings.json, creating minimal settings object. $($_.Exception.Message)")
+                        $settings = @{}
+                    }
+                }
+                if (-not $settings.ContainsKey('Store') -or $null -eq $settings.Store) { $settings.Store = @{} }
+                if (-not $settings.Store.ContainsKey('CertificateStore') -or $null -eq $settings.Store.CertificateStore) { $settings.Store.CertificateStore = @{} }
+
+                [Console]::WriteLine('Choose private key export setting:')
+                [Console]::WriteLine('[1] PrivateKeyExportable=false')
+                [Console]::WriteLine('[2] PrivateKeyExportable=true')
+                $mode = Read-SetupChoice -Prompt 'Export setting' -Options @{ '1'='false'; '2'='true' } -DefaultKey '1' -AllowBack
+                if ($mode -in @('__CANCEL__','__BACK__')) { continue }
+
+                $settings.Store.CertificateStore.PrivateKeyExportable = ($mode -eq 'true')
+                [System.IO.File]::WriteAllText($targetSettingsPath, ($settings | ConvertTo-Json -Depth 12), (New-Object System.Text.UTF8Encoding($false)))
+                [Console]::WriteLine("Updated: $targetSettingsPath")
+                [Console]::WriteLine('This applies only to newly issued certificates.')
+                [Console]::WriteLine('Existing certificates must be reissued to change private key exportability.')
+                Wait-ForOperatorReturn
+            }
+        }
+    }
 }
 
 function Invoke-PolicyEditor {
@@ -937,4 +1334,20 @@ function Invoke-FirstRunWizard {
     return $DefaultEnvPath
 }
 
-Export-ModuleMember -Function @('Invoke-DeviceForm','Invoke-AcmeForm','Invoke-PolicyEditor','Invoke-FirstRunWizard','Test-FanoutPolicyValue','Test-QuorumThreshold','Show-PoliciesView','Read-Policies','Invoke-ManageCertificatesMenu')
+Export-ModuleMember -Function @(
+    'Invoke-DeviceForm',
+    'Invoke-AcmeForm',
+    'Invoke-AcmeSettingsMenu',
+    'Invoke-PolicyEditor',
+    'Invoke-PolicyViewer',
+    'Invoke-FirstRunWizard',
+    'Test-FanoutPolicyValue',
+    'Test-QuorumThreshold',
+    'Show-PoliciesView',
+    'Read-Policies',
+    'Invoke-ManageCertificatesMenu',
+    'Get-SimpleAcmeLogLocations',
+    'Show-SimpleAcmeDiagnosticSummary',
+    'Invoke-ViewLogsDiagnostics'
+    ,'Wait-ForOperatorReturn'
+)

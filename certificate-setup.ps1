@@ -55,9 +55,14 @@ if ($null -eq $formRunnerModule) {
 }
 Assert-SetupCommandAvailable -CommandName 'Invoke-FirstRunWizard' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeForm' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+Assert-SetupCommandAvailable -CommandName 'Invoke-AcmeSettingsMenu' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyEditor' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+Assert-SetupCommandAvailable -CommandName 'Invoke-PolicyViewer' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 Assert-SetupCommandAvailable -CommandName 'Invoke-DeviceForm' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 Assert-SetupCommandAvailable -CommandName 'Invoke-ManageCertificatesMenu' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+Assert-SetupCommandAvailable -CommandName 'Invoke-ViewLogsDiagnostics' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+Assert-SetupCommandAvailable -CommandName 'Show-SimpleAcmeDiagnosticSummary' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
+Assert-SetupCommandAvailable -CommandName 'Wait-ForOperatorReturn' -ExpectedModulePath $formRunnerModulePath -ModuleInfo $formRunnerModule
 $schedulerModule = Import-Module $schedulerModulePath -Force -Global -PassThru
 if ($null -eq $schedulerModule) {
     throw "Unable to import required scheduler module from path: $schedulerModulePath"
@@ -72,7 +77,7 @@ function Invoke-InitialAcmeReconcilePrompt {
     $answer = [string](Read-Host 'Run initial ACME reconcile now? [Y/N]')
     if ($answer.Trim().ToLowerInvariant() -notin @('y','yes')) {
         Show-TuiStatus -Message 'Skipped ACME reconcile. Run certificate-simple-acme-reconcile.ps1 later to bootstrap issuance.' -Type Warning -Row $statusRow
-        Start-Sleep -Milliseconds 2000
+        Wait-ForOperatorReturn
         return
     }
 
@@ -81,11 +86,13 @@ function Invoke-InitialAcmeReconcilePrompt {
         Import-Module (Join-Path $RootDir 'core/Simple-Acme-Reconciler.psm1') -Force | Out-Null
         $action = Invoke-SimpleAcmeReconcile -EnvValues $envValues
         Show-TuiStatus -Message "ACME reconcile completed successfully (action=$action)." -Type Success -Row $statusRow
+        Show-SimpleAcmeDiagnosticSummary -ProjectRoot $RootDir -ShowNoobAdvice
         Invoke-PostSetupValidation -RootDir $RootDir -EnvValues $envValues
     } catch {
         Show-TuiStatus -Message "ACME reconcile failed: $($_.Exception.Message)" -Type Error -Row $statusRow
+        Show-SimpleAcmeDiagnosticSummary -ProjectRoot $RootDir -ShowNoobAdvice
+        Wait-ForOperatorReturn
     }
-    Start-Sleep -Milliseconds 2200
 }
 
 function Invoke-PostSetupValidation {
@@ -110,8 +117,8 @@ function Invoke-PostSetupValidation {
         Show-TuiStatus -Message 'Post-setup validation passed (renewal JSON, plugins, and script wiring).' -Type Success -Row $statusRow
     } catch {
         Show-TuiStatus -Message "Post-setup validation warning: $($_.Exception.Message)" -Type Warning -Row $statusRow
+        Wait-ForOperatorReturn
     }
-    Start-Sleep -Milliseconds 1500
 }
 
 function Invoke-OrchestratorTaskRegistration {
@@ -181,14 +188,12 @@ while ($menuStack.Count -gt 0) {
         }
         'manage-certs'   { Invoke-ManageCertificatesMenu -ConfigDir $configDir }
         'acme'           {
-            $result = Invoke-AcmeForm -EnvFilePath $envPath
-            if ($null -ne $result) {
-                Invoke-InitialAcmeReconcilePrompt -RootDir $PSScriptRoot
-            }
+            Invoke-AcmeSettingsMenu -EnvFilePath $envPath
         }
+        'logs-diagnostics' { Invoke-ViewLogsDiagnostics -ProjectRoot $PSScriptRoot }
         'task-register'  { Invoke-OrchestratorTaskRegistration -RootDir $PSScriptRoot }
         'policies'       { Invoke-PolicyEditor -ConfigDir $configDir | Out-Null }
-        'policies-view'  { Invoke-PolicyEditor -ConfigDir $configDir -ViewOnly | Out-Null }
+        'policies-view'  { Invoke-PolicyViewer -ConfigDir $configDir | Out-Null }
         'backup-create'  { & "$PSScriptRoot/certificate-backup.ps1" -OutputPath (Join-Path $PSScriptRoot ("certificate-{0}.certbak" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))) }
         'backup-restore' {
             $path = Read-Host 'Backup path'
