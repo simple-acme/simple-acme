@@ -92,6 +92,73 @@ function Get-RenewalFiles {
     return @(Get-ChildItem -LiteralPath $SimpleAcmeDir -Filter '*.renewal.json' -File -ErrorAction SilentlyContinue)
 }
 
+function Get-SimpleAcmeLogDirectories {
+    param([string]$SimpleAcmeDir = (Join-Path $env:ProgramData 'simple-acme'))
+    $dirs = New-Object System.Collections.Generic.List[string]
+    $rootLog = Join-Path $SimpleAcmeDir 'Log'
+    if (Test-Path -LiteralPath $rootLog -PathType Container) { $dirs.Add((Convert-Path -LiteralPath $rootLog -ErrorAction Stop)) }
+    if (Test-Path -LiteralPath $SimpleAcmeDir -PathType Container) {
+        foreach ($child in @(Get-ChildItem -LiteralPath $SimpleAcmeDir -Directory -ErrorAction SilentlyContinue)) {
+            $candidate = Join-Path $child.FullName 'Log'
+            if (Test-Path -LiteralPath $candidate -PathType Container) {
+                $dirs.Add((Convert-Path -LiteralPath $candidate -ErrorAction Stop))
+            }
+        }
+    }
+    return @($dirs | Select-Object -Unique)
+}
+
+function Get-LatestSimpleAcmeLogFile {
+    param([string[]]$Directories = @(Get-SimpleAcmeLogDirectories))
+    $files = @()
+    foreach ($dir in @($Directories)) {
+        if (Test-Path -LiteralPath $dir -PathType Container) {
+            $files += @(Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue)
+        }
+    }
+    if ($files.Count -eq 0) { return $null }
+    return ($files | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1)
+}
+
+function Get-SimpleAcmeLogDiagnosticSummary {
+    param([string]$LogPath)
+    if ([string]::IsNullOrWhiteSpace([string]$LogPath) -or -not (Test-Path -LiteralPath $LogPath -PathType Leaf)) {
+        return [pscustomobject]@{
+            LogPath = $LogPath
+            WarningCount = 0
+            ErrorCount = 0
+            HasAssemblyLoadErrors = $false
+        }
+    }
+    $lines = @(Get-Content -LiteralPath $LogPath -Encoding UTF8 -ErrorAction SilentlyContinue)
+    $warnings = @($lines | Where-Object { $_ -match '\[WARN\]' })
+    $errors = @($lines | Where-Object { $_ -match '\[EROR\]' })
+    $assembly = @($errors | Where-Object { $_ -match 'Error loading assembly' })
+    return [pscustomobject]@{
+        LogPath = $LogPath
+        WarningCount = $warnings.Count
+        ErrorCount = $errors.Count
+        HasAssemblyLoadErrors = ($assembly.Count -gt 0)
+    }
+}
+
+function Write-SimpleAcmeLogDiagnosticSummary {
+    $latest = Get-LatestSimpleAcmeLogFile
+    if ($null -eq $latest) {
+        Write-Host 'simple-acme diagnostics: no log files discovered under ProgramData\simple-acme.'
+        return
+    }
+    $summary = Get-SimpleAcmeLogDiagnosticSummary -LogPath $latest.FullName
+    Write-Host "simple-acme diagnostics: errors=$($summary.ErrorCount) warnings=$($summary.WarningCount) latest=$($summary.LogPath)"
+    if ($summary.HasAssemblyLoadErrors) {
+        Write-Warning @"
+simple-acme logged assembly load errors. This may indicate blocked DLLs, incompatible bundle files, or optional plugin load failures. Inspect:
+$($summary.LogPath)
+Advice (optional): Get-ChildItem C:\certificaat -Recurse | Unblock-File
+"@
+    }
+}
+
 function Find-PropertyValues {
     param(
         [Parameter(Mandatory)]$InputObject,
@@ -564,11 +631,8 @@ function Get-WacsVersion {
     if ($null -ne $EnvValues -and $EnvValues.ContainsKey('ACME_WACS_VERSION')) {
         $fromEnv = [string]$EnvValues.ACME_WACS_VERSION
     }
-    $versionOutput = if (-not [string]::IsNullOrWhiteSpace($fromEnv)) {
-        $fromEnv
-    } else {
-        (Invoke-NativeProcess -FilePath (Resolve-WacsExecutablePath -EnvValues $EnvValues) -ArgumentList @('--version') -TimeoutSeconds 30).OutputLines | Select-Object -First 1
-    }
+    $versionOutput = if (-not [string]::IsNullOrWhiteSpace($fromEnv)) { $fromEnv } else { (Invoke-NativeProcess -FilePath (Resolve-WacsExecutablePath -EnvValues $EnvValues) -ArgumentList @('--version') -TimeoutSeconds 30).OutputLines | Select-Object -First 1 }
+    Write-SimpleAcmeLogDiagnosticSummary
 
     if ([string]::IsNullOrWhiteSpace([string]$versionOutput)) {
         throw 'Unable to detect simple-acme/wacs version.'
@@ -786,6 +850,9 @@ function Invoke-SimpleAcmeReconcile {
 
     Write-ReconcileLog -Action 'update' -Domains $domains -Result 'success' -Message 'Renewal was recreated safely.'
     return 'update'
+    } catch {
+        Write-SimpleAcmeLogDiagnosticSummary
+        throw
     } finally {
         if ($null -ne $lockFileStream) {
             $lockFileStream.Dispose()
@@ -812,5 +879,7 @@ Export-ModuleMember -Function @(
     'Wait-RenewalFileRemoval',
     'New-ReconcileConfigHash',
     'Test-ExactDomainSetMatch',
-    'Write-ReconcileLog'
+    'Write-ReconcileLog',
+    'Write-SimpleAcmeLogDiagnosticSummary',
+    'Get-SimpleAcmeLogDiagnosticSummary'
 )

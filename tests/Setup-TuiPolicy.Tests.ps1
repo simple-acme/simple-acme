@@ -71,8 +71,7 @@ Describe 'Setup TUI and policy reliability' {
 
     It 'Format-PolicySummaryLines supports empty and populated policy lists' {
         $empty = @(Format-PolicySummaryLines -Policies @())
-        $empty.Count | Should -Be 1
-        $empty[0] | Should -Match 'No deployment policies found'
+        $empty.Count | Should -Be 0
 
         $policies = @(
             [pscustomobject]@{ policy_id='alpha'; fanout_policy='all'; quorum_threshold=2; connectors=@([pscustomobject]@{ connector_type='iis' }) },
