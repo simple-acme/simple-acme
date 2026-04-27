@@ -145,13 +145,7 @@ function Invoke-OrchestratorTaskRegistration {
     Start-Sleep -Milliseconds 2200
 }
 
-$envPath = if ($env:CERTIFICATE_ENV_FILE) {
-    [string]$env:CERTIFICATE_ENV_FILE
-} elseif ($env:CERTIFICATE_CONFIG_DIR) {
-    Join-Path $env:CERTIFICATE_CONFIG_DIR 'certificate.env'
-} else {
-    Join-Path $PSScriptRoot 'certificate.env'
-}
+$envPath = if ($env:CERTIFICATE_ENV_FILE) { [string]$env:CERTIFICATE_ENV_FILE } else { Join-Path $PSScriptRoot 'certificate.env' }
 
 . "$PSScriptRoot/config.ps1"
 Initialize-CertificateConfig -AllowIncomplete | Out-Null

@@ -69,11 +69,11 @@ foreach ($modulePath in $coreModules) {
 Write-Host '[compat] Running Invoke-NativeProcess with a harmless command.'
 if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) {
     $cmdExe = Join-Path $env:SystemRoot 'System32\cmd.exe'
-    $result = Invoke-NativeProcess -FilePath $cmdExe -ArgumentList @('/c','echo','compat-ok') -TimeoutSeconds 10
+    $result = Invoke-NativeProcess -FilePath $cmdExe -ArgumentList @('/c','echo','compat ok with spaces') -TimeoutSeconds 10
     if (-not $result.Succeeded) {
         throw 'Invoke-NativeProcess failed for cmd.exe compatibility check.'
     }
-    if (-not ($result.OutputLines -contains 'compat-ok')) {
+    if (-not (@($result.OutputLines | Where-Object { $_ -match 'compat ok with spaces' }).Count -gt 0)) {
         throw 'Invoke-NativeProcess output did not contain expected marker.'
     }
 } else {
@@ -90,7 +90,7 @@ if ($hadOriginal) {
 
 try {
     'stub' | Set-Content -LiteralPath $wacsPath -Encoding ASCII
-    $resolved = Resolve-WacsExecutablePath -EnvValues @{}
+    $resolved = Resolve-WacsExecutable -EnvValues @{}
     $expected = Convert-Path -LiteralPath $wacsPath
     if ($resolved -ne $expected) {
         throw "Expected resolver to return bundled executable path '$expected' but got '$resolved'."
