@@ -19,7 +19,8 @@ try {
             $transcriptStarted = $true
         }
     }
-    $envValues = Import-EnvFile -Force
+    $envFilePath = Resolve-BootstrapEnvPath -ProjectRoot $PSScriptRoot
+    $envValues = Import-EnvFile -Path $envFilePath -Force
     $preflight = Assert-ReconcilePreflight -EnvValues $envValues
     Write-Output "preflight ok: wacs=$($preflight.WacsPath) domains=$($preflight.DomainCount) script=$($preflight.ScriptPath)"
     Write-SimpleAcmeLogDiagnosticSummary

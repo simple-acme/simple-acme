@@ -158,17 +158,25 @@ function Get-SimpleAcmeLogDiagnosticSummary {
 function Write-SimpleAcmeLogDiagnosticSummary {
     $latest = Get-LatestSimpleAcmeLogFile
     if ($null -eq $latest) {
-        Write-Host 'simple-acme diagnostics: no log files discovered under ProgramData\simple-acme.'
+        Write-Host 'simple-acme diagnostics'
+        Write-Host '-----------------------'
+        Write-Host 'No log files discovered under ProgramData\simple-acme.'
         return
     }
     $summary = Get-SimpleAcmeLogDiagnosticSummary -LogPath $latest.FullName
-    Write-Host "simple-acme diagnostics: errors=$($summary.ErrorCount) warnings=$($summary.WarningCount) latest=$($summary.LogPath)"
+    Write-Host 'simple-acme diagnostics'
+    Write-Host '-----------------------'
+    Write-Host "Errors: $($summary.ErrorCount)"
+    Write-Host "Warnings: $($summary.WarningCount)"
+    Write-Host 'Latest log:'
+    Write-Host $summary.LogPath
     if ($summary.HasAssemblyLoadErrors) {
-        Write-Warning @"
-simple-acme logged assembly load errors. This may indicate blocked DLLs, incompatible bundle files, or optional plugin load failures. Inspect:
-$($summary.LogPath)
-Advice (optional): Get-ChildItem C:\certificaat -Recurse | Unblock-File
-"@
+        Write-Host ''
+        Write-Host 'Assembly load errors were found.'
+        Write-Host 'This may indicate blocked DLLs, incompatible bundle files, or optional plugin load failures.'
+        Write-Host ''
+        Write-Host 'Optional manual repair:'
+        Write-Host 'Get-ChildItem C:\certificaat -Recurse | Unblock-File'
     }
 }
 
@@ -698,7 +706,7 @@ Fix the wrapper command generation.
         if ($fallback.Success) { $versionText = $fallback.Value }
     }
     if ([string]::IsNullOrWhiteSpace($versionText)) {
-        throw "Unable to parse simple-acme/wacs version from output: '$joined'."
+        throw 'Unable to parse simple-acme/wacs version from output.'
     }
 
     return [pscustomobject]@{

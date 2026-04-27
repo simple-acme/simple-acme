@@ -12,6 +12,7 @@ $ErrorActionPreference = 'Stop'
 $cryptoModulePath = Join-Path $PSScriptRoot 'core/Crypto.psm1'
 $cryptoModule = Import-Module $cryptoModulePath -Force -PassThru
 Import-Module "$PSScriptRoot/core/Config-Store.psm1" -Force
+Import-Module "$PSScriptRoot/core/Env-Loader.psm1" -Force
 
 $plainTextCommand = Get-Command 'ConvertTo-PlainText' -ErrorAction SilentlyContinue
 if ($null -eq $plainTextCommand -or [string]::IsNullOrWhiteSpace([string]$plainTextCommand.Source) -or $plainTextCommand.Source -ne $cryptoModule.Name) {
@@ -111,7 +112,7 @@ try {
     $warnings = New-Object System.Collections.Generic.List[string]
     $files = New-Object System.Collections.Generic.List[object]
 
-    $envPath = Join-Path $ProjectRoot 'certificate.env'
+    $envPath = Resolve-BootstrapEnvPath -ProjectRoot $ProjectRoot
     $parsedEnv = Read-EnvFileBestEffort -Path $envPath
     foreach ($warning in $parsedEnv.Warnings) { $warnings.Add([string]$warning) }
     if (Test-Path -LiteralPath $envPath) {

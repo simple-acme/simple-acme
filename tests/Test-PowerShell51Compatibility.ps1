@@ -127,6 +127,31 @@ try {
     $providerOvWild = Get-ProviderDefaults -Provider 'networking4all' -Networking4AllEnvironment 'production' -Networking4AllProduct 'ov-wildcard-san'
     if ([string]$providerOvWild.ACME_DIRECTORY -ne 'https://acme.networking4all.com/ov-wildcard-san') { throw 'Networking4All production ov-wildcard-san URL construction failed.' }
     if (-not [bool]$providerDv.RequiresEab) { throw 'Networking4All provider must require EAB.' }
+    $expectedBootstrap = [System.IO.Path]::GetFullPath((Join-Path $repoRoot 'certificate.env'))
+    $resolvedBootstrap = Resolve-BootstrapEnvPath -ProjectRoot $repoRoot
+    if ($resolvedBootstrap -ne $expectedBootstrap) { throw "Resolve-BootstrapEnvPath default mismatch: '$resolvedBootstrap'" }
+
+    $oldOverride = [Environment]::GetEnvironmentVariable('CERTIFICATE_ENV_FILE')
+    try {
+        $overridePath = Join-Path $tempRoot 'override.env'
+        [Environment]::SetEnvironmentVariable('CERTIFICATE_ENV_FILE', $overridePath)
+        $resolvedOverride = Resolve-BootstrapEnvPath -ProjectRoot $repoRoot
+        if ($resolvedOverride -ne [System.IO.Path]::GetFullPath($overridePath)) {
+            throw "Resolve-BootstrapEnvPath override mismatch: '$resolvedOverride'"
+        }
+    } finally {
+        [Environment]::SetEnvironmentVariable('CERTIFICATE_ENV_FILE', $oldOverride)
+    }
+
+    $savedExpected = @{
+        ACME_PROVIDER = 'networking4all'
+        ACME_NETWORKING4ALL_ENVIRONMENT = 'test'
+        ACME_NETWORKING4ALL_PRODUCT = 'dv'
+        ACME_DIRECTORY = 'https://test-acme.networking4all.com/dv'
+        ACME_REQUIRES_EAB = '1'
+        DOMAINS = 'remote.example.nl'
+    }
+    Assert-SavedEnvMatchesSetup -Expected $savedExpected -Actual $savedExpected
 
     $pipeline = Get-GuidedPipelineTemplate -TargetSystem 'rds' -ValidationMode 'none'
     if ([string]$pipeline.ACME_SCRIPT_PARAMETERS -ne '{CertThumbprint}') { throw 'RDS script parameters must be {CertThumbprint}.' }

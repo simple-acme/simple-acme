@@ -5,6 +5,7 @@ $script:tuiModule = $null
 $tuiEngineModulePath = Join-Path $PSScriptRoot 'core/Tui-Engine.psm1'
 $formRunnerModulePath = Join-Path $PSScriptRoot 'setup/Form-Runner.psm1'
 $schedulerModulePath = Join-Path $PSScriptRoot 'core/Scheduler.psm1'
+$envLoaderModulePath = Join-Path $PSScriptRoot 'core/Env-Loader.psm1'
 
 function Assert-SetupCommandAvailable {
     param(
@@ -68,12 +69,34 @@ if ($null -eq $schedulerModule) {
     throw "Unable to import required scheduler module from path: $schedulerModulePath"
 }
 Assert-SetupCommandAvailable -CommandName 'Ensure-OrchestratorScheduledTask' -ExpectedModulePath $schedulerModulePath -ModuleInfo $schedulerModule
+Import-Module $envLoaderModulePath -Force -Global | Out-Null
 . "$PSScriptRoot/setup/Menu-Tree.ps1"
 
 function Invoke-InitialAcmeReconcilePrompt {
-    param([Parameter(Mandatory)][string]$RootDir)
+    param(
+        [Parameter(Mandatory)][string]$RootDir,
+        [Parameter(Mandatory)][string]$EnvFilePath
+    )
 
     $statusRow = [Math]::Max(0, [Console]::WindowHeight - 2)
+    $envValues = Import-EnvFile -Path $EnvFilePath -Force
+
+    if ([string]$envValues.ACME_PROVIDER -eq 'networking4all' -and [string]$envValues.ACME_DIRECTORY -notmatch 'networking4all\.com') {
+        Show-TuiStatus -Message 'Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is not Networking4All. Setup was not saved.' -Type Error -Row $statusRow
+        Wait-ForOperatorReturn
+        return
+    }
+
+    [Console]::WriteLine('')
+    [Console]::WriteLine('Issuance ACME directory:')
+    [Console]::WriteLine([string]$envValues.ACME_DIRECTORY)
+    [Console]::WriteLine('')
+    [Console]::WriteLine('Effective wacs command preview:')
+    [Console]::WriteLine(("wacs.exe --accepttos --source manual --order single --baseuri {0} --validation none --globalvalidation none --host {1}" -f [string]$envValues.ACME_DIRECTORY, [string]$envValues.DOMAINS))
+    if (-not [string]::IsNullOrWhiteSpace([string]$envValues.ACME_KID)) { [Console]::WriteLine('--eab-key-identifier <set>') }
+    if (-not [string]::IsNullOrWhiteSpace([string]$envValues.ACME_HMAC_SECRET)) { [Console]::WriteLine('--eab-key <hidden>') }
+    [Console]::WriteLine('')
+
     $answer = [string](Read-Host 'Run initial ACME reconcile now? [Y/N]')
     if ($answer.Trim().ToLowerInvariant() -notin @('y','yes')) {
         Show-TuiStatus -Message 'Skipped ACME reconcile. Run certificate-simple-acme-reconcile.ps1 later to bootstrap issuance.' -Type Warning -Row $statusRow
@@ -82,7 +105,6 @@ function Invoke-InitialAcmeReconcilePrompt {
     }
 
     try {
-        $envValues = Import-EnvFile -Force
         Import-Module (Join-Path $RootDir 'core/Simple-Acme-Reconciler.psm1') -Force | Out-Null
         $action = Invoke-SimpleAcmeReconcile -EnvValues $envValues
         Show-TuiStatus -Message "ACME reconcile completed successfully (action=$action)." -Type Success -Row $statusRow
@@ -126,7 +148,7 @@ function Invoke-OrchestratorTaskRegistration {
 
     $statusRow = [Math]::Max(0, [Console]::WindowHeight - 2)
     try {
-        $envValues = Import-EnvFile -Force
+        $envValues = Import-EnvFile -Path (Resolve-BootstrapEnvPath -ProjectRoot $RootDir) -Force
         $taskName = if (-not [string]::IsNullOrWhiteSpace([string]$envValues.CERTIFICATE_TASK_NAME)) { [string]$envValues.CERTIFICATE_TASK_NAME } else { 'Certificate-Orchestrator' }
         $interval = 5
         if (-not [string]::IsNullOrWhiteSpace([string]$envValues.CERTIFICATE_TASK_INTERVAL_MINUTES)) {
@@ -145,7 +167,7 @@ function Invoke-OrchestratorTaskRegistration {
     Start-Sleep -Milliseconds 2200
 }
 
-$envPath = if ($env:CERTIFICATE_ENV_FILE) { [string]$env:CERTIFICATE_ENV_FILE } else { Join-Path $PSScriptRoot 'certificate.env' }
+$envPath = Resolve-BootstrapEnvPath -ProjectRoot $PSScriptRoot
 $envPathSource = if ($env:CERTIFICATE_ENV_FILE) { 'CERTIFICATE_ENV_FILE override' } else { 'default project-root certificate.env' }
 Write-Host ("Bootstrap env path: {0}" -f $envPath)
 Write-Host ("Bootstrap env source: {0}" -f $envPathSource)
@@ -180,7 +202,7 @@ while ($menuStack.Count -gt 0) {
         'setup-new'      {
             $result = Invoke-AcmeForm -EnvFilePath $envPath
             if ($null -ne $result) {
-                Invoke-InitialAcmeReconcilePrompt -RootDir $PSScriptRoot
+                Invoke-InitialAcmeReconcilePrompt -RootDir $PSScriptRoot -EnvFilePath $envPath
             }
         }
         'manage-certs'   { Invoke-ManageCertificatesMenu -ConfigDir $configDir }
