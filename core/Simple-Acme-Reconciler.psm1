@@ -39,38 +39,51 @@ function Get-NormalizedDomains {
 }
 
 
-function Resolve-WacsExecutablePath {
-    param([hashtable]$EnvValues)
+function Resolve-WacsExecutable {
+    param([hashtable]$EnvValues = @{})
+
+    $candidates = New-Object System.Collections.Generic.List[string]
+    if ($null -ne $EnvValues -and $EnvValues.ContainsKey('ACME_WACS_PATH')) {
+        $configured = [string]$EnvValues.ACME_WACS_PATH
+        if (-not [string]::IsNullOrWhiteSpace($configured)) {
+            $candidates.Add($configured)
+        }
+    }
 
     $projectRoot = Split-Path $PSScriptRoot -Parent
-    $candidates = @()
-    if ($null -ne $EnvValues -and $EnvValues.ContainsKey('ACME_WACS_PATH') -and -not [string]::IsNullOrWhiteSpace([string]$EnvValues.ACME_WACS_PATH)) {
-        $candidates += [string]$EnvValues.ACME_WACS_PATH
-    } elseif (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable('ACME_WACS_PATH'))) {
-        $candidates += [string][Environment]::GetEnvironmentVariable('ACME_WACS_PATH')
+    $candidates.Add((Join-Path $projectRoot 'wacs.exe'))
+    $candidates.Add((Join-Path $projectRoot 'simple-acme.exe'))
+
+    foreach ($cmdName in @('wacs.exe','wacs')) {
+        $cmd = Get-Command $cmdName -ErrorAction SilentlyContinue
+        if ($null -ne $cmd -and -not [string]::IsNullOrWhiteSpace([string]$cmd.Source)) {
+            $candidates.Add([string]$cmd.Source)
+        }
     }
-    $candidates += (Join-Path $projectRoot 'wacs.exe')
-    $candidates += (Join-Path $projectRoot 'simple-acme.exe')
 
     foreach ($candidate in $candidates) {
         if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
-        $resolvedCandidate = $candidate
-        if (-not [System.IO.Path]::IsPathRooted([string]$resolvedCandidate)) {
-            $resolvedCandidate = [System.IO.Path]::GetFullPath((Join-Path $projectRoot $resolvedCandidate))
+        $expanded = [Environment]::ExpandEnvironmentVariables($candidate)
+        if (-not [System.IO.Path]::IsPathRooted($expanded)) {
+            $expanded = [System.IO.Path]::GetFullPath((Join-Path $projectRoot $expanded))
         }
-        if (Test-Path -LiteralPath $resolvedCandidate -PathType Leaf) {
-            return $resolvedCandidate
-        }
-    }
-
-    $wacsCommand = Get-Command 'wacs' -ErrorAction SilentlyContinue
-    if ($null -ne $wacsCommand -and -not [string]::IsNullOrWhiteSpace([string]$wacsCommand.Source)) {
-        if ([System.IO.Path]::IsPathRooted([string]$wacsCommand.Source)) {
-            return [string]$wacsCommand.Source
+        if (Test-Path -LiteralPath $expanded -PathType Leaf) {
+            return [string](Convert-Path -LiteralPath $expanded -ErrorAction Stop)
         }
     }
 
-    throw "Unable to resolve simple-acme executable. Checked ACME_WACS_PATH, '$projectRoot\wacs.exe', '$projectRoot\simple-acme.exe', and PATH."
+    throw @"
+simple-acme executable not found.
+
+Expected one of:
+- .\wacs.exe
+- .\simple-acme.exe
+- configured ACME_WACS_PATH
+- wacs.exe on PATH
+
+Fix:
+Place wacs.exe in the project root or set ACME_WACS_PATH in certificate.env.
+"@
 }
 
 function Test-ValidDomainName {
@@ -400,7 +413,7 @@ function Compare-RenewalWithEnv {
 function Assert-ReconcilePreflight {
     param([Parameter(Mandatory)][hashtable]$EnvValues)
 
-    $wacsPath = Resolve-WacsExecutablePath -EnvValues $EnvValues
+    $wacsPath = Resolve-WacsExecutable -EnvValues $EnvValues
     $detectedVersion = Get-WacsVersion -EnvValues $EnvValues
     $minimumVersion = [version]'2.2'
     $testedRangeNote = 'Tested with simple-acme/wacs 2.2.x through 2.4.x.'
@@ -562,7 +575,7 @@ function Invoke-WacsWithRetry {
     [void][int]::TryParse([string]$EnvValues.ACME_WACS_RETRY_DELAY_SECONDS, [ref]$delaySeconds)
     if ($delaySeconds -lt 0) { $delaySeconds = 0 }
 
-    $wacsPath = Resolve-WacsExecutablePath -EnvValues $EnvValues
+    $wacsPath = Resolve-WacsExecutable -EnvValues $EnvValues
     if (-not [System.IO.Path]::IsPathRooted([string]$wacsPath)) {
         throw "Resolved wacs path is not absolute: '$wacsPath'"
     }
@@ -631,7 +644,7 @@ function Get-WacsVersion {
     if ($null -ne $EnvValues -and $EnvValues.ContainsKey('ACME_WACS_VERSION')) {
         $fromEnv = [string]$EnvValues.ACME_WACS_VERSION
     }
-    $versionOutput = if (-not [string]::IsNullOrWhiteSpace($fromEnv)) { $fromEnv } else { (Invoke-NativeProcess -FilePath (Resolve-WacsExecutablePath -EnvValues $EnvValues) -ArgumentList @('--version') -TimeoutSeconds 30).OutputLines | Select-Object -First 1 }
+    $versionOutput = if (-not [string]::IsNullOrWhiteSpace($fromEnv)) { $fromEnv } else { (Invoke-NativeProcess -FilePath (Resolve-WacsExecutable -EnvValues $EnvValues) -ArgumentList @('--version') -TimeoutSeconds 30).OutputLines | Select-Object -First 1 }
     Write-SimpleAcmeLogDiagnosticSummary
 
     if ([string]::IsNullOrWhiteSpace([string]$versionOutput)) {
@@ -861,7 +874,7 @@ function Invoke-SimpleAcmeReconcile {
 }
 
 Export-ModuleMember -Function @(
-    'Resolve-WacsExecutablePath',
+    'Resolve-WacsExecutable',
     'Compare-RenewalWithEnv',
     'Assert-ReconcilePreflight',
     'Ensure-SimpleAcmeSettings',

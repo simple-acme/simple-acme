@@ -121,18 +121,18 @@ function Invoke-TestSimpleAcmeReconciler {
             }
 
             [System.IO.File]::WriteAllText($simpleAcmePath, 'placeholder', [System.Text.Encoding]::UTF8)
-            $resolvedPackageLocal = Resolve-WacsExecutablePath -EnvValues @{}
+            $resolvedPackageLocal = Resolve-WacsExecutable -EnvValues @{}
             if ($resolvedPackageLocal -ne $simpleAcmePath) {
                 throw "Expected package-local simple-acme.exe, got '$resolvedPackageLocal'"
             }
 
             [System.IO.File]::WriteAllText($wacsPath, 'placeholder', [System.Text.Encoding]::UTF8)
-            $resolvedWacs = Resolve-WacsExecutablePath -EnvValues @{}
+            $resolvedWacs = Resolve-WacsExecutable -EnvValues @{}
             if ($resolvedWacs -ne $wacsPath) {
                 throw "Expected package-local wacs.exe, got '$resolvedWacs'"
             }
 
-            $resolvedOverride = Resolve-WacsExecutablePath -EnvValues @{ ACME_WACS_PATH = $simpleAcmePath }
+            $resolvedOverride = Resolve-WacsExecutable -EnvValues @{ ACME_WACS_PATH = $simpleAcmePath }
             if ($resolvedOverride -ne $simpleAcmePath) {
                 throw "Expected ACME_WACS_PATH override, got '$resolvedOverride'"
             }
