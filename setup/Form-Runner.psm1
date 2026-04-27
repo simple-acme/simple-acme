@@ -9,6 +9,10 @@ Import-Module "$PSScriptRoot/../core/Env-Loader.psm1" -Force -Global
 . "$PSScriptRoot/Device-Schemas.ps1"
 . "$PSScriptRoot/Menu-Tree.ps1"
 
+if (-not (Get-Command -Name Resolve-BootstrapEnvPath -CommandType Function -ErrorAction SilentlyContinue)) {
+    throw 'Resolve-BootstrapEnvPath is required but was not found after importing core/Env-Loader.psm1.'
+}
+
 $script:DefaultScriptParameters = "'default' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
 
 function Read-MenuChoice {
@@ -717,9 +721,15 @@ function Invoke-AcmeSettingsMenu {
             'preview' {
                 $envValues = @{}
                 if (Test-Path -LiteralPath $resolvedEnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $resolvedEnvFilePath }
+                if ([string]$envValues.ACME_PROVIDER -eq 'networking4all' -and [string]$envValues.ACME_DIRECTORY -match 'letsencrypt') {
+                    [Console]::WriteLine('Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is Let''s Encrypt.')
+                    [Console]::WriteLine('Setup was not saved or reconcile is reading the wrong env file.')
+                    Wait-ForOperatorReturn
+                    continue
+                }
                 if ([string]$envValues.ACME_PROVIDER -eq 'networking4all' -and [string]$envValues.ACME_DIRECTORY -notmatch 'networking4all\.com') {
                     [Console]::WriteLine('Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is not Networking4All.')
-                    [Console]::WriteLine('Setup was not saved.')
+                    [Console]::WriteLine('Setup was not saved or reconcile is reading the wrong env file.')
                     Wait-ForOperatorReturn
                     continue
                 }
@@ -1292,8 +1302,8 @@ function Invoke-AcmeForm {
     Assert-SavedEnvMatchesSetup -Expected $values -Actual $reloaded
     if ([string]$reloaded.ACME_PROVIDER -eq 'networking4all' -and [string]$reloaded.ACME_DIRECTORY -match 'letsencrypt') {
         throw @'
-Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is not Networking4All.
-Setup was not saved.
+Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is Let's Encrypt.
+Setup was not saved or reconcile is reading the wrong env file.
 '@
     }
     if ([string]$reloaded.ACME_PROVIDER -eq 'networking4all' -and ([string]$reloaded.ACME_REQUIRES_EAB -ne '1')) {
