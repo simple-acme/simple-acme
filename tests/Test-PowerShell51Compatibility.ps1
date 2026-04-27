@@ -105,3 +105,42 @@ try {
 }
 
 Write-Host '[compat] Windows PowerShell 5.1 compatibility checks passed.'
+
+Write-Host '[compat] Running phase-1 functional guard checks.'
+Import-Module (Join-Path $repoRoot 'setup/Form-Runner.psm1') -Force
+Import-Module (Join-Path $repoRoot 'core/Env-Loader.psm1') -Force
+
+$tempRoot = Join-Path $env:TEMP ('simple-acme-compat-' + [Guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+$tempEnv = Join-Path $tempRoot 'certificate.env'
+
+try {
+    if (Test-Path -LiteralPath $tempEnv) { Remove-Item -LiteralPath $tempEnv -Force }
+    Write-EnvFile -Values @{ DOMAINS='remote.example.nl'; ACME_DIRECTORY='https://acme-v02.api.letsencrypt.org/directory'; ACME_SCRIPT_PATH=(Join-Path $repoRoot 'Scripts/cert2rds.ps1'); ACME_SCRIPT_PARAMETERS='{CertThumbprint}' } -Path $tempEnv
+    $loaded = Import-EnvFile -Path $tempEnv -AllowIncomplete -Force
+    if (-not $loaded.ContainsKey('ACME_WACS_PATH')) { throw 'Expected optional ACME_WACS_PATH default to be injected.' }
+
+    $providerDv = Get-ProviderDefaults -Provider 'networking4all' -Networking4AllEnvironment 'test' -Networking4AllProduct 'dv'
+    if ([string]$providerDv.ACME_DIRECTORY -ne 'https://test-acme.networking4all.com/dv') { throw 'Networking4All test dv URL construction failed.' }
+    $providerDvSan = Get-ProviderDefaults -Provider 'networking4all' -Networking4AllEnvironment 'test' -Networking4AllProduct 'dv-san'
+    if ([string]$providerDvSan.ACME_DIRECTORY -ne 'https://test-acme.networking4all.com/dv-san') { throw 'Networking4All test dv-san URL construction failed.' }
+    $providerOvWild = Get-ProviderDefaults -Provider 'networking4all' -Networking4AllEnvironment 'production' -Networking4AllProduct 'ov-wildcard-san'
+    if ([string]$providerOvWild.ACME_DIRECTORY -ne 'https://acme.networking4all.com/ov-wildcard-san') { throw 'Networking4All production ov-wildcard-san URL construction failed.' }
+    if (-not [bool]$providerDv.RequiresEab) { throw 'Networking4All provider must require EAB.' }
+
+    $pipeline = Get-GuidedPipelineTemplate -TargetSystem 'rds' -ValidationMode 'none'
+    if ([string]$pipeline.ACME_SCRIPT_PARAMETERS -ne '{CertThumbprint}') { throw 'RDS script parameters must be {CertThumbprint}.' }
+    if ([string]$pipeline.ACME_VALIDATION_MODE -ne 'none') { throw 'RDS validation mode must be none in guided phase-1 flow.' }
+
+    $maskedKid = Mask-EnvDisplayValue -Name 'ACME_KID' -Value 'kid-value'
+    $maskedSecret = Mask-EnvDisplayValue -Name 'ACME_HMAC_SECRET' -Value 'secret-value'
+    if ($maskedKid -ne '<set>') { throw 'ACME_KID masking contract changed unexpectedly.' }
+    if ($maskedSecret -ne '<hidden>') { throw 'ACME_HMAC_SECRET masking contract changed unexpectedly.' }
+
+    $policyLines = @(Format-PolicySummaryLines -Policies @())
+    if ($policyLines.Count -ne 0) { throw 'Empty policy list should return no summary rows.' }
+} finally {
+    Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Write-Host '[compat] Functional checks passed.'

@@ -146,6 +146,9 @@ function Invoke-OrchestratorTaskRegistration {
 }
 
 $envPath = if ($env:CERTIFICATE_ENV_FILE) { [string]$env:CERTIFICATE_ENV_FILE } else { Join-Path $PSScriptRoot 'certificate.env' }
+$envPathSource = if ($env:CERTIFICATE_ENV_FILE) { 'CERTIFICATE_ENV_FILE override' } else { 'default project-root certificate.env' }
+Write-Host ("Bootstrap env path: {0}" -f $envPath)
+Write-Host ("Bootstrap env source: {0}" -f $envPathSource)
 
 . "$PSScriptRoot/config.ps1"
 Initialize-CertificateConfig -AllowIncomplete | Out-Null

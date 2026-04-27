@@ -514,7 +514,13 @@ function Invoke-ViewLogsDiagnostics {
     [Console]::WriteLine("Warnings found: $($diag.WarningCount)")
     [Console]::WriteLine("Errors found: $($diag.ErrorCount)")
     if ($diag.HasAssemblyLoadErrors) {
-        [Console]::WriteLine('Assembly load errors were detected in this log.')
+        [Console]::WriteLine('simple-acme logged assembly load errors.')
+        [Console]::WriteLine('This may indicate blocked DLLs, incompatible bundle files, or optional plugin load failures.')
+        [Console]::WriteLine('Inspect:')
+        [Console]::WriteLine($latest.FullName)
+        [Console]::WriteLine('')
+        [Console]::WriteLine('Suggested manual command (do not run automatically):')
+        [Console]::WriteLine('Get-ChildItem C:\certificaat -Recurse | Unblock-File')
     }
     [Console]::WriteLine('')
     [Console]::WriteLine('Last 50 lines:')
@@ -579,7 +585,7 @@ function Invoke-AcmeSettingsMenu {
                 [Console]::WriteLine('')
                 $settingsPaths = @(Get-SimpleAcmeSettingsPaths)
                 if ($settingsPaths.Count -eq 0) {
-                    [Console]::WriteLine('simple-acme settings.json not found yet; it may be created after first wacs run.')
+                    [Console]::WriteLine('simple-acme settings.json not found yet. It may be created after first wacs run.')
                     Wait-ForOperatorReturn
                     continue
                 }
@@ -636,16 +642,31 @@ function Invoke-AcmeSettingsMenu {
                         $hosts = @($rawHosts | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Sort-Object -Unique)
 
                         $scriptPath = '(none)'
+                        $sourcePlugin = '(unknown)'
+                        $validationPlugin = '(unknown)'
+                        $storePlugin = '(unknown)'
                         if ($obj.PSObject.Properties['Installation'] -and $obj.Installation.PSObject.Properties['Plugin']) {
                             $installPlugin = [string]$obj.Installation.Plugin
                         } else {
                             $installPlugin = '(unknown)'
+                        }
+                        if ($obj.PSObject.Properties['Source'] -and $obj.Source.PSObject.Properties['Plugin']) {
+                            $sourcePlugin = [string]$obj.Source.Plugin
+                        }
+                        if ($obj.PSObject.Properties['Validation'] -and $obj.Validation.PSObject.Properties['Plugin']) {
+                            $validationPlugin = [string]$obj.Validation.Plugin
+                        }
+                        if ($obj.PSObject.Properties['Store'] -and $obj.Store.PSObject.Properties['Plugin']) {
+                            $storePlugin = [string]$obj.Store.Plugin
                         }
                         if ($obj.PSObject.Properties['Installation'] -and $obj.Installation.PSObject.Properties['PluginOptions'] -and $obj.Installation.PluginOptions.PSObject.Properties['Script']) {
                             $scriptPath = [string]$obj.Installation.PluginOptions.Script
                         }
 
                         [Console]::WriteLine(" - domains/hosts: $(if ($hosts.Count -gt 0) { $hosts -join ',' } else { '(unknown)' })")
+                        [Console]::WriteLine(" - source plugin: $sourcePlugin")
+                        [Console]::WriteLine(" - validation plugin: $validationPlugin")
+                        [Console]::WriteLine(" - store plugin: $storePlugin")
                         [Console]::WriteLine(" - script path: $scriptPath")
                         [Console]::WriteLine(" - installation plugin: $installPlugin")
                     } catch {
@@ -1000,6 +1021,42 @@ function Select-AcmeProviderValues {
         if ([string]::IsNullOrWhiteSpace($values.ACME_KID) -or [string]::IsNullOrWhiteSpace($values.ACME_HMAC_SECRET)) {
             throw 'Networking4All requires ACME_KID and ACME_HMAC_SECRET.'
         }
+        $warnings = New-Object System.Collections.Generic.List[string]
+        $domains = @()
+        if ($null -ne $CurrentValues -and $CurrentValues.ContainsKey('DOMAINS')) {
+            $domains = @(
+                [string]$CurrentValues.DOMAINS -split ',' |
+                    ForEach-Object { $_.Trim().ToLowerInvariant() } |
+                    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                    Sort-Object -Unique
+            )
+        }
+        $hasWildcardDomain = @($domains | Where-Object { $_.StartsWith('*.') }).Count -gt 0
+        $isWildcardProduct = ([string]$productChoice -like '*wildcard*')
+        $isSanProduct = ([string]$productChoice -like '*-san*')
+
+        if ($isWildcardProduct -and -not $hasWildcardDomain) {
+            $warnings.Add('Selected wildcard product, but no wildcard domain (*.example.com) is configured.')
+        }
+        if ($hasWildcardDomain -and -not $isWildcardProduct) {
+            $warnings.Add('Configured wildcard domain detected, but selected product is non-wildcard.')
+        }
+        if (@($domains).Count -gt 1 -and -not $isSanProduct) {
+            $warnings.Add('Multiple domains detected, but selected product is non-SAN.')
+        }
+        if (@($domains).Count -le 1 -and $isSanProduct) {
+            $warnings.Add('SAN product selected with one domain configured.')
+        }
+
+        if ($warnings.Count -gt 0) {
+            [Console]::WriteLine('')
+            [Console]::WriteLine('Domain/product sanity warnings:')
+            foreach ($warning in $warnings) {
+                [Console]::WriteLine(" - $warning")
+            }
+            $confirm = Read-SetupChoice -Prompt 'Continue and save these provider settings? [1] Yes [2] No' -Options @{ '1'='yes'; '2'='no' } -DefaultKey '2' -AllowBack
+            if ($confirm -in @('__CANCEL__','__BACK__','no')) { return $null }
+        }
         return $values
     }
 
@@ -1179,7 +1236,7 @@ function Invoke-ManageCertificatesMenu {
 
         if ($choice -in @('back','__CANCEL__','__BACK__')) { return }
 
-        $simpleAcmeDir = Join-Path $env:ProgramData 'simple-acme'
+        $simpleAcmeDir = Get-SimpleAcmeDataRoot
         $mappings = @()
         if (Test-Path -LiteralPath $simpleAcmeDir) {
             $mappings = @(Get-ChildItem -LiteralPath $simpleAcmeDir -Filter '*.renewal.json' -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
