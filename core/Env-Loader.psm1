@@ -3,12 +3,7 @@ Set-StrictMode -Version Latest
 
 $script:RequiredEnvKeys = @(
     'ACME_DIRECTORY',
-    'DOMAINS',
-    'CERTIFICATE_CONFIG_DIR',
-    'CERTIFICATE_DROP_DIR',
-    'CERTIFICATE_STATE_DIR',
-    'CERTIFICATE_LOG_DIR',
-    'CERTIFICATE_API_KEY'
+    'DOMAINS'
 )
 
 $script:OptionalEnvDefaults = @{
@@ -21,7 +16,7 @@ $script:OptionalEnvDefaults = @{
     ACME_WACS_RETRY_DELAY_SECONDS = '2'
     ACME_INSTALLATION_PLUGINS     = 'script'
     ACME_CSR_ALGORITHM            = 'ec'
-    ACME_SCRIPT_PARAMETERS        = "'default' {RenewalId} '{CertCommonName}' {CertThumbprint} {OldCertThumbprint} '{CacheFile}' '{CachePassword}' '{StorePath}' {StoreType}"
+    ACME_SCRIPT_PARAMETERS        = '{CertThumbprint}'
     CERTIFICATE_VERIFY_MAX_ATTEMPTS = '3'
     CERTIFICATE_ACTIVATE_TIMEOUT_MS = '120000'
     CERTIFICATE_DEFAULT_FANOUT      = 'fail-fast'
@@ -143,7 +138,7 @@ function Import-EnvFile {
             $installationPlugins = @([string]$script:OptionalEnvDefaults.ACME_INSTALLATION_PLUGINS -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
         }
         if ($installationPlugins -contains 'script') {
-            foreach ($key in @('ACME_SCRIPT_PATH','ACME_SCRIPT_PARAMETERS')) {
+            foreach ($key in @('ACME_SCRIPT_PATH')) {
                 if (-not $values.ContainsKey($key) -or [string]::IsNullOrWhiteSpace([string]$values[$key])) {
                     $missing += $key
                 }
