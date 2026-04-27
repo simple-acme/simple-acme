@@ -7,7 +7,9 @@ function ConvertTo-WindowsCommandLineArgument {
 
     if ($null -eq $Value) { return '""' }
 
-    if ($Value -notmatch '[\s"`]') {
+    if ($Value -eq '') { return '""' }
+
+    if ($Value -notmatch '[\s"]') {
         return $Value
     }
 

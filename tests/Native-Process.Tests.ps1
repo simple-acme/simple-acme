@@ -2,9 +2,8 @@ Import-Module "$PSScriptRoot/../core/Native-Process.psm1" -Force
 
 function Get-TestPowerShellExecutable {
     $candidates = @(
-        (Join-Path $PSHOME 'pwsh.exe'),
-        (Join-Path $PSHOME 'pwsh'),
-        (Join-Path $PSHOME 'powershell.exe')
+        (Join-Path $PSHOME 'powershell.exe'),
+        (Join-Path $PSHOME 'powershell')
     )
 
     foreach ($candidate in $candidates) {
@@ -13,7 +12,7 @@ function Get-TestPowerShellExecutable {
         }
     }
 
-    $resolved = Get-Command -Name 'pwsh','powershell' -ErrorAction SilentlyContinue | Select-Object -First 1
+    $resolved = Get-Command -Name 'powershell' -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($null -eq $resolved) {
         throw 'Unable to locate a PowerShell executable for Native-Process tests.'
     }
@@ -70,9 +69,10 @@ Write-Output "TOKEN=$Token"
         $result.OutputLines | Should -Contain 'TOKEN={CertThumbprint}'
     }
 
-    It 'does not use ProcessStartInfo.ArgumentList in the module implementation' {
+    It 'does not use ProcessStartInfo argument-list API in the module implementation' {
         $nativeProcessSource = Join-Path $script:repoRoot 'core/Native-Process.psm1'
         $raw = Get-Content -LiteralPath $nativeProcessSource -Raw
-        $raw | Should -Not -Match '\$psi\.ArgumentList'
+        $pattern = '\$psi\.' + 'ArgumentList'
+        $raw | Should -Not -Match $pattern
     }
 }

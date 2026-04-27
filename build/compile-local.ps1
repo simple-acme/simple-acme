@@ -31,7 +31,7 @@ function Get-DotNetCommand {
     param([string]$ExpectedPath)
 
     $localDotnet = Join-Path $ExpectedPath 'dotnet'
-    if ($IsWindows) {
+    if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) {
         $localDotnet = "$localDotnet.exe"
     }
 
@@ -60,15 +60,7 @@ function Install-DotNetSdk {
     Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -OutFile $installer
 
     Write-Step "Installing .NET SDK channel $Channel into $TargetPath"
-    $pwsh = Get-Command -Name 'pwsh' -ErrorAction SilentlyContinue
-    if ($pwsh) {
-        & $pwsh.Path -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installer `
-            -Channel $Channel `
-            -InstallDir $TargetPath `
-            -NoPath
-    } else {
-        & $installer -Channel $Channel -InstallDir $TargetPath -NoPath
-    }
+    & $installer -Channel $Channel -InstallDir $TargetPath -NoPath
 
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet-install failed with exit code $LASTEXITCODE"
