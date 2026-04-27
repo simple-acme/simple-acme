@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -169,3 +170,6 @@ try {
 }
 
 Write-Host '[compat] Functional checks passed.'
+
+Write-Host '[compat] Running module import gate script.'
+& (Join-Path $repoRoot 'tests/Test-ModuleImports.ps1')

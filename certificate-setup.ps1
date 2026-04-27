@@ -81,8 +81,13 @@ function Invoke-InitialAcmeReconcilePrompt {
     $statusRow = [Math]::Max(0, [Console]::WindowHeight - 2)
     $envValues = Import-EnvFile -Path $EnvFilePath -Force
 
+    if ([string]$envValues.ACME_PROVIDER -eq 'networking4all' -and [string]$envValues.ACME_DIRECTORY -match 'letsencrypt') {
+        Show-TuiStatus -Message "Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is Let's Encrypt. Setup was not saved or reconcile is reading the wrong env file." -Type Error -Row $statusRow
+        Wait-ForOperatorReturn
+        return
+    }
     if ([string]$envValues.ACME_PROVIDER -eq 'networking4all' -and [string]$envValues.ACME_DIRECTORY -notmatch 'networking4all\.com') {
-        Show-TuiStatus -Message 'Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is not Networking4All. Setup was not saved.' -Type Error -Row $statusRow
+        Show-TuiStatus -Message 'Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is not Networking4All. Setup was not saved or reconcile is reading the wrong env file.' -Type Error -Row $statusRow
         Wait-ForOperatorReturn
         return
     }
@@ -168,9 +173,11 @@ function Invoke-OrchestratorTaskRegistration {
 }
 
 $envPath = Resolve-BootstrapEnvPath -ProjectRoot $PSScriptRoot
-$envPathSource = if ($env:CERTIFICATE_ENV_FILE) { 'CERTIFICATE_ENV_FILE override' } else { 'default project-root certificate.env' }
-Write-Host ("Bootstrap env path: {0}" -f $envPath)
-Write-Host ("Bootstrap env source: {0}" -f $envPathSource)
+[Console]::WriteLine('Active bootstrap env:')
+[Console]::WriteLine($envPath)
+if ($env:CERTIFICATE_ENV_FILE) {
+    [Console]::WriteLine('Source: CERTIFICATE_ENV_FILE override')
+}
 
 . "$PSScriptRoot/config.ps1"
 Initialize-CertificateConfig -AllowIncomplete | Out-Null
