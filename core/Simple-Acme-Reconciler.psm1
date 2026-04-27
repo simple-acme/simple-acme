@@ -2,6 +2,31 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Import-Module "$PSScriptRoot/Native-Process.psm1" -Force
 
+
+function ConvertTo-HashtableRecursive {
+    param($InputObject)
+
+    if ($null -eq $InputObject) { return $null }
+
+    if ($InputObject -is [System.Collections.IEnumerable] -and -not ($InputObject -is [string]) -and -not ($InputObject -is [System.Management.Automation.PSCustomObject])) {
+        $array = @()
+        foreach ($item in $InputObject) {
+            $array += ConvertTo-HashtableRecursive -InputObject $item
+        }
+        return $array
+    }
+
+    if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
+        $hash = @{}
+        foreach ($prop in $InputObject.PSObject.Properties) {
+            $hash[$prop.Name] = ConvertTo-HashtableRecursive -InputObject $prop.Value
+        }
+        return $hash
+    }
+
+    return $InputObject
+}
+
 function Get-NormalizedDomains {
     param([Parameter(Mandatory)][string]$Domains)
 
@@ -384,7 +409,8 @@ function Ensure-SimpleAcmeSettings {
     $settings = @{}
     if (Test-Path -LiteralPath $settingsPath) {
         try {
-            $existing = Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
+            $existingJson = Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            $existing = ConvertTo-HashtableRecursive -InputObject $existingJson
         } catch {
             throw "Failed to parse settings JSON '$settingsPath': $($_.Exception.Message)"
         }

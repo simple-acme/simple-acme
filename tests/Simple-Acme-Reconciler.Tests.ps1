@@ -17,7 +17,8 @@ function Invoke-TestSimpleAcmeReconciler {
             $path = Join-Path $root 'settings.json'
             @{ Existing = @{ Keep = 'yes' } } | ConvertTo-Json -Depth 5 | Set-Content -Path $path -Encoding UTF8
             Ensure-SimpleAcmeSettings -SimpleAcmeDir $root
-            $json = Get-Content -Path $path -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
+            $jsonObject = Get-Content -Path $path -Raw -Encoding UTF8 | ConvertFrom-Json
+            $json = ConvertTo-HashtableRecursive -InputObject $jsonObject
             if ($json.Existing.Keep -ne 'yes') { throw 'Existing key not preserved.' }
             if ($json.ScheduledTask.RenewalDays -ne 199) { throw 'RenewalDays not set.' }
             if ($json.ScheduledTask.RenewalMinimumValidDays -ne 16) { throw 'RenewalMinimumValidDays not set.' }

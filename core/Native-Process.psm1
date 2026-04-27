@@ -1,6 +1,23 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+function ConvertTo-WindowsCommandLineArgument {
+    [CmdletBinding()]
+    param([AllowNull()][string]$Value)
+
+    if ($null -eq $Value) { return '""' }
+
+    if ($Value -eq '') { return '""' }
+
+    if ($Value -notmatch '[\s"]') {
+        return $Value
+    }
+
+    $escaped = $Value -replace '(\\*)"', '$1$1\"'
+    $escaped = $escaped -replace '(\\+)$', '$1$1'
+    return '"' + $escaped + '"'
+}
+
 function Invoke-NativeProcess {
     [CmdletBinding()]
     param(
@@ -23,7 +40,9 @@ function Invoke-NativeProcess {
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.CreateNoWindow = $true
-    foreach ($arg in $ArgumentList) { [void]$psi.ArgumentList.Add([string]$arg) }
+    $psi.Arguments = (@($ArgumentList) | ForEach-Object {
+        ConvertTo-WindowsCommandLineArgument -Value ([string]$_)
+    }) -join ' '
 
     $proc = New-Object System.Diagnostics.Process
     $proc.StartInfo = $psi

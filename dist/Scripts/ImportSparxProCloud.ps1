@@ -25,8 +25,7 @@ The output PEM file for Server Cert+PrivKey, usually C:\Program Files\Sparx Syst
 The output PEM file for CA Cert, usually C:\Program Files\Sparx Systems\Pro Cloud Server\Service\cacert.pem
 
 .NOTES
-Requires Powershell7 installed (invokes itself using interpreter pwsh.exe).
-PS7 is based on .Net Core and has this method: $cert.PrivateKey.ExportPkcs8PrivateKey()
+Requires .NET support for exporting PKCS#8 private keys via: $cert.PrivateKey.ExportPkcs8PrivateKey()
 
 #>
 
@@ -45,27 +44,16 @@ param(
 )
 
 
-# Check current PowerShell version
-$psVersion = $PSVersionTable.PSVersion
-
-# Check if we are using PowerShell older than 7
-if ($psVersion.Major -lt 7) {
-    Write-Host "PowerShell <7 detected. Restarting with pwsh.exe..."
-
-    # Get the script path
-    $scriptPath = $MyInvocation.MyCommand.Path
-
-    # Execute the script using pwsh.exe (PowerShell Core), passing the 3 positional parameters
-    & "pwsh.exe" -File "$scriptPath" "$NewCertThumbprint" "$PemFile" "$CaFile"
-    exit
-}
-
 
 $cert = Get-ChildItem -Path Cert:\LocalMachine -Recurse | Where-Object { $_.HasPrivateKey } | Where-Object { $_.thumbprint -eq $NewCertThumbprint } | Sort-Object -Descending | Select-Object -f 1
 
 if ($null -eq $cert) {
     Write-Host "No valid certificate with a private key found. Exiting..."
     exit 1
+}
+
+if (-not ($cert.PrivateKey | Get-Member -Name 'ExportPkcs8PrivateKey' -MemberType Method -ErrorAction SilentlyContinue)) {
+    throw 'This environment does not support ExportPkcs8PrivateKey() required by this script.'
 }
 
 # Retrieve the certificate chain

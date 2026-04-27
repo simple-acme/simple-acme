@@ -31,7 +31,7 @@ function Get-DotNetCommand {
     param([string]$ExpectedPath)
 
     $localDotnet = Join-Path $ExpectedPath 'dotnet'
-    if ($IsWindows) {
+    if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) {
         $localDotnet = "$localDotnet.exe"
     }
 
