@@ -567,6 +567,12 @@ function Invoke-WacsWithRetry {
         [Parameter(Mandatory)][hashtable]$EnvValues,
         [int]$TimeoutSeconds = 300
     )
+    if ($null -eq $Args -or $Args.Count -eq 0) {
+        throw @'
+wacs was launched without non-interactive arguments and entered interactive mode.
+Fix the wrapper command generation.
+'@
+    }
 
     $attempts = 3
     [void][int]::TryParse([string]$EnvValues.ACME_WACS_RETRY_ATTEMPTS, [ref]$attempts)
@@ -583,6 +589,7 @@ function Invoke-WacsWithRetry {
     $last = $null
     for ($attempt = 1; $attempt -le $attempts; $attempt++) {
         $last = Invoke-NativeProcess -FilePath $wacsPath -ArgumentList $Args -TimeoutSeconds $TimeoutSeconds -FatalPatterns @('(?i)\bfatal\b')
+        $null = Get-WacsOutputAnalysis -OutputLines @($last.OutputLines) -RequireNonInteractiveMode
         foreach ($line in $last.OutputLines) { Write-Host ([string]$line) }
         if ($last.Succeeded) { return $last }
         if ($attempt -lt $attempts) {
@@ -641,21 +648,67 @@ function Get-WacsVersion {
     param([hashtable]$EnvValues)
 
     $fromEnv = ''
+    $outputLines = @()
     if ($null -ne $EnvValues -and $EnvValues.ContainsKey('ACME_WACS_VERSION')) {
         $fromEnv = [string]$EnvValues.ACME_WACS_VERSION
     }
-    $versionOutput = if (-not [string]::IsNullOrWhiteSpace($fromEnv)) { $fromEnv } else { (Invoke-NativeProcess -FilePath (Resolve-WacsExecutable -EnvValues $EnvValues) -ArgumentList @('--version') -TimeoutSeconds 30).OutputLines | Select-Object -First 1 }
+    if (-not [string]::IsNullOrWhiteSpace($fromEnv)) {
+        $outputLines = @($fromEnv -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    } else {
+        $result = Invoke-NativeProcess -FilePath (Resolve-WacsExecutable -EnvValues $EnvValues) -ArgumentList @('--version') -TimeoutSeconds 30
+        $outputLines = @($result.OutputLines)
+        if (-not $result.Succeeded) {
+            if ($result.TimedOut) { throw 'wacs --version timed out.' }
+            throw "wacs --version failed with exit code $($result.ExitCode)."
+        }
+    }
+
+    $analysis = Get-WacsOutputAnalysis -OutputLines $outputLines -RequireNonInteractiveMode
     Write-SimpleAcmeLogDiagnosticSummary
 
-    if ([string]::IsNullOrWhiteSpace([string]$versionOutput)) {
-        throw 'Unable to detect simple-acme/wacs version.'
+    return $analysis.Version
+}
+
+function Get-WacsOutputAnalysis {
+    param(
+        [string[]]$OutputLines,
+        [switch]$RequireNonInteractiveMode
+    )
+
+    $lines = @($OutputLines | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    $assemblyDiagnostics = @($lines | Where-Object { $_ -match '^Error loading assembly ' -or $_ -match '^Error loading some types from ' })
+    $scheduledTaskDiagnostics = @($lines | Where-Object { $_ -match '^Scheduled task not configured yet$' })
+    $interactiveHits = @($lines | Where-Object { $_ -match '^Please choose from the menu:' })
+    $diagnostics = @($assemblyDiagnostics + $scheduledTaskDiagnostics)
+
+    if ($RequireNonInteractiveMode -and $interactiveHits.Count -gt 0) {
+        throw @'
+wacs was launched without non-interactive arguments and entered interactive mode.
+Fix the wrapper command generation.
+'@
     }
 
-    $versionMatch = [regex]::Match([string]$versionOutput, '(\d+\.\d+\.\d+|\d+\.\d+)')
-    if (-not $versionMatch.Success) {
-        throw "Unable to parse simple-acme/wacs version from output: '$versionOutput'."
+    $joined = $lines -join "`n"
+    $versionText = ''
+    $versionMatch = [regex]::Match($joined, 'Software version\s+(\d+\.\d+(?:\.\d+){0,2})')
+    if ($versionMatch.Success) {
+        $versionText = $versionMatch.Groups[1].Value
+    } else {
+        $fallback = [regex]::Match($joined, '\b\d+\.\d+(?:\.\d+){0,2}\b')
+        if ($fallback.Success) { $versionText = $fallback.Value }
     }
-    return [version]$versionMatch.Groups[1].Value
+    if ([string]::IsNullOrWhiteSpace($versionText)) {
+        throw "Unable to parse simple-acme/wacs version from output: '$joined'."
+    }
+
+    return [pscustomobject]@{
+        Version = [version]$versionText
+        Diagnostics = $diagnostics
+        AssemblyDiagnosticCount = $assemblyDiagnostics.Count
+        ScheduledTaskDiagnosticCount = $scheduledTaskDiagnostics.Count
+        EnteredInteractiveMenu = ($interactiveHits.Count -gt 0)
+        OutputLines = $lines
+    }
 }
 
 function Invoke-WacsIssue {
@@ -886,6 +939,7 @@ Export-ModuleMember -Function @(
     'Get-RenewalIdForCancel',
     'Invoke-SimpleAcmeReconcile',
     'Get-WacsVersion',
+    'Get-WacsOutputAnalysis',
     'Invoke-WacsWithRetry',
     'Invoke-WacsIssue',
     'Get-NormalizedCsvValues',
