@@ -28,6 +28,30 @@ function Read-MenuChoice {
     }
 }
 
+function Read-SetupChoice {
+    param(
+        [Parameter(Mandatory)][string]$Prompt,
+        [Parameter(Mandatory)][hashtable]$Options,
+        [string]$DefaultKey = '',
+        [switch]$AllowBack
+    )
+
+    while ($true) {
+        $suffix = if ([string]::IsNullOrWhiteSpace($DefaultKey)) { '' } else { " [$DefaultKey]" }
+        $backText = if ($AllowBack) { ', B=Back' } else { '' }
+        $value = [string](Read-Host "$Prompt$suffix (Q=Cancel$backText)")
+        if ([string]::IsNullOrWhiteSpace($value)) { $value = $DefaultKey }
+        $value = $value.Trim()
+
+        if ($value -match '^[Qq]$') { return '__CANCEL__' }
+        if ($AllowBack -and $value -match '^[Bb]$') { return '__BACK__' }
+
+        if ($Options.ContainsKey($value)) { return [string]$Options[$value] }
+
+        Write-Warning "Invalid selection '$value'. Valid choices: $($Options.Keys -join ', '), Q$backText"
+    }
+}
+
 function Get-SafeDefaultPipeline {
     return @{
         ACME_ORDER_PLUGIN = 'single'
@@ -78,17 +102,37 @@ function Get-ProviderDefaults {
 }
 
 function Read-DomainsInput {
+    [Console]::WriteLine('Enter domain(s), one per line.')
+    [Console]::WriteLine('Empty line = finish, Q = cancel setup.')
+
+    $lines = New-Object System.Collections.Generic.List[string]
+
     while ($true) {
-        [Console]::WriteLine('Enter domain(s), one per line. Submit an empty line to finish:')
-        $lines = New-Object System.Collections.Generic.List[string]
-        while ($true) {
-            $line = [string](Read-Host 'domain')
-            if ([string]::IsNullOrWhiteSpace($line)) { break }
-            $lines.Add($line.Trim())
+        $line = [string](Read-Host 'domain')
+        if ($line -match '^[Qq]$') { return '__CANCEL__' }
+        if ($line -match '^[Bb]$') { return '__BACK__' }
+
+        if ([string]::IsNullOrWhiteSpace($line)) {
+            if ($lines.Count -gt 0) {
+                return ($lines -join ',')
+            }
+            Write-Warning 'At least one domain is required, or type Q to cancel.'
+            continue
         }
-        $domains = @($lines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-        if ($domains.Count -gt 0) { return ($domains -join ',') }
-        Write-Warning 'At least one domain is required.'
+
+        $lines.Add($line.Trim())
+    }
+}
+
+function Wait-ForOperatorReturn {
+    param([string]$Message = 'Press Enter, Esc, Backspace, or Q to return.')
+
+    [Console]::WriteLine('')
+    [Console]::WriteLine($Message)
+    while ($true) {
+        $key = [Console]::ReadKey($true)
+        if ($key.Key -in @([ConsoleKey]::Enter, [ConsoleKey]::Escape, [ConsoleKey]::Backspace)) { return }
+        if ($key.KeyChar -match '^[Qq]$') { return }
     }
 }
 
@@ -451,24 +495,41 @@ function Invoke-AcmeForm {
     [Console]::WriteLine('[4] Firewall / VPN')
     [Console]::WriteLine('[5] Load balancer / WAF')
     [Console]::WriteLine('[6] Custom system')
-    $target = Read-MenuChoice -Prompt 'Target' -Options @{ '1'='rds'; '2'='iis'; '3'='mail'; '4'='firewall'; '5'='waf'; '6'='custom' } -DefaultKey '1'
+    $target = Read-SetupChoice -Prompt 'Target' -Options @{ '1'='rds'; '2'='iis'; '3'='mail'; '4'='firewall'; '5'='waf'; '6'='custom' } -DefaultKey '1'
+    if ($target -in @('__CANCEL__','__BACK__')) {
+        Show-TuiStatus -Message 'Setup cancelled.' -Type Warning -Row ([Console]::WindowHeight-2)
+        return $null
+    }
 
     [Console]::WriteLine('')
     [Console]::WriteLine('Where is this system located?')
     [Console]::WriteLine('[1] This server')
     [Console]::WriteLine('[2] Another server / device')
     [Console]::WriteLine('[3] Multiple systems (cluster / farm)')
-    $location = Read-MenuChoice -Prompt 'Location' -Options @{ '1'='this-server'; '2'='another-server'; '3'='cluster-farm' } -DefaultKey '1'
+    $location = Read-SetupChoice -Prompt 'Location' -Options @{ '1'='this-server'; '2'='another-server'; '3'='cluster-farm' } -DefaultKey '1' -AllowBack
+    if ($location -in @('__CANCEL__','__BACK__')) {
+        Show-TuiStatus -Message 'Setup cancelled.' -Type Warning -Row ([Console]::WindowHeight-2)
+        return $null
+    }
 
     [Console]::WriteLine('')
     [Console]::WriteLine('Will this certificate be used on more than one system?')
     [Console]::WriteLine('[1] No - only this system (recommended, most secure)')
     [Console]::WriteLine('[2] Yes - multiple systems (RDS farm, firewall, etc.)')
-    $distributionMode = Read-MenuChoice -Prompt 'Distribution' -Options @{ '1'='single'; '2'='multi' } -DefaultKey '1'
+    $distributionMode = Read-SetupChoice -Prompt 'Distribution' -Options @{ '1'='single'; '2'='multi' } -DefaultKey '1' -AllowBack
+    if ($distributionMode -in @('__CANCEL__','__BACK__')) {
+        Show-TuiStatus -Message 'Setup cancelled.' -Type Warning -Row ([Console]::WindowHeight-2)
+        return $null
+    }
 
     $values = @{}
     $providerDefaults = Get-ProviderDefaults -Provider 'letsencrypt'
-    $values.DOMAINS = Read-DomainsInput
+    $domains = Read-DomainsInput
+    if ($domains -in @('__CANCEL__','__BACK__')) {
+        Show-TuiStatus -Message 'Setup cancelled.' -Type Warning -Row ([Console]::WindowHeight-2)
+        return $null
+    }
+    $values.DOMAINS = $domains
     $values.ACME_DIRECTORY = [string]$providerDefaults.ACME_DIRECTORY
     $values.ACME_KID = if ($curr.ContainsKey('ACME_KID')) { [string]$curr.ACME_KID } else { '' }
     $values.ACME_HMAC_SECRET = if ($curr.ContainsKey('ACME_HMAC_SECRET')) { [string]$curr.ACME_HMAC_SECRET } else { '' }
@@ -500,10 +561,17 @@ function Invoke-AcmeForm {
         [Console]::WriteLine('Choose distribution method:')
         [Console]::WriteLine('[1] Windows systems (enable exportable key)')
         [Console]::WriteLine('[2] Appliances / mixed systems (use PFX distribution) [recommended]')
-        $multiChoice = Read-MenuChoice -Prompt 'Multi-system key mode' -Options @{ '1'='exportable'; '2'='pfx' } -DefaultKey '2'
+        $multiChoice = Read-SetupChoice -Prompt 'Multi-system key mode' -Options @{ '1'='exportable'; '2'='pfx' } -DefaultKey '2' -AllowBack
+        if ($multiChoice -in @('__CANCEL__','__BACK__')) {
+            Show-TuiStatus -Message 'Setup cancelled.' -Type Warning -Row ([Console]::WindowHeight-2)
+            return $null
+        }
         [Console]::WriteLine('Enabling exportable keys reduces security because private keys can be transferred.')
-        $continue = Read-MenuChoice -Prompt 'Continue? [1] Yes [2] No' -Options @{ '1'='yes'; '2'='no' } -DefaultKey '2'
-        if ($continue -eq 'no') { throw 'Setup cancelled by user.' }
+        $continue = Read-SetupChoice -Prompt 'Continue? [1] Yes [2] No' -Options @{ '1'='yes'; '2'='no' } -DefaultKey '2' -AllowBack
+        if ($continue -in @('__CANCEL__','__BACK__','no')) {
+            Show-TuiStatus -Message 'Setup cancelled.' -Type Warning -Row ([Console]::WindowHeight-2)
+            return $null
+        }
 
         if ($multiChoice -eq 'exportable') {
             $values.ACME_PRIVATE_KEY_STRATEGY = 'exportable-store'
@@ -520,7 +588,11 @@ function Invoke-AcmeForm {
 
         $values.ACME_RENEWAL_MODE = 'multi-endpoint'
         [Console]::WriteLine('This setting only applies to new certificates.')
-        $reissueChoice = Read-MenuChoice -Prompt '[1] Apply on next renewal [2] Re-issue certificate now' -Options @{ '1'='next-renewal'; '2'='force-reissue' } -DefaultKey '1'
+        $reissueChoice = Read-SetupChoice -Prompt '[1] Apply on next renewal [2] Re-issue certificate now' -Options @{ '1'='next-renewal'; '2'='force-reissue' } -DefaultKey '1' -AllowBack
+        if ($reissueChoice -in @('__CANCEL__','__BACK__')) {
+            Show-TuiStatus -Message 'Setup cancelled.' -Type Warning -Row ([Console]::WindowHeight-2)
+            return $null
+        }
         $values.ACME_REISSUE_STRATEGY = $reissueChoice
     } else {
         $values.ACME_RENEWAL_MODE = 'single-system'
@@ -552,22 +624,76 @@ function Invoke-AcmeForm {
 function Invoke-ManageCertificatesMenu {
     param([Parameter(Mandatory)][string]$ConfigDir)
 
-    $simpleAcmeDir = Join-Path $env:ProgramData 'simple-acme'
-    $renewals = @()
-    if (Test-Path -LiteralPath $simpleAcmeDir) {
-        $renewals = @(Get-ChildItem -LiteralPath $simpleAcmeDir -Filter '*.renewal.json' -File -ErrorAction SilentlyContinue)
-    }
-    if ($renewals.Count -eq 0) {
-        Show-TuiStatus -Message 'No simple-acme renewals found yet.' -Type Warning -Row ([Console]::WindowHeight-2)
-        Start-Sleep -Milliseconds 1200
-        return
-    }
+    while ($true) {
+        [Console]::WriteLine('')
+        [Console]::WriteLine('Manage existing certificates')
+        [Console]::WriteLine('[0] Back')
+        [Console]::WriteLine('[1] View configured certificates')
+        [Console]::WriteLine('[2] Reissue certificate (placeholder)')
+        [Console]::WriteLine('[3] Change targets (placeholder)')
+        [Console]::WriteLine('[4] Test deployment (placeholder)')
+        [Console]::WriteLine('[5] Remove certificate mapping')
+        $choice = Read-SetupChoice -Prompt 'Manage' -Options @{
+            '0'='back'
+            '1'='view'
+            '2'='reissue'
+            '3'='targets'
+            '4'='test'
+            '5'='remove'
+        } -DefaultKey '0'
 
-    [Console]::WriteLine('Existing simple-acme renewal files:')
-    foreach ($renewal in $renewals) { [Console]::WriteLine(" - $($renewal.Name)") }
-    [Console]::WriteLine('')
-    [Console]::WriteLine('Use "wacs --renew" for runtime renewal operations.')
-    Start-Sleep -Milliseconds 1200
+        if ($choice -in @('back','__CANCEL__','__BACK__')) { return }
+
+        $simpleAcmeDir = Join-Path $env:ProgramData 'simple-acme'
+        $mappings = @()
+        if (Test-Path -LiteralPath $simpleAcmeDir) {
+            $mappings = @(Get-ChildItem -LiteralPath $simpleAcmeDir -Filter '*.renewal.json' -File -ErrorAction SilentlyContinue | ForEach-Object {
+                [pscustomobject]@{
+                    renewalId = $_.BaseName
+                    connector = 'wacs'
+                    endpoints = @($_.Name)
+                }
+            })
+        }
+
+        switch ($choice) {
+            'view' {
+                [Console]::WriteLine('')
+                [Console]::WriteLine('Configured certificates')
+                [Console]::WriteLine('-----------------------')
+
+                if (@($mappings).Count -eq 0) {
+                    [Console]::WriteLine('No configured certificates were found.')
+                } else {
+                    foreach ($m in $mappings) {
+                        [Console]::WriteLine("renewalId=$($m.renewalId) connector=$($m.connector) endpoints=$(@($m.endpoints).Count)")
+                    }
+                }
+
+                Wait-ForOperatorReturn
+            }
+            'reissue' {
+                [Console]::WriteLine('')
+                [Console]::WriteLine('Reissue is not implemented yet.')
+                Wait-ForOperatorReturn
+            }
+            'targets' {
+                [Console]::WriteLine('')
+                [Console]::WriteLine('Change targets is not implemented yet.')
+                Wait-ForOperatorReturn
+            }
+            'test' {
+                [Console]::WriteLine('')
+                [Console]::WriteLine('Test deployment is not implemented yet.')
+                Wait-ForOperatorReturn
+            }
+            'remove' {
+                [Console]::WriteLine('')
+                [Console]::WriteLine('Remove mapping is not implemented yet.')
+                Wait-ForOperatorReturn
+            }
+        }
+    }
 }
 
 function Get-PolicyFilePathLegacy {
