@@ -2,9 +2,22 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path $PSScriptRoot -Parent
-$modules = Get-ChildItem -Path $root -Filter '*.psm1' -Recurse
 
-foreach ($module in $modules) {
-    Write-Host "Importing $($module.FullName)"
-    Import-Module $module.FullName -Force
+$modules = @(
+    'core\Tui-Engine.psm1',
+    'core\Config-Store.psm1',
+    'core\Env-Loader.psm1',
+    'core\Native-Process.psm1',
+    'core\Simple-Acme-Reconciler.psm1',
+    'setup\Form-Runner.psm1'
+)
+
+foreach ($relative in $modules) {
+    $path = Join-Path $root $relative
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "Module not found: $path"
+    }
+
+    Write-Host "Importing $path"
+    Import-Module $path -Force
 }

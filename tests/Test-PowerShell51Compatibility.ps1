@@ -58,6 +58,16 @@ foreach ($file in $psFiles) {
     Assert-NoForbiddenConstructs -Path $file.FullName -Content $raw
 }
 
+
+Write-Host '[compat] Verifying no fragile Export-ModuleMember inline arrays remain in runtime modules.'
+$moduleFiles = Get-ChildItem -Path $repoRoot -Filter '*.psm1' -Recurse
+foreach ($file in $moduleFiles) {
+    $text = [System.IO.File]::ReadAllText($file.FullName)
+    if ($text -match 'Export-ModuleMember\s+-Function\s+@\s*\(') {
+        throw "Forbidden fragile Export-ModuleMember inline array remains in $($file.FullName)"
+    }
+}
+
 Write-Host '[compat] Importing core modules using PowerShell 5.1-compatible syntax.'
 $coreModules = @(
     (Join-Path $repoRoot 'core/Native-Process.psm1'),
