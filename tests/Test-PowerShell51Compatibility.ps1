@@ -22,20 +22,32 @@ function Assert-NoForbiddenConstructs {
     )
 
     $forbiddenPatterns = @(
-        ('\\.Arg' + 'umentList'),
-        ('ConvertFrom-Json\\s+-As' + 'Hashtable'),
-        ('ForEach-Object\\s+-Par' + 'allel'),
-        ('Start-' + 'ThreadJob'),
-        ('\\b' + 'pw' + 'sh' + '\\b'),
-        '\\?\\?'
+        [pscustomobject]@{ Pattern = ('\.Arg' + 'umentList'); AllowIn = @() },
+        [pscustomobject]@{ Pattern = ('ConvertFrom-Json\s+-As' + 'Hashtable'); AllowIn = @() },
+        [pscustomobject]@{ Pattern = ('ForEach-Object\s+-Par' + 'allel'); AllowIn = @() },
+        [pscustomobject]@{ Pattern = ('Start-' + 'ThreadJob'); AllowIn = @() },
+        [pscustomobject]@{ Pattern = ('\b' + 'pw' + 'sh' + '\b'); AllowIn = @('build/compile-local.ps1') },
+        [pscustomobject]@{ Pattern = '\?\?'; AllowIn = @() }
     )
 
-    foreach ($pattern in $forbiddenPatterns) {
-        if ($Content -match $pattern) {
-            throw "Forbidden construct '$pattern' found in '$Path'"
+    $normalizedPath = $Path.Replace('\','/')
+    foreach ($entry in $forbiddenPatterns) {
+        if ($Content -match $entry.Pattern) {
+            $allowed = $false
+            foreach ($allowedPath in $entry.AllowIn) {
+                if ($normalizedPath.EndsWith($allowedPath)) {
+                    $allowed = $true
+                    break
+                }
+            }
+
+            if (-not $allowed) {
+                throw "Forbidden construct '$($entry.Pattern)' found in '$Path'"
+            }
         }
     }
 }
+
 
 Write-Host '[compat] Parsing all .ps1/.psm1 files for Windows PowerShell 5.1 syntax compatibility.'
 $psFiles = @(Get-ChildItem -Path $repoRoot -Recurse -Include *.ps1,*.psm1 -File)

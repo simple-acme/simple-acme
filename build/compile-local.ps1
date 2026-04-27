@@ -60,7 +60,15 @@ function Install-DotNetSdk {
     Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -OutFile $installer
 
     Write-Step "Installing .NET SDK channel $Channel into $TargetPath"
-    & $installer -Channel $Channel -InstallDir $TargetPath -NoPath
+    $pwsh = Get-Command -Name 'pwsh' -ErrorAction SilentlyContinue
+    if ($pwsh) {
+        & $pwsh.Path -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installer `
+            -Channel $Channel `
+            -InstallDir $TargetPath `
+            -NoPath
+    } else {
+        & $installer -Channel $Channel -InstallDir $TargetPath -NoPath
+    }
 
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet-install failed with exit code $LASTEXITCODE"
