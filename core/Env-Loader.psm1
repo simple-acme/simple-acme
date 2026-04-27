@@ -76,12 +76,6 @@ function Resolve-EnvPath {
     $cwdPath = Join-Path (Get-Location).Path 'certificate.env'
     if (Test-Path -LiteralPath $cwdPath) { return $cwdPath }
 
-    $configDir = [Environment]::GetEnvironmentVariable('CERTIFICATE_CONFIG_DIR')
-    if (-not [string]::IsNullOrWhiteSpace($configDir)) {
-        $configPath = Join-Path $configDir 'certificate.env'
-        if (Test-Path -LiteralPath $configPath) { return $configPath }
-    }
-
     throw 'No certificate.env could be resolved. Set CERTIFICATE_ENV_FILE or create .\certificate.env.'
 }
 
