@@ -532,6 +532,12 @@ function Invoke-ViewLogsDiagnostics {
 function Invoke-AcmeSettingsMenu {
     param([Parameter(Mandatory)][string]$EnvFilePath)
 
+    $resolvedEnvFilePath = if ([string]::IsNullOrWhiteSpace([string]$EnvFilePath)) {
+        Resolve-BootstrapEnvPath -ProjectRoot (Split-Path $PSScriptRoot -Parent)
+    } else {
+        [System.IO.Path]::GetFullPath($EnvFilePath)
+    }
+
     while ($true) {
         [Console]::WriteLine('')
         [Console]::WriteLine('ACME settings')
@@ -563,18 +569,18 @@ function Invoke-AcmeSettingsMenu {
         switch ($choice) {
             'view-bootstrap' {
                 [Console]::WriteLine('')
-                [Console]::WriteLine("Bootstrap env file: $EnvFilePath")
+                [Console]::WriteLine("Bootstrap env file: $resolvedEnvFilePath")
                 if ($env:CERTIFICATE_ENV_FILE) {
                     [Console]::WriteLine('Source: CERTIFICATE_ENV_FILE override')
                 } else {
                     [Console]::WriteLine('Source: default project-root certificate.env')
                 }
-                if (-not (Test-Path -LiteralPath $EnvFilePath -PathType Leaf)) {
+                if (-not (Test-Path -LiteralPath $resolvedEnvFilePath -PathType Leaf)) {
                     [Console]::WriteLine('certificate.env not found.')
                     Wait-ForOperatorReturn
                     continue
                 }
-                $envValues = Read-EnvFile -Path $EnvFilePath
+                $envValues = Read-EnvFile -Path $resolvedEnvFilePath
                 foreach ($name in @($envValues.Keys | Sort-Object)) {
                     $displayValue = Mask-EnvDisplayValue -Name [string]$name -Value ([string]$envValues[$name])
                     [Console]::WriteLine("$name=$displayValue")
@@ -677,32 +683,32 @@ function Invoke-AcmeSettingsMenu {
             }
             'provider' {
                 $envValues = @{}
-                if (Test-Path -LiteralPath $EnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $EnvFilePath }
+                if (Test-Path -LiteralPath $resolvedEnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $resolvedEnvFilePath }
                 $providerValues = Select-AcmeProviderValues -CurrentValues $envValues
                 if ($null -eq $providerValues) { continue }
                 foreach ($k in $providerValues.Keys) { $envValues[$k] = $providerValues[$k] }
-                Write-EnvFile -Values $envValues -Path $EnvFilePath
+                Write-EnvFile -Values $envValues -Path $resolvedEnvFilePath
                 [Console]::WriteLine('Updated ACME provider settings in bootstrap certificate.env.')
                 Wait-ForOperatorReturn
             }
             'eab' {
                 $envValues = @{}
-                if (Test-Path -LiteralPath $EnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $EnvFilePath }
+                if (Test-Path -LiteralPath $resolvedEnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $resolvedEnvFilePath }
                 $envValues.ACME_KID = [string](Read-Host 'ACME_KID')
                 $envValues.ACME_HMAC_SECRET = [string](Read-Host 'ACME_HMAC_SECRET')
-                Write-EnvFile -Values $envValues -Path $EnvFilePath
+                Write-EnvFile -Values $envValues -Path $resolvedEnvFilePath
                 [Console]::WriteLine('Updated EAB credentials.')
                 Wait-ForOperatorReturn
             }
             'validation' {
                 $envValues = @{}
-                if (Test-Path -LiteralPath $EnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $EnvFilePath }
+                if (Test-Path -LiteralPath $resolvedEnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $resolvedEnvFilePath }
                 [Console]::WriteLine('[1] none (recommended for Networking4All)')
                 [Console]::WriteLine('[2] http-01 (advanced/unsupported in this guided flow)')
                 $mode = Read-SetupChoice -Prompt 'Validation mode' -Options @{ '1'='none'; '2'='http-01' } -DefaultKey '1' -AllowBack
                 if ($mode -in @('__CANCEL__','__BACK__')) { continue }
                 $envValues.ACME_VALIDATION_MODE = $mode
-                Write-EnvFile -Values $envValues -Path $EnvFilePath
+                Write-EnvFile -Values $envValues -Path $resolvedEnvFilePath
                 if ($mode -eq 'http-01') {
                     [Console]::WriteLine('Warning: http-01 flow is not fully implemented in this noob-guided setup.')
                 }
@@ -710,7 +716,13 @@ function Invoke-AcmeSettingsMenu {
             }
             'preview' {
                 $envValues = @{}
-                if (Test-Path -LiteralPath $EnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $EnvFilePath }
+                if (Test-Path -LiteralPath $resolvedEnvFilePath -PathType Leaf) { $envValues = Read-EnvFile -Path $resolvedEnvFilePath }
+                if ([string]$envValues.ACME_PROVIDER -eq 'networking4all' -and [string]$envValues.ACME_DIRECTORY -notmatch 'networking4all\.com') {
+                    [Console]::WriteLine('Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is not Networking4All.')
+                    [Console]::WriteLine('Setup was not saved.')
+                    Wait-ForOperatorReturn
+                    continue
+                }
                 $scriptParameters = if ($envValues.ContainsKey('ACME_SCRIPT_PARAMETERS')) { [string]$envValues.ACME_SCRIPT_PARAMETERS } else { '{CertThumbprint}' }
                 $line = "wacs.exe --accepttos --source manual --order single --baseuri $([string]$envValues.ACME_DIRECTORY) --validation none --globalvalidation none --host $([string]$envValues.DOMAINS) --store certificatestore --installation script --script $([string]$envValues.ACME_SCRIPT_PATH) --scriptparameters `"$scriptParameters`" --csr ec"
                 if (-not [string]::IsNullOrWhiteSpace([string]$envValues.ACME_KID)) { $line += ' --eab-key-identifier <set>' }
@@ -1016,11 +1028,8 @@ function Select-AcmeProviderValues {
         $values.ACME_NETWORKING4ALL_PRODUCT = [string]$productChoice
         $values.ACME_DIRECTORY = [string]$defaults.ACME_DIRECTORY
         $values.ACME_REQUIRES_EAB = '1'
-        $values.ACME_KID = [string](Read-Host 'ACME_KID')
-        $values.ACME_HMAC_SECRET = [string](Read-Host 'ACME_HMAC_SECRET')
-        if ([string]::IsNullOrWhiteSpace($values.ACME_KID) -or [string]::IsNullOrWhiteSpace($values.ACME_HMAC_SECRET)) {
-            throw 'Networking4All requires ACME_KID and ACME_HMAC_SECRET.'
-        }
+        $eabState = Resolve-EabCredentialsForSetup -CurrentValues $CurrentValues -TargetValues $values
+        if ($eabState -in @('__BACK__','__CANCEL__')) { return $null }
         $warnings = New-Object System.Collections.Generic.List[string]
         $domains = @()
         if ($null -ne $CurrentValues -and $CurrentValues.ContainsKey('DOMAINS')) {
@@ -1069,20 +1078,90 @@ function Select-AcmeProviderValues {
     $values.ACME_DIRECTORY = $directory
     if ($requiresEab -eq 'yes') {
         $values.ACME_REQUIRES_EAB = '1'
-        $values.ACME_KID = [string](Read-Host 'ACME_KID')
-        $values.ACME_HMAC_SECRET = [string](Read-Host 'ACME_HMAC_SECRET')
-        if ([string]::IsNullOrWhiteSpace($values.ACME_KID) -or [string]::IsNullOrWhiteSpace($values.ACME_HMAC_SECRET)) {
-            throw 'Custom ACME with EAB requires ACME_KID and ACME_HMAC_SECRET.'
-        }
+        $eabState = Resolve-EabCredentialsForSetup -CurrentValues $CurrentValues -TargetValues $values
+        if ($eabState -in @('__BACK__','__CANCEL__')) { return $null }
     }
     return $values
+}
+
+function Resolve-EabCredentialsForSetup {
+    param(
+        [Parameter(Mandatory)][hashtable]$CurrentValues,
+        [Parameter(Mandatory)][hashtable]$TargetValues
+    )
+
+    $existingKid = ''
+    $existingSecret = ''
+    if ($CurrentValues.ContainsKey('ACME_KID')) { $existingKid = [string]$CurrentValues.ACME_KID }
+    if ($CurrentValues.ContainsKey('ACME_HMAC_SECRET')) { $existingSecret = [string]$CurrentValues.ACME_HMAC_SECRET }
+
+    $hasKid = -not [string]::IsNullOrWhiteSpace($existingKid)
+    $hasSecret = -not [string]::IsNullOrWhiteSpace($existingSecret)
+
+    if ($hasKid -and $hasSecret) {
+        [Console]::WriteLine('')
+        [Console]::WriteLine('Existing EAB credentials found:')
+        [Console]::WriteLine('- KID: set')
+        [Console]::WriteLine('- HMAC secret: set')
+        [Console]::WriteLine('')
+        [Console]::WriteLine('[1] Reuse existing EAB credentials')
+        [Console]::WriteLine('[2] Replace EAB credentials')
+        [Console]::WriteLine('[0] Back')
+        $choice = Read-SetupChoice -Prompt 'EAB credentials' -Options @{ '1'='reuse'; '2'='replace'; '0'='back' } -DefaultKey '1' -AllowBack
+        if ($choice -in @('__CANCEL__','__BACK__','back')) { return '__BACK__' }
+        if ($choice -eq 'reuse') {
+            $TargetValues.ACME_KID = $existingKid
+            $TargetValues.ACME_HMAC_SECRET = $existingSecret
+            return 'ok'
+        }
+    } elseif ($hasKid -or $hasSecret) {
+        $kidState = 'not set'
+        $secretState = 'not set'
+        if ($hasKid) { $kidState = 'set' }
+        if ($hasSecret) { $secretState = 'set' }
+        [Console]::WriteLine('')
+        [Console]::WriteLine('Incomplete EAB credentials found:')
+        [Console]::WriteLine("- KID: $kidState")
+        [Console]::WriteLine("- HMAC secret: $secretState")
+        [Console]::WriteLine('Networking4All requires both values.')
+    }
+
+    $kid = [string](Read-Host 'ACME_KID')
+    if ([string]::IsNullOrWhiteSpace($kid)) { return '__BACK__' }
+    $secret = [string](Read-Host 'ACME_HMAC_SECRET')
+    if ([string]::IsNullOrWhiteSpace($secret)) { return '__BACK__' }
+    $TargetValues.ACME_KID = $kid
+    $TargetValues.ACME_HMAC_SECRET = $secret
+    return 'ok'
+}
+
+function Assert-SavedEnvMatchesSetup {
+    param(
+        [Parameter(Mandatory)][hashtable]$Expected,
+        [Parameter(Mandatory)][hashtable]$Actual
+    )
+    foreach ($key in @('ACME_PROVIDER','ACME_DIRECTORY','ACME_REQUIRES_EAB','ACME_NETWORKING4ALL_ENVIRONMENT','ACME_NETWORKING4ALL_PRODUCT','DOMAINS')) {
+        $expectedValue = ''
+        $actualValue = ''
+        if ($Expected.ContainsKey($key)) { $expectedValue = [string]$Expected[$key] }
+        if ($Actual.ContainsKey($key)) { $actualValue = [string]$Actual[$key] }
+        if ($expectedValue -ne $actualValue) {
+            throw "Saved environment mismatch for '$key'. expected='$expectedValue' actual='$actualValue'"
+        }
+    }
 }
 
 function Invoke-AcmeForm {
     param([string]$EnvFilePath)
 
+    $resolvedEnvFilePath = if ([string]::IsNullOrWhiteSpace([string]$EnvFilePath)) {
+        Resolve-BootstrapEnvPath -ProjectRoot (Split-Path $PSScriptRoot -Parent)
+    } else {
+        [System.IO.Path]::GetFullPath($EnvFilePath)
+    }
+
     $curr = @{}
-    if ($EnvFilePath -and (Test-Path -LiteralPath $EnvFilePath)) { $curr = Read-EnvFile -Path $EnvFilePath }
+    if (Test-Path -LiteralPath $resolvedEnvFilePath) { $curr = Read-EnvFile -Path $resolvedEnvFilePath }
 
     [Console]::WriteLine('')
     [Console]::WriteLine('What do you want to secure?')
@@ -1208,9 +1287,20 @@ function Invoke-AcmeForm {
 
     Assert-AcmeSetupValues -Values $values
 
-    Write-EnvFile -Values $values -Path $EnvFilePath
+    Write-EnvFile -Values $values -Path $resolvedEnvFilePath
+    $reloaded = Read-EnvFile -Path $resolvedEnvFilePath
+    Assert-SavedEnvMatchesSetup -Expected $values -Actual $reloaded
+    if ([string]$reloaded.ACME_PROVIDER -eq 'networking4all' -and [string]$reloaded.ACME_DIRECTORY -match 'letsencrypt') {
+        throw @'
+Internal state mismatch: selected provider is Networking4All but ACME_DIRECTORY is not Networking4All.
+Setup was not saved.
+'@
+    }
+    if ([string]$reloaded.ACME_PROVIDER -eq 'networking4all' -and ([string]$reloaded.ACME_REQUIRES_EAB -ne '1')) {
+        throw "Saved environment mismatch for 'ACME_REQUIRES_EAB'. expected='1' actual='$([string]$reloaded.ACME_REQUIRES_EAB)'"
+    }
     Show-TuiStatus -Message 'Saved bootstrap certificate.env for initial simple-acme setup.' -Type Success -Row ([Console]::WindowHeight-2)
-    return $values
+    return $reloaded
 }
 
 function Invoke-ManageCertificatesMenu {
@@ -1564,5 +1654,8 @@ Export-ModuleMember -Function @(
     'Get-SimpleAcmeLogLocations',
     'Show-SimpleAcmeDiagnosticSummary',
     'Invoke-ViewLogsDiagnostics'
-    ,'Wait-ForOperatorReturn'
+    ,'Wait-ForOperatorReturn',
+    'Resolve-EabCredentialsForSetup',
+    'Assert-SavedEnvMatchesSetup',
+    'Get-ProviderDefaults'
 )

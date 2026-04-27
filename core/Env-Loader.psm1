@@ -65,18 +65,37 @@ function Import-SecureOverlay {
     return $Values
 }
 
-function Resolve-EnvPath {
-    param([string]$Path = '')
-
-    if (-not [string]::IsNullOrWhiteSpace($Path) -and (Test-Path -LiteralPath $Path)) { return $Path }
+function Resolve-BootstrapEnvPath {
+    param([string]$ProjectRoot = '')
 
     $fromEnv = [Environment]::GetEnvironmentVariable('CERTIFICATE_ENV_FILE')
-    if (-not [string]::IsNullOrWhiteSpace($fromEnv) -and (Test-Path -LiteralPath $fromEnv)) { return $fromEnv }
+    if (-not [string]::IsNullOrWhiteSpace([string]$fromEnv)) {
+        return [System.IO.Path]::GetFullPath([string]$fromEnv)
+    }
 
-    $cwdPath = Join-Path (Get-Location).Path 'certificate.env'
-    if (Test-Path -LiteralPath $cwdPath) { return $cwdPath }
+    $resolvedProjectRoot = [string]$ProjectRoot
+    if ([string]::IsNullOrWhiteSpace($resolvedProjectRoot)) {
+        $resolvedProjectRoot = Split-Path $PSScriptRoot -Parent
+    }
 
-    throw 'No certificate.env could be resolved. Set CERTIFICATE_ENV_FILE or create .\certificate.env.'
+    return [System.IO.Path]::GetFullPath((Join-Path $resolvedProjectRoot 'certificate.env'))
+}
+
+function Resolve-EnvPath {
+    param(
+        [string]$Path = '',
+        [string]$ProjectRoot = ''
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($Path)) {
+        $explicit = [System.IO.Path]::GetFullPath($Path)
+        if (Test-Path -LiteralPath $explicit) { return $explicit }
+        throw "Env file not found: $explicit"
+    }
+
+    $candidate = Resolve-BootstrapEnvPath -ProjectRoot $ProjectRoot
+    if (Test-Path -LiteralPath $candidate) { return $candidate }
+    throw "No certificate.env could be resolved. Expected: $candidate"
 }
 
 function Read-EnvFile {
@@ -109,9 +128,14 @@ function Read-EnvFile {
 }
 
 function Import-EnvFile {
-    param([string]$Path = '', [switch]$Force, [switch]$AllowIncomplete)
+    param(
+        [string]$Path = '',
+        [switch]$Force,
+        [switch]$AllowIncomplete,
+        [string]$ProjectRoot = ''
+    )
 
-    $resolved = Resolve-EnvPath -Path $Path
+    $resolved = Resolve-EnvPath -Path $Path -ProjectRoot $ProjectRoot
     $values = Read-EnvFile -Path $resolved
     $values = Import-SecureOverlay -Values $values
 
@@ -215,4 +239,4 @@ function Write-EnvFile {
     Set-EnvFileAcl -Path $Path
 }
 
-Export-ModuleMember -Function @('Read-EnvFile','Import-EnvFile','Write-EnvFile')
+Export-ModuleMember -Function @('Resolve-BootstrapEnvPath','Read-EnvFile','Import-EnvFile','Write-EnvFile')
