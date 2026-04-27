@@ -5,6 +5,14 @@ Describe 'Backup/Restore scripts' {
         $content | Should -Match '0x01'
     }
 
+    It 'Backup script includes inventory-based warnings and does not enforce secret presence' {
+        $content = Get-Content -Raw -Path "$PSScriptRoot/../certificate-backup.ps1"
+        $content | Should -Match 'certificate\\.env missing'
+        $content | Should -Match 'simple-acme data directory not found'
+        $content | Should -Match 'optional phase2 mappings not found'
+        $content | Should -Not -Match \"required credential 'ACME_KID' is empty\"
+    }
+
     It 'Restore script validates magic and decryption message' {
         $content = Get-Content -Raw -Path "$PSScriptRoot/../certificate-restore.ps1"
         $content | Should -Match 'valid Certificate backup'
@@ -31,11 +39,21 @@ Describe 'Backup/Restore scripts' {
         $content | Should -Match 'Legacy key CERTIFICAAT_API_KEY detected'
     }
 
-    It 'Restore script writes only non-secret env keys and restores secure files' {
+    It 'Restore script supports secrets in certificate.env and restores secure files' {
         $content = Get-Content -Raw -Path "$PSScriptRoot/../certificate-restore.ps1"
         $content | Should -Match 'CERTIFICATE_CONFIG_DIR\s*='
-        $content | Should -Not -Match 'CERTIFICATE_API_KEY\s*='
+        $content | Should -Match 'CERTIFICATE_API_KEY\s*='
+        $content | Should -Match 'ACME_KID\s*='
+        $content | Should -Match 'ACME_HMAC_SECRET\s*='
         $content | Should -Match 'credentials.sec'
         $content | Should -Match 'env.secure'
+    }
+
+    It 'Restore script emits tolerant summary output' {
+        $content = Get-Content -Raw -Path "$PSScriptRoot/../certificate-restore.ps1"
+        $content | Should -Match 'Restored:'
+        $content | Should -Match 'certificate\\.env'
+        $content | Should -Match 'simple-acme settings\\.json'
+        $content | Should -Match 'phase2 config'
     }
 }
