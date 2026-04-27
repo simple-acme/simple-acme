@@ -157,4 +157,11 @@ function Remove-DeviceConfig {
     if (Test-Path -LiteralPath $shaPath) { Remove-Item -Path $shaPath -Force }
 }
 
-Export-ModuleMember -Function @('Save-DeviceConfig','Get-DeviceConfig','Get-AllDeviceConfigs','Remove-DeviceConfig')
+$FunctionsToExport = @(
+    'Save-DeviceConfig',
+    'Get-DeviceConfig',
+    'Get-AllDeviceConfigs',
+    'Remove-DeviceConfig'
+)
+
+Export-ModuleMember -Function $FunctionsToExport

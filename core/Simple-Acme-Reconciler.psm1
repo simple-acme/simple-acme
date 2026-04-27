@@ -934,7 +934,7 @@ function Invoke-SimpleAcmeReconcile {
     }
 }
 
-Export-ModuleMember -Function @(
+$FunctionsToExport = @(
     'Resolve-WacsExecutable',
     'Compare-RenewalWithEnv',
     'Assert-ReconcilePreflight',
@@ -958,3 +958,5 @@ Export-ModuleMember -Function @(
     'Write-SimpleAcmeLogDiagnosticSummary',
     'Get-SimpleAcmeLogDiagnosticSummary'
 )
+
+Export-ModuleMember -Function $FunctionsToExport

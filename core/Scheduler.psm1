@@ -116,8 +116,10 @@ function Ensure-OrchestratorScheduledTask {
     }
 }
 
-Export-ModuleMember -Function @(
+$FunctionsToExport = @(
     'Ensure-OrchestratorScheduledTask',
     'New-OrchestratorTaskDefinition',
     'Test-OrchestratorTaskMatches'
 )
+
+Export-ModuleMember -Function $FunctionsToExport

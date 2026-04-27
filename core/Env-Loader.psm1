@@ -239,4 +239,11 @@ function Write-EnvFile {
     Set-EnvFileAcl -Path $Path
 }
 
-Export-ModuleMember -Function @('Resolve-BootstrapEnvPath','Read-EnvFile','Import-EnvFile','Write-EnvFile')
+$FunctionsToExport = @(
+    'Resolve-BootstrapEnvPath',
+    'Read-EnvFile',
+    'Import-EnvFile',
+    'Write-EnvFile'
+)
+
+Export-ModuleMember -Function $FunctionsToExport

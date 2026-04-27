@@ -143,4 +143,13 @@ function Invoke-ConnectorPipeline {
     }
 }
 
-Export-ModuleMember -Function @('Get-CertificateByThumbprint','Test-ThumbprintFormat','Ensure-CertificateInMyStore','Resolve-RenewalMapping','Invoke-EndpointAction','Invoke-ConnectorPipeline')
+$FunctionsToExport = @(
+    'Get-CertificateByThumbprint',
+    'Test-ThumbprintFormat',
+    'Ensure-CertificateInMyStore',
+    'Resolve-RenewalMapping',
+    'Invoke-EndpointAction',
+    'Invoke-ConnectorPipeline'
+)
+
+Export-ModuleMember -Function $FunctionsToExport

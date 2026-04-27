@@ -1639,7 +1639,7 @@ function Invoke-FirstRunWizard {
     return $DefaultEnvPath
 }
 
-Export-ModuleMember -Function @(
+$FunctionsToExport = @(
     'Invoke-DeviceForm',
     'Invoke-AcmeForm',
     'Invoke-AcmeSettingsMenu',
@@ -1653,9 +1653,23 @@ Export-ModuleMember -Function @(
     'Invoke-ManageCertificatesMenu',
     'Get-SimpleAcmeLogLocations',
     'Show-SimpleAcmeDiagnosticSummary',
-    'Invoke-ViewLogsDiagnostics'
-    ,'Wait-ForOperatorReturn',
+    'Invoke-ViewLogsDiagnostics',
+    'Wait-ForOperatorReturn',
     'Resolve-EabCredentialsForSetup',
     'Assert-SavedEnvMatchesSetup',
     'Get-ProviderDefaults'
 )
+
+$FunctionsToExport = @($FunctionsToExport | Where-Object {
+    -not [string]::IsNullOrWhiteSpace([string]$_)
+} | ForEach-Object {
+    [string]$_
+})
+
+foreach ($fn in $FunctionsToExport) {
+    if (-not (Get-Command -Name $fn -CommandType Function -ErrorAction SilentlyContinue)) {
+        throw "Export list contains missing function: $fn"
+    }
+}
+
+Export-ModuleMember -Function $FunctionsToExport

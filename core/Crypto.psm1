@@ -162,8 +162,17 @@ function Get-RandomBytes {
     return $bytes
 }
 
-Export-ModuleMember -Function @(
-    'Protect-DpapiValue','Unprotect-DpapiValue','New-AesKeyFromPassphrase',
-    'Protect-AesValue','Unprotect-AesValue','Get-Sha256','Get-Sha256OfString',
-    'Get-RandomBytes','ConvertTo-PlainText','ConvertTo-SecureStringValue'
+$FunctionsToExport = @(
+    'Protect-DpapiValue',
+    'Unprotect-DpapiValue',
+    'New-AesKeyFromPassphrase',
+    'Protect-AesValue',
+    'Unprotect-AesValue',
+    'Get-Sha256',
+    'Get-Sha256OfString',
+    'Get-RandomBytes',
+    'ConvertTo-PlainText',
+    'ConvertTo-SecureStringValue'
 )
+
+Export-ModuleMember -Function $FunctionsToExport
