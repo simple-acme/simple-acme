@@ -157,11 +157,21 @@ function Remove-DeviceConfig {
     if (Test-Path -LiteralPath $shaPath) { Remove-Item -Path $shaPath -Force }
 }
 
-$FunctionsToExport = @(
-    'Save-DeviceConfig',
-    'Get-DeviceConfig',
-    'Get-AllDeviceConfigs',
-    'Remove-DeviceConfig'
-)
+$FunctionsToExport = New-Object System.Collections.Generic.List[string]
+$FunctionsToExport.Add('Save-DeviceConfig')
+$FunctionsToExport.Add('Get-DeviceConfig')
+$FunctionsToExport.Add('Get-AllDeviceConfigs')
+$FunctionsToExport.Add('Remove-DeviceConfig')
 
-Export-ModuleMember -Function $FunctionsToExport
+$MissingExports = @()
+foreach ($fn in $FunctionsToExport) {
+    if (-not (Get-Command -Name $fn -CommandType Function -ErrorAction SilentlyContinue)) {
+        $MissingExports += $fn
+    }
+}
+
+if ($MissingExports.Count -gt 0) {
+    throw ('Export list contains missing function(s): ' + ($MissingExports -join ', '))
+}
+
+Export-ModuleMember -Function ([string[]]$FunctionsToExport.ToArray())

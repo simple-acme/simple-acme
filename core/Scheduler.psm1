@@ -116,10 +116,20 @@ function Ensure-OrchestratorScheduledTask {
     }
 }
 
-$FunctionsToExport = @(
-    'Ensure-OrchestratorScheduledTask',
-    'New-OrchestratorTaskDefinition',
-    'Test-OrchestratorTaskMatches'
-)
+$FunctionsToExport = New-Object System.Collections.Generic.List[string]
+$FunctionsToExport.Add('Ensure-OrchestratorScheduledTask')
+$FunctionsToExport.Add('New-OrchestratorTaskDefinition')
+$FunctionsToExport.Add('Test-OrchestratorTaskMatches')
 
-Export-ModuleMember -Function $FunctionsToExport
+$MissingExports = @()
+foreach ($fn in $FunctionsToExport) {
+    if (-not (Get-Command -Name $fn -CommandType Function -ErrorAction SilentlyContinue)) {
+        $MissingExports += $fn
+    }
+}
+
+if ($MissingExports.Count -gt 0) {
+    throw ('Export list contains missing function(s): ' + ($MissingExports -join ', '))
+}
+
+Export-ModuleMember -Function ([string[]]$FunctionsToExport.ToArray())

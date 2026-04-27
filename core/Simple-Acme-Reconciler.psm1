@@ -934,29 +934,39 @@ function Invoke-SimpleAcmeReconcile {
     }
 }
 
-$FunctionsToExport = @(
-    'Resolve-WacsExecutable',
-    'Compare-RenewalWithEnv',
-    'Assert-ReconcilePreflight',
-    'Ensure-SimpleAcmeSettings',
-    'Get-NormalizedDomains',
-    'Get-RenewalFiles',
-    'Get-RenewalSummary',
-    'Get-RenewalSummarySafe',
-    'Get-InstallationPlugins',
-    'Get-RenewalIdForCancel',
-    'Invoke-SimpleAcmeReconcile',
-    'Get-WacsVersion',
-    'Get-WacsOutputAnalysis',
-    'Invoke-WacsWithRetry',
-    'Invoke-WacsIssue',
-    'Get-NormalizedCsvValues',
-    'Wait-RenewalFileRemoval',
-    'New-ReconcileConfigHash',
-    'Test-ExactDomainSetMatch',
-    'Write-ReconcileLog',
-    'Write-SimpleAcmeLogDiagnosticSummary',
-    'Get-SimpleAcmeLogDiagnosticSummary'
-)
+$FunctionsToExport = New-Object System.Collections.Generic.List[string]
+$FunctionsToExport.Add('Resolve-WacsExecutable')
+$FunctionsToExport.Add('Compare-RenewalWithEnv')
+$FunctionsToExport.Add('Assert-ReconcilePreflight')
+$FunctionsToExport.Add('Ensure-SimpleAcmeSettings')
+$FunctionsToExport.Add('Get-NormalizedDomains')
+$FunctionsToExport.Add('Get-RenewalFiles')
+$FunctionsToExport.Add('Get-RenewalSummary')
+$FunctionsToExport.Add('Get-RenewalSummarySafe')
+$FunctionsToExport.Add('Get-InstallationPlugins')
+$FunctionsToExport.Add('Get-RenewalIdForCancel')
+$FunctionsToExport.Add('Invoke-SimpleAcmeReconcile')
+$FunctionsToExport.Add('Get-WacsVersion')
+$FunctionsToExport.Add('Get-WacsOutputAnalysis')
+$FunctionsToExport.Add('Invoke-WacsWithRetry')
+$FunctionsToExport.Add('Invoke-WacsIssue')
+$FunctionsToExport.Add('Get-NormalizedCsvValues')
+$FunctionsToExport.Add('Wait-RenewalFileRemoval')
+$FunctionsToExport.Add('New-ReconcileConfigHash')
+$FunctionsToExport.Add('Test-ExactDomainSetMatch')
+$FunctionsToExport.Add('Write-ReconcileLog')
+$FunctionsToExport.Add('Write-SimpleAcmeLogDiagnosticSummary')
+$FunctionsToExport.Add('Get-SimpleAcmeLogDiagnosticSummary')
 
-Export-ModuleMember -Function $FunctionsToExport
+$MissingExports = @()
+foreach ($fn in $FunctionsToExport) {
+    if (-not (Get-Command -Name $fn -CommandType Function -ErrorAction SilentlyContinue)) {
+        $MissingExports += $fn
+    }
+}
+
+if ($MissingExports.Count -gt 0) {
+    throw ('Export list contains missing function(s): ' + ($MissingExports -join ', '))
+}
+
+Export-ModuleMember -Function ([string[]]$FunctionsToExport.ToArray())

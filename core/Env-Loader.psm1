@@ -239,11 +239,21 @@ function Write-EnvFile {
     Set-EnvFileAcl -Path $Path
 }
 
-$FunctionsToExport = @(
-    'Resolve-BootstrapEnvPath',
-    'Read-EnvFile',
-    'Import-EnvFile',
-    'Write-EnvFile'
-)
+$FunctionsToExport = New-Object System.Collections.Generic.List[string]
+$FunctionsToExport.Add('Resolve-BootstrapEnvPath')
+$FunctionsToExport.Add('Read-EnvFile')
+$FunctionsToExport.Add('Import-EnvFile')
+$FunctionsToExport.Add('Write-EnvFile')
 
-Export-ModuleMember -Function $FunctionsToExport
+$MissingExports = @()
+foreach ($fn in $FunctionsToExport) {
+    if (-not (Get-Command -Name $fn -CommandType Function -ErrorAction SilentlyContinue)) {
+        $MissingExports += $fn
+    }
+}
+
+if ($MissingExports.Count -gt 0) {
+    throw ('Export list contains missing function(s): ' + ($MissingExports -join ', '))
+}
+
+Export-ModuleMember -Function ([string[]]$FunctionsToExport.ToArray())

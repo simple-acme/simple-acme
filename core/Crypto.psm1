@@ -162,17 +162,27 @@ function Get-RandomBytes {
     return $bytes
 }
 
-$FunctionsToExport = @(
-    'Protect-DpapiValue',
-    'Unprotect-DpapiValue',
-    'New-AesKeyFromPassphrase',
-    'Protect-AesValue',
-    'Unprotect-AesValue',
-    'Get-Sha256',
-    'Get-Sha256OfString',
-    'Get-RandomBytes',
-    'ConvertTo-PlainText',
-    'ConvertTo-SecureStringValue'
-)
+$FunctionsToExport = New-Object System.Collections.Generic.List[string]
+$FunctionsToExport.Add('Protect-DpapiValue')
+$FunctionsToExport.Add('Unprotect-DpapiValue')
+$FunctionsToExport.Add('New-AesKeyFromPassphrase')
+$FunctionsToExport.Add('Protect-AesValue')
+$FunctionsToExport.Add('Unprotect-AesValue')
+$FunctionsToExport.Add('Get-Sha256')
+$FunctionsToExport.Add('Get-Sha256OfString')
+$FunctionsToExport.Add('Get-RandomBytes')
+$FunctionsToExport.Add('ConvertTo-PlainText')
+$FunctionsToExport.Add('ConvertTo-SecureStringValue')
 
-Export-ModuleMember -Function $FunctionsToExport
+$MissingExports = @()
+foreach ($fn in $FunctionsToExport) {
+    if (-not (Get-Command -Name $fn -CommandType Function -ErrorAction SilentlyContinue)) {
+        $MissingExports += $fn
+    }
+}
+
+if ($MissingExports.Count -gt 0) {
+    throw ('Export list contains missing function(s): ' + ($MissingExports -join ', '))
+}
+
+Export-ModuleMember -Function ([string[]]$FunctionsToExport.ToArray())
