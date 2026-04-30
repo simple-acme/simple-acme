@@ -4,7 +4,6 @@ using PKISharp.WACS.Services;
 using System;
 using System.Net;
 using System.Net.Http;
-using System.Runtime.InteropServices.Marshalling;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -109,6 +108,18 @@ namespace PKISharp.WACS.Clients.Acme
             }
         }
 
+        /// <summary>
+        /// Inner method for Backoff that does the actual retrying with delay, and throws a more descriptive error message if the max attempts is reached
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="client"></param>
+        /// <param name="executor"></param>
+        /// <param name="log"></param>
+        /// <param name="attempt"></param>
+        /// <param name="errorMessage"></param>
+        /// <param name="ex"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         private static async Task<T> Backoff<T>(this AcmeProtocolClient client, Func<Task<T>> executor, ILogService log, int attempt, string errorMessage, Exception ex)
         {
             if (attempt == 5)
