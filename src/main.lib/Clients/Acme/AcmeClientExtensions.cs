@@ -101,7 +101,7 @@ namespace PKISharp.WACS.Clients.Acme
                     }
                     if (RetryCodes.Contains(hrex.StatusCode.Value))
                     {
-                        return await Backoff(client, executor, log, attempt, $"Error {(int)hrex.StatusCode.Value})", ex);
+                        return await Backoff(client, executor, log, attempt, $"Error {(int)hrex.StatusCode.Value} ({hrex.StatusCode.Value})", ex);
                     }
                 }
                 throw;
