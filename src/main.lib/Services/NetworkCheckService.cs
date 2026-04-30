@@ -7,44 +7,84 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Services
 {
-    internal class NetworkCheckService(IProxyService proxy, ISettings settings, ILogService log)
+    /// <summary>
+    /// Used for initial check of network connectivity, to provide early feedback to the 
+    /// user if there are issues with the connection to the ACME server. Some attempts
+    /// are made to restore connection if it fails, for example by bypassing the proxy 
+    /// or forcing TLS 1.2. 
+    /// </summary>
+    /// <param name="proxy"></param>
+    /// <param name="settings"></param>
+    /// <param name="log"></param>
+    /// <param name="acmeClientManager"></param>
+    internal class NetworkCheckService(IProxyService proxy, ISettings settings, ILogService log, AcmeClientManager acmeClientManager)
     {
+        /// <summary>
+        /// Called from the Banner
+        /// </summary>
+        /// <returns></returns>
+        internal async Task ConnectionTest()
+        {
+            // Connection test
+            log.Information("Connecting to {ACME}...", settings.BaseUri);
+            var success = await CheckNetworkWithTimeout();
+            if (!success)
+            {
+                log.Debug("Connection failed, retrying with TLS 1.2 forced...");
+                proxy.SslProtocols = SslProtocols.Tls12;
+                success = await CheckNetworkWithTimeout();
+            } 
+            if (!success)
+            {
+                log.Debug("Connection failed, retrying with proxy bypass...");
+                proxy.Disable();
+                success = await CheckNetworkWithTimeout();
+            }
+            if (!success)
+            {
+                log.Warning("Network check failed or timed out. Functionality may be limited.");
+                return;
+            }
+            log.Information("Connection OK!");
+        }
 
         /// <summary>
-        /// Test the network connection
+        /// If any connection test takes too long, we also consider it failed
         /// </summary>
-        internal async Task CheckNetwork()
+        /// <returns></returns>
+        private async Task<bool> CheckNetworkWithTimeout()
         {
-            using var httpClient = await proxy.GetHttpClient();
-            httpClient.BaseAddress = settings.BaseUri;
-            httpClient.Timeout = new TimeSpan(0, 0, 10);
-            var success = await CheckNetworkUrl(httpClient, "directory");
-            if (!success)
+            try
             {
-                success = await CheckNetworkUrl(httpClient, "");
+                var result = CheckNetwork();
+                return await result.WaitAsync(TimeSpan.FromSeconds(15));
             }
-            if (!success)
+            catch (TimeoutException)
             {
-                log.Debug("Initial connection failed, retrying with TLS 1.2 forced");
-                proxy.SslProtocols = SslProtocols.Tls12;
-                success = await CheckNetworkUrl(httpClient, "directory");
-                if (!success)
-                {
-                    success = await CheckNetworkUrl(httpClient, "");
-                }
-            }
-            if (success)
-            {
-                log.Verbose("Connection OK!");
-            }
-            else
-            {
-                log.Warning("Initial connection failed");
+                return false;
             }
         }
 
         /// <summary>
-        /// Test the network connection
+        /// Test the network connection using candidate directory URLs from the AcmeClientManager
+        /// </summary>
+        private async Task<bool> CheckNetwork()
+        {
+            using var httpClient = await proxy.GetHttpClient();
+            httpClient.BaseAddress = settings.BaseUri;
+            httpClient.Timeout = new TimeSpan(0, 0, 10);
+            foreach (var url in acmeClientManager.GetDirectorUrls())
+            {
+                if (await CheckNetworkUrl(httpClient, url))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Try to connect to the given URL and check if it returns a valid response.
         /// </summary>
         private async Task<bool> CheckNetworkUrl(HttpClient httpClient, string path)
         {
@@ -53,6 +93,11 @@ namespace PKISharp.WACS.Services
                 var response = await httpClient.GetAsync(path).ConfigureAwait(false);
                 await CheckNetworkResponse(response);
                 return true;
+            }
+            catch (HttpRequestException ex)
+            {
+                log.Debug($"{{error}}: {ex.Message} ({{status}})", ex.HttpRequestError, (int?)ex.StatusCode ?? -1);
+                return false;
             }
             catch (Exception ex)
             {
