@@ -83,6 +83,7 @@ namespace PKISharp.WACS.Services
                             result.LastFriendlyName = result.FriendlyName;
                         }
                         result.History ??= [];
+                        result.EndPoint ??= settings.BaseUri.ToString();
                         list.Add(result);
                     }
                     catch (Exception ex)
