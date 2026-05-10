@@ -103,7 +103,12 @@ namespace PKISharp.WACS.Services
                 if (renewal.Settings != null)
                 {
                     var currentSettings = main.Resolve<ISettings>();
-                    var renewalSettings = currentSettings.Merge(renewal.Settings);
+                    var uri = null as Uri;
+                    if (Uri.TryCreate(renewal.EndPoint, UriKind.Absolute, out var ret))
+                    {
+                        uri = ret;
+                    }
+                    var renewalSettings = currentSettings.Merge(renewal.Settings, uri);        
                     builder.Register(c => renewalSettings).As<ISettings>().SingleInstance();
                 }
                 builder.Register(c => runLevel).As<RunLevel>();
