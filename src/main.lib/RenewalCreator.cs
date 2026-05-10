@@ -287,9 +287,12 @@ namespace PKISharp.WACS
                 try
                 {
                     var profile = await SetupCertificateProfile(runLevel);
-                    tempRenewal.Settings ??= new Settings();
-                    tempRenewal.Settings.Acme ??= new AcmeSettings();
-                    tempRenewal.Settings.Acme.CertificateProfile = profile;
+                    if (!string.IsNullOrWhiteSpace(profile))
+                    {
+                        tempRenewal.Settings ??= new Settings();
+                        tempRenewal.Settings.Acme ??= new AcmeSettings();
+                        tempRenewal.Settings.Acme.CertificateProfile = profile;
+                    }
                 }
                 catch
                 {
