@@ -254,7 +254,11 @@ namespace PKISharp.WACS.Services
             ValidationFrontend(ILifetimeScope execution, ValidationPluginOptions options, Identifier identifier)
         {
             var dummyTarget = new Target(identifier);
-            var dummyScope = Target(execution, dummyTarget).BeginLifetimeScope(b => b.Register(c => RunLevel.None).As<RunLevel>());
+            var dummyRenewal = new Renewal();
+            var dummyScope = Target(execution, dummyTarget).BeginLifetimeScope(b => {
+                b.Register(c => RunLevel.None).As<RunLevel>();
+                b.RegisterInstance(dummyRenewal);
+            });
             var pluginHelper = PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>(dummyScope, options, "dummy");
             return pluginHelper.Resolve<PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>>();
         }
