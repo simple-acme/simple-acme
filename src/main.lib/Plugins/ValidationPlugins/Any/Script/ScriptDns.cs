@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
 
         internal Dictionary<string, string?> ReplaceTokens(string identifier, string recordName, bool censor, string token)
         {
-            var zoneName = domainParseService.GetRegisterableDomain(identifier);
+            var zoneName = domainParseService.GetRegisterableDomain(recordName);
             var nodeName = DnsValidation<Script>.RelativeRecordName(zoneName, recordName);
             return new Dictionary<string, string?>
                 {

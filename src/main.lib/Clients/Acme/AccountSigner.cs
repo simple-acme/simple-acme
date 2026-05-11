@@ -10,8 +10,6 @@ namespace PKISharp.WACS.Clients.Acme
     /// </summary>
     internal class AccountSigner
     {
-        private string? _keyType;
-        private string? _keyExport;
         private IJwsTool? _jwsTool;
 
         public AccountSigner() { }
@@ -31,8 +29,8 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         public string? KeyType 
         {
-            get => _keyType;
-            set { _keyType = value; _jwsTool = null; }
+            get;
+            set { field = value; _jwsTool = null; }
         }
 
         /// <summary>
@@ -40,8 +38,8 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         public string? KeyExport
         {
-            get => _keyExport;
-            set { _keyExport = value; _jwsTool = null; }
+            get;
+            set { field = value; _jwsTool = null; }
         }
 
         public IJwsTool JwsTool()

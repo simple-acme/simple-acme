@@ -11,9 +11,10 @@ namespace PKISharp.WACS.Services.AutoRenew
     [SupportedOSPlatform("linux")]
     internal class CronJobService(ILogService log, ISettings settings) : IAutoRenewService
     {
-        private string CronFileName => $"{settings.Client.ClientName.CleanPath()}-{settings.BaseUri.CleanUri()}";
+        private string CronFileName => $"{settings.Client.ClientName.CleanPath()}-{settings.BaseUri.CleanUri().Replace(".", "_")}";
         private FileInfo CronFile => new($"/etc/cron.daily/{CronFileName}");
         private string CronScriptTemplate => $@"
+#!/bin/sh
 # Automatically created by simple-acme: https://github.com/simple-acme/simple-acme/
 cd {Path.GetDirectoryName(VersionService.ExePath)}
 ./wacs --{nameof(MainArguments.Renew).ToLowerInvariant()} --{nameof(MainArguments.BaseUri).ToLowerInvariant()} ""{settings.BaseUri}""";

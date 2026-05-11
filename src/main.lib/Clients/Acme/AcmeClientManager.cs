@@ -26,38 +26,19 @@ namespace PKISharp.WACS.Clients.Acme
     /// <summary>
     /// Main class that talks to the ACME server
     /// </summary>
-    internal class AcmeClientManager
+    internal class AcmeClientManager(
+        IInputService inputService,
+        ArgumentsParser arguments,
+        ILogService log,
+        IAcmeLogger acmeLogger,
+        ISettings settings,
+        AccountManager accountManager,
+        IProxyService proxy,
+        AcmeCredentialReader acmeCredentials)
     {
-        private readonly ILogService _log;
-        private readonly IAcmeLogger _acmeLogger;
-        private readonly IInputService _input;
-        private readonly ISettings _settings;
-        private readonly ArgumentsParser _arguments;
-        private readonly IProxyService _proxyService;
-        private readonly AcmeCredentialReader _acmeCredentials;
+
         private AcmeProtocolClient? _anonymousClient;
         private readonly Dictionary<string, AcmeClient> _authorizedClients = [];
-        private readonly AccountManager _accountManager;
-
-        public AcmeClientManager(
-            IInputService inputService,
-            ArgumentsParser arguments,
-            ILogService log,
-            IAcmeLogger acmeLogger,
-            ISettings settings,
-            AccountManager accountManager,
-            IProxyService proxy,
-            AcmeCredentialReader acmeCredentials)
-        {
-            _log = log;
-            _acmeLogger = acmeLogger;
-            _settings = settings;
-            _arguments = arguments;
-            _input = inputService;
-            _proxyService = proxy;
-            _accountManager = accountManager;
-            _acmeCredentials = acmeCredentials;
-        }
 
         /// <summary>
         /// Load the directory and create AcmeProtocolClient that we will use
@@ -66,10 +47,10 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         private async Task<AcmeProtocolClient> CreateAnonymousClient()
         {
-            var httpClient = await _proxyService.GetHttpClient();
-            httpClient.BaseAddress = _settings.BaseUri;
-            _log.Verbose("Constructing ACME protocol client...");
-            var client = new AcmeProtocolClient(httpClient, _acmeLogger, usePostAsGet: _settings.Acme.PostAsGet);
+            var httpClient = await proxy.GetHttpClient();
+            httpClient.BaseAddress = settings.BaseUri;
+            log.Verbose("Constructing ACME protocol client...");
+            var client = new AcmeProtocolClient(httpClient, acmeLogger, usePostAsGet: settings.Acme.PostAsGet);
             client.Directory = await EnsureServiceDirectory(client);
             return client;
         }
@@ -97,48 +78,46 @@ namespace PKISharp.WACS.Clients.Acme
             _anonymousClient ??= await CreateAnonymousClient();
 
             // Try to load prexisting account
-            var account = _accountManager.LoadAccount(name);
+            var account = accountManager.LoadAccount(name);
             if (account != null)
             {
-                _log.Verbose("Using existing ACME account");
+                log.Verbose("Using existing ACME account");
             }
             else
             {
-                _log.Verbose("No account found, creating new one");
+                log.Verbose("No account found, creating new one");
                 account = await SetupAccount(_anonymousClient, runLevel);
                 if (account == null)
                 {
                     throw new Exception("AcmeClient was unable to find or create an account");
                 }
                 // Save newly created account to disk
-                await _accountManager.StoreAccount(account, name);
+                await accountManager.StoreAccount(account, name);
             }
 
             // Create authorized account
-            var httpClient = await _proxyService.GetHttpClient(_settings.Acme.ValidateServerCertificate);
-            var ret = new AcmeClient(httpClient, _log, _acmeLogger, _settings, _anonymousClient.Directory, account);
+            var httpClient = await proxy.GetHttpClient(settings.Acme.ValidateServerCertificate);
+            var ret = new AcmeClient(httpClient, log, acmeLogger, settings, _anonymousClient.Directory, account);
             if (!string.IsNullOrWhiteSpace(name))
             {
-                _log.Debug("Using named account {name}...", name);
+                log.Debug("Using named account {name}...", name);
             }
             else
             {
-                _log.Debug("Using default account...", name);
+                log.Debug("Using default account...", name);
             }
             return ret;
         }
 
         /// <summary>
-        /// Make sure that we find a service directory
+        /// Guess where we might find the service directory, based on the base URI 
         /// </summary>
-        /// <param name="client"></param>
         /// <returns></returns>
-        private async Task<ServiceDirectory> EnsureServiceDirectory(AcmeProtocolClient client)
+        internal List<string> GetDirectorUrls()
         {
-
             var urlsToTry = new List<string>([""]);
-            if (_settings.BaseUri.Host.EndsWith(".letsencrypt.org") &&
-                string.IsNullOrEmpty(_settings.BaseUri.PathAndQuery.TrimEnd('/')))
+            if (settings.BaseUri.Host.EndsWith(".letsencrypt.org") &&
+                string.IsNullOrEmpty(settings.BaseUri.PathAndQuery.TrimEnd('/')))
             {
                 // For Let's Encrypt, try the /directory endpoint first,
                 // because historically we have only configured the host
@@ -152,13 +131,23 @@ namespace PKISharp.WACS.Clients.Acme
                 // compatiblity with how the client used to behave.
                 urlsToTry.Insert(1, "directory");
             }
+            return urlsToTry;
+        }
+
+        /// <summary>
+        /// Make sure that we find a service directory
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns></returns>
+        private async Task<ServiceDirectory> EnsureServiceDirectory(AcmeProtocolClient client)
+        {
             ServiceDirectory? directory;
-            foreach (var urlToTry in urlsToTry)
+            foreach (var urlToTry in GetDirectorUrls())
             {
                 try
                 {
-                    _log.Debug("Getting service directory from {url}...", string.IsNullOrWhiteSpace(urlToTry) ? _settings.BaseUri : "/" + urlToTry);
-                    directory = await client.Backoff(async () => await client.GetDirectoryAsync(urlToTry), _log);
+                    log.Debug("Getting service directory from {url}...", string.IsNullOrWhiteSpace(urlToTry) ? settings.BaseUri : "/" + urlToTry);
+                    directory = await client.Backoff(async () => await client.GetDirectoryAsync(urlToTry), log);
                     if (directory != null)
                     {
                         return directory;
@@ -167,7 +156,6 @@ namespace PKISharp.WACS.Clients.Acme
                 catch
                 {
                 }
-
             }
             throw new Exception("Unable to get service directory");
         }
@@ -200,7 +188,7 @@ namespace PKISharp.WACS.Clients.Acme
             try
             {
                 var (_, filename, content) = await client.GetTermsOfServiceAsync();
-                _log.Verbose("Terms of service downloaded");
+                log.Verbose("Terms of service downloaded");
                 if (!string.IsNullOrEmpty(filename) && content != null)
                 {
                     if (!await AcceptTos(filename, content))
@@ -211,28 +199,28 @@ namespace PKISharp.WACS.Clients.Acme
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Error getting terms of service");
+                log.Error(ex, "Error getting terms of service");
             }
 
             var eabRequired = client.Directory?.Meta?.ExternalAccountRequired ?? false;
-            var eabArgs = await _acmeCredentials.FromArguments();
+            var eabArgs = await acmeCredentials.FromArguments();
 
             // Warn about unneeded EAB
             if (!eabRequired && eabArgs != null)
             {
-                _input.CreateSpace();
-                _input.Show(null, "You have provided an external account binding key, even though " +
+                inputService.CreateSpace();
+                inputService.Show(null, "You have provided an external account binding key, even though " +
                     "the server does not indicate that this is required. We will attempt to register " +
                     "using this key anyway.");
-                _input.CreateSpace();
+                inputService.CreateSpace();
             }
 
             // Get EAB if required by the server
             if (eabRequired && eabArgs == null)
             {
-                eabArgs = _settings.BaseUri.Host.Contains("zerossl.com")
-                    ? await _acmeCredentials.GetZeroSsl(runLevel)
-                    : await _acmeCredentials.GetRegular(runLevel);
+                eabArgs = settings.BaseUri.Host.Contains("zerossl.com")
+                    ? await acmeCredentials.GetZeroSsl(runLevel)
+                    : await acmeCredentials.GetRegular(runLevel);
                 if (eabArgs == null)
                 {
                     throw new Exception("Unable to retrieve required credentials");
@@ -242,9 +230,9 @@ namespace PKISharp.WACS.Clients.Acme
             // Get contacts if EAB is not required
             var contacts = eabRequired
                 ? [] 
-                : await _acmeCredentials.GetContacts(runLevel);
+                : await acmeCredentials.GetContacts(runLevel);
 
-            var newAccount = _accountManager.NewAccount();
+            var newAccount = accountManager.NewAccount();
             AccountDetails newAccountDetails;
             try
             {
@@ -256,7 +244,7 @@ namespace PKISharp.WACS.Clients.Acme
                 // algorithms, so attempt fallback to RS256
                 if (apex.ProblemType == ProblemType.BadSignatureAlgorithm && newAccount.Signer.KeyType != "RS256")
                 {
-                    newAccount = _accountManager.NewAccount("RS256");
+                    newAccount = accountManager.NewAccount("RS256");
                     newAccountDetails = await CreateAccount(client, newAccount.Signer, contacts, eabArgs);
                 }
                 else
@@ -266,7 +254,7 @@ namespace PKISharp.WACS.Clients.Acme
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "Error creating account");
+                log.Error(ex, "Error creating account");
                 return null;
             }
             if (newAccountDetails == default)
@@ -309,7 +297,7 @@ namespace PKISharp.WACS.Clients.Acme
                 () => client.CreateAccountAsync(
                     contacts,
                     termsOfServiceAgreed: true,
-                    externalAccountBinding: externalAccount?.Payload() ?? null), _log);
+                    externalAccountBinding: externalAccount?.Payload() ?? null), log);
         }
 
         /// <summary>
@@ -321,17 +309,17 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         private async Task<bool> AcceptTos(string filename, byte[] content)
         {
-            var tosPath = Path.Combine(_settings.Client.ConfigurationPath, filename);
-            _log.Verbose("Writing terms of service to {path}", tosPath);
+            var tosPath = Path.Combine(settings.Client.ConfigurationPath, filename);
+            log.Verbose("Writing terms of service to {path}", tosPath);
             await File.WriteAllBytesAsync(tosPath, content);
-            _input.CreateSpace();
-            _input.Show($"Terms of service", tosPath);
-            _input.CreateSpace();
-            if (_arguments.GetArguments<AccountArguments>()?.AcceptTos ?? false)
+            inputService.CreateSpace();
+            inputService.Show($"Terms of service", tosPath);
+            inputService.CreateSpace();
+            if (arguments.GetArguments<AccountArguments>()?.AcceptTos ?? false)
             {
                 return true;
             }
-            if (await _input.PromptYesNo($"Open in default application?", false))
+            if (await inputService.PromptYesNo($"Open in default application?", false))
             {
                 try
                 {
@@ -343,10 +331,10 @@ namespace PKISharp.WACS.Clients.Acme
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex, "Unable to start application");
+                    log.Error(ex, "Unable to start application");
                 }
             }
-            return await _input.PromptYesNo($"Do you agree with the terms?", true);
+            return await inputService.PromptYesNo($"Do you agree with the terms?", true);
         }
 
         /// <summary>
@@ -357,12 +345,12 @@ namespace PKISharp.WACS.Clients.Acme
         internal async Task ChangeContacts(RunLevel runLevel, string? name = null)
         {
             var client = await GetClient(runLevel, name);
-            var contacts = await _acmeCredentials.GetContacts(runLevel);
+            var contacts = await acmeCredentials.GetContacts(runLevel);
             var newDetails = await client.UpdateAccountAsync(contacts);
             if (newDetails.Payload != null)
             {
                 client.Account.Details = newDetails;
-                await _accountManager.StoreAccount(client.Account, name);
+                await accountManager.StoreAccount(client.Account, name);
             }
         }
     }
