@@ -67,7 +67,7 @@ namespace PKISharp.WACS
             try
             {
                 var client = await clientManager.GetClient(RunLevel.Unattended, accountArguments.Account);
-                log.Information("Registration successful", client.Account.Details.Kid);
+                log.Information("Registration successful: {kid}", client.Account.Details.Kid);
             }
             catch (Exception ex)
             {
