@@ -72,6 +72,7 @@ namespace PKISharp.WACS
             catch (Exception ex)
             {
                 log.Error(ex, "Registration failed");
+                throw;
             }
         }
          
