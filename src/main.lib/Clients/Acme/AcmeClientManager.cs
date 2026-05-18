@@ -81,7 +81,14 @@ namespace PKISharp.WACS.Clients.Acme
             var account = accountManager.LoadAccount(name);
             if (account != null)
             {
-                log.Verbose("Using existing ACME account");
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    log.Information("Using existing named ACME account {named}: {kid}", name, account.Details.Kid);
+                }
+                else
+                {
+                    log.Information("Using existing default ACME account: {kid}", account.Details.Kid);
+                }
             }
             else
             {
@@ -91,6 +98,14 @@ namespace PKISharp.WACS.Clients.Acme
                 {
                     throw new Exception("AcmeClient was unable to find or create an account");
                 }
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    log.Information("Created new named ACME account {named}: {kid}", name, account.Details.Kid);
+                }
+                else
+                {
+                    log.Information("Created new default ACME account: {kid}", account.Details.Kid);
+                }
                 // Save newly created account to disk
                 await accountManager.StoreAccount(account, name);
             }
@@ -98,14 +113,6 @@ namespace PKISharp.WACS.Clients.Acme
             // Create authorized account
             var httpClient = await proxy.GetHttpClient(settings.Acme.ValidateServerCertificate);
             var ret = new AcmeClient(httpClient, log, acmeLogger, settings, _anonymousClient.Directory, account);
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                log.Debug("Using named account {name}...", name);
-            }
-            else
-            {
-                log.Debug("Using default account...", name);
-            }
             return ret;
         }
 
@@ -191,7 +198,7 @@ namespace PKISharp.WACS.Clients.Acme
                 log.Verbose("Terms of service downloaded");
                 if (!string.IsNullOrEmpty(filename) && content != null)
                 {
-                    if (!await AcceptTos(filename, content))
+                    if (!await AcceptTos(filename, content, runLevel))
                     {
                         return null;
                     }
@@ -218,18 +225,15 @@ namespace PKISharp.WACS.Clients.Acme
             // Get EAB if required by the server
             if (eabRequired && eabArgs == null)
             {
-                eabArgs = settings.BaseUri.Host.Contains("zerossl.com")
+                eabArgs = (settings.BaseUri.Host.Contains("zerossl.com")
                     ? await acmeCredentials.GetZeroSsl(runLevel)
-                    : await acmeCredentials.GetRegular(runLevel);
-                if (eabArgs == null)
-                {
+                    : await acmeCredentials.GetRegular(runLevel)) ??
                     throw new Exception("Unable to retrieve required credentials");
-                }
             }
 
-            // Get contacts if EAB is not required
-            var contacts = eabRequired
-                ? [] 
+            // Get contacts 
+            var contacts = eabArgs?.Contact != null ? 
+                [eabArgs.Contact] 
                 : await acmeCredentials.GetContacts(runLevel);
 
             var newAccount = accountManager.NewAccount();
@@ -307,18 +311,23 @@ namespace PKISharp.WACS.Clients.Acme
         /// <param name="filename"></param>
         /// <param name="content"></param>
         /// <returns></returns>
-        private async Task<bool> AcceptTos(string filename, byte[] content)
+        private async Task<bool> AcceptTos(string filename, byte[] content, RunLevel runLevel)
         {
             var tosPath = Path.Combine(settings.Client.ConfigurationPath, filename);
             log.Verbose("Writing terms of service to {path}", tosPath);
             await File.WriteAllBytesAsync(tosPath, content);
-            inputService.CreateSpace();
-            inputService.Show($"Terms of service", tosPath);
-            inputService.CreateSpace();
             if (arguments.GetArguments<AccountArguments>()?.AcceptTos ?? false)
             {
                 return true;
             }
+            if (runLevel.HasFlag(RunLevel.Unattended))
+            {
+                log.Error("Please review terms of service at {tosPath} and add {accepttos} to your command line if you agree.", tosPath, "--accepttos");
+                return false;
+            }
+            inputService.CreateSpace();
+            inputService.Show($"Terms of service", tosPath);
+            inputService.CreateSpace();
             if (await inputService.PromptYesNo($"Open in default application?", false))
             {
                 try
