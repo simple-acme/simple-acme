@@ -190,13 +190,13 @@ namespace PKISharp.WACS
                 var localOptions = authorisationContext.Order.Renewal.ValidationPluginOptions;
                 var identifier = Identifier.Parse(authorisationContext.Authorization);
                 var globalOptions = await validationOptions.GetValidationOptions(identifier);
-                if (globalOptions != null &&
-                    CanValidate(authorisationContext, globalOptions))
+                if (globalOptions != null && 
+                    await CanValidate(authorisationContext, globalOptions))
                 {
                     add(globalOptions, authorisationContext);
                 }
-                else if ((globalOptions == null || localOptions.Plugin != globalOptions.Plugin) &&
-                    CanValidate(authorisationContext, localOptions))
+                else if ((globalOptions == null || localOptions.Plugin != globalOptions.Plugin) && 
+                    await CanValidate(authorisationContext, localOptions))
                 {
                     add(localOptions, authorisationContext);
                 }
@@ -219,7 +219,7 @@ namespace PKISharp.WACS
         /// <param name="authorization"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        private bool CanValidate(AuthorizationContext context, ValidationPluginOptions options)
+        private async Task<bool> CanValidate(AuthorizationContext context, ValidationPluginOptions options)
         {
             if (context.Authorization.Identifier == null)
             {
@@ -227,7 +227,7 @@ namespace PKISharp.WACS
             }
             var identifier = Identifier.Parse(context.Authorization.Identifier);
             var pluginFrontend = scopeBuilder.ValidationFrontend(context.Order.OrderScope, options, identifier);
-            var state = pluginFrontend.Capability.ExecutionState;
+            var state = await pluginFrontend.Capability.ExecutionState();
             if (state.Disabled)
             {
                 log.Warning("Validation plugin {name} is not available. {disabledReason}", pluginFrontend.Meta.Name, state.Reason);

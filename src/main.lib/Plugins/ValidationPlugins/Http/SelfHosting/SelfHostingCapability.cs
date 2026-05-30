@@ -16,28 +16,25 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         public SelfHostingCapability(Target target, ArgumentsParser args, ISelfHosterFactory factory, SelfHostingOptions? options) : this(target, args, factory) => SelfHostingOptions = options;
 
-        public override State ExecutionState
+        public override async Task<State> ExecutionState()
         {
-            get
+            var baseState = await base.ExecutionState();
+            if (baseState.Disabled)
             {
-                var baseState = base.ExecutionState;
-                if (baseState.Disabled)
-                {
-                    return baseState;
-                }
-                return TestListener.Value;
+                return baseState;
             }
+            return await TestListener.Value;
         }
 
-        internal Lazy<State> TestListener
+        internal Lazy<Task<State>> TestListener
         {
             get
             {
-                _testListener ??= new Lazy<State>(() => TestListenerCreator().Result);
+                _testListener ??= new Lazy<Task<State>>(TestListenerCreator);
                 return _testListener;
             }
         }
-        internal Lazy<State>? _testListener;
+        internal Lazy<Task<State>>? _testListener;
 
         internal async Task<State> TestListenerCreator() 
         {

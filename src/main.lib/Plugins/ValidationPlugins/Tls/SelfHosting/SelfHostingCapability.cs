@@ -5,6 +5,7 @@ using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using System;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
 {
@@ -27,17 +28,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
             ArgumentsParser = args;
         }
 
-        public override State ExecutionState
+        public override async Task<State> ExecutionState()
         {
-            get
+            var baseState = await base.ExecutionState();
+            if (baseState.Disabled)
             {
-                var baseState = base.ExecutionState;
-                if (baseState.Disabled)
-                {
-                    return baseState;
-                }
-                return TestListener.Value;
+                return baseState;
             }
+            return TestListener.Value;
         }
 
         internal Lazy<State> TestListener
