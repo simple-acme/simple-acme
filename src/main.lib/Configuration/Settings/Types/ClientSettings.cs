@@ -56,7 +56,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             }
         }
 
-        public string ClientName => Get(x => x.ClientName) ?? "simple-acme";
+        public string ClientName => Get(x => x.ClientName) ?? VersionService.DefaultClientName;
         public string ConfigurationPath => Path.Combine(ConfigRoot, root.BaseUri.CleanUri());
         public string PluginPath => Get(x => x.PluginPath) ?? Path.Combine(ConfigRoot, "plugins");
         public string LogPath {
@@ -80,7 +80,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     public class ClientSettings
     {
         [SettingsValue(
-            Default = "simple-acme", 
+            Default = VersionService.DefaultClientName, 
             Description = "The name of the client, which comes back in several places like the " +
             "scheduled task name, Windows event viewer, notification messages, user agent and " +
             "the <code>ConfigurationPath</code>.")]

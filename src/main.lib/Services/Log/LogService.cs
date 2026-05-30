@@ -39,7 +39,7 @@ namespace PKISharp.WACS.Services
         public LogService(bool verbose, bool config)
         {
             // Custom configuration support
-            ConfigurationPath = Path.Combine(VersionService.BasePath, "serilog.json");
+            ConfigurationPath = Path.Combine(VersionService.ResourcePath, "serilog.json");
 #if DEBUG
             var initialLevel = LogEventLevel.Debug;
 #else

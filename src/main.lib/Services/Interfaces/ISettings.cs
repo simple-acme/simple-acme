@@ -6,7 +6,7 @@ namespace PKISharp.WACS.Services
 {
     public interface ISettings
     {
-        ISettings Merge(Settings settings);
+        ISettings Merge(Settings settings, Uri? baseUri);
 
         IUiSettings UI { get; }
         IAcmeSettings Acme { get; }

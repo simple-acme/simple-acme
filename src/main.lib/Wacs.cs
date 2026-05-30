@@ -63,11 +63,7 @@ namespace PKISharp.WACS.Host
             {
                 return -1;
             }
-            if (!VersionService.Valid)
-            {
-                return -1;
-            }
-
+   
             // List informational message and start-up diagnostics
             _args = argumentsParser.GetArguments<MainArguments>() ?? new();
 

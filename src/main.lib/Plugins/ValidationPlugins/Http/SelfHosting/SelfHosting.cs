@@ -70,11 +70,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             // Add validation file
             _files.GetOrAdd($"/{Http01ChallengeValidationDetails.HttpPathPrefix}/{challenge.HttpResourceName}", challenge.HttpResourceValue);
+            StartListener();
             await TestChallenge(challenge);
             return true;
         }
 
-        public override Task Commit()
+        private void StartListener()
         {
             // Create listener if it doesn't exist yet
             lock (_listenerLock)
@@ -97,8 +98,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                     }
                 }
             }
-            return Task.CompletedTask;
         }
+
+        public override Task Commit() => Task.CompletedTask;
 
         private static (HttpListener, int) CreateListener(bool? https, int? userPort)
         {

@@ -37,13 +37,13 @@
     <None Include="$(MSBuildThisFileDirectory)environment-local.ps1" />
     <None Include="$(MSBuildThisFileDirectory)publish-local.ps1" />
     <None Include="$(MSBuildThisFileDirectory)release.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)08-nuget.ps1">
+    <None Include="$(MSBuildThisFileDirectory)09-nuget.ps1">
       <Filter>ReleaseSteps</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)07-github.ps1">
       <Filter>ReleaseSteps</Filter>
     </None>
-    <None Include="$(MSBuildThisFileDirectory)09-docs.ps1">
+    <None Include="$(MSBuildThisFileDirectory)08-docs.ps1">
       <Filter>ReleaseSteps</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)06-prepare-release.ps1">

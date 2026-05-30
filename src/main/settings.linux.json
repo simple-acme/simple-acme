@@ -43,6 +43,12 @@
     "Path": null,
     "ProtectionMode": "default"
   },
+  "ScheduledTask": {
+    "RenewalDays": 55,
+    "RenewalDaysRange": 0,
+    "RenewalMinimumValidDays": null,
+    "RenewalDisableServerSchedule": false
+  },
   "Notification": {
     "ComputerName": null,
     "Email": {
