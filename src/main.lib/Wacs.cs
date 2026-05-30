@@ -16,6 +16,7 @@ namespace PKISharp.WACS.Host
         IInputService inputService,
         ISettings settingsService,
         HelpService helpService,
+        YamlService yamlService,
         ArgumentsParser argumentsParser,
         RenewalCreator renewalCreator,
         DomainParseService domainParseService,
@@ -62,11 +63,7 @@ namespace PKISharp.WACS.Host
             {
                 return -1;
             }
-            if (!VersionService.Valid)
-            {
-                return -1;
-            }
-
+   
             // List informational message and start-up diagnostics
             _args = argumentsParser.GetArguments<MainArguments>() ?? new();
 
@@ -109,13 +106,10 @@ namespace PKISharp.WACS.Host
             // update the website.
             if (_args.Docs)
             {
-                helpService.GenerateArgumentsYaml();
-#pragma warning disable IL2026
-                // We only run this on the untrimmed build
-                helpService.GeneratePluginsYaml();
-                helpService.GenerateSettingsYaml();
-                helpService.GenerateSettingsYaml2();
-#pragma warning restore IL2026
+                yamlService.GenerateArgumentsYaml();
+                yamlService.GeneratePluginsYaml();
+                yamlService.GenerateSettingsYaml();
+                yamlService.GenerateSettingsYaml2();
                 return 0;
             }
 

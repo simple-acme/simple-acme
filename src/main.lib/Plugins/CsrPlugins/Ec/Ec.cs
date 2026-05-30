@@ -46,7 +46,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
             try
             {
                 var config = _settings.Csr.Ec.CurveName;
-                if (!string.IsNullOrWhiteSpace(""))
+                if (!string.IsNullOrWhiteSpace(config))
                 {
                     DerObjectIdentifier? curveOid = null;
                     try

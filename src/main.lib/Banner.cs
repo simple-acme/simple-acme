@@ -15,7 +15,6 @@ namespace PKISharp.WACS.Host
         ILogService logService,
         IInputService inputService,
         ISettings settingsService,
-        IProxyService proxyService,
         ArgumentsParser argumentsParser,
         AdminService adminService,
         NetworkCheckService networkCheck,
@@ -35,28 +34,7 @@ namespace PKISharp.WACS.Host
             logService.Information(LogType.Disk | LogType.Event, "Software version {version} ({build}, {bitness}) started", VersionService.SoftwareVersion, VersionService.BuildType, VersionService.Bitness);
             logService.Debug("Running on {platform} {version}", Environment.OSVersion.Platform, Environment.OSVersion.Version);
             argumentsParser.ShowCommandLine();
-
-            // Connection test
-            logService.Information("Connecting to {ACME}...", settingsService.BaseUri);
-            var result = networkCheck.CheckNetwork();
-            try
-            {
-                await result.WaitAsync(TimeSpan.FromSeconds(30));
-            }
-            catch (TimeoutException)
-            {
-                try
-                {
-                    logService.Warning("Network check failed or timed out, retry with proxy bypass...");
-                    proxyService.Disable();
-                    result = networkCheck.CheckNetwork();
-                    await result.WaitAsync(TimeSpan.FromSeconds(30));
-                }
-                catch (TimeoutException)
-                {
-                    logService.Warning("Network check failed or timed out. Functionality may be limited.");
-                }
-            }
+            await networkCheck.ConnectionTest();
 
             // New version test
             if (settingsService.Client.VersionCheck == true)
@@ -125,7 +103,6 @@ namespace PKISharp.WACS.Host
                 LogPath = settingsService.Client.LogPath,
                 CachePath = settingsService.Cache.CachePath,
                 SettingsPath = VersionService.SettingsPath,
-                PluginPath = VersionService.PluginPath,
                 ExecutablePath = VersionService.ExePath
             };
             Console.WriteLine(JsonSerializer.Serialize(data, wacsJson.BannerData));
@@ -141,7 +118,6 @@ namespace PKISharp.WACS.Host
         public string? LogPath { get; internal set; }
         public string? CachePath { get; internal set; }
         public string? SettingsPath { get; internal set; }
-        public string? PluginPath { get; internal set; }
         public string? ExecutablePath { get; internal set; }
         public bool Debug { get; internal set; }
         public bool DotNetTool { get; internal set; }

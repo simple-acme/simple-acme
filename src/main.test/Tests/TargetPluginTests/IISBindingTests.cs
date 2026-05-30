@@ -64,11 +64,11 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
 
                 var target = Target(result);
                 Assert.IsNotNull(target);
-                Assert.AreEqual(validator.IsValid(target), true);
+                Assert.IsTrue(validator.IsValid(target));
                 Assert.AreEqual(target.CommonName?.Value, host);
-                Assert.AreEqual(target.Parts.Count, 1);
+                Assert.HasCount(1, target.Parts);
                 Assert.AreEqual(target.Parts.First().SiteId, siteId);
-                Assert.AreEqual(target.Parts.First().Identifiers.Count, 1);
+                Assert.HasCount(1, target.Parts.First().Identifiers);
                 Assert.AreEqual(target.Parts.First().Identifiers.First().Value, host);
             }
            
@@ -95,12 +95,12 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
 
                 var target = Target(result);
                 Assert.IsNotNull(target);
-                Assert.AreEqual(validator.IsValid(target), true);
-                Assert.AreEqual(target.IIS, true);
+                Assert.IsTrue(validator.IsValid(target));
+                Assert.IsTrue(target.IIS);
                 Assert.AreEqual(target.CommonName?.Value, uniHost);
-                Assert.AreEqual(target.Parts.Count, 1);
+                Assert.HasCount(1, target.Parts);
                 Assert.AreEqual(target.Parts.First().SiteId, siteId);
-                Assert.AreEqual(target.Parts.First().Identifiers.Count, 1);
+                Assert.HasCount(1, target.Parts.First().Identifiers);
                 Assert.AreEqual(target.Parts.First().Identifiers.First().Value, uniHost);
             }
         }

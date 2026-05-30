@@ -27,7 +27,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                 {
                     var randomBindingOptions = new BindingOptions();
                     var randomId = "a" + ShortGuid.NewGuid().ToString() + ".nl";
-                    randomBindingOptions = randomBindingOptions.WithHost(randomId.ToLower());
+                    randomBindingOptions = randomBindingOptions.WithHost(randomId.ToLowerInvariant());
                     bindingList.Add(new MockBinding(randomBindingOptions));
                 };
                 siteList.Add(new MockSite()
@@ -45,13 +45,13 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             timer.Start();
             _ = helper.GetSites(false);
             timer.Stop();
-            Assert.IsTrue(timer.ElapsedMilliseconds < 1000);
+            Assert.IsLessThan(1000, timer.ElapsedMilliseconds);
 
             timer.Reset();
             timer.Start();
             _ = helper.GetBindings();
             timer.Stop();
-            Assert.IsTrue(timer.ElapsedMilliseconds < 1000);
+            Assert.IsLessThan(1000, timer.ElapsedMilliseconds);
         }
 
 

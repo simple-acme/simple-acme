@@ -19,12 +19,13 @@ namespace PKISharp.WACS.DomainObjects
     [DebuggerDisplay("Renewal {Id}: {FriendlyName}")]
     public class Renewal
     {
-        internal static Renewal Create(string? id = null)
+        internal static Renewal Create(Uri endPoint, string? id = null)
         {
             var ret = new Renewal
             {
                 New = true,
                 Id = string.IsNullOrEmpty(id) ? ShortGuid.NewGuid().ToString() : id,
+                EndPoint = endPoint.ToString(),
                 PfxPassword = new ProtectedString(PasswordGenerator.Generate())
             };
             return ret;
@@ -55,6 +56,11 @@ namespace PKISharp.WACS.DomainObjects
         /// Unique identifer for the renewal
         /// </summary>
         public string Id { get; set; } = "";
+
+        /// <summary>
+        /// Endpoint URL of the ACME server to use for this renewal
+        /// </summary>
+        public string? EndPoint { get; set; }
 
         /// <summary>
         /// Friendly name for the certificate. If left

@@ -75,12 +75,14 @@ namespace PKISharp.WACS
             log.Warning("Overwriting previously created renewal");
             existing.Updated = true;
             existing.Account = temp.Account;
+            existing.EndPoint = temp.EndPoint;
             existing.TargetPluginOptions = temp.TargetPluginOptions;
             existing.OrderPluginOptions = temp.OrderPluginOptions;
             existing.CsrPluginOptions = temp.CsrPluginOptions;
             existing.StorePluginOptions = temp.StorePluginOptions;
             existing.ValidationPluginOptions = temp.ValidationPluginOptions;
             existing.InstallationPluginOptions = temp.InstallationPluginOptions;
+            existing.Settings = temp.Settings;
             return existing;
         }
 
@@ -96,7 +98,7 @@ namespace PKISharp.WACS
         {
             log.Information(LogType.All, "Running in mode: {runLevel}", runLevel);
 
-            tempRenewal ??= Renewal.Create(mainArgs.Id);
+            tempRenewal ??= Renewal.Create(settings.BaseUri, mainArgs.Id);
 
             // Choose the target plugin
             var resolver = CreateResolver(container, runLevel);
@@ -285,9 +287,12 @@ namespace PKISharp.WACS
                 try
                 {
                     var profile = await SetupCertificateProfile(runLevel);
-                    tempRenewal.Settings ??= new Settings();
-                    tempRenewal.Settings.Acme ??= new AcmeSettings();
-                    tempRenewal.Settings.Acme.CertificateProfile = profile;
+                    if (!string.IsNullOrWhiteSpace(profile))
+                    {
+                        tempRenewal.Settings ??= new Settings();
+                        tempRenewal.Settings.Acme ??= new AcmeSettings();
+                        tempRenewal.Settings.Acme.CertificateProfile = profile;
+                    }
                 }
                 catch
                 {

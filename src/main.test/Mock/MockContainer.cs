@@ -63,6 +63,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<InteractiveResolver>();
             _ = builder.RegisterType<Real.AutofacBuilder>().As<Real.IAutofacBuilder>().SingleInstance();
             _ = builder.RegisterType<AcmeClientManager>().SingleInstance();
+            _ = builder.RegisterType<AcmeCredentialReader>().SingleInstance();
             _ = builder.RegisterType<ZeroSsl>().SingleInstance();
             _ = builder.RegisterType<EmailClient>().SingleInstance();
             _ = builder.RegisterType<ScriptClient>().SingleInstance();
@@ -75,6 +76,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             }
             _ = builder.RegisterType<Real.NotificationService>().SingleInstance();
             _ = builder.RegisterType<NotificationTargetEmail>().SingleInstance();
+            _ = builder.RegisterType<NotificationTargetScript>().SingleInstance();
             _ = builder.RegisterType<RenewalValidator>().SingleInstance();
             _ = builder.RegisterType<RenewalExecutor>().SingleInstance();
             _ = builder.RegisterType<OrderProcessor>().SingleInstance();

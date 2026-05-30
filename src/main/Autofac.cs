@@ -51,7 +51,7 @@ namespace PKISharp.WACS.Host
 
                 // Single instance types
                 _ = builder.RegisterType<AdminService>().SingleInstance();
-                _ = builder.RegisterType<HelpService>().SingleInstance();
+                _ = builder.RegisterType<YamlService>().SingleInstance().As<YamlService>().As<HelpService>();
                 _ = builder.RegisterType<UserRoleService>().As<IUserRoleService>().SingleInstance();
                 _ = builder.RegisterType<ValidationOptionsService>().As<IValidationOptionsService>().As<ValidationOptionsService>().SingleInstance();
                 _ = builder.RegisterType<InputService>().As<IInputService>().SingleInstance();
@@ -66,9 +66,10 @@ namespace PKISharp.WACS.Host
                 _ = builder.RegisterType<AutofacBuilder>().As<IAutofacBuilder>().SingleInstance();
                 _ = builder.RegisterType<AccountManager>().SingleInstance();
                 _ = builder.RegisterType<AcmeClientManager>().SingleInstance();
+                _ = builder.RegisterType<AcmeCredentialReader>().SingleInstance();
                 _ = builder.RegisterType<NetworkCheckService>().SingleInstance();
                 _ = builder.RegisterType<ZeroSsl>().SingleInstance();
-                _ = builder.RegisterType<OrderManager>().SingleInstance();
+                _ = builder.RegisterType<OrderManager>().InstancePerLifetimeScope();
                 _ = builder.RegisterType<TargetValidator>().SingleInstance();
                 _ = builder.RegisterType<EmailClient>().SingleInstance();
                 _ = builder.RegisterType<ScriptClient>().SingleInstance();

@@ -32,7 +32,7 @@ namespace PKISharp.WACS.Services.Serialization
             if (!_pluginService.TryGetPlugin(neutral, out var plugin))
             {
                 _log.Error("Unable to find {typeToConvert} plugin {id}", 
-                    typeToConvert.Name.Replace("PluginOptions", "").Replace("Target", "Source").ToLower(), 
+                    typeToConvert.Name.Replace("PluginOptions", "").Replace("Target", "Source").ToLowerInvariant(), 
                     neutral?.Plugin);
                 reader.Skip();
                 return null;

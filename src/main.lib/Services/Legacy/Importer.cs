@@ -48,7 +48,7 @@ namespace PKISharp.WACS.Services.Legacy
             }
 
             log.Information("Step {x}/3: ensure ACMEv2 account", 3);
-            await clientManager.GetClient();
+            await clientManager.GetClient(runLevel);
             var listCommand = "--list";
             var renewCommand = "--renew";
             if (runLevel.HasFlag(RunLevel.Interactive))
@@ -72,7 +72,7 @@ namespace PKISharp.WACS.Services.Legacy
             // will be due immediately. That's the ulimate test to see 
             // if they will actually work in the new ACMEv2 environment
 
-            var ret = Renewal.Create();
+            var ret = Renewal.Create(settings.BaseUri);
             ConvertTarget(legacy, ret);
             ConvertValidation(legacy, ret);
             ConvertStore(legacy, ret);
@@ -100,7 +100,7 @@ namespace PKISharp.WACS.Services.Legacy
                     _ => "Manual",
                 };
             }
-            switch (legacy.Binding.TargetPluginName.ToLower())
+            switch (legacy.Binding.TargetPluginName.ToLowerInvariant())
             {
                 case "iisbinding":
                     var options = new Target.IISOptions();
@@ -169,7 +169,7 @@ namespace PKISharp.WACS.Services.Legacy
             {
                 legacy.Binding.ValidationPluginName = "http-01.filesystem";
             }
-            switch (legacy.Binding.ValidationPluginName.ToLower())
+            switch (legacy.Binding.ValidationPluginName.ToLowerInvariant())
             {
                 case "dns-01.script":
                 case "dns-01.dnsscript":
@@ -304,7 +304,7 @@ namespace PKISharp.WACS.Services.Legacy
             }
             foreach (var legacyName in legacy.InstallationPluginNames)
             {
-                switch (legacyName.ToLower())
+                switch (legacyName.ToLowerInvariant())
                 {
                     case "iis":
                         ret.InstallationPluginOptions.Add(new Install.IISOptions()

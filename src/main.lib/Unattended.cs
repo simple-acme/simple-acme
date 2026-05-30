@@ -62,7 +62,20 @@ namespace PKISharp.WACS
         /// Register new ACME account from the command line
         /// </summary>
         /// <returns></returns>
-        internal async Task Register() => await clientManager.GetClient(accountArguments.Account);
+        internal async Task Register()
+        {
+            try
+            {
+                var client = await clientManager.GetClient(RunLevel.Unattended, accountArguments.Account);
+                log.Information("Registration successful: {kid}", client.Account.Details.Kid);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex, "Registration failed");
+                throw;
+            }
+        }
+         
 
         /// <summary>
         /// Filters for unattended mode

@@ -1,6 +1,7 @@
-﻿using PKISharp.WACS.Plugins.Base.Options;
+﻿using System.Text.Json.Serialization;
+
+using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Services.Serialization;
-using System.Text.Json.Serialization;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 {
@@ -15,5 +16,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public ProtectedString? ApiToken { get; set; }
 
         public string? ZoneId { get; set; }
+
+        public bool UseHetznerCloud { get; set; }
     }
 }

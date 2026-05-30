@@ -1,0 +1,1 @@
+The example scritps have found a new home at https://github.com/simple-acme/reference-scripts

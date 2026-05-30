@@ -35,7 +35,6 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             WacsJson.Configure(builder);
             _container = builder.Build();
             _plugin = _container.Resolve<IPluginService>();
-            log.Debug(context.TestName ?? "");
         }
 
         private static string Serialize(Renewal renewal)
@@ -67,14 +66,14 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             var newRenewal = Deserialize(serialize);
             serialize = Serialize(newRenewal);
             newRenewal = Deserialize(serialize);
-            Assert.IsFalse(serialize.Contains("null"));
+            Assert.DoesNotContain("null", serialize);
             Assert.IsNotNull(newRenewal);
-            Assert.IsInstanceOfType(newRenewal.ValidationPluginOptions, typeof(FtpOptions));
+            Assert.IsInstanceOfType<FtpOptions>(newRenewal.ValidationPluginOptions);
             var ftpOptions = newRenewal.ValidationPluginOptions as FtpOptions;
             Assert.IsNotNull(ftpOptions);
             Assert.IsNotNull(ftpOptions.Credential);
             Assert.IsNotNull(ftpOptions.Credential.Password);
-            Assert.AreEqual(ftpOptions.Credential.Password.Value, "password");
+            Assert.AreEqual("password", ftpOptions.Credential.Password.Value);
         }
 
         [TestMethod]
@@ -94,14 +93,14 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             };
             var serialize = Serialize(renewal);
             var newRenewal = Deserialize(serialize);
-            Assert.IsFalse(serialize.Contains("null"));
+            Assert.DoesNotContain("null", serialize);
             Assert.IsNotNull(newRenewal);
-            Assert.IsInstanceOfType(newRenewal.ValidationPluginOptions, typeof(FtpOptions));
+            Assert.IsInstanceOfType<FtpOptions>(newRenewal.ValidationPluginOptions);
             var azureOptions = newRenewal.ValidationPluginOptions as FtpOptions;
             Assert.IsNotNull(azureOptions);
             Assert.IsNotNull(azureOptions.Credential);
             Assert.IsNotNull(azureOptions.Credential.Password);
-            Assert.AreEqual(azureOptions.Credential.Password.Value, "safe");
+            Assert.AreEqual("safe", azureOptions.Credential.Password.Value);
         }
 
     }

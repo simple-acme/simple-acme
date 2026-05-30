@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.X509;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Services;
@@ -8,7 +9,7 @@ using System;
 using System.Linq;
 using Net = System.Security.Cryptography.X509Certificates;
 
-namespace PKISharp.WACS.UnitTests.Tests.CertificateInfoTests
+namespace PKISharp.WACS.UnitTests.Tests.DomainObjectTests
 {
     [TestClass]
     public class CertificateInfoTests
@@ -128,7 +129,7 @@ btUK9CQkVXXUE5FDNjWBh/WxofE=
 -----END CERTIFICATE-----";
             var store = ParseData(cert1);
             var certinfo = new CertificateInfo(store);
-            var collection = certinfo.AsCollection(Net.X509KeyStorageFlags.EphemeralKeySet, new Mock.Services.LogService(), null);
+            var collection = certinfo.AsCollection(Net.X509KeyStorageFlags.EphemeralKeySet, new Mock.Services.LogService(), new InheritSettings());
             var main = collection.FirstOrDefault(x => !collection.Any(y => x.Subject == y.Issuer));
             Assert.IsNotNull(main);
         }

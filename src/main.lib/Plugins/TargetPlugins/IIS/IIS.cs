@@ -13,25 +13,28 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
     [IPlugin.Plugin<
         IISSitesOptions, IISSitesOptionsFactory, 
         IISCapability, WacsJsonPlugins>
-        ("cdd79a68-4a87-4039-bee8-5a0ebdca41cb", 
-        "IISSites", "Read sites from IIS (legacy)", Hidden = true)]
+        (SitesID, "IISSites", "Read sites from IIS (legacy)", Hidden = true)]
     [IPlugin.Plugin<
         IISSiteOptions, IISSiteOptionsFactory,
         IISCapability, WacsJsonPlugins>
-        ("d7940b23-f570-460e-ab15-2c822a79009b", 
-        "IISSite", "Read site from IIS (legacy)", Hidden = true)]
+        (SiteID, "IISSite", "Read site from IIS (legacy)", Hidden = true)]
     [IPlugin.Plugin<
         IISBindingOptions, IISBindingOptionsFactory, 
         IISCapability, WacsJsonPlugins>
-        ("2f5dd428-0f5d-4c8a-8fd0-56fc1b5985ce", 
-        "IISBinding", "Read bindings from IIS (legacy)", Hidden = true)]
+        (BindingID, "IISBinding", "Read bindings from IIS (legacy)", Hidden = true)]
     [IPlugin.Plugin1<
         IISOptions, IISOptionsFactory, 
         IISCapability, WacsJsonPlugins, IISArguments>
-        ("54deb3ee-b5df-4381-8485-fe386054055b", 
-        "IIS", "Read bindings from IIS", Name = "IIS bindings")]
+        (ID, Trigger, "Read bindings from IIS", Name = "IIS bindings")]
     internal class IIS(ILogService logService, IISHelper helper, IISOptions options) : ITargetPlugin
     {
+        public const string Trigger = "IIS";
+        public const string ID = "54deb3ee-b5df-4381-8485-fe386054055b";
+        public const string BindingID = "2f5dd428-0f5d-4c8a-8fd0-56fc1b5985ce";
+        public const string SiteID = "d7940b23-f570-460e-ab15-2c822a79009b";
+        public const string SitesID = "cdd79a68-4a87-4039-bee8-5a0ebdca41cb";
+        public static readonly string[] IDs = [ID, BindingID, SiteID, SitesID]; 
+
         public Task<Target?> Generate()
         {
             // Check if we have any bindings
@@ -86,7 +89,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
 
             if (!string.IsNullOrEmpty(options.IncludePattern))
             {
-                friendlyNameSuggestion += $" | {options.IncludePattern}";
+                friendlyNameSuggestion += $" - {options.IncludePattern}";
             }
             else if (options.IncludeHosts != null && options.IncludeHosts.Count != 0)
             {
@@ -96,7 +99,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                     host = cnBinding.HostUnicode;
                 }
                 host ??= options.IncludeHosts.First();
-                friendlyNameSuggestion += $", {host}";
+                friendlyNameSuggestion += $" - {host}";
                 var count = options.IncludeHosts.Count;
                 if (count > 1)
                 {
@@ -105,19 +108,18 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             }
             else if (options.IncludeRegex != null)
             {
-                friendlyNameSuggestion += $", {options.IncludeRegex}";
+                friendlyNameSuggestion += $" - {options.IncludeRegex}";
             }
             else
             {
-                friendlyNameSuggestion += $", (any host)";
+                friendlyNameSuggestion += $" - (all hosts)";
             }
 
             // Return result
             var commonName = cnValid ? 
                 cn : 
                 filteredBindings.
-                    Where(x => x.HostUnicode.Length <= Constants.MaxCommonName).
-                    FirstOrDefault()?.
+                    FirstOrDefault(x => x.HostUnicode.Length <= Constants.MaxCommonName)?.
                     HostUnicode;
             var parts = filteredBindings.
                 GroupBy(x => x.SiteId).

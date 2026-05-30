@@ -29,6 +29,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
         }
 
+        public static (HttpListener, int) CreateFromArgs(SelfHostingArguments? args) =>
+            SelfHosting.CreateFromOptions(new SelfHostingOptions() { 
+                Https = args?.ValidationProtocol?.ToLowerInvariant() == "https",
+                Port = args?.ValidationPort 
+            });
+
         internal Lazy<State> TestListener
         {
             get

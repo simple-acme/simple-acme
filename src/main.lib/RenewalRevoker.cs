@@ -31,7 +31,7 @@ namespace PKISharp.WACS
                 try
                 {
                     log.Warning($"Revoke renewal {renewal.LastFriendlyName}");
-                    var client = await clientManager.GetClient(renewal.Account);
+                    var client = await clientManager.GetClient(RunLevel.Unattended, renewal.Account);
                     var orders = dueDate.CurrentOrders(renewal);
                     var result = new RenewResult()
                     {

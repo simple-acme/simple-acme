@@ -38,6 +38,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
     {
         private ScriptDns? _scriptDns;
         private ScriptHttp? _scriptHttp;
+        private readonly object _childLock = new();
 
         /// <summary>
         /// User can prepare multiple challenges before proceeding to validation
@@ -62,12 +63,18 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         {
             if (context.ChallengeDetails is Dns01ChallengeValidationDetails dnsChallenge)
             {
-                _scriptDns = new ScriptDns(this, dnsClient, domainParseService, log, settings);
+                lock (_childLock)
+                {
+                    _scriptDns ??= new ScriptDns(this, dnsClient, domainParseService, log, settings);
+                }
                 return await _scriptDns.PrepareChallenge(context, dnsChallenge);
             }
             else if (context.ChallengeDetails is Http01ChallengeValidationDetails httpChallenge)
             {
-                _scriptHttp = new ScriptHttp(this, context, pars, httpChallenge);
+                lock (_childLock)
+                {
+                    _scriptHttp ??= new ScriptHttp(this, context, pars, httpChallenge);
+                }
                 return await _scriptHttp.PrepareChallenge(context, httpChallenge);
             }
             return false;
@@ -164,12 +171,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             return await ScriptClient.ReplaceTokens(args, replacements ?? [], secretServiceManager, censor);
         }
 
-        public async Task CleanUp() =>
-            await (
-                _scriptDns?.CleanUp() ?? 
-                _scriptHttp?.CleanUp() ??
-                Task.CompletedTask);
+        /// <summary>
+        /// Forward cleanup call to the appropriate script
+        /// </summary>
+        /// <returns></returns>
+        public Task CleanUp() => _scriptDns?.CleanUp() ?? _scriptHttp?.CleanUp() ?? Task.CompletedTask;
 
-        public Task Commit() => Task.CompletedTask;
+        /// <summary>
+        /// Forward commit call to the appropriate plugin, important for DNS prevalidation
+        /// </summary>
+        /// <returns></returns>
+        public Task Commit() => _scriptDns?.Commit() ?? _scriptHttp?.Commit() ?? Task.CompletedTask;
     }
 }

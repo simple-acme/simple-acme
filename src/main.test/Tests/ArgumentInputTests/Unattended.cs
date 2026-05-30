@@ -140,11 +140,11 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
                     Required().
                     GetValue().
                     Result;
-                Assert.AreEqual(shouldThrow, false, "No exception thrown though it should have been");
+                Assert.IsFalse(shouldThrow, "No exception thrown though it should have been");
             } 
             catch
             {
-                Assert.AreEqual(shouldThrow, true, "Exception throw when it should not have been");
+                Assert.IsTrue(shouldThrow, "Exception throw when it should not have been");
             }
 
         }
@@ -167,12 +167,12 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
                     Required().
                     GetValue().
                     Result;
-                Assert.AreEqual(shouldThrow, false, "No exception thrown though it should have been");
+                Assert.IsFalse(shouldThrow, "No exception thrown though it should have been");
                 Assert.AreEqual(expectedValue, result);
             }
             catch
             {
-                Assert.AreEqual(shouldThrow, true, "Exception throw when it should not have been");
+                Assert.IsTrue(shouldThrow, "Exception throw when it should not have been");
             }
         }
 
@@ -192,11 +192,11 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
                     Validate(x => Task.FromResult(x == "valid"), "not valid").
                     GetValue().
                     Result;
-                Assert.AreEqual(shouldThrow, false, "No exception thrown though it should have been");
+                Assert.IsFalse(shouldThrow, "No exception thrown though it should have been");
             }
             catch
             {
-                Assert.AreEqual(shouldThrow, true, "Exception throw when it should not have been");
+                Assert.IsTrue(shouldThrow, "Exception throw when it should not have been");
             }
         }
 
@@ -219,11 +219,11 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
                     Validate(x => Task.FromResult(x?.Contains('b') ?? false), "No B").
                     GetValue().
                     Result;
-                Assert.AreEqual(shouldThrow, false, "No exception thrown though it should have been");
+                Assert.IsFalse(shouldThrow, "No exception thrown though it should have been");
             }
             catch
             {
-                Assert.AreEqual(shouldThrow, true, "Exception throw when it should not have been");
+                Assert.IsTrue(shouldThrow, "Exception throw when it should not have been");
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿using MimeKit;
 using PKISharp.WACS.Clients;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Interfaces;
 using Serilog.Events;
@@ -19,21 +20,27 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         private readonly IPluginService _plugin;
         private readonly EmailClient _email;
         private readonly DueDateStaticService _dueDate;
+        private readonly ISettings _settings;
 
         public NotificationTargetEmail(
             ILogService log,
             IPluginService pluginService,
             EmailClient email,
             DueDateStaticService dueDate,
-            ICacheService certificateService)
+            ICacheService certificateService,
+            ISettings settings)
         {
             _log = log;
             _cacheService = certificateService;
             _plugin = pluginService;
             _email = email;
-            _plugin = pluginService;
             _dueDate = dueDate;
+            _settings = settings;
         }
+
+        public string Label => "Email";
+        public State State => _email.State;
+        public bool NotifyOnSuccess => _settings.Notification.Email?.NotifyOnSuccess == true;
 
         /// <summary>
         /// Handle created notification
@@ -87,20 +94,12 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
 
         public async Task SendTest()
         {
-            if (!_email.Enabled)
+            var success = await _email.Send("Test notification",
+                "<p>If you are reading this, it means you will receive notifications in the future.</p>",
+                MessagePriority.Normal);
+            if (success)
             {
-                _log.Error("Email notifications not enabled. Configure an SMTP server, sender and receiver in settings.json to enable this.");
-            }
-            else
-            {
-                _log.Information("Sending test message...");
-                var success = await _email.Send("Test notification",
-                    "<p>If you are reading this, it means you will receive notifications in the future.</p>",
-                    MessagePriority.Normal);
-                if (success)
-                {
-                    _log.Information("Test message sent!");
-                }
+                _log.Information("Test message sent!");
             }
         }
 

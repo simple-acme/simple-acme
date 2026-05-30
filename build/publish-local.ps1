@@ -5,13 +5,13 @@ Push-Location $PSScriptFilePath.Directory
 . .\environment-local.ps1
 . .\01-helpers.ps1
 
-$bundle = "$Bundle\signingbundle.zip"
-while (!(Test-Path $bundle)) {
-    Write-Host "File $bundle not found, download from SignPath..."
+$bundleFile = "$Bundle\signingbundle.zip"
+while (!(Test-Path $bundleFile)) {
+    Write-Host "File $bundleFile not found, download from SignPath..."
     Read-Host "Press [Enter] to continue"
 }
 Remove-Item $Final\* -recurse
-Decompress $Final $bundle
+Decompress $Final $bundleFile
 
 # Gather build metadata
 $yaml = Get-Content -Path "$($Final)build.yml" -raw
@@ -19,12 +19,40 @@ $env:APPVEYOR_REPO_TAG_NAME = Get-YamlValue "releasetag" $yaml
 $env:APPVEYOR_BUILD_VERSION = Get-YamlValue "releasebuild" $yaml
 $env:APPVEYOR_REPO_COMMIT = Get-YamlValue "commit" $yaml
 
+# Test if the release is actually signed
+Remove-Item $Temp\* -recurse
+Decompress $Temp "$Final\simple-acme.v$($env:APPVEYOR_BUILD_VERSION).win-x64.trimmed.zip"
+$signed = Get-AuthenticodeSignature "$Temp\wacs.exe"
+if ($signed.Status -ne "Valid") {
+    Write-Error "The release is not properly signed. Aborting."
+    exit 1
+}
+
 .\06-prepare-release.ps1
-.\07-github.ps1
-.\08-nuget.ps1
-.\09-docs.ps1
-.\10-chocolatey.ps1
-.\11-winget.ps1
+$github = Read-Host "Publish to GitHub? (y/n)"
+if ($github -eq "y") {
+    .\07-github.ps1
+}
+
+$docs = Read-Host "Prepare documentation site? (y/n)"
+if ($docs -eq "y") {
+    .\08-docs.ps1
+}
+
+$nuget = Read-Host "Publish to NuGet? (y/n)"
+if ($nuget -eq "y") {
+    .\09-nuget.ps1
+}
+
+$choco = Read-Host "Publish to Chocolatey? (y/n)"
+if ($choco -eq "y") {
+    .\10-chocolatey.ps1
+}
+
+$winget = Read-Host "Publish to WinGet? (y/n)"
+if ($winget -eq "y") {
+    .\11-winget.ps1
+}
 
 Pop-Location
 Pop-Location

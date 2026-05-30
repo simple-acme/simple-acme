@@ -23,12 +23,18 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Store
         /// maintainability.
         /// </summary>
         string? DefaultPath { get; }
+
+        /// <summary>
+        /// Private key container format: PKCS#1 or PKCS#8.
+        /// </summary>
+        string? KeyFormat { get; }
     }
 
     internal class InheritPemFilesSettings(params IEnumerable<PemFilesSettings?> chain) : InheritSettings<PemFilesSettings>(chain), IPemFilesSettings
     {
         public string? DefaultPassword => Get(x => x.DefaultPassword);
         public string? DefaultPath => Get(x => x.DefaultPath);
+        public string? KeyFormat => Get(x => x.KeyFormat);
     }
 
     public class PemFilesSettings
@@ -49,5 +55,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Store
             " with the default password will automatically change to any future default value, meaning this is also a" +
             " good practice for maintainability.")]
         public string? DefaultPassword { get; set; }
+
+        [SettingsValue(
+            NullBehaviour = "equivalent to <code>\"PKCS#1\"</code>",
+            Description = "Choose between the older <code>\"PKCS#1\"</code> format for legacy applications, " +
+            "or the more modern <code>\"PKCS#8\"</code> for enhanced security and modern applications.")]
+        public string? KeyFormat { get; set; }
     }
 }

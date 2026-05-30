@@ -1,4 +1,9 @@
-﻿using PKISharp.WACS.DomainObjects;
+﻿using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Pkcs;
+using Org.BouncyCastle.Security;
+using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -25,6 +30,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         private readonly string _path;
         private readonly string? _name;
 
+        private readonly string? _format;
         private readonly string? _passwordRaw;
         private string? _passwordEvaluated;
         private readonly SecretServiceManager _secretService;
@@ -41,7 +47,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             SecretServiceManager secretServiceManager)
         {
             _log = log;
-
+            _format = settings.Store.PemFiles.KeyFormat;
             _passwordRaw = options.PemPassword?.Value ?? settings.Store.PemFiles.DefaultPassword;
             _secretService = secretServiceManager;
             _name = options.FileName;
@@ -96,12 +102,53 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 // Private key
                 if (input.PrivateKey != null)
                 {
-                    var pkPem = PemService.GetPem(input.PrivateKey, await GetPassword());
+                    var password = await GetPassword();
+                    var pkPem = default(string);
+                    switch (_format?.ToUpperInvariant().Trim())
+                    {
+                        case null:
+                        case "":
+                        case "PKCS#1":
+                            // PKCS#1
+                            pkPem = PemService.GetPem(input.PrivateKey, password);
+                            break;
+                        case "PKCS#8":
+                            // PKCS#8
+                            if (!string.IsNullOrEmpty(password))
+                            {
+                                var rand = new SecureRandom();
+                                var salt = SecureRandom.GetNextBytes(rand, 20);
+                                var encryptedPkcs8 = EncryptedPrivateKeyInfoFactory.CreateEncryptedPrivateKeyInfo(
+                                    NistObjectIdentifiers.IdAes256Cbc,
+                                    PkcsObjectIdentifiers.IdHmacWithSha256,
+                                    password.ToCharArray(),
+                                    salt,
+                                    200_000,
+                                    rand,
+                                    input.PrivateKey);
+                                pkPem = PemService.GetPem(new Pkcs8EncryptedPrivateKeyInfo(encryptedPkcs8));
+                            }
+                            else
+                            {
+                                var pkcs8 = new Pkcs8Generator(input.PrivateKey);
+                                var key = pkcs8.Generate();
+                                pkPem = PemService.GetPem(key);
+                            }
+                            break;
+                        default:
+                            {
+                                throw new InvalidOperationException($"Unsupported format: {_format}");
+                            }
+                    }
                     if (!string.IsNullOrEmpty(pkPem))
                     {
                         await FileInfoExtensions.SafeWrite(Path.Combine(_path, $"{name}-key.pem"), pkPem);
                     }
-                } 
+                    else
+                    {
+                        _log.Error("Failed to generate PEM for private key");
+                    }
+                }
                 else
                 {
                     _log.Warning("No private key found in cache");

@@ -33,15 +33,14 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
         {
             var tempPath = Infrastructure.Directory.Temp();
             var file = new FileInfo(tempPath.FullName + "\\a.json");
-            file.SafeWrite(initial).Wait();
+            file.SafeWrite(initial).Wait(TestContext.CancellationTokenSource.Token);
             Assert.AreEqual(initial, File.ReadAllText(file.FullName));
-            file.SafeWrite(updated).Wait();
+            file.SafeWrite(updated).Wait(TestContext.CancellationTokenSource.Token);
             Assert.AreEqual(updated, File.ReadAllText(file.FullName));
         }
 
         [TestMethod]
         [DataRow("a")]
-        [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
         public void NewExists(string initial)
         {
             var tempPath = Infrastructure.Directory.Temp();
@@ -49,12 +48,11 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             var newFile = new FileInfo(tempPath.FullName + "\\a.json.new");
             using var x = newFile.Create();
             x.Dispose();
-            file.SafeWrite(initial).Wait();
+            Assert.ThrowsAsync<Exception>(() => file.SafeWrite(initial));
         }
 
         [TestMethod]
         [DataRow("a")]
-        [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
         public void PreviousExists(string initial)
         {
             var tempPath = Infrastructure.Directory.Temp();
@@ -62,14 +60,14 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             var previous = new FileInfo(tempPath.FullName + "\\a.json.previous");
             using var x = previous.Create();
             x.Dispose();
-            file.SafeWrite(initial).Wait();
+            Assert.ThrowsAsync<Exception>(() => file.SafeWrite(initial));
         }
 
         [TestMethod]
         [DataRow("a")]
-        [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
         public void NewAndPreviousExists(string initial)
         {
+        
             var tempPath = Infrastructure.Directory.Temp();
             var file = new FileInfo(tempPath.FullName + "\\a.json");
             var newFile = new FileInfo(tempPath.FullName + "\\a.json.new");
@@ -78,7 +76,9 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             x.Dispose();
             using var y = newFile.Create();
             y.Dispose();
-            file.SafeWrite(initial).Wait();
+            Assert.ThrowsAsync<Exception>(() => file.SafeWrite(initial));
         }
+
+        public TestContext TestContext { get; set; } = null!;
     }
 }

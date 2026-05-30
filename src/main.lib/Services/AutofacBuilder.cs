@@ -103,7 +103,12 @@ namespace PKISharp.WACS.Services
                 if (renewal.Settings != null)
                 {
                     var currentSettings = main.Resolve<ISettings>();
-                    var renewalSettings = currentSettings.Merge(renewal.Settings);
+                    var uri = null as Uri;
+                    if (Uri.TryCreate(renewal.EndPoint, UriKind.Absolute, out var ret))
+                    {
+                        uri = ret;
+                    }
+                    var renewalSettings = currentSettings.Merge(renewal.Settings, uri);        
                     builder.Register(c => renewalSettings).As<ISettings>().SingleInstance();
                 }
                 builder.Register(c => runLevel).As<RunLevel>();
@@ -249,7 +254,11 @@ namespace PKISharp.WACS.Services
             ValidationFrontend(ILifetimeScope execution, ValidationPluginOptions options, Identifier identifier)
         {
             var dummyTarget = new Target(identifier);
-            var dummyScope = Target(execution, dummyTarget);
+            var dummyRenewal = new Renewal();
+            var dummyScope = Target(execution, dummyTarget).BeginLifetimeScope(b => {
+                b.Register(c => RunLevel.None).As<RunLevel>();
+                b.RegisterInstance(dummyRenewal);
+            });
             var pluginHelper = PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>(dummyScope, options, "dummy");
             return pluginHelper.Resolve<PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>>();
         }

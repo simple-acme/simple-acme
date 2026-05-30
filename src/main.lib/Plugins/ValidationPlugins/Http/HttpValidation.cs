@@ -88,14 +88,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                 if (Equals(value, challenge.HttpResourceValue))
                 {
                     log.Information("Preliminary validation looks good, but the ACME server will be more thorough");
-                    return true;
                 }
                 else
                 {
                     log.Warning("Preliminary validation failed, the server answered '{value}' instead of '{expected}'. The ACME server might have a different perspective",
                         foundValue ?? "(null)",
                         challenge.HttpResourceValue);
-                    return true;
                 }
             }
             catch (HttpRequestException hrex)
@@ -106,7 +104,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             {
                 log.Error(ex, "Preliminary validation failed");
             }
-            return false;
+            return true;
         }
 
         /// <summary>

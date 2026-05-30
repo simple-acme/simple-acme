@@ -111,14 +111,13 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
         /// </summary>
         private async Task Save()
         {
-            if (_file == null || _secrets == null)
+            if (_file != null && _secrets != null)
             {
-                throw new InvalidOperationException();
-            }
-            var newData = JsonSerializer.Serialize(_secrets, wacsJson.CredentialEntryCollection);
-            if (newData != null)
-            {
-                await _file.SafeWrite(newData);
+                var newData = JsonSerializer.Serialize(_secrets, wacsJson.CredentialEntryCollection);
+                if (newData != null)
+                {
+                    await _file.SafeWrite(newData);
+                }
             }
         }
 
@@ -138,7 +137,11 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
             }
         }
 
-        public async Task Encrypt() => await Save();
+        public async Task Encrypt()
+        {
+            await Init();
+            await Save();
+        }
     }
 
     /// <summary>

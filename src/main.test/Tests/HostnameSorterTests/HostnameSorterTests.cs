@@ -25,7 +25,7 @@ namespace PKISharp.WACS.UnitTests.Tests.HostnameSorterTests
         {
             var input = new[] { "a.example.com", "example.com" };
             var sorted = input.OrderBy(x => x, new HostnameSorter(dp));
-            Assert.AreEqual(sorted.First(), "example.com");
+            Assert.AreEqual("example.com", sorted.First());
         }
 
         [TestMethod]
@@ -41,7 +41,7 @@ namespace PKISharp.WACS.UnitTests.Tests.HostnameSorterTests
         {
             var input = new[] { "a.b.example.com", "b.example.com" };
             var sorted = input.OrderBy(x => x, new HostnameSorter(dp));
-            Assert.AreEqual(sorted.First(), "b.example.com");
+            Assert.AreEqual("b.example.com", sorted.First());
         }
 
         [TestMethod]
@@ -49,8 +49,8 @@ namespace PKISharp.WACS.UnitTests.Tests.HostnameSorterTests
         {
             var input = new[] { "b.b.example.com", "a.b.example.com", "b.example.com" };
             var sorted = input.OrderBy(x => x, new HostnameSorter(dp));
-            Assert.AreEqual(sorted.First(), "b.example.com");
-            Assert.AreEqual(sorted.Last(), "b.b.example.com");
+            Assert.AreEqual("b.example.com", sorted.First());
+            Assert.AreEqual("b.b.example.com", sorted.Last());
         }
 
         [TestMethod]
@@ -58,7 +58,7 @@ namespace PKISharp.WACS.UnitTests.Tests.HostnameSorterTests
         {
             var input = new[] { "zxample.aaa", "example.com" };
             var sorted = input.OrderBy(x => x, new HostnameSorter(dp));
-            Assert.AreEqual(sorted.First(), "example.com");
+            Assert.AreEqual("example.com", sorted.First());
         }
 
         [TestMethod]
@@ -66,7 +66,7 @@ namespace PKISharp.WACS.UnitTests.Tests.HostnameSorterTests
         {
             var input = new[] { "example.com", "example.aaa" };
             var sorted = input.OrderBy(x => x, new HostnameSorter(dp));
-            Assert.AreEqual(sorted.First(), "example.aaa");
+            Assert.AreEqual("example.aaa", sorted.First());
         }
 
         [TestMethod]
@@ -74,8 +74,8 @@ namespace PKISharp.WACS.UnitTests.Tests.HostnameSorterTests
         {
             var input = new[] { "a.example.com", "b.example.com", "example.com" };
             var sorted = input.OrderBy(x => x, new HostnameSorter(dp));
-            Assert.AreEqual(sorted.First(), "example.com");
-            Assert.AreEqual(sorted.Last(), "b.example.com");
+            Assert.AreEqual("example.com", sorted.First());
+            Assert.AreEqual("b.example.com", sorted.Last());
         }
     }
 }

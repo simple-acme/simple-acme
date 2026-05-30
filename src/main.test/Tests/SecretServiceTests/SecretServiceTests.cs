@@ -4,6 +4,7 @@ using PKISharp.WACS.Clients;
 using PKISharp.WACS.Plugins.InstallationPlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
+using PKISharp.WACS.UnitTests.Tests.DomainObjectTests;
 using Real = PKISharp.WACS.Services;
 
 namespace PKISharp.WACS.UnitTests.Tests.SecretServiceTests
@@ -47,7 +48,7 @@ namespace PKISharp.WACS.UnitTests.Tests.SecretServiceTests
             var secretServiceManager = _container!.Resolve<SecretServiceManager>();
             var scriptClient = _container!.Resolve<ScriptClient>();
             var scriptInstaller = new Script(new DomainObjects.Renewal(), new ScriptOptions(), scriptClient, secretServiceManager);
-            var info = CertificateInfoTests.CertificateInfoTests.CloudFlare();
+            var info = CertificateInfoTests.CloudFlare();
             var placeholder = $"{{{SecretServiceManager.VaultPrefix}{secretService.Prefix}/{theKey}}}";
             var output = scriptInstaller.ReplaceParameters(
                 placeholder, 
