@@ -100,7 +100,7 @@ namespace PKISharp.WACS.Services.Legacy
                     _ => "Manual",
                 };
             }
-            switch (legacy.Binding.TargetPluginName.ToLower())
+            switch (legacy.Binding.TargetPluginName.ToLowerInvariant())
             {
                 case "iisbinding":
                     var options = new Target.IISOptions();
@@ -169,7 +169,7 @@ namespace PKISharp.WACS.Services.Legacy
             {
                 legacy.Binding.ValidationPluginName = "http-01.filesystem";
             }
-            switch (legacy.Binding.ValidationPluginName.ToLower())
+            switch (legacy.Binding.ValidationPluginName.ToLowerInvariant())
             {
                 case "dns-01.script":
                 case "dns-01.dnsscript":
@@ -304,7 +304,7 @@ namespace PKISharp.WACS.Services.Legacy
             }
             foreach (var legacyName in legacy.InstallationPluginNames)
             {
-                switch (legacyName.ToLower())
+                switch (legacyName.ToLowerInvariant())
                 {
                     case "iis":
                         ret.InstallationPluginOptions.Add(new Install.IISOptions()

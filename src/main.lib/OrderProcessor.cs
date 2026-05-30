@@ -300,7 +300,7 @@ namespace PKISharp.WACS
             {
                 log.Warning(
                     "Cached certificate available but not used due to --{switch} switch.",
-                    nameof(MainArguments.NoCache).ToLower());
+                    nameof(MainArguments.NoCache).ToLowerInvariant());
                 return null;
             }
             log.Warning(
@@ -308,7 +308,7 @@ namespace PKISharp.WACS
                 "within {days} days, run with --{switch}.",
                 context.Order.FriendlyNameIntermediate,
                 settings.Cache.ReuseDays,
-                nameof(MainArguments.NoCache).ToLower());
+                nameof(MainArguments.NoCache).ToLowerInvariant());
             return cachedCertificate;
         }
 

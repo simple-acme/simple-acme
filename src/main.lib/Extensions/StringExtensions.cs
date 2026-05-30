@@ -84,12 +84,11 @@ namespace PKISharp.WACS.Extensions
             {
                 return null;
             }
-            return input.
+            return [.. input.
                 Split(',').
                 Where(x => !string.IsNullOrWhiteSpace(x)).
-                Select(x => x.Trim().ToLower()).
-                Distinct().
-                ToList();
+                Select(x => x.Trim().ToLowerInvariant()).
+                Distinct()];
         }
 
         /// <summary>

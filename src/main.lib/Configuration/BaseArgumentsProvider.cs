@@ -66,7 +66,7 @@ namespace PKISharp.WACS.Configuration
 
                     var clob = typeof(ICommandLineOptionBuilderFluent<>).MakeGenericType(property.PropertyType);
                     var @as = clob.GetMethod(nameof(ICommandLineOptionBuilderFluent<object>.As), [typeof(string)]) ?? throw new InvalidOperationException();
-                    var asResult = @as.Invoke(result, [(commandLineInfo.Name ?? property.Name).ToLower()]);
+                    var asResult = @as.Invoke(result, [(commandLineInfo.Name ?? property.Name).ToLowerInvariant()]);
 
                     // Add description when available
                     if (!string.IsNullOrWhiteSpace(commandLineInfo?.Description))

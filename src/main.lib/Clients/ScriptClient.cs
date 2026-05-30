@@ -49,7 +49,7 @@ namespace PKISharp.WACS.Clients
 
                 // Append the replacement value
                 var replacement = m.Value;
-                var key = m.Value.Trim('{', '}').ToLower();
+                var key = m.Value.Trim('{', '}').ToLowerInvariant();
                 if (caseInsenstive.TryGetValue(key, out var value))
                 {
                     replacement = value;

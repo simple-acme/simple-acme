@@ -216,11 +216,11 @@ namespace PKISharp.WACS.Services
                 {
                     mode = Constants.TlsAlpn01ChallengeType;
                 }
-                return $"--validationmode {mode} --validation {plugin.Trigger.ToLower()}";
+                return $"--validationmode {mode} --validation {plugin.Trigger.ToLowerInvariant()}";
             }
             else
             {
-                return $"--{plugin.Step.ToString().ToLower()} {plugin.Trigger.ToLower()}";
+                return $"--{plugin.Step.ToString().ToLowerInvariant()} {plugin.Trigger.ToLowerInvariant()}";
             }
         }
 

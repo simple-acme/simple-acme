@@ -129,7 +129,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             ret.DeleteScriptArguments = await CleanupScriptArguments(isHttp).GetValue();
             ret.CreateScriptArguments = await PrepareScriptArguments(isHttp).GetValue();
             ret.Parallelism = await Parallelism.GetValue();
-            ret.ChallengeType = challengeType?.ToLower();
+            ret.ChallengeType = challengeType?.ToLowerInvariant();
             return ret;
         }
 

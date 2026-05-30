@@ -388,23 +388,23 @@ namespace PKISharp.WACS.Services
         {
             if (uri == null)
             {
-                log.Error("Argument --{VaultKey} not specified", nameof(MainArguments.VaultKey).ToLower());
+                log.Error("Argument --{VaultKey} not specified", nameof(MainArguments.VaultKey).ToLowerInvariant());
                 return;
             }
             if (value == null)
             {
-                log.Error("Argument --{VaultSecret} not specified", nameof(MainArguments.VaultSecret).ToLower());
+                log.Error("Argument --{VaultSecret} not specified", nameof(MainArguments.VaultSecret).ToLowerInvariant());
                 return;
             }
             if (!uri.StartsWith(VaultPrefix))
             {
-                log.Error("Argument --{VaultKey} should start with {VaultPrefix}", nameof(MainArguments.VaultKey).ToLower(), VaultPrefix);
+                log.Error("Argument --{VaultKey} should start with {VaultPrefix}", nameof(MainArguments.VaultKey).ToLowerInvariant(), VaultPrefix);
                 return;
             }
             var key = new DecomposedKey(uri);
             if (!key.Valid || key.Key == null)
             {
-                log.Error("Argument --{VaultKey} is invalid", nameof(MainArguments.VaultKey).ToLower(), VaultPrefix);
+                log.Error("Argument --{VaultKey} is invalid", nameof(MainArguments.VaultKey).ToLowerInvariant(), VaultPrefix);
                 return;
             }
             var backend = GetService(key.Provider);
