@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Services.AutoRenew
         private FileInfo CronFile => new($"/etc/cron.daily/{CronFileName}");
         private string CronScriptTemplate => $@"
 #!/bin/sh
-# Automatically created by simple-acme: https://github.com/simple-acme/simple-acme/
+# Automatically created by {VersionService.DefaultClientName}: https://github.com/simple-acme/simple-acme/
 cd {Path.GetDirectoryName(VersionService.ExePath)}
 ./wacs --{nameof(MainArguments.Renew).ToLowerInvariant()} --{nameof(MainArguments.BaseUri).ToLowerInvariant()} ""{settings.BaseUri}""";
 

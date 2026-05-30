@@ -43,7 +43,7 @@ namespace PKISharp.WACS.Clients
 #if PLUGGABLE
                     options.CustomStream = typeof(GnuTlsStream);
 #else
-                    log.Warning("Unable to use GnuTLS with trimmed build of simple-acme, please download a pluggable build.");
+                    log.Warning($"Unable to use GnuTLS with trimmed build of {VersionService.DefaultClientName}, please download a pluggable build.");
 #endif
                 }
                 var client = new AsyncFtpClient(uri.Host, port, options)

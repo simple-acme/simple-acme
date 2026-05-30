@@ -3,6 +3,7 @@ using PKISharp.WACS.Context;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Plugins.Interfaces;
+using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         NullOptions, PluginOptionsFactory<NullOptions>,
         AnyValidationCapability, WacsJsonPlugins>
         ("a37b41dc-b45a-42fe-8d81-82ca409a5491",
-        "none", "Certificate(s) are pre-authorized outside of simple-acme",
+        "none", $"Certificate(s) are pre-authorized outside of {VersionService.DefaultClientName}",
         Name = "None")]
     class Null : IValidationPlugin
     {

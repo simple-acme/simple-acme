@@ -12,7 +12,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         SelfHostingOptions, SelfHostingOptionsFactory, 
         SelfHostingCapability, WacsJsonPlugins, SelfHostingArguments>
         ("c7d5e050-9363-4ba1-b3a8-931b31c618b7", 
-        "SelfHosting", "Let simple-acme answer HTTP validation request", 
+        "SelfHosting", $"Let {VersionService.DefaultClientName} answer HTTP validation request", 
         Name = "Self-hosting")]
     internal class SelfHosting(ILogService log, RunLevel runLevel, IInputService input, ISelfHosterFactory factory, SelfHostingOptions options) : 
         HttpValidationBase(log, runLevel, input)
