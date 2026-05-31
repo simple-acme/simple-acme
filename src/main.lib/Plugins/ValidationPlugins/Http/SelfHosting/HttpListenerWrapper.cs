@@ -67,6 +67,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                     _log.Warning("Couldn't serve file {name}", path);
                     ctx.Response.StatusCode = 404;
                 }
+                ctx.Response.Close();
             }
         }
     }
