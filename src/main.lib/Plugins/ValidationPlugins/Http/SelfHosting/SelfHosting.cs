@@ -34,7 +34,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         public override async Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
-            Listener.Challenges.Add(challenge.HttpResourceName, challenge.HttpResourceValue);
+            Listener.Challenges.TryAdd(challenge.HttpResourceName, challenge.HttpResourceValue);
             if (!Listener.Started)
             {
                 try

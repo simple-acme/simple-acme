@@ -1,6 +1,6 @@
 ﻿using ACMESharp.Authorizations;
 using PKISharp.WACS.Services;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             _listener.Prefixes.Add(prefix);
         }
 
-        public Dictionary<string, string> Challenges { get; } = [];
+        public ConcurrentDictionary<string, string> Challenges { get; } = [];
         public int Port { get; }
         public bool Started { get; private set; }
 
@@ -49,7 +49,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             while (_listener != null && _listener.IsListening && !_cancellationTokenSource.IsCancellationRequested)
             {
-                var ctx = await _listener.GetContextAsync().WaitAsync(_cancellationTokenSource.Token);
+                HttpListenerContext ctx;
+                try
+                {
+                    ctx = await _listener.GetContextAsync().WaitAsync(_cancellationTokenSource.Token);
+                } 
+                catch
+                {
+                    break;
+                }
                 var path = ctx.Request.Url?.LocalPath ?? "";
                 var prefix = $"/{Http01ChallengeValidationDetails.HttpPathPrefix}/";
                 if (path.StartsWith(prefix))

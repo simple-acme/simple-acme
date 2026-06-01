@@ -12,6 +12,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         public string? ValidationProtocol { get; set; }
 
         public int? Port => ValidationPort;
-        public bool? Https => ValidationProtocol?.ToLower() == "https";
+        public bool? Https => ValidationProtocol?.ToLowerInvariant() == "https";
     }
 }

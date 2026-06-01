@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using PKISharp.WACS.Services;
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
@@ -26,7 +29,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
             else
             {
-                builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(Port));
+                builder.WebHost.ConfigureKestrel(options => {
+                    options.ListenAnyIP(Port, listenOptions =>
+                    {
+                        if (https)
+                        {
+                            using var rsa = RSA.Create(2048);
+                            var name = new X500DistinguishedName($"CN=www.example.com");
+                            var request = new CertificateRequest(name, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                            var now = DateTime.UtcNow;
+                            var certificate = request.CreateSelfSigned(new DateTimeOffset(now.AddDays(-1)), new DateTimeOffset(now.AddDays(1)));
+                            listenOptions.UseHttps(certificate);
+                        }
+                    });
+                });
             }
             _app = builder.Build();
             if (OperatingSystem.IsWindows())
@@ -53,7 +69,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             }
         }
 
-        public Dictionary<string, string> Challenges { get; set; } = [];
+        public ConcurrentDictionary<string, string> Challenges { get; set; } = new();
         public int Port { get; }
         public bool Started { get; private set; }
 
