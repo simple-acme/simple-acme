@@ -54,9 +54,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
 
         public async Task DeleteRecord(string domain, string identifier, RecordType type)
         {
-            httpClient.BaseAddress = new Uri(uri);
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
+            // BaseAddress and Accept headers are configured in the constructor
             var postData = new
             {
                 apikey = apiKey,
