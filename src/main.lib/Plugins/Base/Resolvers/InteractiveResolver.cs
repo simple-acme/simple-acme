@@ -68,9 +68,9 @@ namespace PKISharp.WACS.Plugins.Resolvers
             // combination of plugin being enabled (e.g. due to missing
             // administrator rights) and being a right fit for the current
             // renewal (e.g. cannot validate wildcards using http-01)
-            State combinedConfigState(PluginFrontend<TCapability, TOptions> plugin)
+            async Task<State> combinedConfigState(PluginFrontend<TCapability, TOptions> plugin)
             {
-                var baseState = plugin.Capability.ConfigurationState;
+                var baseState = await plugin.Capability.ConfigurationState();
                 if (baseState.Disabled)
                 {
                     return baseState;
@@ -83,7 +83,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             };
 
             // Apply default sorting when no sorting has been provided yet
-            var options = pluginService.
+            var options = (await Task.WhenAll(pluginService.
                 GetPlugins(step).
                 Where(x => !x.Hidden).
                 Select(x => autofacBuilder.PluginFrontend<TCapability, TOptions>(scope, x)).
@@ -91,15 +91,15 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 OrderBy(sort ??= x => 1).
                 ThenBy(x => x.OptionsFactory.Order).
                 ThenBy(x => x.Meta.Description).
-                Select(plugin => new PluginChoice<TCapability, TOptions>(
+                Select(async plugin => new PluginChoice<TCapability, TOptions>(
                     plugin.Meta,
                     plugin,
-                    combinedConfigState(plugin),
-                    plugin.Capability.ExecutionState,
+                    await combinedConfigState(plugin),
+                    await plugin.Capability.ExecutionState(),
                     description == null ? plugin.Meta.Description : description(plugin),
-                    false)).
-                ToList();
-           
+                    false))
+                )).ToList();
+
             // Default out when there are no reasonable plugins to pick
             if (options.Count == 0 || options.All(x => x.ConfigurationState.Disabled))
             {
@@ -186,12 +186,18 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 ? await inputService.ChooseOptional(shortDescription, options, creator, "Abort")
                 : await inputService.ChooseRequired(shortDescription, options, creator);
 
-            if (result?.Capability.ExecutionState.Disabled == true) 
+            if (result == null)
+            {
+                return null;
+            }
+
+            var state = await result.Capability.ExecutionState();
+            if (state.Disabled) 
             {
                 log.Warning("Chosen {n} plugin {x} might not work: {m}",
                     char.ToUpperInvariant(className[0]) + className[1..],
                     result.Meta.Name,
-                    result.Capability.ExecutionState.Reason);
+                    state.Reason);
                 var retry = await inputService.PromptYesNo("Switch to another one?", true);
                 if (retry)
                 {

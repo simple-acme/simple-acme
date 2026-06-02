@@ -37,7 +37,7 @@ namespace PKISharp.WACS.Host
                     var encoding = System.Text.Encoding.GetEncoding(settingsService.UI.TextEncoding);
                     Console.OutputEncoding = encoding;
                     Console.InputEncoding = encoding;
-                    Console.Title = $"simple-acme {VersionService.SoftwareVersion}";
+                    Console.Title = $"{VersionService.DefaultClientName} {VersionService.SoftwareVersion}";
                 }
                 catch (Exception ex)
                 {

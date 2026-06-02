@@ -6,26 +6,24 @@ using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
 {
     internal class IISCapability(IUserRoleService userRole, IIISClient iisClient) : InstallationCapability
     {
-        public override State ExecutionState
+        public override Task<State> ExecutionState()
         {
-            get
+            var state = userRole.IISState;
+            if (state.Disabled)
             {
-                var state = userRole.IISState;
-                if (state.Disabled)
-                {
-                    return state;
-                }
-                if (!iisClient.Sites.Any())
-                {
-                    return State.DisabledState("No IIS sites detected.");
-                }
-                return State.EnabledState();
+                return Task.FromResult(state);
             }
+            if (!iisClient.Sites.Any())
+            {
+                return Task.FromResult(State.DisabledState("No IIS sites detected."));
+            }
+            return Task.FromResult(State.EnabledState());
         }
 
         public override State CanInstall(IEnumerable<Type> storeTypes, IEnumerable<Type> installationTypes)

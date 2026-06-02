@@ -11,7 +11,7 @@ namespace PKISharp.WACS.Services
         /// <summary>
         /// Default client name if none can be determined from the settings
         /// </summary>
-        internal const string DefaultClientName = "simple-acme";
+        public const string DefaultClientName = "simple-acme";
 
         /// <summary>
         /// File where the resources are (like template settings)

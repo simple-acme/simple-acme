@@ -163,7 +163,7 @@ namespace PKISharp.WACS
                     {
                         var pluginFrontend = autofacBuilder.ValidationFrontend(targetPluginScope, options, identifier);
                         log.Debug("Global validation option {name} found for {identifier}", pluginFrontend.Meta.Name, identifier.Value);
-                        var state = pluginFrontend.Capability.ExecutionState;
+                        var state = await pluginFrontend.Capability.ExecutionState();
                         if (!state.Disabled)
                         {
                             mapping[identifier] = pluginFrontend;
@@ -196,10 +196,18 @@ namespace PKISharp.WACS
                         $"identifiers found in the source are covered by usable global validation options. " +
                         $"Any validation settings configured for the renewal will only apply to the " +
                         $"remainder.");
-                    await input.WritePagedList(allIdentifiers.Select(identifier =>
-                        Choice.Create(
-                            identifier,
-                            $"{identifier.Value}: {mapping[identifier]?.Meta.Name ?? "-"}{(mapping[identifier]?.Capability.ExecutionState.Disabled ?? false ? " (disabled)" : "")}")));
+                    var choices = await Task.WhenAll(allIdentifiers.Select(async identifier =>
+                    {
+                        var pluginFrontend = mapping[identifier];
+                        var disabled = false;
+                        if (pluginFrontend != null)
+                        {
+                            var state = await pluginFrontend.Capability.ExecutionState();
+                            disabled = state.Disabled;
+                        }
+                        return Choice.Create(identifier, $"{identifier.Value}: {pluginFrontend?.Meta.Name ?? "-"}{(disabled ? " (disabled)" : "")}");
+                    }));
+                    await input.WritePagedList(choices);
                     input.CreateSpace();
                 }
 

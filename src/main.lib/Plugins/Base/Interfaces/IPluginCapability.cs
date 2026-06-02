@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.Interfaces
 {
@@ -13,13 +14,13 @@ namespace PKISharp.WACS.Plugins.Interfaces
         /// scripts has run (e.g. to free port 80).
         /// </summary>
         /// <returns></returns>
-        State ConfigurationState { get; }
+        Task<State> ConfigurationState();
 
         /// <summary>
         /// Indicates whether the plugin can run in the current context.
         /// </summary>
         /// <returns></returns>
-        State ExecutionState { get; }
+        Task<State> ExecutionState();
     }
 
     /// <summary>

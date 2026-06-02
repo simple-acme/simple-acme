@@ -4,75 +4,65 @@ using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using System;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    internal class SelfHostingCapability : HttpValidationCapability
+    internal class SelfHostingCapability(Target target, ArgumentsParser args, ISelfHosterFactory factory) : HttpValidationCapability(target)
     {
+        protected readonly ISelfHosterFactory Factory = factory;
         protected readonly SelfHostingOptions? SelfHostingOptions;
-        protected readonly ArgumentsParser ArgumentsParser;
+        protected readonly ArgumentsParser ArgumentsParser = args;
 
-        public SelfHostingCapability(Target target, ArgumentsParser args) : base(target) => ArgumentsParser = args;
+        public SelfHostingCapability(Target target, ArgumentsParser args, ISelfHosterFactory factory, SelfHostingOptions? options) : this(target, args, factory) => SelfHostingOptions = options;
 
-        public SelfHostingCapability(Target target, ArgumentsParser args, SelfHostingOptions? options) : base(target) 
+        public override async Task<State> ExecutionState()
         {
-            SelfHostingOptions = options;
-            ArgumentsParser = args;
-        } 
-
-        public override State ExecutionState
-        {
-            get
+            var baseState = await base.ExecutionState();
+            if (baseState.Disabled)
             {
-                var baseState = base.ExecutionState;
-                if (baseState.Disabled)
-                {
-                    return baseState;
-                }
-                return TestListener.Value;
+                return baseState;
             }
+            return await TestListener.Value;
         }
 
-        public static (HttpListener, int) CreateFromArgs(SelfHostingArguments? args) =>
-            SelfHosting.CreateFromOptions(new SelfHostingOptions() { 
-                Https = args?.ValidationProtocol?.ToLowerInvariant() == "https",
-                Port = args?.ValidationPort 
-            });
-
-        internal Lazy<State> TestListener
+        internal Lazy<Task<State>> TestListener
         {
             get
             {
-                return new(() =>
-                {
-                    var args = ArgumentsParser.GetArguments<SelfHostingArguments>();
-                    var (testListener, port) = SelfHostingOptions is null ?
-                        CreateFromArgs(args) :
-                        SelfHosting.CreateFromOptions(SelfHostingOptions);
-                    try
-                    {
-                        testListener.Start();
-                        testListener.Stop();
-                    }
-                    catch (HttpListenerException hex)
-                    {
-                        if (hex.ErrorCode == 5)
-                        {
-                            return State.DisabledState("Run as administrator to allow opening a HTTP listener.");
-                        }
-                        else if (hex.ErrorCode == 32)
-                        {
-                            return State.DisabledState($"Another program appears to be using port {port}.");
-                        }
-                        return State.DisabledState(hex.Message);
-                    }
-                    catch (Exception ex)
-                    {
-                        return State.DisabledState(ex.Message);
-                    }
-                    return State.EnabledState();
-                });
+                _testListener ??= new Lazy<Task<State>>(TestListenerCreator);
+                return _testListener;
             }
+        }
+        internal Lazy<Task<State>>? _testListener;
+
+        internal async Task<State> TestListenerCreator() 
+        {
+            var args = ArgumentsParser.GetArguments<SelfHostingArguments>();
+            var options = SelfHostingOptions as ISelfHosterOptions ?? args ?? new SelfHostingArguments();
+            var listener = Factory.Create(options);
+            try
+            {
+                await listener.Start();
+                await listener.Stop();
+            }
+            catch (HttpListenerException hex)
+            {
+                if (hex.ErrorCode == 5)
+                {
+                    return State.DisabledState("Run as administrator to allow opening a HTTP listener.");
+                }
+                else if (hex.ErrorCode == 32)
+                {
+                    return State.DisabledState($"Another program appears to be using port {listener.Port}.");
+                }
+                return State.DisabledState(hex.Message);
+            }
+            catch (Exception ex)
+            {
+                return State.DisabledState(ex.Message);
+            }
+            return State.EnabledState();
         }
     }
 }

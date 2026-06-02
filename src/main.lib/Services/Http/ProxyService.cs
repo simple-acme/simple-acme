@@ -89,7 +89,7 @@ namespace PKISharp.WACS.Services
         {
             var httpClientHandler = await GetHttpMessageHandler(checkSsl);
             var httpClient = new HttpClient(httpClientHandler);
-            httpClient.DefaultRequestHeaders.Add("User-Agent", $"simple-acme/{VersionService.SoftwareVersion} (+https://github.com/simple-acme/simple-acme)");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", $"{VersionService.DefaultClientName}/{VersionService.SoftwareVersion} (+https://github.com/simple-acme/simple-acme)");
             return httpClient;
         }
 

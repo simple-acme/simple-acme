@@ -33,7 +33,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
             public string? Name { get; set; } = null;
             public string Trigger { get; set; } = trigger;
             public string Description { get; set; } = description;
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
             public Type Options { get; } = typeof(TOptions);
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             public Type OptionsFactory { get; } = typeof(TOptionsFactory);
