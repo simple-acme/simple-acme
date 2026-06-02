@@ -39,8 +39,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
 
             //Record successfully created
             // Wrap our JSON inside a StringContent which then can be used by the HttpClient class
-            var httpContent = new StringContent(serializedPost, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync("", httpContent);
+            using var httpContent = new StringContent(serializedPost, Encoding.UTF8, "application/json");
+            using var response = await httpClient.PostAsync("", httpContent);
             if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.NoContent)
             {
                 _ = await response.Content.ReadAsStringAsync();
@@ -67,8 +67,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dnsexit
             };
 
             var serializedObject = Newtonsoft.Json.JsonConvert.SerializeObject(postData);
-            var httpContent = new StringContent(serializedObject, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync("", httpContent);
+            using var httpContent = new StringContent(serializedObject, Encoding.UTF8, "application/json");
+            using var response = await httpClient.PostAsync("", httpContent);
             if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.NoContent)
             {
                 _ = await response.Content.ReadAsStringAsync();
