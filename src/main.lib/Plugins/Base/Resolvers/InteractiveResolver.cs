@@ -192,7 +192,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             }
 
             var state = await result.Capability.ExecutionState();
-            if (state.Disabled == true) 
+            if (state.Disabled) 
             {
                 log.Warning("Chosen {n} plugin {x} might not work: {m}",
                     char.ToUpperInvariant(className[0]) + className[1..],
