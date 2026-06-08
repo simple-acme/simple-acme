@@ -20,6 +20,11 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             GetString<CsrArguments>(x => x.CsrScript).
             Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
 
+        private ArgumentResult<string?> CsrScriptArguments => arguments.
+            GetString<CsrArguments>(x => x.CsrScriptArguments).
+            WithLabel("Arguments").
+            WithDescription("Arguments passed to the CSR script.");
+
         private ArgumentResult<string?> PkFile => arguments.
             GetString<CsrArguments>(x => x.PkFile).
             Validate(x => Task.FromResult(x.ValidFile(log)), "invalid file");
@@ -44,7 +49,8 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             {
                 return new CsrOptions()
                 {
-                    CsrScript = await CsrScript.Interactive(inputService).Required().GetValue()
+                    CsrScript = await CsrScript.Interactive(inputService).Required().GetValue(),
+                    CsrScriptArguments = await CsrScriptArguments.Interactive(inputService).GetValue()
                 };
             }
         }
@@ -55,7 +61,8 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             {
                 PkFile = await PkFile.GetValue(),
                 CsrFile = await CsrFile.GetValue(),
-                CsrScript = await CsrScript.GetValue()
+                CsrScript = await CsrScript.GetValue(),
+                CsrScriptArguments = await CsrScriptArguments.GetValue()
             };
             if (string.IsNullOrWhiteSpace(ret.CsrFile) && string.IsNullOrEmpty(ret.CsrScript))
             {
@@ -68,6 +75,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         {
             yield return (CsrFile.Meta, options.CsrFile);
             yield return (CsrScript.Meta, options.CsrScript);
+            yield return (CsrScriptArguments.Meta, options.CsrScriptArguments);
             yield return (PkFile.Meta, options.PkFile);
         }
     }
