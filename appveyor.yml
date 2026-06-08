@@ -1,4 +1,4 @@
-version: 2.3.6.{build}
+version: 2.4.0.{build}
 branches:
   only:
     - main
