@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal.Models.HetznerCloud;
+namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal.Models.Dto;
 
 internal sealed class RRSet
 {
@@ -11,7 +11,7 @@ internal sealed class RRSet
         this.Ttl = record.ttl;
         this.Records = new[]
         {
-            new RecordValue($"\"{record.value}\"", "win-acme validation record")
+            new RecordValue($"\"{record.value}\"", "simple-acme validation record")
         };
     }
 
