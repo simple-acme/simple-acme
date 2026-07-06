@@ -94,7 +94,7 @@ internal class IPProjects(IPProjectsOptions options,
             recordName = recordName == "@" ? string.Empty : recordName;
 
             IPProjectsClient client = await GetClient();
-            await client.AddRecord(domain, recordName, record.Value);
+            await client.DeleteRecord(domain, recordName, record.Value);
         }
         catch (Exception ex)
         {
