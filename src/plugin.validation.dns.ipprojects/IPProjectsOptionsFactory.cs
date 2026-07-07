@@ -24,8 +24,6 @@ internal class IPProjectsOptionsFactory(ArgumentsInputService arguments) : Plugi
 
     /// <summary>
     /// This is called when the user is setting up a new renewal interactively
-    /// You have access to the input service, which allows you to ask questions
-    /// and prompt feedback to the screen.
     /// </summary>
     /// <param name="input"></param>
     /// <param name="runLevel"></param>
