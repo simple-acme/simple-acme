@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal.Models;
-using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal.Models.HetznerCloud;
+using PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal.Models.Dto;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns.Internal;
 
-internal sealed class HetznerCloudDnsClient : IHetznerClient, IDisposable
+internal sealed class HetznerCloudDnsClient : IDisposable
 {
     private static readonly Uri BASE_ADDRESS = new Uri("https://api.hetzner.cloud/v1/");
 
