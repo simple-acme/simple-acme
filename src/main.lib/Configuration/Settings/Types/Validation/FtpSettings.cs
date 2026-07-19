@@ -27,7 +27,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
             "<a href=\"https://github.com/robinrodricks/FluentFTP/wiki/FTPS-Connection-using-GnuTLS\">This page</a> by " +
             "the FluentFTP project explains the reasons behind and limitations of this method. ",
             Warning = "It's not enough to merely change this setting, please refer to the " +
-            "documentation of the <a href=\"/reference/plugins/validation/http/ftp\">FTP plugin</a> for more details.")]
+            "documentation of the <a href=\"/reference/plugins/validation/http/ftps\">FTP plugin</a> for more details.")]
         public bool? UseGnuTls { get; set; }
     }
 }
