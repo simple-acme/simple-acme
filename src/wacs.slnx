@@ -91,6 +91,10 @@
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
     </Project>
+    <Project Path="plugin.validation.dns.ipprojects/wacs.validation.dns.ipprojects.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
     <Project Path="plugin.validation.dns.linode/wacs.validation.dns.linode.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
