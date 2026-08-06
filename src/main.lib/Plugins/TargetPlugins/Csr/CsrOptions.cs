@@ -7,6 +7,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         public const string Trigger = "CSR";
         public string? CsrFile { get; set; }
         public string? CsrScript { get; set; }
+        public string? CsrScriptArguments { get; set; }
         public string? PkFile { get; set; }
     }
 }

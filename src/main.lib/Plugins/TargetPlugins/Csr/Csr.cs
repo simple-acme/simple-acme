@@ -110,7 +110,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             // Get CSR from script
             if (!string.IsNullOrEmpty(options.CsrScript))
             {
-                var ret = await scriptClient.RunScript(options.CsrScript);
+                var ret = await scriptClient.RunScript(options.CsrScript, options.CsrScriptArguments);
                 if (!ret.Success)
                 {
                     throw new InvalidOperationException($"Script {options.CsrScript} unable to run");
