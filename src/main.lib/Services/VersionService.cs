@@ -84,6 +84,14 @@ namespace PKISharp.WACS.Services
         internal static bool DotNetTool => LaunchInfo.Value?.Name == "wacs.dll" && !Debug;
         internal static string SettingsPath => DotNetTool ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DefaultClientName) : BasePath.Value;
         internal static string ExePath => ExeFileInfo.Value?.FullName ?? string.Empty;
+
+        /// <summary>
+        /// Directory that the program should run from, i.e. the location of the
+        /// real executable and its resources, with symlinks and junctions resolved.
+        /// Note that this may differ from the directory of <see cref="ExePath"/>,
+        /// which points to the shortcut that the scheduled task should launch.
+        /// </summary>
+        internal static string ExeDirectory => BasePath.Value.TrimEnd(Path.DirectorySeparatorChar);
         internal static string ResourcePath => BasePath.Value;
         internal static string Bitness => Environment.Is64BitProcess ? "64-bit" : "32-bit";
         internal static bool Pluggable =>

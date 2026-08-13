@@ -16,7 +16,7 @@ namespace PKISharp.WACS.Services.AutoRenew
         private string CronScriptTemplate => $@"
 #!/bin/sh
 # Automatically created by {VersionService.DefaultClientName}: https://github.com/simple-acme/simple-acme/
-cd {Path.GetDirectoryName(VersionService.ExePath)}
+cd {VersionService.ExeDirectory}
 ./wacs --{nameof(MainArguments.Renew).ToLowerInvariant()} --{nameof(MainArguments.BaseUri).ToLowerInvariant()} ""{settings.BaseUri}""";
 
         /// <summary>
