@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Services
         ILogService log) : IAutoRenewService
     {
         private string TaskName => $"{settings.Client.ClientName.CleanPath()} renew ({settings.BaseUri.CleanUri()})";
-        private static string WorkingDirectory => Path.GetDirectoryName(VersionService.ExePath) ?? "";
+        private static string WorkingDirectory => VersionService.ExeDirectory;
         private static string ExecutingFile => Path.GetFileName(VersionService.ExePath);
 
         private Task? ExistingTask
