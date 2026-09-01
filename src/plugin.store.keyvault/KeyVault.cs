@@ -36,9 +36,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 new CertificateClientOptions() {
                     Transport = armOptions.Transport
                 });
-            var importOptions = new ImportCertificateOptions(
-                options.CertificateName,
-                certificateInfo.PfxBytes());
+
+            var importOptions = new ImportCertificateOptions(options.CertificateName, certificateInfo.PfxBytes());
+            var password = await ssm.EvaluateSecret(options.CertificatePassword);
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                importOptions.Password = password;
+            }
             try
             {
                 _ = await client.ImportCertificateAsync(importOptions);
