@@ -18,8 +18,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             Required();
 
         private ArgumentResult<string?> CertificateName => arguments.
-            GetString<KeyVaultArguments>(a => a.CertificateName).
-            Required();
+            GetString<KeyVaultArguments>(a => a.CertificateName);
 
         private ArgumentResult<ProtectedString?> CertificatePassword => arguments.
             GetProtectedString<KeyVaultArguments>(a => a.CertificatePassword);

@@ -41,7 +41,8 @@ namespace PKISharp.WACS.Services
             }
 
             // What are we going to get?
-            var friendlyName = order.FriendlyNameIntermediate;
+            var friendlyNameIntermediate = order.GetIntermediate();
+            var friendlyName = friendlyNameIntermediate;
             if (settings.Security.FriendlyNameDateTimeStamp != false)
             {
                 friendlyName = $"{friendlyName} @ {inputService.FormatDate(DateTime.Now)}";
@@ -86,7 +87,7 @@ namespace PKISharp.WACS.Services
             }
 
             // Download the certificate from the server
-            log.Information("Downloading certificate {friendlyName}", order.FriendlyNameIntermediate);
+            log.Information("Downloading certificate {friendlyName}", friendlyNameIntermediate);
             var selected = await DownloadCertificate(order.Details, friendlyName, order.Target.PrivateKey);
 
             // Update LastFriendlyName so that the user sees

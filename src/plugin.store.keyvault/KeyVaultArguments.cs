@@ -8,7 +8,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         [CommandLine(Description = "The name of the vault")]
         public string? VaultName { get; set; }
 
-        [CommandLine(Description = "The name for the certificate")]
+        [CommandLine(Description = "The name for the certificate. Defaults to the friendly name.")]
         public string? CertificateName { get; set; }
 
         [CommandLine(Description = "The password for the certificate", Secret = true)]

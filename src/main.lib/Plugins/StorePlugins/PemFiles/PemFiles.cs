@@ -67,14 +67,16 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
         }
 
-        public async Task<StoreInfo?> Save(ICertificateInfo input)
+        public async Task<StoreInfo?> Save(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo)
         {
             
             _log.Information("Exporting .pem files to {folder}", _path);
             try
             {
                 // Determine name
-                var name = _name ?? input.CommonName?.Value ?? input.SanNames.First().Value;
+                var name = string.IsNullOrEmpty(_name) ?
+                        input.CommonName?.Value ?? input.SanNames.First().Value :
+                        friendlyNameInfo.GetIntermediate(_name);
                 name = name.Replace("*", "_");
 
                 // Base certificate
@@ -165,6 +167,6 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             }
         }
 
-        public Task Delete(ICertificateInfo input) => Task.CompletedTask;
+        public Task Delete(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo) => Task.CompletedTask;
     }
 }
