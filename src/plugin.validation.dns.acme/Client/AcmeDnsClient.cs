@@ -20,10 +20,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private readonly string _dnsConfigPath;
         private readonly Uri _baseUri;
         private readonly IInputService? _input;
+        private readonly ISettings _settings;   
 
         public AcmeDnsClient(LookupClientProvider dnsClient, IProxyService proxy, ILogService log,
                              ISettings settings, IInputService? input, Uri baseUri)
         {
+            _settings = settings;
             _baseUri = baseUri;
             _proxy = proxy;
             _dnsClient = dnsClient;
@@ -220,9 +222,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 _log.Error("Registration for domain {domain} appears invalid", domain);
                 return false;
             }
-            if (!await VerifyCname(domain, reg.Fulldomain))
+            if (_settings.Validation.PreValidateDns)
             {
-                _log.Warning("Registration for domain {domain} appears invalid", domain);
+                if (!await VerifyCname(domain, reg.Fulldomain))
+                {
+                    _log.Warning("Registration for domain {domain} appears invalid", domain);
+                }
             }
             using var client = await Client();
             client.DefaultRequestHeaders.Add("X-Api-User", reg.UserName);
