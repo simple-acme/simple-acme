@@ -83,23 +83,28 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 var certificateExport = input.Certificate.GetEncoded();
                 var certString = PemService.GetPem("CERTIFICATE", certificateExport);
                 var chainString = "";
-                await FileInfoExtensions.SafeWrite(Path.Combine(_path, $"{name}-crt.pem"), certString);
+                var rootString = "";
 
                 // Rest of the chain
                 foreach (var chainCertificate in input.Chain)
                 {
-                    // Do not include self-signed certificates, root certificates
-                    // are supposed to be known already by the client.
+                    var chainCertificateExport = chainCertificate.GetEncoded();
                     if (chainCertificate.SubjectDN.ToString() != chainCertificate.IssuerDN.ToString())
                     {
-                        var chainCertificateExport = chainCertificate.GetEncoded();
                         chainString += PemService.GetPem("CERTIFICATE", chainCertificateExport);
+                    }
+                    else
+                    {
+                        rootString += PemService.GetPem("CERTIFICATE", chainCertificateExport);
                     }
                 }
 
-                // Save complete chain
+                // Save chains
+                await FileInfoExtensions.SafeWrite(Path.Combine(_path, $"{name}-crt.pem"), certString);
                 await FileInfoExtensions.SafeWrite(Path.Combine(_path, $"{name}-chain.pem"), certString + chainString);
+                await FileInfoExtensions.SafeWrite(Path.Combine(_path, $"{name}-chain-full.pem"), certString + chainString + rootString);
                 await FileInfoExtensions.SafeWrite(Path.Combine(_path, $"{name}-chain-only.pem"), chainString);
+                await FileInfoExtensions.SafeWrite(Path.Combine(_path, $"{name}-chain-only-full.pem"), chainString + rootString);
 
                 // Private key
                 if (input.PrivateKey != null)
