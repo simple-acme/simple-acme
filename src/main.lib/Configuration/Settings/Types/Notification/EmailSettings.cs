@@ -66,6 +66,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Notification
         string? SmtpServer { get; }
 
         /// <summary>
+        /// Domain name used in the SMTP HELO or EHLO command.
+        /// </summary>
+        string? SmtpLocalDomain { get; }
+
+        /// <summary>
         /// User name for the SMTP server, in case 
         /// of authenticated SMTP.
         /// </summary>
@@ -83,6 +88,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Notification
         public bool SmtpSecure => Get(x => x.SmtpSecure) ?? true;
         public int SmtpSecureMode => Get(x => x.SmtpSecureMode) ?? 1;
         public string? SmtpServer => Get(x => x.SmtpServer);
+        public string? SmtpLocalDomain => Get(x => x.SmtpLocalDomain);
         public string? SmtpUser => Get(x => x.SmtpUser);
     }
 
@@ -92,6 +98,12 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Notification
             SubType = "host",
             Description = "SMTP server to use for sending email notifications. Required to receive renewal failure notifications.")]
         public string? SmtpServer { get; set; }
+
+        [SettingsValue(
+            SubType = "host",
+            Description = "Domain name used in the SMTP HELO or EHLO command.",
+            NullBehaviour = "the local IP address will be used")]
+        public string? SmtpLocalDomain { get; set; }
 
         [SettingsValue(
             Default = "25",

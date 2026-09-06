@@ -53,6 +53,7 @@
     "ComputerName": null,
     "Email": {
       "SmtpServer": null,
+      "SmtpLocalDomain": null,
       "SmtpPort": 25,
       "SmtpUser": null,
       "SmtpPassword": null,

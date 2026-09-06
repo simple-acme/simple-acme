@@ -29,11 +29,10 @@ namespace PKISharp.WACS.DomainObjects
                 }
                 return OrderResults?.
                     Where(x => 
-                        x.ExpireDate != null && 
-                        _expireDate.HasValue && 
-                        _expireDate != DateTime.MinValue).
-                    Select(x => x.ExpireDate).
-                    Min();
+                        x.ExpireDate != null &&
+                        x.ExpireDate.HasValue &&
+                        x.ExpireDate != DateTime.MinValue).
+                    Min(x => x.ExpireDate);
             }
             [Obsolete("Only for legacy")]
             set => _expireDate = value;

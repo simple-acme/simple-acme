@@ -26,7 +26,7 @@ if ($Clean) {
 # Build Nuget package
 if ($BuildNuget) {	
 	Status "Publish NuGet..."
-	& dotnet pack $Root\src\main\wacs.csproj -c "Release" /p:PublishSingleFile=false /p:PublishReadyToRun=false
+	& dotnet pack $Root\src\main\wacs.csproj -c "Release" /p:PublishSingleFile=false /p:PublishReadyToRun=false /p:RuntimeIdentifiers=
 }
 
 # Build regular releases

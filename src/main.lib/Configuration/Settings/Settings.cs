@@ -127,6 +127,11 @@ namespace PKISharp.WACS.Configuration.Settings
                 newSettings.Notification.Email ??= new EmailSettings();
                 newSettings.Notification.Email.SmtpPassword ??= newSettings.Notification.SmtpPassword;
             }
+            if (newSettings.Notification?.SmtpUser != null)
+            {
+                newSettings.Notification.Email ??= new EmailSettings();
+                newSettings.Notification.Email.SmtpUser ??= newSettings.Notification.SmtpUser;
+            }
             if (newSettings.Notification?.SmtpPort != null)
             {
                 newSettings.Notification.Email ??= new EmailSettings();

@@ -1,4 +1,4 @@
-﻿using ARSoft.Tools.Net;
+using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
 using ARSoft.Tools.Net.Dns.DynamicUpdate;
 using PKISharp.WACS.Clients.DNS;
@@ -142,7 +142,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     ipAddress = lookup.First();
                 }
                 _log.Verbose("Connnecting to DNS server at {ipAddress}:{port} using key {key}", ipAddress, port, options.TsigKeyName);
-                _client = new ArDnsClient(ipAddress, port);
+                _client = new ArDnsClient(
+                    [ipAddress],
+                    [new UdpClientTransport(port), new TcpClientTransport(port)],
+                    true);
             }
             return _client;
         }

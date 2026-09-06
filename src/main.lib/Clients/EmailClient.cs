@@ -23,6 +23,7 @@ namespace PKISharp.WACS.Clients
 #pragma warning enable
 
         private readonly string _server;
+        private readonly string? _localDomain;
         private readonly int _port;
         private readonly string _user;
         private readonly string _password;
@@ -43,6 +44,7 @@ namespace PKISharp.WACS.Clients
             _log = log;
             _settings = settings;
             _server = _settings.Notification.Email.SmtpServer;
+            _localDomain = _settings.Notification.Email.SmtpLocalDomain;
             _port = _settings.Notification.Email.SmtpPort;
             _user = _settings.Notification.Email.SmtpUser;
             _password = _settings.Notification.Email.SmtpPassword;
@@ -96,6 +98,7 @@ namespace PKISharp.WACS.Clients
             using var client = new SmtpClient(logger);
             try
             {
+                client.LocalDomain = _localDomain;
                 var options = SecureSocketOptions.None;
                 if (_secure)
                 {

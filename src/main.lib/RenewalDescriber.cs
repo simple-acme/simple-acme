@@ -177,7 +177,7 @@ namespace PKISharp.WACS
                     input.Show("FriendlyName", renewal.FriendlyName);
                 }
                 input.Show(".pfx password", renewal.PfxPassword?.Value);
-                var expires = renewal.History.Where(x => x.Success == true).LastOrDefault()?.ExpireDate;
+                var expires = renewal.History.LastOrDefault(x => x.Success == true)?.ExpireDate;
                 if (expires == null)
                 {
                     input.Show("Expires", "Unknown");
