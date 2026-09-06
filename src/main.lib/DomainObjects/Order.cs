@@ -46,7 +46,7 @@ namespace PKISharp.WACS.DomainObjects
             baseName ??= FriendlyNameBase;
             if (!string.IsNullOrEmpty(FriendlyNamePart))
             {
-                return string.Format($"{baseName} [{FriendlyNamePart}]");
+                return $"{baseName} [{FriendlyNamePart}]";
             }
             return baseName;
         }

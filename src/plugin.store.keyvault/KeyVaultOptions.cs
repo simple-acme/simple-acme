@@ -25,8 +25,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public string? SubscriptionId { get; set; }
         public string? TenantId { get; set; }
-        public string? VaultName { get; set; } = "";
-        public string? CertificateName { get; set; } = "";
+        public string? VaultName { get; set; }
+        public string? CertificateName { get; set; }
         /// <summary>
         /// Password for the certificate
         /// </summary>

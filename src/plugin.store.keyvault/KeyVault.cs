@@ -45,18 +45,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             {
                 importOptions.Password = password;
             }
-            //try
-            //{
-            //    _ = await client.ImportCertificateAsync(importOptions);
-            //    return new StoreInfo() {
-            //        Path = options.VaultName,
-            //        Name = options.CertificateName
-            //    };
-            //}
-            //catch (Exception ex)
-            //{
-            //    log.Error(ex, "Error importing certificate to KeyVault");
-            //}
+            try
+            {
+                _ = await client.ImportCertificateAsync(importOptions);
+                return new StoreInfo()
+                {
+                    Path = options.VaultName,
+                    Name = options.CertificateName
+                };
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex, "Error importing certificate to KeyVault");
+            }
             return null;
         }
     }
