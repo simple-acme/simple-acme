@@ -63,6 +63,10 @@
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
     </Project>
+    <Project Path="plugin.validation.dns.dnsmint/wacs.validation.dns.dnsmint.csproj">
+      <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+      <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+    </Project>
     <Project Path="plugin.validation.dns.domeneshop/wacs.validation.dns.domeneshop.csproj">
       <BuildType Solution="DebugTrimmed|*" Project="Debug" />
       <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
