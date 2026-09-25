@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
         ("a1565064-b208-4467-8ca1-1bd3c08aa500", 
         "SelfHosting", $"Let {VersionService.DefaultClientName} answer TLS validation request", 
         Name = "Self-hosting")]
-    internal class SelfHosting(ILogService log, SelfHostingOptions options) : Validation<TlsAlpn01ChallengeValidationDetails>
+    internal class SelfHosting(ILogService log, ISettings settings, SelfHostingOptions options) : Validation<TlsAlpn01ChallengeValidationDetails>
     {
         internal const int DefaultValidationPort = 443;
         private TcpListener? _listener;
@@ -109,7 +109,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
 
                 _tokenSource = new();
 
-                var (newListener, newPort) = CreateListener(options.Port);
+                var (newListener, newPort) = CreateListener(options.Port ?? settings.Validation.ValidationPort);
                 port = newPort;
                 newListener.Start();
                 _listener = newListener;

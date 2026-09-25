@@ -177,4 +177,53 @@ namespace PKISharp.WACS.UnitTests.Tests.SettingsTests
             Assert.AreEqual("mail.example.com", settings.Notification.Email!.SmtpLocalDomain);
         }
     }
+
+    [TestClass]
+    public class ValidationPortSettingsTests
+    {
+        [TestMethod]
+        public void ValidationPortDefaultsToNull()
+        {
+            var settings = new InheritSettings(new Settings());
+
+            Assert.IsNull(settings.Validation.ValidationPort);
+        }
+
+        [TestMethod]
+        public void ValidationPortCanBeConfigured()
+        {
+            var globalSettings = new Settings
+            {
+                Validation = new ValidationSettings
+                {
+                    ValidationPort = 9040
+                }
+            };
+            var settings = new InheritSettings(globalSettings);
+
+            Assert.AreEqual(9040, settings.Validation.ValidationPort);
+        }
+
+        [TestMethod]
+        public void ValidationPortCanBeOverruled()
+        {
+            var globalSettings = new Settings
+            {
+                Validation = new ValidationSettings
+                {
+                    ValidationPort = 9040
+                }
+            };
+            var localSettings = new Settings
+            {
+                Validation = new ValidationSettings
+                {
+                    ValidationPort = 8080
+                }
+            };
+            var settings = new InheritSettings(localSettings, globalSettings);
+
+            Assert.AreEqual(8080, settings.Validation.ValidationPort);
+        }
+    }
 }

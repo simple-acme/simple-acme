@@ -14,12 +14,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         private readonly ILogService _log;
         private readonly CancellationTokenSource _cancellationTokenSource = new();
 
-        public HttpListenerWrapper(ISelfHosterOptions options, ILogService log)
+        public HttpListenerWrapper(ISelfHosterOptions options, ILogService log, ISettings settings)
         {
             _log = log;
             var https = options.Https == true;
             var protocol = https ? "https" : "http";
-            Port = options.Port ?? (https ? 443 : 80);
+            Port = options.Port ?? settings.Validation.ValidationPort ?? (https ? 443 : 80);
             var prefix = $"{protocol}://+:{Port}/.well-known/acme-challenge/";
             _listener = new HttpListener();
             _listener.Prefixes.Add(prefix);
