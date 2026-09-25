@@ -14,18 +14,21 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
         protected readonly IUserRoleService UserRoleService;
         protected readonly SelfHostingOptions? SelfHostingOptions;
         protected readonly ArgumentsParser ArgumentsParser;
+        protected readonly ISettings Settings;
 
-        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args) : base(target)
+        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args, ISettings settings) : base(target)
         {
             UserRoleService = user;
             ArgumentsParser = args;
+            Settings = settings;
         }
 
-        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args, SelfHostingOptions? options) : base(target)
+        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args, ISettings settings, SelfHostingOptions? options) : base(target)
         {
             UserRoleService = user;
             SelfHostingOptions = options;
             ArgumentsParser = args;
+            Settings = settings;
         }
 
         public override async Task<State> ExecutionState()
@@ -46,8 +49,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                 {
                     var args = ArgumentsParser.GetArguments<SelfHostingArguments>();
                     var (testListener, port) = SelfHostingOptions is null ?
-                        SelfHosting.CreateListener(args?.ValidationPort) :
-                        SelfHosting.CreateListener(SelfHostingOptions.Port);
+                        SelfHosting.CreateListener(args?.ValidationPort ?? Settings.Validation.ValidationPort) :
+                        SelfHosting.CreateListener(SelfHostingOptions.Port ?? Settings.Validation.ValidationPort);
                     try
                     {
                         testListener.Start();

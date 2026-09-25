@@ -15,12 +15,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         private readonly WebApplication _app;
         private readonly ILogService _log;
 
-        public KestrelSelfHoster(ISelfHosterOptions options, ILogService log)
+        public KestrelSelfHoster(ISelfHosterOptions options, ILogService log, ISettings settings)
         {
             _log = log;
             var https = options.Https == true;
             var protocol = https ? "https" : "http";
-            Port = options.Port ?? (https ? 443 : 80);
+            Port = options.Port ?? settings.Validation.ValidationPort ?? (https ? 443 : 80);
             var builder = WebApplication.CreateSlimBuilder();
             builder.Logging.ClearProviders();
             if (OperatingSystem.IsWindows())

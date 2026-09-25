@@ -2,11 +2,11 @@
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    public class KestrelSelfHosterFactory(ILogService log) : ISelfHosterFactory
+    public class KestrelSelfHosterFactory(ILogService log, ISettings settings) : ISelfHosterFactory
     {
         public ISelfHoster Create(ISelfHosterOptions options)
         {
-            return new KestrelSelfHoster(options, log);
+            return new KestrelSelfHoster(options, log, settings);
         }
     }
 }
