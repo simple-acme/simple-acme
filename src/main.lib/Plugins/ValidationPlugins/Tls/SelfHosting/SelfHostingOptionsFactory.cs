@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
 {
-    internal class SelfHostingOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<SelfHostingOptions>
+    internal class SelfHostingOptionsFactory(ArgumentsInputService arguments, ISettings settings) : PluginOptionsFactory<SelfHostingOptions>
     {
         private ArgumentResult<int?> HostingPort => 
-            arguments.GetInt<SelfHostingArguments>(x => x.ValidationPort);
+            arguments.GetInt<SelfHostingArguments>(x => x.ValidationPort).
+            WithDefault(settings.Validation.ValidationPort).
+            DefaultAsNull();
 
         public override int Order => 100;
 

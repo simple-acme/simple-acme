@@ -91,6 +91,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         /// Amount of time in seconds to wait between each retry.
         /// </summary>
         int PreValidateDnsRetryInterval { get; }
+
+        /// <summary>
+        /// Default port for self-hosting HTTP-01 / TLS-ALPN-01 validation.
+        /// </summary>
+        int? ValidationPort { get; }
     }
 
     internal class InheritValidationSettings(params IEnumerable<ValidationSettings?> chain) : InheritSettings<ValidationSettings>(chain), IValidationSettings
@@ -108,6 +113,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public bool PreValidateDnsLocal => Get(x => x.PreValidateDnsLocal) ?? false;
         public int PreValidateDnsRetryCount => Get(x => x.PreValidateDnsRetryCount) ?? 5;
         public int PreValidateDnsRetryInterval => Get(x => x.PreValidateDnsRetryInterval) ?? 30;
+        public int? ValidationPort => Get(x => x.ValidationPort);
     }
 
     public class ValidationSettings
@@ -187,6 +193,16 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             "locate the actual authoritative name servers for the domain. You can use the string <code>\"[System]\"</code> " +
             "to have the program query the default name servers on your machine.")]
         public List<string>? DnsServers { get; set; }
+
+        [SettingsValue(
+            Description = "Default listening port for the <a href=\"/reference/plugins/validation/http/selfhosting\">self-hosting</a> " +
+            "HTTP-01 and TLS-ALPN-01 validation plugins. Filling this out makes the <code>‑‑validationport</code> argument " +
+            "unnecessary in most cases. Renewals created with the default port will automatically change to any future " +
+            "default value, meaning this is also a good practice for maintainability. " +
+            "Note that the ACME server will always send requests to port 80 (HTTP-01) or 443 (TLS-ALPN-01); " +
+            "this option is only useful in combination with port forwarding.",
+            NullBehaviour = "equivalent to <code>80</code> for HTTP-01 and <code>443</code> for TLS-ALPN-01")]
+        public int? ValidationPort { get; set; }
 
         public FtpSettings? Ftp { get; set; }
     }

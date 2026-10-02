@@ -94,7 +94,8 @@
     "PreValidateDnsLocal": false,
     "DnsPropagationDelay": 30,
     "AllowDnsSubstitution": true,
-    "DnsServers": [ "[System]" ]
+    "DnsServers": [ "[System]" ],
+    "ValidationPort": null
   },
   "Order": {
     "DefaultOrder": null,
