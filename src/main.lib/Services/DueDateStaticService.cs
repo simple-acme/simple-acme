@@ -5,9 +5,9 @@ using System.Linq;
 
 namespace PKISharp.WACS.Services
 {
-    public class DueDateStaticService(
+    internal class DueDateStaticService(
         DueDateRuntimeService runtime,
-        ILogService logService)
+        ILogService logService) : IDueDateStaticService
     {
         public DueDate? DueDate(Renewal renewal)
         {
@@ -74,7 +74,7 @@ namespace PKISharp.WACS.Services
                         }
 
                     }
-                } 
+                }
                 catch (Exception ex)
                 {
                     logService.Error(ex, "Error reading history for {renewal}: {ex}", renewal.Id, ex.Message);

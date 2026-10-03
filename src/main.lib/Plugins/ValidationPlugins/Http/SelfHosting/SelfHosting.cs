@@ -32,7 +32,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         }
         private ISelfHoster? _listener;
 
-        public override async Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
+        public override async Task<bool> PrepareChallenge(Http01ChallengeValidationDetails challenge)
         {
             Listener.Challenges.TryAdd(challenge.HttpResourceName, challenge.HttpResourceValue);
             if (!Listener.Started)

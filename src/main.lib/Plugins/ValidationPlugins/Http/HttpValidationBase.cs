@@ -1,4 +1,5 @@
 ﻿using ACMESharp.Authorizations;
+using PKISharp.WACS.Context;
 using PKISharp.WACS.Services;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -9,6 +10,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         Validation<Http01ChallengeValidationDetails>
     {
         protected readonly ILogService log = log;
+
+        internal async override Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge) => await PrepareChallenge(challenge);
+
+        public abstract Task<bool> PrepareChallenge(Http01ChallengeValidationDetails challenge);
 
         public async Task TestChallenge(Http01ChallengeValidationDetails challenge)
         {

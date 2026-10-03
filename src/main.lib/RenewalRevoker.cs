@@ -15,7 +15,7 @@ namespace PKISharp.WACS
         ILogService log,
         OrderManager orderManager,
         AcmeClientManager clientManager,
-        DueDateStaticService dueDate,
+        IDueDateStaticService dueDate,
         NotificationService notification) : IRenewalRevoker
     {
 

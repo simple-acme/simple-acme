@@ -3,7 +3,7 @@ using PKISharp.WACS.DomainObjects;
 
 namespace PKISharp.WACS.Context
 {
-    public class AuthorizationContext(OrderContext order, AcmeAuthorization authorization, string uri)
+    internal class AuthorizationContext(OrderContext order, AcmeAuthorization authorization, string uri)
     {
         public AcmeAuthorization Authorization { get; internal set; } = authorization;
         public OrderContext Order { get; } = order;

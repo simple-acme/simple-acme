@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Host
             ISettings settings,
             IUserRoleService userRoleService,
             IInputService input,
-            DueDateStaticService dueDateService,
+            IDueDateStaticService dueDateService,
             IRenewalStore renewalStore,
             ArgumentsParser argumentsParser,
             AdminService adminService,

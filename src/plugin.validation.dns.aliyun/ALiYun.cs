@@ -39,7 +39,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             try
             {
                 var client = await GetClient();
-                var identifier = GetDomain(client, record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
+                var identifier = GetDomain(client, record) ?? throw new($"The domain name cannot be found: {record.Identifier}");
                 var domain = record.Authority.Domain;
                 var value = record.Value;
                 //Add Record
@@ -60,7 +60,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             try
             {
                 var client = await GetClient();
-                var identifier = GetDomain(client, record) ?? throw new($"The domain name cannot be found: {record.Context.Identifier}");
+                var identifier = GetDomain(client, record) ?? throw new($"The domain name cannot be found: {record.Identifier}");
                 var domain = record.Authority.Domain;
                 //Delete Record
                 _ = DelRecord(client, identifier, domain);

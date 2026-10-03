@@ -73,7 +73,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
             return (testListener, port);
         }
 
-        public override Task<bool> PrepareChallenge(ValidationContext context, TlsAlpn01ChallengeValidationDetails challenge)
+        internal override Task<bool> PrepareChallenge(ValidationContext context, TlsAlpn01ChallengeValidationDetails challenge)
         {
             var port = DefaultValidationPort;
             try

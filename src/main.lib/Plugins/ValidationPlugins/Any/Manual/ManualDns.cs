@@ -1,5 +1,7 @@
 ﻿using PKISharp.WACS.Clients.DNS;
+using PKISharp.WACS.Context;
 using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -14,7 +16,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
             input.CreateSpace();
-            input.Show("Domain", record.Context.Identifier);
+            input.Show("Domain", record.Identifier);
             input.Show("Record", record.Authority.Domain);
             input.Show("Type", "TXT");
             input.Show("Content", $"\"{record.Value}\"");
@@ -56,10 +58,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             }
         }
 
-        public override Task DeleteRecord(DnsValidationRecord record)
-        {
+        internal override Task DeleteRecord(ValidationContext context, DnsValidationRecord record)
+        { 
             input.CreateSpace();
-            input.Show("Domain", record.Context.Identifier);
+            input.Show("Domain", context.Identifier);
             input.Show("Record", record.Authority.Domain);
             input.Show("Type", "TXT");
             input.Show("Content", $"\"{record.Value}\"");

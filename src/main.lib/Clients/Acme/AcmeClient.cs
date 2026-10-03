@@ -43,7 +43,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// <summary>
         /// Which account is this client authorized for
         /// </summary>
-        public Account Account { get; private set; }
+        public AcmeAccount Account { get; private set; }
 
         /// <summary>
         /// Service directory for this client
@@ -56,7 +56,7 @@ namespace PKISharp.WACS.Clients.Acme
             IAcmeLogger acmeLogger,
             ISettings settings,
             ServiceDirectory directory,
-            Account account)
+            AcmeAccount account)
         {
             _log = log;
             _settings = settings;

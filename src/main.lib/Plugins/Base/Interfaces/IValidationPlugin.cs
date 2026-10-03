@@ -9,7 +9,7 @@ namespace PKISharp.WACS.Plugins.Interfaces
     /// <summary>
     /// Instance interface
     /// </summary>
-    public interface IValidationPlugin : IPlugin
+    internal interface IValidationPlugin : IPlugin
     {
         /// <summary>
         /// Select one of the available challenges to process

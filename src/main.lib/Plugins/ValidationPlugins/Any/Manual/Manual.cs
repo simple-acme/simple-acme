@@ -9,6 +9,7 @@ using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
@@ -46,10 +47,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             }
             return await input.ChooseRequired(
                 "How would you like to prove that you own the domain?",
-                supportedChallenges, c => Choice.Create(c,
+                supportedChallenges.OrderBy(s => s.Type), c => Choice.Create(c,
                    c.Type switch
                    {
-                       Constants.Dns01ChallengeType => "Create a DNS record",
+                       Constants.Dns01ChallengeType => "Create a temporary DNS record",
+                       Constants.DnsPersist01ChallengeType => "Create a permanent DNS record",
                        Constants.Http01ChallengeType => "Upload a file",
                        _ => "Unknown (bug?)"
                    }));
@@ -63,7 +65,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         /// <exception cref="InvalidOperationException"></exception>
         public async Task<bool> PrepareChallenge(ValidationContext context)
         {
-            if (context.ChallengeDetails is Dns01ChallengeValidationDetails dnsChallenge)
+            if (context.ChallengeDetails is IDnsChallengeValidationDetails dnsChallenge)
             {
                 _manualDns = new ManualDns(dnsClient, log, input, settings);
                 return await _manualDns.PrepareChallenge(context, dnsChallenge);

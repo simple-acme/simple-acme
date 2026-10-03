@@ -76,7 +76,7 @@ namespace PKISharp.WACS.Host
                 _ = builder.RegisterType<LookupClientProvider>().SingleInstance();
                 _ = builder.RegisterType<CacheService>().As<ICacheService>().SingleInstance();
                 _ = builder.RegisterType<CertificatePicker>().SingleInstance();
-                _ = builder.RegisterType<DueDateStaticService>().SingleInstance();
+                _ = builder.RegisterType<DueDateStaticService>().As<IDueDateStaticService>().SingleInstance();
                 _ = builder.RegisterType<DueDateRuntimeService>().SingleInstance();
                 _ = builder.RegisterType<SecretServiceManager>().SingleInstance();
 #if LINUX

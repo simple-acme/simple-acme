@@ -17,12 +17,26 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     public abstract class DnsValidation<TPlugin>(
         LookupClientProvider dnsClient,
         ILogService log,
-        ISettings settings) : Validation<Dns01ChallengeValidationDetails>
+        ISettings settings) : Validation<IDnsChallengeValidationDetails>
     {
         protected readonly LookupClientProvider _dnsClient = dnsClient;
         protected readonly ILogService _log = log;
         protected readonly ISettings _settings = settings;
-        private readonly ConcurrentBag<DnsValidationRecord> _recordsCreated = new();
+        private readonly ConcurrentBag<DnsValidationRecord> _recordsCreated = [];
+
+        /// <summary>
+        /// Calculate the record name for a PERSIST-01 challenge
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="challenge"></param>
+        private static DnsPersist01ChallengeValidationDetails PreparePersistRecord(ValidationContext context, DnsPersist01ChallengeValidationDetails challenge)
+        {
+            challenge.DnsRecordName = $"{DnsPersist01ChallengeValidationDetails.DnsRecordNamePrefix}.{context.Identifier}";
+            challenge.DnsRecordType = DnsPersist01ChallengeValidationDetails.DnsRecordTypeDefault;
+            var hash = "1234";
+            challenge.DnsRecordValue = $"{challenge.IssuerDomainNames.First()};accounturi={context.Account.Details.Kid};hash={hash}";
+            return challenge;
+        }
 
         /// <summary>
         /// Prepare to add a new DNS record
@@ -30,8 +44,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <param name="context"></param>
         /// <param name="challenge"></param>
         /// <returns></returns>
-        public override async Task<bool> PrepareChallenge(ValidationContext context, Dns01ChallengeValidationDetails challenge)
+        internal override async Task<bool> PrepareChallenge(ValidationContext context, IDnsChallengeValidationDetails challenge)
         {
+            // Support the DNS-PERSIST-01 challenge type
+            if (challenge is DnsPersist01ChallengeValidationDetails persist)
+            {
+                challenge = PreparePersistRecord(context, persist);
+            }
+
             // Check for substitute domains
             var authority = await _dnsClient.GetAuthority(
                 challenge.DnsRecordName,
@@ -95,13 +115,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// </summary>
         /// <param name="record"></param>
         /// <returns></returns>
-        protected async Task<bool> PreValidate(DnsValidationRecord record)
+        internal async Task<bool> PreValidate(DnsValidationRecord record)
         {
             var success = 0;
             var count = record.Authority.Nameservers.Count();
             try
             {
-                _log.Debug("[{identifier}] Looking for TXT value {DnsRecordValue}...", record.Context.Label, record.Value);
+                _log.Debug("[{identifier}] Looking for TXT value {DnsRecordValue}...", record.Label, record.Value);
                 var testClients = record.Authority.Nameservers;
                 if (_settings.Validation.PreValidateDnsLocal)
                 {
@@ -109,40 +129,40 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 }
                 foreach (var client in testClients)
                 {
-                    _log.Debug("[{identifier}] [{ip}] Getting TXT records...", record.Context.Label, client.IpAddress);
+                    _log.Debug("[{identifier}] [{ip}] Getting TXT records...", record.Label, client.IpAddress);
                     var answers = await client.GetTxtRecords(record.Authority.Domain);
                     if (!answers.Any())
                     {
-                        _log.Warning("[{identifier}] [{ip}] No TXT records found", record.Context.Label, client.IpAddress);
+                        _log.Warning("[{identifier}] [{ip}] No TXT records found", record.Label, client.IpAddress);
                         continue;
                     }
                     if (!answers.Contains(record.Value))
                     {
-                        _log.Debug("[{identifier}] [{ip}] Found {answers}", record.Context.Label, client.IpAddress, answers);
-                        _log.Warning("[{identifier}] [{ip}] Incorrect TXT record(s) found", record.Context.Label, client.IpAddress);
+                        _log.Debug("[{identifier}] [{ip}] Found {answers}", record.Label, client.IpAddress, answers);
+                        _log.Warning("[{identifier}] [{ip}] Incorrect TXT record(s) found", record.Label, client.IpAddress);
                         continue;
                     }
-                    _log.Debug("[{identifier}] [{ip}] looks good", record.Context.Label, client.IpAddress);
+                    _log.Debug("[{identifier}] [{ip}] looks good", record.Label, client.IpAddress);
                     success++;
                 }
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "[{identifier}] Preliminary validation failed", record.Context.Label);
+                _log.Error(ex, "[{identifier}] Preliminary validation failed", record.Label);
                 return false;
             }
             if (success == count)
             {
-                _log.Information("[{identifier}] Preliminary validation succeeded", record.Context.Label);
+                _log.Information("[{identifier}] Preliminary validation succeeded", record.Label);
                 return true;
             }
             if (success >= 1)
             {
-                _log.Information("[{identifier}] Preliminary validation failed on {n}/{m} nameservers", record.Context.Label, success, count);
+                _log.Information("[{identifier}] Preliminary validation failed on {n}/{m} nameservers", record.Label, success, count);
             } 
             else
             {
-                _log.Information("[{identifier}] Preliminary validation failed on all nameservers", record.Context.Label);
+                _log.Information("[{identifier}] Preliminary validation failed on all nameservers", record.Label);
             }
             return false;
         }
@@ -157,11 +177,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 try
                 {
                     await DeleteRecord(record);
-                    _log.Information("[{identifier}] Record {value} deleted", record.Context.Label, record.Value);
+                    _log.Information("[{identifier}] Record {value} deleted", record.Label, record.Value);
                 }
                 catch (Exception ex)
                 {
-                    _log.Warning(ex, "[{identifier}] Error deleting record {value}", record.Context.Label, record.Value);
+                    _log.Warning(ex, "[{identifier}] Error deleting record {value}", record.Label, record.Value);
                 }
             }
             await Finalize();
@@ -198,12 +218,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                     retry += 1;
                     if (retry > maxRetries)
                     {
-                        _log.Information("[{identifier}] It looks like validation is going to fail, but we will try now anyway...", record.Context.Label);
+                        _log.Information("[{identifier}] It looks like validation is going to fail, but we will try now anyway...", record.Label);
                         break;
                     }
                     else
                     {
-                        _log.Information("[{identifier}] Will retry in {s} seconds (retry {i}/{j})...", record.Context.Label, retrySeconds, retry, maxRetries);
+                        _log.Information("[{identifier}] Will retry in {s} seconds (retry {i}/{j})...", record.Label, retrySeconds, retry, maxRetries);
                         await Task.Delay(retrySeconds * 1000);
                     }
                 }
@@ -214,7 +234,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// Delete validation record
         /// </summary>
         /// <param name="recordName">Name of the record</param>
+        internal virtual Task DeleteRecord(ValidationContext context, DnsValidationRecord record) => DeleteRecord(record);
+
+        /// <summary>
+        /// Delete validation record
+        /// </summary>
+        /// <param name="recordName">Name of the record</param>
         public virtual Task DeleteRecord(DnsValidationRecord record) => Task.CompletedTask;
+
+        /// <summary>
+        /// Create validation record
+        /// </summary>
+        /// <param name="recordName">Name of the record</param>
+        internal virtual Task CreateRecord(ValidationContext context, DnsValidationRecord record) => CreateRecord(record);
 
         /// <summary>
         /// Create validation record
@@ -298,11 +330,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <summary>
         /// Keep track of which records are created, so that they can be deleted later
         /// </summary>
-        public class DnsValidationRecord(ValidationContext context, DnsLookupResult authority, string value)
+        public class DnsValidationRecord
         {
-            public ValidationContext Context { get; } = context;
-            public DnsLookupResult Authority { get; } = authority;
-            public string Value { get; } = value;
+            internal DnsValidationRecord(ValidationContext context, DnsLookupResult authority, string value)
+            {
+                Identifier = context.Identifier;
+                Label = context.Label;
+                Authority = authority;
+                Value = value;
+            }
+
+            public string Label { get; }
+            public string Identifier { get; }
+            public DnsLookupResult Authority { get; }
+            public string Value { get; }
         }
     }
 

@@ -26,7 +26,7 @@ namespace PKISharp.WACS
         IInputService input, ILogService log, TargetValidator targetValidator,
         IPluginService plugin, IAutofacBuilder autofacBuilder,
         IValidationOptionsService validationOptions, AccountManager accountManager,
-        NotificationService notification, DueDateStaticService dueDateService,
+        NotificationService notification, IDueDateStaticService dueDateService,
         ExceptionHandler exceptionHandler, RenewalExecutor renewalExecutor,
         AcmeClientManager acmeClientManager, ISettings settings)
     {

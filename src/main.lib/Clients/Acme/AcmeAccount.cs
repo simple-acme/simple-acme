@@ -6,7 +6,7 @@ namespace PKISharp.WACS.Clients.Acme
     /// Constructor requires signer to be present
     /// </summary>
     /// <param name="signer"></param>
-    internal class Account(AccountDetails details, AccountSigner signer)
+    internal class AcmeAccount(AccountDetails details, AccountSigner signer)
     {
 
         /// <summary>

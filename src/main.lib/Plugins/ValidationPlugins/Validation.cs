@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// Handle the challenge
         /// </summary>
         /// <param name="challenge"></param>
-        public async Task<bool> PrepareChallenge(ValidationContext context)
+        internal async Task<bool> PrepareChallenge(ValidationContext context) 
         {
             if (context.ChallengeDetails is TChallenge typed)
             {
@@ -40,12 +40,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 throw new InvalidOperationException("Unexpected challenge type");
             }
         }
+        Task<bool> IValidationPlugin.PrepareChallenge(ValidationContext context) => PrepareChallenge(context);
 
         /// <summary>
         /// Handle the challenge
-        /// </summary>
-        /// <param name="challenge"></param>
-        public abstract Task<bool> PrepareChallenge(ValidationContext context, TChallenge typed);
+        /// </summary> 
+        internal abstract Task<bool> PrepareChallenge(ValidationContext context, TChallenge typed);
 
         /// <summary>
         /// Commit changes
@@ -58,6 +58,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// </summary>
         /// <returns></returns>
         public abstract Task CleanUp();
+
 
         /// <summary>
         /// No parallelism by default

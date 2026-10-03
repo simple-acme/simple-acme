@@ -12,7 +12,7 @@ using System.Collections.Generic;
 
 namespace PKISharp.WACS.Context
 {
-    public class ValidationContextParameters(
+    internal class ValidationContextParameters(
         AuthorizationContext authorization,
         TargetPart targetPart,
         ValidationPluginOptions options,
@@ -24,9 +24,10 @@ namespace PKISharp.WACS.Context
         public AuthorizationContext AuthorizationContext { get; } = authorization;
         public string Label { get; } = authorization.Label;
         public string Name { get; } = plugin.Name;
+        public AcmeAccount Account { get; } = authorization.Order.Account;
     }
 
-    public class ValidationContext
+    internal class ValidationContext
     {
         public ValidationContext(
             ILifetimeScope scope,
@@ -42,6 +43,7 @@ namespace PKISharp.WACS.Context
             AuthorizationContext = parameters.AuthorizationContext;
             OrderResult = parameters.OrderContext.OrderResult;
             Scope = scope;
+            Account = parameters.Account;
             PluginName = parameters.Name;
             var backend = scope.Resolve<PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>>();
             ValidationPlugin = backend.Backend;
@@ -58,6 +60,7 @@ namespace PKISharp.WACS.Context
         public TargetPart? TargetPart { get; }
         public AuthorizationContext AuthorizationContext { get; set; }
         public AcmeChallenge? Challenge { get; set; }
+        public AcmeAccount Account { get; set; }
         public IChallengeValidationDetails? ChallengeDetails { get; set; }
         public IValidationPlugin ValidationPlugin { get; set; }
     }

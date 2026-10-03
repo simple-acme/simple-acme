@@ -26,7 +26,7 @@ namespace PKISharp.WACS
         IInputService input,
         ISettings settings,
         TargetValidator targetValidator,
-        DueDateStaticService dueDateStatic,
+        IDueDateStaticService dueDateStatic,
         DueDateRuntimeService dueDateRuntime,
         ExceptionHandler exceptionHandler,
         IAutoRenewService taskScheduler,
@@ -186,10 +186,11 @@ namespace PKISharp.WACS
 
             // Get the certificates from cache or server
             var orderProcessor = execute.Resolve<OrderProcessor>();
+            var client = execute.Resolve<AcmeClient>();
 
             // Build context
             var previousOrders = dueDateStatic.CurrentOrders(renewal);
-            var orderContexts = orders.Select(order => new OrderContext(scopeBuilder.Order(execute, order), order, runLevel)).ToList();
+            var orderContexts = orders.Select(order => new OrderContext(scopeBuilder.Order(execute, order), client.Account, order, runLevel)).ToList();
             await orderProcessor.PrepareOrders(orderContexts, previousOrders);
 
             // Check individual orders

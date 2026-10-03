@@ -1,5 +1,6 @@
 ﻿using ACMESharp.Protocol.Resources;
 using Autofac;
+using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.DomainObjects;
 using System.Diagnostics;
 
@@ -9,10 +10,11 @@ namespace PKISharp.WACS.Context
     /// Common objects used throughout the renewal process
     /// </summary>
     [DebuggerDisplay("{OrderName}")]
-    public class OrderContext
+    internal class OrderContext
     {
         public const string DefaultOrderName = "Main";
         public ILifetimeScope OrderScope { get; private set; }
+        public AcmeAccount Account { get; private set; }
         public Order Order { get; private set; }
         public RunLevel RunLevel { get; private set; }
         public OrderResult OrderResult { get; private set; }
@@ -43,9 +45,10 @@ namespace PKISharp.WACS.Context
         /// </summary>
         public ICertificateInfo? NewCertificate { get; set; }
 
-        public OrderContext(ILifetimeScope orderScope, Order order, RunLevel runLevel)
+        public OrderContext(ILifetimeScope orderScope, AcmeAccount account, Order order, RunLevel runLevel)
         {
             OrderScope = orderScope;
+            Account = account;
             Order = order;
             RunLevel = runLevel;
             OrderResult = new OrderResult(OrderCacheKey);

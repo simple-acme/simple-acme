@@ -13,7 +13,7 @@ namespace PKISharp.WACS.Services
 {
     internal class RenewalStoreDisk(
         ISettings settings,
-        DueDateStaticService dueDate,
+        IDueDateStaticService dueDate,
         ILogService log,
         WacsJson wacsJson) : object(), IRenewalStoreBackend
     {

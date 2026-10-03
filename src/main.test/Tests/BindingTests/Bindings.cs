@@ -659,7 +659,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             var updatedBinding = outofScopeSite.Bindings[0];
             Assert.AreEqual(DefaultStore, updatedBinding.CertificateStoreName);
-            Assert.AreEqual(scopeCert, updatedBinding.CertificateHash);
+            Assert.AreSequenceEqual(scopeCert, updatedBinding.CertificateHash);
         }
 
         [TestMethod]
@@ -895,7 +895,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             var untouchedBinding = sniTrap2Site.Bindings[0];
             Assert.AreEqual(SSLFlags.None, untouchedBinding.SSLFlags);
-            Assert.AreEqual(oldCert1, untouchedBinding.CertificateHash);
+            Assert.AreSequenceEqual(oldCert1, untouchedBinding.CertificateHash);
             Assert.HasCount(1, sniTrap2Site.Bindings);
         }
 
@@ -952,7 +952,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             var untouchedBinding = sniTrap2Site.Bindings[0];
             Assert.AreEqual(SSLFlags.None, untouchedBinding.SSLFlags);
-            Assert.AreEqual(oldCert1, untouchedBinding.CertificateHash);
+            Assert.AreSequenceEqual(oldCert1, untouchedBinding.CertificateHash);
             Assert.HasCount(2, sniTrap2Site.Bindings);
             var newBinding = sniTrap2Site.Bindings[1];
             Assert.AreEqual(SSLFlags.Sni, newBinding.SSLFlags);

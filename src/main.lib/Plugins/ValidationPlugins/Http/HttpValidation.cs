@@ -69,7 +69,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         /// <summary>
         /// Handle http challenge
         /// </summary>
-        public async override Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
+        internal async override Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
             // Should always have a value, confirmed by RenewalExecutor
             // check only to satifiy the compiler
@@ -77,10 +77,14 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
             {
                 Refresh(context.TargetPart);
             }
+            return await PrepareChallenge(challenge);
+        }
+
+        public override async Task<bool> PrepareChallenge(Http01ChallengeValidationDetails challenge)
+        {
             await WriteAuthorizationFile(challenge);
             await WriteWebConfig();
             await TestChallenge(challenge);
-
             string? foundValue = null;
             try
             {

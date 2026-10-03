@@ -137,7 +137,7 @@ namespace PKISharp.WACS.DomainObjects
         /// Pretty format
         /// </summary>
         /// <returns></returns>
-        public string ToString(DueDateStaticService? dueDateService, IInputService? inputService)
+        public string ToString(IDueDateStaticService? dueDateService, IInputService? inputService)
         {
             var success = History.FindAll(x => x.Success == true).Count;
             var errors = History.AsEnumerable().Reverse().TakeWhile(x => x.Success == false);

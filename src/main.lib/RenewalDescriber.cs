@@ -15,10 +15,10 @@ namespace PKISharp.WACS
         ISettings settings,
         IInputService input,
         ILogService log,
-        DueDateStaticService dueDate,
+        IDueDateStaticService dueDate,
         IAutofacBuilder autofacBuilder)
     {
-        private readonly DueDateStaticService _dueDate = dueDate;
+        private readonly IDueDateStaticService _dueDate = dueDate;
 
         /// <summary>
         /// Write the command line that can be used to create 

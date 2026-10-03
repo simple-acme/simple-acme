@@ -15,7 +15,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         protected override Task DeleteFolder(string path) => Task.CompletedTask;
         protected override Task<bool> IsEmpty(string path) => Task.FromResult(true);
 
-        public override async Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
+        internal override async Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
         {
             this.context = context;
             // Pre-pre-validate, allowing the manual user to correct mistakes

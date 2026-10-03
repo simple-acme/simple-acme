@@ -189,7 +189,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         /// <param name="client"></param>
         /// <returns></returns>
-        private async Task<Account?> SetupAccount(AcmeProtocolClient client, RunLevel runLevel)
+        private async Task<AcmeAccount?> SetupAccount(AcmeProtocolClient client, RunLevel runLevel)
         {
             // Accept the terms of service, if defined by the server
             try
@@ -265,7 +265,7 @@ namespace PKISharp.WACS.Clients.Acme
             {
                 return null;
             }
-            return new Account(newAccountDetails, newAccount.Signer);
+            return new AcmeAccount(newAccountDetails, newAccount.Signer);
         }
 
         /// <summary>

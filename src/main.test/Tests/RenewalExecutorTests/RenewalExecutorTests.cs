@@ -14,7 +14,7 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalTests
         {
             renewal.LastFriendlyName = "UnitTest";
             var container = MockContainer.TestScope();
-            var dueDate = container.Resolve<DueDateStaticService>();
+            var dueDate = container.Resolve<IDueDateStaticService>();
             Assert.AreEqual(outcome, dueDate.IsDue(renewal));
         }
 

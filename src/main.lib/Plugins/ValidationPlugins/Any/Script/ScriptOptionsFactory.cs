@@ -1,5 +1,4 @@
-﻿using ACMESharp.Authorizations;
-using PKISharp.WACS.Configuration;
+﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
@@ -17,7 +16,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
     {
         private ArgumentResult<string?> ValidationMode => arguments.
             GetLowerString<MainArguments>(x => x.ValidationMode).
-            WithDefault(Dns01ChallengeValidationDetails.Dns01ChallengeType).
+            WithDefault(Constants.Dns01ChallengeType).
             DefaultAsNull();
 
         private ArgumentResult<string?> Script => arguments.
@@ -117,7 +116,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         public override async Task<ScriptOptions?> Default()
         {
             var challengeType = await ValidationMode.GetValue();
-            var isHttp = string.Equals(challengeType, Http01ChallengeValidationDetails.Http01ChallengeType, StringComparison.OrdinalIgnoreCase);
+            var isHttp = string.Equals(challengeType, Constants.Http01ChallengeType, StringComparison.OrdinalIgnoreCase);
             var ret = new ScriptOptions();
             var commonScript = await Script.GetValue();
             var createScript = await PrepareScript.GetValue();

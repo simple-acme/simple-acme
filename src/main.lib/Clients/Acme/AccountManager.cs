@@ -36,7 +36,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// Create a new default signer
         /// </summary>
         /// <returns></returns>
-        internal Account NewAccount(string keyType = "ES256")
+        internal AcmeAccount NewAccount(string keyType = "ES256")
         {
             AccountSigner? signer;
             try
@@ -55,7 +55,7 @@ namespace PKISharp.WACS.Clients.Acme
                     throw;
                 }
             }
-            return new Account(default, signer);
+            return new AcmeAccount(default, signer);
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        internal Account? LoadAccount(string? name = null)
+        internal AcmeAccount? LoadAccount(string? name = null)
         {
             var signerPath = GetPath(SignerFileName, name);
             var detailsPath = GetPath(RegistrationFileName, name);
@@ -77,7 +77,7 @@ namespace PKISharp.WACS.Clients.Acme
             {
                 return null;
             }
-            return new Account(details, signer);
+            return new AcmeAccount(details, signer);
         }
 
         /// <summary>
@@ -85,7 +85,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// </summary>
         /// <param name="account"></param>
         /// <param name="name"></param>
-        internal async Task StoreAccount(Account account, string? name = null)
+        internal async Task StoreAccount(AcmeAccount account, string? name = null)
         {
             var signerPath = GetPath(SignerFileName, name);
             var detailsPath = GetPath(RegistrationFileName, name);

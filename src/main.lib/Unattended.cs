@@ -14,7 +14,7 @@ namespace PKISharp.WACS
         IRenewalStore renewalStore,
         IInputService input,
         ILogService log,
-        DueDateStaticService dueDate,
+        IDueDateStaticService dueDate,
         IRenewalRevoker renewalRevoker,
         AccountArguments accountArguments,
         AcmeClientManager clientManager)

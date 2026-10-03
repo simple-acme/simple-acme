@@ -19,14 +19,14 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         private readonly ICacheService _cacheService;
         private readonly IPluginService _plugin;
         private readonly EmailClient _email;
-        private readonly DueDateStaticService _dueDate;
+        private readonly IDueDateStaticService _dueDate;
         private readonly ISettings _settings;
 
         public NotificationTargetEmail(
             ILogService log,
             IPluginService pluginService,
             EmailClient email,
-            DueDateStaticService dueDate,
+            IDueDateStaticService dueDate,
             ICacheService certificateService,
             ISettings settings)
         {

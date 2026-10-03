@@ -1,5 +1,4 @@
 ﻿using ACMESharp.Authorizations;
-using PKISharp.WACS.Context;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
@@ -21,8 +20,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
     internal sealed class Rest(
         IProxyService proxyService,
         ILogService log,
+        RunLevel runLevel,
+        IInputService input,
         SecretServiceManager ssm,
-        RestOptions options) : Validation<Http01ChallengeValidationDetails>
+        RestOptions options) : HttpValidationBase(log, runLevel, input)
     {
         private readonly ConcurrentBag<(string url, string challengeValue)> _urlsChallenges = [];
         private async Task<string?> GetSecurityToken() => await ssm.EvaluateSecret(options.SecurityToken);
@@ -31,14 +32,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
         public override ParallelOperations Parallelism => ParallelOperations.Prepare | ParallelOperations.Answer;
 
-        public override Task<bool> PrepareChallenge(ValidationContext context, Http01ChallengeValidationDetails challenge)
+
+        public override Task<bool> PrepareChallenge(Http01ChallengeValidationDetails typed)
         {
-            var resourceUrl = challenge.HttpResourceUrl;
+            var resourceUrl = typed.HttpResourceUrl;
             if (_useHttps)
             {
                 resourceUrl = resourceUrl.Replace("http://", "https://");
             }
-            _urlsChallenges.Add((resourceUrl, challenge.HttpResourceValue));
+            _urlsChallenges.Add((resourceUrl, typed.HttpResourceValue));
             return Task.FromResult(true);
         }
 

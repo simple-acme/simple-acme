@@ -1,5 +1,7 @@
 ﻿using PKISharp.WACS.Clients.DNS;
+using PKISharp.WACS.Context;
 using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -16,10 +18,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
         internal const string DefaultCleanupArguments = "delete {Identifier} {RecordName} {Token}";
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record) => 
-            await parent.Create(record.Context.Identifier, record.Authority.Domain, record.Value);
+            await parent.Create(record.Identifier, record.Authority.Domain, record.Value);
 
-        public override async Task DeleteRecord(DnsValidationRecord record) =>
-            await parent.Delete(record.Context.Identifier, record.Authority.Domain, record.Value);
+        internal override async Task DeleteRecord(ValidationContext context, DnsValidationRecord record) =>
+            await parent.Delete(context.Identifier, record.Authority.Domain, record.Value);
 
         internal Dictionary<string, string?> ReplaceTokens(string identifier, string recordName, bool censor, string token)
         {
