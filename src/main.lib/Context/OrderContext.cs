@@ -15,6 +15,7 @@ namespace PKISharp.WACS.Context
         public const string DefaultOrderName = "Main";
         public ILifetimeScope OrderScope { get; private set; }
         public AcmeAccount Account { get; private set; }
+        public DirectoryMeta? DirectoryMeta { get; private set; }
         public Order Order { get; private set; }
         public RunLevel RunLevel { get; private set; }
         public OrderResult OrderResult { get; private set; }
@@ -45,10 +46,11 @@ namespace PKISharp.WACS.Context
         /// </summary>
         public ICertificateInfo? NewCertificate { get; set; }
 
-        public OrderContext(ILifetimeScope orderScope, AcmeAccount account, Order order, RunLevel runLevel)
+        public OrderContext(ILifetimeScope orderScope, AcmeClient client, Order order, RunLevel runLevel)
         {
             OrderScope = orderScope;
-            Account = account;
+            DirectoryMeta = client.Directory.Meta;
+            Account = client.Account;
             Order = order;
             RunLevel = runLevel;
             OrderResult = new OrderResult(OrderCacheKey);

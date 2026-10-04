@@ -190,7 +190,7 @@ namespace PKISharp.WACS
 
             // Build context
             var previousOrders = dueDateStatic.CurrentOrders(renewal);
-            var orderContexts = orders.Select(order => new OrderContext(scopeBuilder.Order(execute, order), client.Account, order, runLevel)).ToList();
+            var orderContexts = orders.Select(order => new OrderContext(scopeBuilder.Order(execute, order), client, order, runLevel)).ToList();
             await orderProcessor.PrepareOrders(orderContexts, previousOrders);
 
             // Check individual orders

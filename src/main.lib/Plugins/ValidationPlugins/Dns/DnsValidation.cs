@@ -3,10 +3,13 @@ using PKISharp.WACS.Clients.DNS;
 using PKISharp.WACS.Context;
 using PKISharp.WACS.Services;
 using System;
+using System.Buffers.Text;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins
@@ -33,8 +36,20 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             challenge.DnsRecordName = $"{DnsPersist01ChallengeValidationDetails.DnsRecordNamePrefix}.{context.Identifier}";
             challenge.DnsRecordType = DnsPersist01ChallengeValidationDetails.DnsRecordTypeDefault;
-            var hash = "1234";
-            challenge.DnsRecordValue = $"{challenge.IssuerDomainNames.First()};accounturi={context.Account.Details.Kid};hash={hash}";
+
+            // Specification:
+            // https://datatracker.ietf.org/doc/html/draft-ietf-acme-dns-persist-02#section-10.2
+            
+            var hashBytes = new List<byte>();
+            hashBytes.Add((byte)context.Identifier.Length);
+            hashBytes.AddRange(Encoding.ASCII.GetBytes(context.Identifier));
+            hashBytes.AddRange(context.Account.Signer.JwsTool().GetThumbprint());
+            hashBytes.AddRange(Encoding.ASCII.GetBytes(context.Account.Details.Kid));
+
+            var sha256hash = SHA256.HashData(hashBytes.ToArray());
+            var hash = Base64Url.EncodeToString(sha256hash);
+            var prefix = context.DirectoryMeta?.AccountHashPrefix ?? throw new InvalidOperationException("Missing account hash prefix.");
+            challenge.DnsRecordValue = $"{challenge.IssuerDomainNames.First()}; accounturi={prefix}/sha256/{hash}";
             return challenge;
         }
 
