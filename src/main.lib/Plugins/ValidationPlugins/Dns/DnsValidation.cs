@@ -7,7 +7,6 @@ using System.Buffers.Text;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +16,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
     /// <summary>
     /// Base implementation for DNS-01 validation plugins
     /// </summary>reee
-    public abstract class DnsValidation<TPlugin>(
+    public abstract partial class DnsValidation<TPlugin>(
         LookupClientProvider dnsClient,
         ILogService log,
         ISettings settings) : Validation<IDnsChallengeValidationDetails>
@@ -39,7 +38,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
 
             // Specification:
             // https://datatracker.ietf.org/doc/html/draft-ietf-acme-dns-persist-02#section-10.2
-            
+
             var hashBytes = new List<byte>();
             hashBytes.Add((byte)context.Identifier.Length);
             hashBytes.AddRange(Encoding.ASCII.GetBytes(context.Identifier));
@@ -82,7 +81,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 {
                     _log.Debug("[{identifier}] Failed to create record under {authority}", context.Label, authority.Domain);
                     authority = authority.From ?? throw new Exception($"[{context.Label}] Unable to prepare for challenge answer");
-                } 
+                }
                 else
                 {
                     _log.Information("[{identifier}] Record {value} successfully created", context.Label, record.Value);
@@ -174,7 +173,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             if (success >= 1)
             {
                 _log.Information("[{identifier}] Preliminary validation failed on {n}/{m} nameservers", record.Label, success, count);
-            } 
+            }
             else
             {
                 _log.Information("[{identifier}] Preliminary validation failed on all nameservers", record.Label);
@@ -277,13 +276,13 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <param name="candidates"></param>
         /// <param name="recordName"></param>
         /// <returns></returns>
-        public T? FindBestMatch<T>(Dictionary<string, T> candidates, string recordName) where T: class
+        public T? FindBestMatch<T>(Dictionary<string, T> candidates, string recordName) where T : class
         {
             var result = candidates.Keys.Select(key =>
             {
                 var fit = 0;
                 var name = key.TrimEnd('.');
-                if (string.Equals(recordName, name, StringComparison.InvariantCultureIgnoreCase) || 
+                if (string.Equals(recordName, name, StringComparison.InvariantCultureIgnoreCase) ||
                     recordName.EndsWith("." + name, StringComparison.InvariantCultureIgnoreCase))
                 {
                     // If there is a zone for a.b.c.com (4) and one for c.com (2)
@@ -296,8 +295,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 {
                     _log.Verbose("Zone {name} not matched", key);
                 }
-                return new { 
-                    key, 
+                return new {
+                    key,
                     value = candidates[key],
                     fit
                 };
@@ -310,7 +309,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 _log.Debug("Picked {name} as best match", result.key);
                 return result.value;
-            } 
+            }
             else
             {
                 _log.Error("No match found");
@@ -340,65 +339,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             }
             var ret = recordName[..index].TrimEnd('.');
             return string.IsNullOrEmpty(ret) ? "@" : ret;
-        }
-
-        /// <summary>
-        /// Keep track of which records are created, so that they can be deleted later
-        /// </summary>
-        public class DnsValidationRecord
-        {
-            internal DnsValidationRecord(ValidationContext context, DnsLookupResult authority, string value)
-            {
-                Identifier = context.Identifier;
-                Label = context.Label;
-                Authority = authority;
-                Value = value;
-            }
-
-            public string Label { get; }
-            public string Identifier { get; }
-            public DnsLookupResult Authority { get; }
-            public string Value { get; }
-        }
-    }
-
-    public abstract class DnsValidation<TPlugin, TClient>(LookupClientProvider dnsClient, ILogService log, ISettings settings, IProxyService proxy) : 
-        DnsValidation<TPlugin>(dnsClient, log, settings), IDisposable 
-        where TClient: class
-    {
-        protected IProxyService _proxy = proxy;
-
-        private HttpClient? _httpClient = default;
-        protected async Task<HttpClient> GetHttpClient()
-        {
-            if (_httpClient == default)
-            {
-                _httpClient = await _proxy.GetHttpClient();
-            }
-            return _httpClient;
-        }
-
-        private TClient? _cachedClient = default;
-        protected async Task<TClient> GetClient()
-        {
-            if (_cachedClient == default) {
-                _log.Debug("Client of type {x} created", typeof(TClient).Name);
-                var httpClient = await GetHttpClient();
-                _cachedClient = await CreateClient(httpClient);
-            }
-            return _cachedClient;
-        }
-        protected internal abstract Task<TClient> CreateClient(HttpClient httpClient);
-
-        public void Dispose()
-        {
-            if (_cachedClient is IDisposable disposable)
-            {
-                _log.Debug("Client of type {x} disposed", typeof(TClient).Name);
-                disposable?.Dispose();
-            }
-            _httpClient?.Dispose();
-            GC.SuppressFinalize(this);
         }
     }
 }
