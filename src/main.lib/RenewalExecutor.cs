@@ -186,11 +186,10 @@ namespace PKISharp.WACS
 
             // Get the certificates from cache or server
             var orderProcessor = execute.Resolve<OrderProcessor>();
-            var client = execute.Resolve<AcmeClient>();
 
             // Build context
             var previousOrders = dueDateStatic.CurrentOrders(renewal);
-            var orderContexts = orders.Select(order => new OrderContext(scopeBuilder.Order(execute, order), client, order, runLevel)).ToList();
+            var orderContexts = orders.Select(order => new OrderContext(scopeBuilder.Order(execute, order), order, runLevel)).ToList();
             await orderProcessor.PrepareOrders(orderContexts, previousOrders);
 
             // Check individual orders

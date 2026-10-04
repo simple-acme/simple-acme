@@ -133,9 +133,9 @@ namespace PKISharp.WACS.Clients.Acme
             {
                 throw new NotSupportedException("Missing challenge type");
             }
-            return AuthorizationDecoder.DecodeChallengeValidation(auth, challenge.Type, _client.Signer);
+            return AuthorizationDecoder.DecodeChallengeValidation(auth, challenge.Type, _client.Signer, _client.Account, _client.Directory.Meta);
         }
-
+          
         /// <summary>
         /// Answer the challenge
         /// </summary>

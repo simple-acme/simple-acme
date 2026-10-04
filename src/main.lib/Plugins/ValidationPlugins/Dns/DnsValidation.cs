@@ -26,33 +26,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         protected readonly ISettings _settings = settings;
         private readonly ConcurrentBag<DnsValidationRecord> _recordsCreated = [];
 
-        /// <summary>
-        /// Calculate the record name for a PERSIST-01 challenge
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="challenge"></param>
-        private static DnsPersist01ChallengeValidationDetails PreparePersistRecord(ValidationContext context, DnsPersist01ChallengeValidationDetails challenge)
-        {
-            challenge.DnsRecordName = $"{DnsPersist01ChallengeValidationDetails.DnsRecordNamePrefix}.{context.Identifier}";
-            challenge.DnsRecordType = DnsPersist01ChallengeValidationDetails.DnsRecordTypeDefault;
-
-            // Specification:
-            // https://datatracker.ietf.org/doc/html/draft-ietf-acme-dns-persist-02#section-10.2
-
-            var hashBytes = new List<byte>();
-            hashBytes.Add((byte)context.Identifier.Length);
-            hashBytes.AddRange(Encoding.ASCII.GetBytes(context.Identifier));
-            hashBytes.AddRange(context.Account.Signer.JwsTool().GetThumbprint());
-            hashBytes.AddRange(Encoding.ASCII.GetBytes(context.Account.Details.Kid));
-
-            var sha256hash = SHA256.HashData(hashBytes.ToArray());
-            var hash = Base64Url.EncodeToString(sha256hash);
-            var prefix = context.DirectoryMeta?.AccountHashPrefix ?? throw new InvalidOperationException("Missing account hash prefix.");
-            challenge.DnsRecordValue = $"{challenge.IssuerDomainNames.First()}; accounturi={prefix}/sha256/{hash}";
-            return challenge;
-        }
-
-        /// <summary>
         /// Prepare to add a new DNS record
         /// </summary>
         /// <param name="context"></param>
@@ -60,12 +33,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         /// <returns></returns>
         internal override async Task<bool> PrepareChallenge(ValidationContext context, IDnsChallengeValidationDetails challenge)
         {
-            // Support the DNS-PERSIST-01 challenge type
-            if (challenge is DnsPersist01ChallengeValidationDetails persist)
-            {
-                challenge = PreparePersistRecord(context, persist);
-            }
-
             // Check for substitute domains
             var authority = await _dnsClient.GetAuthority(
                 challenge.DnsRecordName,
