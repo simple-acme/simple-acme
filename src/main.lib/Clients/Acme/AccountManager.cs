@@ -226,5 +226,21 @@ namespace PKISharp.WACS.Clients.Acme
                 log.Error("Cannot re-save account (created on a different machine?)");
             }
         }
+
+        internal async Task Delete(string? name) 
+        {
+            var signerPath = GetPath(SignerFileName, name);
+            var detailsPath = GetPath(RegistrationFileName, name);
+            if (File.Exists(signerPath))
+            {
+                log.Debug("Deleting signer at {SignerPath}", signerPath);
+                File.Delete(signerPath);
+            }
+            if (File.Exists(detailsPath))
+            {
+                log.Debug("Deleting details at {DetailsPath}", detailsPath);
+                File.Delete(detailsPath);
+            }
+        }
     }
 }

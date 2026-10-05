@@ -133,7 +133,7 @@ namespace PKISharp.WACS.Clients.Acme
             {
                 throw new NotSupportedException("Missing challenge type");
             }
-            return AuthorizationDecoder.DecodeChallengeValidation(auth, challenge.Type, _client.Signer);
+            return AuthorizationDecoder.DecodeChallengeValidation(auth, challenge.Type, _client.Signer, null, null);
         }
 
         /// <summary>
@@ -233,6 +233,14 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         internal async Task DeactivateAuthorization(string url) => 
             await _client.Retry(() => _client.DeactivateAuthorizationAsync(url), _log);
+
+        /// <summary>
+        /// Deactivate an account
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        internal async Task<AccountDetails> DeactivateAccount() =>
+            await _client.Retry(() => _client.DeactivateAccountAsync(), _log);
 
         /// <summary>
         /// https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.1.3
