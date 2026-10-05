@@ -362,5 +362,20 @@ namespace PKISharp.WACS.Clients.Acme
                 await accountManager.StoreAccount(client.Account, name);
             }
         }
+
+        /// <summary>
+        /// Deactivate the current account, which will prevent it from being used for future requests.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        internal async Task Deactivate(RunLevel runLevel, string? name = null)
+        {
+            var client = await GetClient(runLevel, name);
+            var newDetails = await client.DeactivateAccount();
+            if (newDetails.Payload != null)
+            {
+                await accountManager.Delete(name);
+            }
+        }
     }
 }

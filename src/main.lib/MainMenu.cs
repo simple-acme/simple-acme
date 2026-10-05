@@ -228,7 +228,7 @@ namespace PKISharp.WACS.Host
             input.Show("Account ID", accountDetails.Payload.Id ?? "-");
             input.Show("Account KID", accountDetails.Kid ?? "-");
             input.Show("Created", accountDetails.Payload.CreatedAt);
-            input.Show("Initial IP", accountDetails.Payload.InitialIp);
+            input.Show("Initial IP", accountDetails.Payload.InitialIp ?? "-");
             input.Show("Status", accountDetails.Payload.Status);
             if (accountDetails.Payload.Contact != null &&
                 accountDetails.Payload.Contact.Length > 0)
@@ -239,17 +239,37 @@ namespace PKISharp.WACS.Host
             {
                 input.Show("Contact(s)", "(none)");
             }
-            if (await input.PromptYesNo("Modify contacts?", false))
+            var options = new List<Choice<int>>
             {
-                try
+                Choice.Create(1, $"Update contact(s)", "V"),
+                Choice.Create(2, $"Deactivate and delete", "D"),
+                Choice.Create(3, $"Cancel", "C"),
+            };
+            try
+            {
+                var chosen = await input.ChooseFromMenu("Please choose from the menu", options);
+                switch (chosen)
                 {
-                    await clientManager.ChangeContacts(runLevel, account);
-                    await UpdateAccount(runLevel);
-                } 
-                catch (Exception ex)
-                {
-                    exceptionHandler.HandleException(ex);
+                    case 1:
+                        await clientManager.ChangeContacts(runLevel, account);
+                        await UpdateAccount(runLevel);
+                        break;
+                    case 2:
+                        var confirm = await input.PromptYesNo($"Are you sure you want to deactivate and delete this account?", false);
+                        if (confirm)
+                        {
+                            await clientManager.Deactivate(runLevel, account);
+                            log.Information("Account deactivated and deleted");
+                        }
+                        break;
+                    case 3:
+                    default:
+                        break;
                 }
+            }
+            catch (Exception ex)
+            {
+                exceptionHandler.HandleException(ex);
             }
         }
 
