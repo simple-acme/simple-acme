@@ -70,7 +70,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         private async Task<bool> CheckNetwork()
         {
-            using var httpClient = await proxy.GetHttpClient();
+            using var httpClient = await proxy.GetHttpClient(settings.Acme.ValidateServerCertificate);
             httpClient.BaseAddress = settings.BaseUri;
             httpClient.Timeout = new TimeSpan(0, 0, 10);
             foreach (var url in acmeClientManager.GetDirectorUrls())
