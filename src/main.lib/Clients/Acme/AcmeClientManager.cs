@@ -47,7 +47,7 @@ namespace PKISharp.WACS.Clients.Acme
         /// <returns></returns>
         private async Task<AcmeProtocolClient> CreateAnonymousClient()
         {
-            var httpClient = await proxy.GetHttpClient();
+            var httpClient = await proxy.GetHttpClient(settings.Acme.ValidateServerCertificate);
             httpClient.BaseAddress = settings.BaseUri;
             log.Verbose("Constructing ACME protocol client...");
             var client = new AcmeProtocolClient(httpClient, acmeLogger, usePostAsGet: settings.Acme.PostAsGet);
