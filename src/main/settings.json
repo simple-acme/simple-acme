@@ -98,6 +98,7 @@
     "DnsPropagationDelay": 30,
     "AllowDnsSubstitution": true,
     "DnsServers": [ "[System]" ],
+    "ValidationPort": null,
     "Ftp": {
       "UseGnuTls": false
     }
