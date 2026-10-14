@@ -2,7 +2,7 @@ version: 2.4.1.{build}
 branches:
   only:
     - main
-    - invariant 
+    - urlencode 
 image: Visual Studio 2022
 platform: Any CPU
 shallow_clone: true
