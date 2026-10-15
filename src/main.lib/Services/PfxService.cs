@@ -68,6 +68,9 @@ namespace PKISharp.WACS.Services
                 outputBuilder.SetKeyAlgorithm(
                     NistObjectIdentifiers.IdAes256Cbc,
                     PkcsObjectIdentifiers.IdHmacWithSha256);
+                outputBuilder.SetCertAlgorithm(
+                    NistObjectIdentifiers.IdAes256Cbc,
+                    PkcsObjectIdentifiers.IdHmacWithSha256);
             }
             return new PfxWrapper(outputBuilder.Build(), protectionMode);
         }
