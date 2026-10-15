@@ -61,6 +61,7 @@
 
 	<ItemGroup>
   	<PackageReference Include="MimeKit" Version="4.18.1" />
+  	<PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
 		<ProjectReference Include="..\ACMESharpCore\src\ACMESharp\ACMESharp.csproj" />
 		<ProjectReference Include="..\fluent-command-line-parser\FluentCommandLineParser\FluentCommandLineParser.csproj" />
 	</ItemGroup>
