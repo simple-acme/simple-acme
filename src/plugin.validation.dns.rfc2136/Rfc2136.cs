@@ -67,7 +67,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     _log.Verbose("Attempt to create {domain} in zone {zone}", domain, currentZone);
                     await SendUpdate(msg);
 
-                    // Cache succesful zone result after succesful
+                    // Cache successful zone result after successful
                     // update so that we don't have to retry again
                     // for subsequent adds and deletes.
                     _zoneMap.TryAdd(domain, currentZone);

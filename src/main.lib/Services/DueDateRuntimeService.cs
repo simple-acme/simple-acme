@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Services
                 logService.Verbose("{name}: previous expires {thumbprint}", order.OrderFriendlyName, input.FormatDate(previousCert.NotAfter));
 
                 // Check if the certificate was actually installed
-                // succesfully before we decided to use it as a 
+                // successfully before we decided to use it as a 
                 // reference point.
                 var history = order.Renewal.History.
                     Where(x => x.OrderResults?.Any(o =>
@@ -39,7 +39,7 @@ namespace PKISharp.WACS.Services
                 {
                     // Latest date determined by the certificate validity
                     // because we've established (through the history) that 
-                    // this certificate was succesfully stored and installed
+                    // this certificate was successfully stored and installed
                     // at least once.
                     logService.Verbose("{name}: no historic success found", order.OrderFriendlyName);
                     previousCert = null;
