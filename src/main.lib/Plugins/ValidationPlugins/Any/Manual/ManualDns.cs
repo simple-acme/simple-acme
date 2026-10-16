@@ -25,7 +25,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
                 return false;
             }
 
-            if (!_settings.Validation.PreValidateDns)
+            if (!_settings.Validation.Dns.PreValidation.Enabled)
             {
                 return true;
             }

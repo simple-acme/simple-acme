@@ -99,7 +99,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Any
             {
                 ret.DeleteScriptArguments = await CleanupScriptArguments(http).Interactive(input).GetValue();
             }
-            if (!settings.Validation.DisableMultiThreading)
+            if (settings.Validation.Parallelism.Enabled)
             {
                 ret.Parallelism = await input.ChooseFromMenu(
                     "Enable parallel execution?",

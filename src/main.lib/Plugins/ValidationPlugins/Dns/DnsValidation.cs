@@ -35,7 +35,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             // Check for substitute domains
             var authority = await _dnsClient.GetAuthority(
                 challenge.DnsRecordName,
-                followCnames: _settings.Validation.AllowDnsSubstitution);
+                followCnames: _settings.Validation.Dns.Substitution.Enabled);
 
             var success = false;
             while (!success)
@@ -69,15 +69,15 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
 
             // Verify that the record was created successfully and wait for possible
             // propagation/caching/TTL issues to resolve themselves naturally
-            if (_settings.Validation.PreValidateDns)
+            if (_settings.Validation.Dns.PreValidation.Enabled)
             {
                 var validationTasks = _recordsCreated.Select(ValidateRecord);
                 await Task.WhenAll(validationTasks);
             }
-            if (_settings.Validation.DnsPropagationDelay > 0)
+            if (_settings.Validation.Dns.PreValidation.PropagationDelay > 0)
             {
-                _log.Information("Waiting {n} seconds for global DNS propagation...", _settings.Validation.DnsPropagationDelay);
-                await Task.Delay(_settings.Validation.DnsPropagationDelay * 1000);
+                _log.Information("Waiting {n} seconds for global DNS propagation...", _settings.Validation.Dns.PreValidation.PropagationDelay);
+                await Task.Delay(_settings.Validation.Dns.PreValidation.PropagationDelay * 1000);
             }
         }
 
@@ -103,7 +103,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
             {
                 _log.Debug("[{identifier}] Looking for TXT value {DnsRecordValue}...", record.Context.Label, record.Value);
                 var testClients = record.Authority.Nameservers;
-                if (_settings.Validation.PreValidateDnsLocal)
+                if (_settings.Validation.Dns.PreValidation.CheckLocal)
                 {
                     testClients = testClients.Append(_dnsClient.GetSystemClient());
                 }
@@ -185,8 +185,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         private async Task ValidateRecord(DnsValidationRecord record)
         {
             var retry = 0;
-            var maxRetries = _settings.Validation.PreValidateDnsRetryCount;
-            var retrySeconds = _settings.Validation.PreValidateDnsRetryInterval;
+            var maxRetries = _settings.Validation.Dns.PreValidation.RetryCount;
+            var retrySeconds = _settings.Validation.Dns.PreValidation.RetryInterval;
             while (true)
             {
                 if (await PreValidate(record))
