@@ -88,18 +88,38 @@
   "Validation": {
     "DefaultValidation": null,
     "DefaultValidationMode": null,
-    "DisableMultiThreading": true,
-    "ParallelBatchSize": 20,
-    "CleanupFolders": true,
-    "PreValidateDns": true,
-    "PreValidateDnsRetryCount": 10,
-    "PreValidateDnsRetryInterval": 30,
-    "PreValidateDnsLocal": false,
-    "DnsPropagationDelay": 30,
-    "AllowDnsSubstitution": true,
-    "DnsServers": [ "[System]" ],
-    "Ftp": {
-      "UseGnuTls": false
+    "Parallelism": {
+      "Enabled": true,
+      "BatchSize": 20
+    },
+    "Dns": {
+      "Servers": [ "[System]" ],
+      "PreValidation": {
+        "Enabled": true,
+        "RetryCount": 10,
+        "RetryInterval": 30,
+        "PropagationDelay": 0,
+        "CheckLocal": false,
+        "CheckAuthoritative": true
+      },
+      "Substitution": {
+        "Enabled": true,
+        "CheckAuthoritative": true
+      }
+    },
+    "Http": {
+      "CleanupFolders": true,
+      "Ftp": {
+        "UseGnuTls": false
+      },
+      "SelfHosting": {
+        "Port": 80
+      }
+    },
+    "Tls": {
+      "SelfHosting": {
+        "Port": 443
+      }
     }
   },
   "Order": {

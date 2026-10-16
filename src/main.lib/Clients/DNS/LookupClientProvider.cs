@@ -41,7 +41,7 @@ namespace PKISharp.WACS.Clients.DNS
         private List<IPAddress>? ParseDefaultClients()
         {
             var ret = new List<IPAddress>();
-            var items = _settings.Validation.DnsServers;
+            var items = _settings.Validation.Dns.Servers;
             foreach (var item in items)
             {
                 if (IPAddress.TryParse(item, out var ip))

@@ -38,7 +38,7 @@ namespace PKISharp.WACS.Clients
                 {
                     ValidateAnyCertificate = true
                 };
-                if (settings.Validation?.Ftp?.UseGnuTls == true)
+                if (settings.Validation.Http.Ftp.UseGnuTls)
                 {
 #if PLUGGABLE
                     options.CustomStream = typeof(GnuTlsStream);
