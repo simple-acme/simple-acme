@@ -74,10 +74,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
                 var validationTasks = _recordsCreated.Select(ValidateRecord);
                 await Task.WhenAll(validationTasks);
             }
-            if (_settings.Validation.Dns.PreValidation.PropagationDelay > 0)
+            if (_settings.Validation.Dns.PropagationDelay > 0)
             {
-                _log.Information("Waiting {n} seconds for global DNS propagation...", _settings.Validation.Dns.PreValidation.PropagationDelay);
-                await Task.Delay(_settings.Validation.Dns.PreValidation.PropagationDelay * 1000);
+                _log.Information("Waiting {n} seconds for global DNS propagation...", _settings.Validation.Dns.PropagationDelay);
+                await Task.Delay(_settings.Validation.Dns.PropagationDelay * 1000);
             }
         }
 

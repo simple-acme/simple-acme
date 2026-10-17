@@ -94,11 +94,11 @@
     },
     "Dns": {
       "Servers": [ "[System]" ],
+      "PropagationDelay": 0,
       "PreValidation": {
         "Enabled": true,
         "RetryCount": 10,
         "RetryInterval": 30,
-        "PropagationDelay": 0,
         "CheckLocal": false,
         "CheckAuthoritative": true
       },

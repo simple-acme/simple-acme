@@ -32,11 +32,6 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
         /// Amount of time in seconds to wait between each retry.
         /// </summary>
         int RetryInterval { get; }
-        
-        /// <summary>
-        /// Amount of time in seconds to wait for DNS propagation to complete *after* (optional) PreValidation step has been run.
-        /// </summary>  
-        int PropagationDelay { get; }
     }
 
     internal class InheritPreValidationSettings(params IEnumerable<PreValidationSettings?> chain) : InheritSettings<PreValidationSettings>(chain), IPreValidationSettings
@@ -46,7 +41,6 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
         public bool CheckAuthoritative => Get(x => x.CheckAuthoritative) ?? true;
         public int RetryCount => Get(x => x.RetryCount) ?? 5;
         public int RetryInterval => Get(x => x.RetryInterval) ?? 30;
-        public int PropagationDelay => Get(x => x.PropagationDelay) ?? 0;
     }
 
     public class PreValidationSettings
@@ -75,10 +69,5 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
             Default = "true",
             Description = "Check the authoritative DNS server(s).")]
         public bool? CheckAuthoritative { get; set; }
-
-        [SettingsValue(
-            Default = "0",
-            Description = "Wait an additional number of seconds after the pre-validation completes. This is required for certain providers to synchronise their global network of servers, even after the geographically closest ones have already started reflecting the desired records.")]
-        public int? PropagationDelay { get; set; }
     }
 }

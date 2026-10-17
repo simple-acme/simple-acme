@@ -189,7 +189,7 @@ namespace PKISharp.WACS.Configuration.Settings
             }
             if (newSettings.Validation?.DnsPropagationDelay != null)
             {
-                newSettings.Validation.Dns.PreValidation.PropagationDelay ??= newSettings.Validation.DnsPropagationDelay;
+                newSettings.Validation.Dns.PropagationDelay ??= newSettings.Validation.DnsPropagationDelay;
             }
             if (newSettings.Validation?.DnsServers != null)
             {
