@@ -46,7 +46,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public IHttpSettings Http => new InheritHttpSettings(Chain.Select(c => c?.Http));
         public IDnsSettings Dns => new InheritDnsSettings(Chain.Select(c => c?.Dns));
         public ITlsSettings Tls => new InheritTlsSettings(Chain.Select(c => c?.Tls));
-        public IMultiThreadingSettings Parallelism => new InheritMultiThreadingSettings(Chain.Select(c => c?.MultiThreading));
+        public IMultiThreadingSettings Parallelism => new InheritMultiThreadingSettings(Chain.Select(c => c?.Parallelism));
     }
 
     public class ValidationSettings
@@ -63,7 +63,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public DnsSettings? Dns { get; set; }
         public HttpSettings? Http { get; set; }
         public TlsSettings? Tls { get; set; }
-        public MultiThreadingSettings? MultiThreading { get; set; }
+        public MultiThreadingSettings? Parallelism { get; set; }
 
         #region Backwards compatibility
 

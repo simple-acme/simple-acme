@@ -57,7 +57,16 @@ namespace PKISharp.WACS.Configuration.Settings
         {
             using var fs = useFile.OpenRead();
             var newSettings = JsonSerializer.Deserialize(fs, SettingsJson.Insensitive.Settings) ?? throw new Exception($"Unable to deserialize {useFile.FullName}");
+            return Modernize(newSettings);
+        }
 
+        /// <summary>
+        /// Modernize older-style settings formats to the most current one
+        /// </summary>
+        /// <param name="newSettings"></param>
+        /// <returns></returns>
+        public static Settings Modernize(Settings newSettings)
+        {
             // Migrate old-style settings to new-style settings
             if (newSettings.Target?.DefaultTarget != null)
             {
@@ -156,7 +165,7 @@ namespace PKISharp.WACS.Configuration.Settings
 
 
             newSettings.Validation ??= new ValidationSettings();
-            newSettings.Validation.MultiThreading = new MultiThreadingSettings();
+            newSettings.Validation.Parallelism ??= new MultiThreadingSettings();
             newSettings.Validation.Dns ??= new DnsSettings();
             newSettings.Validation.Dns.Substitution ??= new SubstitutionSettings();
             newSettings.Validation.Dns.PreValidation ??= new PreValidationSettings();
@@ -176,7 +185,7 @@ namespace PKISharp.WACS.Configuration.Settings
             }
             if (newSettings.Validation?.DisableMultiThreading != null)
             {
-                newSettings.Validation.MultiThreading.Enabled ??= !newSettings.Validation.DisableMultiThreading;
+                newSettings.Validation.Parallelism.Enabled ??= !newSettings.Validation.DisableMultiThreading;
             }
             if (newSettings.Validation?.DnsPropagationDelay != null)
             {
@@ -186,13 +195,13 @@ namespace PKISharp.WACS.Configuration.Settings
             {
                 newSettings.Validation.Dns.Servers ??= newSettings.Validation.DnsServers;
             }
-            if (newSettings.Validation?.Ftp != null)
+            if (newSettings.Validation?.Ftp?.UseGnuTls != null)
             {
-                newSettings.Validation.Http.Ftp ??= newSettings.Validation.Ftp;
+                newSettings.Validation.Http.Ftp.UseGnuTls ??= newSettings.Validation.Ftp.UseGnuTls;
             }
             if (newSettings.Validation?.ParallelBatchSize != null)
             {
-                newSettings.Validation.MultiThreading.BatchSize ??= newSettings.Validation.ParallelBatchSize;
+                newSettings.Validation.Parallelism.BatchSize ??= newSettings.Validation.ParallelBatchSize;
             }
             if (newSettings.Validation?.PreValidateDns != null)
             {
@@ -213,5 +222,4 @@ namespace PKISharp.WACS.Configuration.Settings
             return newSettings;
         }
     }
-
 }
