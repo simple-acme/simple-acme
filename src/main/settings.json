@@ -113,12 +113,12 @@
         "UseGnuTls": false
       },
       "SelfHosting": {
-        "Port": 80
+        "Port": null
       }
     },
     "Tls": {
       "SelfHosting": {
-        "Port": 443
+        "Port": 900
       }
     }
   },

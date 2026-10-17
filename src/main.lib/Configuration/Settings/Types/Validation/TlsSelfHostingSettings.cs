@@ -7,15 +7,15 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
     /// </summary>
     public interface ITlsSelfHostingSettings
     {
-        int Port { get; }
+        int? Port { get; }
     }
 
     internal class InheritTlsSelfHostingSettings(params IEnumerable<TlsSelfHostingSettings?> chain) : InheritSettings<TlsSelfHostingSettings>(chain), ITlsSelfHostingSettings
     {
-        public int Port => Get(x => x.Port) ?? 443;
+        public int? Port => Get(x => x.Port);
     }
 
-    public class TlsSelfHostingSettings()
+    public class TlsSelfHostingSettings
     {
         [SettingsValue(
             Default = "443",
