@@ -14,7 +14,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         ("c7d5e050-9363-4ba1-b3a8-931b31c618b7", 
         "SelfHosting", $"Let {VersionService.DefaultClientName} answer HTTP validation request", 
         Name = "Self-hosting")]
-    internal class SelfHosting(ILogService log, RunLevel runLevel, IInputService input, ISelfHosterFactory factory, SelfHostingOptions options) : 
+    internal class SelfHosting(ILogService log, RunLevel runLevel, IInputService input, ISettings settings, ISelfHosterFactory factory, SelfHostingOptions options) : 
         HttpValidationBase(log, runLevel, input)
     {
         /// <summary>
@@ -26,7 +26,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             get
             {
-                _listener ??= factory.Create(options);
+                _listener ??= factory.Create(options, settings);
                 return _listener;
             }
         }
