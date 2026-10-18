@@ -573,7 +573,7 @@ namespace PKISharp.WACS
             {
                 log.Verbose("Starting commit stage");
                 await validationPlugin.Commit();
-                log.Verbose("Commit was succesful");
+                log.Verbose("Commit was successful");
                 return true;
             }
             catch (Exception ex)
@@ -626,7 +626,7 @@ namespace PKISharp.WACS
         }
 
         /// <summary>
-        /// Clean up after (succesful or unsuccesful) validation attempt
+        /// Clean up after (successful or unsuccessful) validation attempt
         /// e.g. delete temporary files and DNS records, close any 
         /// listeners.
         /// </summary>

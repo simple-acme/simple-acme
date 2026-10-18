@@ -163,7 +163,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                         return false;
                     }
                 }
-                _log.Information("Verification of acme-dns configuration succesful.");
+                _log.Information("Verification of acme-dns configuration successful.");
                 return true;
             } 
             catch (Exception ex)

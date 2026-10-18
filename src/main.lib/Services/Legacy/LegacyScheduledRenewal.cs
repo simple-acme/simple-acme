@@ -45,7 +45,7 @@ namespace PKISharp.WACS.Services.Legacy
         public List<string>? InstallationPluginNames { get; set; }
 
         /// <summary>
-        /// Script to run on succesful renewal
+        /// Script to run on successful renewal
         /// </summary>
         public string? Script { get; set; }
 

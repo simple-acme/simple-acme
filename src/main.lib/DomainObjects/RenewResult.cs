@@ -46,7 +46,7 @@ namespace PKISharp.WACS.DomainObjects
         public bool Abort { get; set; }
 
         /// <summary>
-        /// Was the renewal succesfully completed
+        /// Was the renewal successfully completed
         /// </summary>
         public bool? Success { get; set; }
 
