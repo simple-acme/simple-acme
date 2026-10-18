@@ -17,11 +17,6 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
         bool CheckLocal { get; }
 
         /// <summary>
-        /// Add the authoritative DNS servers to the list of servers to query during prevalidation
-        /// </summary>
-        bool CheckAuthoritative { get; }
-
-        /// <summary>
         /// Maximum numbers of times to retry DNS pre-validation, while
         /// waiting for the name servers to start providing the expected
         /// answer.
@@ -38,7 +33,6 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
     {
         public bool Enabled => Get(x => x.Enabled) ?? true;
         public bool CheckLocal => Get(x => x.CheckLocal) ?? false;
-        public bool CheckAuthoritative => Get(x => x.CheckAuthoritative) ?? true;
         public int RetryCount => Get(x => x.RetryCount) ?? 5;
         public int RetryInterval => Get(x => x.RetryInterval) ?? 30;
     }
@@ -64,10 +58,5 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
             Default = "false",
             Description = "Check the local DNS server(s).")]
         public bool? CheckLocal { get; set; }
-
-        [SettingsValue(
-            Default = "true",
-            Description = "Check the authoritative DNS server(s).")]
-        public bool? CheckAuthoritative { get; set; }
     }
 }

@@ -14,18 +14,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
         /// to a party that supports automation.
         /// </summary>
         bool Enabled { get; }
-
-        /// <summary>
-        /// Add the authoritative DNS servers to the list of servers to query during substitution 
-        /// checks.
-        /// </summary>
-        bool CheckAuthoritative { get; }
     }
 
     internal class InheritSubstitutionSettings(params IEnumerable<SubstitutionSettings?> chain) : InheritSettings<SubstitutionSettings>(chain), ISubstitutionSettings
     {
         public bool Enabled => Get(x => x.Enabled) ?? true;
-        public bool CheckAuthoritative => Get(x => x.CheckAuthoritative) ?? false;
     }
 
     public class SubstitutionSettings
@@ -46,10 +39,5 @@ namespace PKISharp.WACS.Configuration.Settings.Types.Validation
             "is lacking the relevant records, you can let simple-acme use a public DNS server like <code>1.1.1.1</code> " +
             "instead of your system server using the <code>DnsServers</code> setting.")]
         public bool? Enabled { get; set; }
-
-        [SettingsValue(
-            Default = "true",
-            Description = "Try to contact authoritative DNS server(s) to find CNAME records, bypassing any local cache.")]
-        public bool? CheckAuthoritative { get; set; }
     }
 }

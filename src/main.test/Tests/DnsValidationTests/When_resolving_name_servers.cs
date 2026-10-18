@@ -1,5 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Clients.DNS;
+using PKISharp.WACS.Configuration.Settings;
+using PKISharp.WACS.Configuration.Settings.Types;
+using PKISharp.WACS.Configuration.Settings.Types.Validation;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System.Linq;
@@ -15,7 +18,17 @@ namespace PKISharp.WACS.UnitTests.Tests.DnsValidationTests
         public When_resolving_name_servers()
         {
             var log = new LogService(true);
-            var settings = new MockSettingsService();
+            var setting = new Settings
+            {
+                Validation = new ValidationSettings
+                {
+                    Dns = new DnsSettings()
+                    {
+                        TryAuthoritativeServers = false
+                    }
+                }
+            };
+            var settings = new MockSettingsService(setting);
             var proxy = new Mock.Services.ProxyService();
             var domainParser = new DomainParseService(log, proxy, settings);
             _dnsClient = new LookupClientProvider(domainParser, log, settings);
