@@ -99,12 +99,10 @@
         "Enabled": true,
         "RetryCount": 10,
         "RetryInterval": 30,
-        "CheckLocal": false,
-        "CheckAuthoritative": true
+        "CheckLocal": false
       },
       "Substitution": {
-        "Enabled": true,
-        "CheckAuthoritative": true
+        "Enabled": true
       }
     },
     "Http": {
@@ -118,7 +116,7 @@
     },
     "Tls": {
       "SelfHosting": {
-        "Port": 443
+        "Port": 443
       }
     }
   },
