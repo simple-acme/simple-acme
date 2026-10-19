@@ -257,7 +257,7 @@ namespace PKISharp.WACS
             var batchSize = settings.Validation.Parallelism.BatchSize;
             var batches = Math.DivRem(contexts.Count, batchSize, out var remainder);
             batches += remainder > 0 ? 1 : 0;
-            for (var i = 0; i < remainder; i += 1)
+            for (var i = 0; i < batches; i += 1)
             {
                 var batch = contexts.Skip(i * batchSize).Take(batchSize).ToList();
                 if (batch.Count != 0)
