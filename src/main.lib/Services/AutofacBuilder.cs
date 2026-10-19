@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration.Arguments;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Host.Services.Legacy;
 using PKISharp.WACS.Plugins;
@@ -102,14 +103,15 @@ namespace PKISharp.WACS.Services
             {
                 if (renewal.Settings != null)
                 {
+                    var renewalSettings = Settings.Modernize(renewal.Settings);
                     var currentSettings = main.Resolve<ISettings>();
                     var uri = null as Uri;
                     if (Uri.TryCreate(renewal.EndPoint, UriKind.Absolute, out var ret))
                     {
                         uri = ret;
                     }
-                    var renewalSettings = currentSettings.Merge(renewal.Settings, uri);        
-                    builder.Register(c => renewalSettings).As<ISettings>().SingleInstance();
+                    var executionSettings = currentSettings.Merge(renewalSettings, uri);        
+                    builder.Register(c => executionSettings).As<ISettings>().SingleInstance();
                 }
                 builder.Register(c => runLevel).As<RunLevel>();
                 builder.RegisterType<FindPrivateKey>().SingleInstance();

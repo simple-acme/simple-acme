@@ -59,7 +59,7 @@ namespace PKISharp.WACS.Clients.DNS
         public async Task<IEnumerable<IPAddress>> GetNameServers(string host)
         {
             host = host.TrimEnd('.');
-            _log.Debug("Querying name servers for {part}", host);
+            _log.Debug("Querying name servers for {part} at {server}", host, IpAddress);
             var nsResponse = await _lookupClient.QueryAsync(host, QueryType.NS);
             if (nsResponse.HasError)
             {
@@ -103,7 +103,7 @@ namespace PKISharp.WACS.Clients.DNS
         /// <returns></returns>
         public async Task<bool> Connect()
         {
-            if (_connected == null) 
+            if (_connected == null)
             {
                 try
                 {

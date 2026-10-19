@@ -2,6 +2,7 @@
 using PKISharp.WACS.Configuration.Settings.Types.Csr;
 using PKISharp.WACS.Configuration.Settings.Types.Notification;
 using PKISharp.WACS.Configuration.Settings.Types.Store;
+using PKISharp.WACS.Configuration.Settings.Types.Validation;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -56,7 +57,16 @@ namespace PKISharp.WACS.Configuration.Settings
         {
             using var fs = useFile.OpenRead();
             var newSettings = JsonSerializer.Deserialize(fs, SettingsJson.Insensitive.Settings) ?? throw new Exception($"Unable to deserialize {useFile.FullName}");
+            return Modernize(newSettings);
+        }
 
+        /// <summary>
+        /// Modernize older-style settings formats to the most current one
+        /// </summary>
+        /// <param name="newSettings"></param>
+        /// <returns></returns>
+        public static Settings Modernize(Settings newSettings)
+        {
             // Migrate old-style settings to new-style settings
             if (newSettings.Target?.DefaultTarget != null)
             {
@@ -152,8 +162,64 @@ namespace PKISharp.WACS.Configuration.Settings
                 newSettings.Notification.Email ??= new EmailSettings();
                 newSettings.Notification.Email.SmtpServer ??= newSettings.Notification.SmtpServer;
             }
+
+
+            newSettings.Validation ??= new ValidationSettings();
+            newSettings.Validation.Parallelism ??= new MultiThreadingSettings();
+            newSettings.Validation.Dns ??= new DnsSettings();
+            newSettings.Validation.Dns.Substitution ??= new SubstitutionSettings();
+            newSettings.Validation.Dns.PreValidation ??= new PreValidationSettings();
+            newSettings.Validation.Http ??= new HttpSettings();
+            newSettings.Validation.Http.Ftp ??= new FtpSettings();
+            newSettings.Validation.Http.SelfHosting ??= new HttpSelfHostingSettings();
+            newSettings.Validation.Tls ??= new TlsSettings();
+            newSettings.Validation.Tls.SelfHosting ??= new TlsSelfHostingSettings();
+
+            if (newSettings.Validation?.AllowDnsSubstitution != null)
+            {
+                newSettings.Validation.Dns.Substitution.Enabled ??= newSettings.Validation.AllowDnsSubstitution;
+            }
+            if (newSettings.Validation?.CleanupFolders != null)
+            {
+                newSettings.Validation.Http.CleanupFolders ??= newSettings.Validation.CleanupFolders;
+            }
+            if (newSettings.Validation?.DisableMultiThreading != null)
+            {
+                newSettings.Validation.Parallelism.Enabled ??= !newSettings.Validation.DisableMultiThreading;
+            }
+            if (newSettings.Validation?.DnsPropagationDelay != null)
+            {
+                newSettings.Validation.Dns.PropagationDelay ??= newSettings.Validation.DnsPropagationDelay;
+            }
+            if (newSettings.Validation?.DnsServers != null)
+            {
+                newSettings.Validation.Dns.Servers ??= newSettings.Validation.DnsServers;
+            }
+            if (newSettings.Validation?.Ftp?.UseGnuTls != null)
+            {
+                newSettings.Validation.Http.Ftp.UseGnuTls ??= newSettings.Validation.Ftp.UseGnuTls;
+            }
+            if (newSettings.Validation?.ParallelBatchSize != null)
+            {
+                newSettings.Validation.Parallelism.BatchSize ??= newSettings.Validation.ParallelBatchSize;
+            }
+            if (newSettings.Validation?.PreValidateDns != null)
+            {
+                newSettings.Validation.Dns.PreValidation.Enabled ??= newSettings.Validation.PreValidateDns;
+            }
+            if (newSettings.Validation?.PreValidateDnsLocal != null)
+            {
+                newSettings.Validation.Dns.PreValidation.CheckLocal ??= newSettings.Validation.PreValidateDnsLocal;
+            }
+            if (newSettings.Validation?.PreValidateDnsRetryCount != null)
+            {
+                newSettings.Validation.Dns.PreValidation.RetryCount ??= newSettings.Validation.PreValidateDnsRetryCount;
+            }
+            if (newSettings.Validation?.PreValidateDnsRetryInterval != null)
+            {
+                newSettings.Validation.Dns.PreValidation.RetryInterval ??= newSettings.Validation.PreValidateDnsRetryInterval;
+            }
             return newSettings;
         }
     }
-
 }

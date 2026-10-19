@@ -222,7 +222,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 _log.Error("Registration for domain {domain} appears invalid", domain);
                 return false;
             }
-            if (_settings.Validation.PreValidateDns)
+            if (_settings.Validation.Dns.PreValidation.Enabled)
             {
                 if (!await VerifyCname(domain, reg.Fulldomain))
                 {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using PKISharp.WACS.Services;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
@@ -20,6 +21,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 
     public interface ISelfHosterFactory
     {
-        ISelfHoster Create(ISelfHosterOptions options);
+        ISelfHoster Create(ISelfHosterOptions options, ISettings settings);
     }
 }

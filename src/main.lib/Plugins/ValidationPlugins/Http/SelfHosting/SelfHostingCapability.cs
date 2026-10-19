@@ -2,19 +2,20 @@
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
+using PKISharp.WACS.Services;
 using System;
 using System.Net;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    internal class SelfHostingCapability(Target target, ArgumentsParser args, ISelfHosterFactory factory) : HttpValidationCapability(target)
+    internal class SelfHostingCapability(Target target, ArgumentsParser args, ISelfHosterFactory factory, ISettings settings) : HttpValidationCapability(target)
     {
         protected readonly ISelfHosterFactory Factory = factory;
         protected readonly SelfHostingOptions? SelfHostingOptions;
         protected readonly ArgumentsParser ArgumentsParser = args;
 
-        public SelfHostingCapability(Target target, ArgumentsParser args, ISelfHosterFactory factory, SelfHostingOptions? options) : this(target, args, factory) => SelfHostingOptions = options;
+        public SelfHostingCapability(Target target, ArgumentsParser args, ISelfHosterFactory factory, SelfHostingOptions? options, ISettings settings) : this(target, args, factory, settings) => SelfHostingOptions = options;
 
         public override async Task<State> ExecutionState()
         {
@@ -40,7 +41,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
         {
             var args = ArgumentsParser.GetArguments<SelfHostingArguments>();
             var options = SelfHostingOptions as ISelfHosterOptions ?? args ?? new SelfHostingArguments();
-            var listener = Factory.Create(options);
+            var listener = Factory.Create(options, settings);
             try
             {
                 await listener.Start();
