@@ -118,7 +118,7 @@
     },
     "Tls": {
       "SelfHosting": {
-        "Port": 900
+        "Port": 443
       }
     }
   },
