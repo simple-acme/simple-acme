@@ -28,7 +28,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         private readonly ILogService _logService;
 
-        private IHetznerClient? _client;
+        private HetznerCloudDnsClient? _client;
 
         public Hetzner(
             HetznerOptions options,
@@ -93,7 +93,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
         public void Dispose() => _client?.Dispose();
 
-        private async Task<HetznerZone?> GetHostedZone(IHetznerClient client, string recordName)
+        private async Task<HetznerZone?> GetHostedZone(HetznerCloudDnsClient client, string recordName)
         {
             if (String.IsNullOrWhiteSpace(_options.ZoneId) is false)
             {
@@ -125,7 +125,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             return bestZone;
         }
 
-        private async Task<IHetznerClient> GetClientAsync()
+        private async Task<HetznerCloudDnsClient> GetClientAsync()
         {
             if (_client is not null)
             {
@@ -137,9 +137,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
 
             var httpClient = await _proxyService.GetHttpClient();
 
-            _client = _options.UseHetznerCloud
-                ? new HetznerCloudDnsClient(apiToken, _logService, httpClient)
-                : new HetznerDnsClient(apiToken, _logService, httpClient);
+            _client = new HetznerCloudDnsClient(apiToken, _logService, httpClient);
 
             return _client;
         }
