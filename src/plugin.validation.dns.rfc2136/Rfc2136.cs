@@ -1,4 +1,4 @@
-﻿using ARSoft.Tools.Net;
+using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
 using ARSoft.Tools.Net.Dns.DynamicUpdate;
 using PKISharp.WACS.Clients.DNS;
@@ -67,7 +67,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     _log.Verbose("Attempt to create {domain} in zone {zone}", domain, currentZone);
                     await SendUpdate(msg);
 
-                    // Cache succesful zone result after succesful
+                    // Cache successful zone result after successful
                     // update so that we don't have to retry again
                     // for subsequent adds and deletes.
                     _zoneMap.TryAdd(domain, currentZone);
@@ -142,7 +142,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     ipAddress = lookup.First();
                 }
                 _log.Verbose("Connnecting to DNS server at {ipAddress}:{port} using key {key}", ipAddress, port, options.TsigKeyName);
-                _client = new ArDnsClient(ipAddress, port);
+                _client = new ArDnsClient(
+                    [ipAddress],
+                    [new UdpClientTransport(port), new TcpClientTransport(port)],
+                    true);
             }
             return _client;
         }
@@ -155,8 +158,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <exception cref="Exception"></exception>
         private async Task SendUpdate(DnsUpdateMessage msg)
         {
-            if (!Enum.TryParse<TSigAlgorithm>(options.TsigKeyAlgorithm, true, out var algorithm)) 
+            if (!Enum.TryParse<TSigAlgorithm>(options.TsigKeyAlgorithm, true, out var algorithm))
             {
+                if (!string.IsNullOrWhiteSpace(options.TsigKeyAlgorithm))
+                {
+                    _log.Warning("Unrecognized TsigKeyAlgorithm {alg}, fallback to MD5", options.TsigKeyAlgorithm);
+                }
                 algorithm = TSigAlgorithm.Md5;
             }
 
@@ -177,7 +184,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 Convert.FromBase64String(key));
 
             var client = await GetClient();
-            _log.Verbose("Send DNS update transaction {TransactionID}", msg.TransactionID);
+            _log.Verbose("Send DNS update transaction {TransactionID} using {key}/{algorithm}", msg.TransactionID, options.TsigKeyName, algorithm);
             var ret = await client.SendUpdateAsync(msg);
             if (ret == null || ret.ReturnCode != ReturnCode.NoError)
             {

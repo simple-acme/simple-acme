@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<RuntimeIdentifiers>win-x64;win-x86;win-arm64;linux-x64;linux-arm64</RuntimeIdentifiers>
 		<Configurations>Debug;DebugTrimmed;Release;ReleaseTrimmed;</Configurations>
 		<ApplicationIcon>icon.ico</ApplicationIcon>
@@ -33,10 +33,17 @@
 		<PublishSingleFile>true</PublishSingleFile>
 		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
 	</PropertyGroup>
-	
 	<PropertyGroup Condition="'$(Configuration)'=='DebugTrimmed'OR'$(Configuration)'=='ReleaseTrimmed'">
 		<PublishTrimmed>true</PublishTrimmed>
 	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64' OR '$(RuntimeIdentifier)' == 'linux-arm64'">
+		<DefineConstants>$(DefineConstants);LINUX</DefineConstants>
+	</PropertyGroup>
+	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64' OR '$(RuntimeIdentifier)' == 'linux-arm64'">
+		<ProjectReference Include="..\main.lib.kestrel\wacs.lib.kestrel.csproj" />
+		<TrimmerRootAssembly Include="wacs.lib.kestrel" />
+	</ItemGroup>
 	
 	<ItemGroup>
 		<TrimmerRootAssembly Include="Autofac" />
@@ -86,7 +93,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="FluentFTP.GnuTLS" Version="1.0.38" />
+	  <PackageReference Include="FluentFTP.GnuTLS" Version="1.0.40" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             _storeClient = new CertificateStoreClient(DefaultStoreName, StoreLocation.CurrentUser, _log, settings);
         }
 
-        public Task<StoreInfo?> Save(ICertificateInfo input)
+        public Task<StoreInfo?> Save(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo)
         {
             _log.Information("Installing certificate in the certificate store");
             _storeClient.InstallCertificate(input, X509KeyStorageFlags.UserKeySet);
@@ -39,7 +39,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             });
         }
 
-        public Task Delete(ICertificateInfo input)
+        public Task Delete(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo)
         {
             _storeClient.UninstallCertificate(input.Thumbprint);
             return Task.CompletedTask;

@@ -300,15 +300,15 @@ namespace PKISharp.WACS
             {
                 log.Warning(
                     "Cached certificate available but not used due to --{switch} switch.",
-                    nameof(MainArguments.NoCache).ToLower());
+                    nameof(MainArguments.NoCache).ToLowerInvariant());
                 return null;
             }
             log.Warning(
                 "Using cache for {friendlyName}. To get a new certificate " +
                 "within {days} days, run with --{switch}.",
-                context.Order.FriendlyNameIntermediate,
+                context.Order.GetIntermediate(),
                 settings.Cache.ReuseDays,
-                nameof(MainArguments.NoCache).ToLower());
+                nameof(MainArguments.NoCache).ToLowerInvariant());
             return cachedCertificate;
         }
 
@@ -351,7 +351,7 @@ namespace PKISharp.WACS
             var csrPlugin = context.Target.UserCsrBytes == null ? context.OrderScope.Resolve<PluginBackend<ICsrPlugin, IPluginCapability, CsrPluginOptions>>() : null;
             if (csrPlugin != null)
             {
-                var state = csrPlugin.Capability.ExecutionState;
+                var state = await csrPlugin.Capability.ExecutionState();
                 if (state.Disabled)
                 {
                     context.OrderResult.AddErrorMessage($"CSR plugin is not available. Reason: {state.Reason}");
@@ -366,7 +366,7 @@ namespace PKISharp.WACS
             }
             catch (Exception ex)
             {
-                log.Error(ex, "Error requesting certificate {friendlyName}", context.Order.FriendlyNameIntermediate);
+                log.Error(ex, "Error requesting certificate {friendlyName}", context.Order.GetIntermediate());
                 return null;
             }
         }
@@ -398,13 +398,13 @@ namespace PKISharp.WACS
                     {
                         log.Information("Store with {name}...", store.Meta.Name);
                     }
-                    var state = store.Capability.ExecutionState;
+                    var state = await store.Capability.ExecutionState();
                     if (state.Disabled)
                     {
                         context.OrderResult.AddErrorMessage($"Store plugin is not available. {state.Reason}");
                         return false;
                     }
-                    var info = await store.Backend.Save(newCertificate);
+                    var info = await store.Backend.Save(newCertificate, context.Order);
                     if (info != null)
                     {
                         storeInfo.TryAdd(store.Backend.GetType(), info);
@@ -444,7 +444,7 @@ namespace PKISharp.WACS
                 {
                     try
                     {
-                        await store.Backend.Delete(previousCertificate);
+                        await store.Backend.Delete(previousCertificate, context.Order);
                     }
                     catch (Exception ex)
                     {
@@ -489,7 +489,7 @@ namespace PKISharp.WACS
                     {
                         log.Information("Installing with {name}...", installationPlugin.Meta.Name);
                     }
-                    var state = installationPlugin.Capability.ExecutionState;
+                    var state = await installationPlugin.Capability.ExecutionState();
                     if (state.Disabled)
                     {
                         context.OrderResult.AddErrorMessage($"Installation plugin is not available. {state.Reason}");

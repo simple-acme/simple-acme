@@ -85,7 +85,7 @@ namespace PKISharp.WACS.Clients.Acme
                     {
                         log.Warning("Using cache. To force a new order within {days} days, run with --{switch}. Beware that you might run into rate limits.", 
                             settings.Cache.ReuseDays, 
-                            nameof(MainArguments.NoCache).ToLower());
+                            nameof(MainArguments.NoCache).ToLowerInvariant());
                         return orderDetails;
                     }
                     else
@@ -191,7 +191,7 @@ namespace PKISharp.WACS.Clients.Acme
                 // and previously cached key as well
                 // to ensure that it won't be used
                 log.Warning("Cached order available but not used with --{switch} option.",
-                    nameof(MainArguments.NoCache).ToLower());
+                    nameof(MainArguments.NoCache).ToLowerInvariant());
                 if (existingOrder.Payload.Authorizations != null)
                 {
                     foreach (var auth in existingOrder.Payload.Authorizations)

@@ -84,7 +84,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             return storeName;
         }
 
-        public Task<StoreInfo?> Save(ICertificateInfo input)
+        public Task<StoreInfo?> Save(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo)
         {
             _log.Information("Installing certificate in the certificate store");
             _storeClient.InstallCertificate(input, X509KeyStorageFlags.MachineKeySet);
@@ -161,7 +161,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 try
                 {
                     IdentityReference? identity = null;
-                    identity = account.ToLower() switch
+                    identity = account.ToLowerInvariant() switch
                     {
                         // For for international installs of Windows
                         // reference: https://learn.microsoft.com/en-US/windows-server/identity/ad-ds/manage/understand-security-identifiers
@@ -187,7 +187,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public Task Delete(ICertificateInfo input)
+        public Task Delete(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo)
         {
             // Test if the user manually added the certificate to IIS
             if (_iisClient.HasWebSites)

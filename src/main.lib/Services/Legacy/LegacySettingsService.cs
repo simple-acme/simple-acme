@@ -146,6 +146,6 @@ namespace PKISharp.WACS.Host.Services.Legacy
         }
 
         public static string CleanFileName(string fileName) => Path.GetInvalidFileNameChars().Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
-        public ISettings Merge(Settings settings) => this;
+        public ISettings Merge(Settings settings, Uri? baseUri) => this;
     }
 }

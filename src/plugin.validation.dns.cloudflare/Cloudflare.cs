@@ -3,6 +3,7 @@ using FluentCloudflare.Api;
 using FluentCloudflare.Api.Entities;
 using FluentCloudflare.Extensions;
 using PKISharp.WACS.Clients.DNS;
+using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
@@ -57,7 +58,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                     "Maybe you entered a wrong API Token?");
                 throw new Exception();
             }
-            var bestZone = FindBestMatch(allZones.ToDictionary(x => x.Name), recordName);
+            var bestZone = FindBestMatch(allZones.ToDictionary(x => x.Name), recordName.ConvertPunycode());
             if (bestZone == null)
             {
                 _log.Error($"No zone could be found that matches with record {recordName}. " +

@@ -75,6 +75,7 @@ namespace PKISharp.WACS
             log.Warning("Overwriting previously created renewal");
             existing.Updated = true;
             existing.Account = temp.Account;
+            existing.EndPoint = temp.EndPoint;
             existing.TargetPluginOptions = temp.TargetPluginOptions;
             existing.OrderPluginOptions = temp.OrderPluginOptions;
             existing.CsrPluginOptions = temp.CsrPluginOptions;
@@ -97,7 +98,7 @@ namespace PKISharp.WACS
         {
             log.Information(LogType.All, "Running in mode: {runLevel}", runLevel);
 
-            tempRenewal ??= Renewal.Create(mainArgs.Id);
+            tempRenewal ??= Renewal.Create(settings.BaseUri, mainArgs.Id);
 
             // Choose the target plugin
             var resolver = CreateResolver(container, runLevel);
@@ -162,7 +163,7 @@ namespace PKISharp.WACS
                     {
                         var pluginFrontend = autofacBuilder.ValidationFrontend(targetPluginScope, options, identifier);
                         log.Debug("Global validation option {name} found for {identifier}", pluginFrontend.Meta.Name, identifier.Value);
-                        var state = pluginFrontend.Capability.ExecutionState;
+                        var state = await pluginFrontend.Capability.ExecutionState();
                         if (!state.Disabled)
                         {
                             mapping[identifier] = pluginFrontend;
@@ -195,10 +196,18 @@ namespace PKISharp.WACS
                         $"identifiers found in the source are covered by usable global validation options. " +
                         $"Any validation settings configured for the renewal will only apply to the " +
                         $"remainder.");
-                    await input.WritePagedList(allIdentifiers.Select(identifier =>
-                        Choice.Create(
-                            identifier,
-                            $"{identifier.Value}: {mapping[identifier]?.Meta.Name ?? "-"}{(mapping[identifier]?.Capability.ExecutionState.Disabled ?? false ? " (disabled)" : "")}")));
+                    var choices = await Task.WhenAll(allIdentifiers.Select(async identifier =>
+                    {
+                        var pluginFrontend = mapping[identifier];
+                        var disabled = false;
+                        if (pluginFrontend != null)
+                        {
+                            var state = await pluginFrontend.Capability.ExecutionState();
+                            disabled = state.Disabled;
+                        }
+                        return Choice.Create(identifier, $"{identifier.Value}: {pluginFrontend?.Meta.Name ?? "-"}{(disabled ? " (disabled)" : "")}");
+                    }));
+                    await input.WritePagedList(choices);
                     input.CreateSpace();
                 }
 
@@ -286,9 +295,12 @@ namespace PKISharp.WACS
                 try
                 {
                     var profile = await SetupCertificateProfile(runLevel);
-                    tempRenewal.Settings ??= new Settings();
-                    tempRenewal.Settings.Acme ??= new AcmeSettings();
-                    tempRenewal.Settings.Acme.CertificateProfile = profile;
+                    if (!string.IsNullOrWhiteSpace(profile))
+                    {
+                        tempRenewal.Settings ??= new Settings();
+                        tempRenewal.Settings.Acme ??= new AcmeSettings();
+                        tempRenewal.Settings.Acme.CertificateProfile = profile;
+                    }
                 }
                 catch
                 {

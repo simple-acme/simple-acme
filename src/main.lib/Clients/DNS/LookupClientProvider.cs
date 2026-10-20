@@ -41,7 +41,7 @@ namespace PKISharp.WACS.Clients.DNS
         private List<IPAddress>? ParseDefaultClients()
         {
             var ret = new List<IPAddress>();
-            var items = _settings.Validation.DnsServers;
+            var items = _settings.Validation.Dns.Servers;
             foreach (var item in items)
             {
                 if (IPAddress.TryParse(item, out var ip))
@@ -134,6 +134,7 @@ namespace PKISharp.WACS.Clients.DNS
                 }
 
                 // Root domain is queried from the system client
+                await _domainParser.Initialize();
                 var rootDomain = _domainParser.GetRegisterableDomain(domainName);
 
                 IEnumerable<IPAddress>? unverified;
@@ -207,10 +208,16 @@ namespace PKISharp.WACS.Clients.DNS
         /// <returns></returns>
         private async Task<DnsLookupResult> Produce(string key, DnsLookupResult? parent = null)
         {
-            var nameServers = await GetNameServers(key);
-            var clients = nameServers.Any() ?
-                nameServers.Select(Produce) :
-                new[] { _systemClient };
+            var clients = new List<LookupClientWrapper>();
+            if (_settings.Validation.Dns.TryAuthoritativeServers)
+            {
+                var nameServers = await GetNameServers(key);
+                clients.AddRange(nameServers.Select(Produce));
+            }
+            if (clients.Count == 0)
+            {
+                clients.Add(_systemClient);
+            }
             return new(key, clients, parent);
         }
     }

@@ -21,7 +21,7 @@ namespace PKISharp.WACS.Context
         public OrderContext OrderContext { get; } = authorization.Order;
         public ValidationPluginOptions Options { get; } = options;
         public TargetPart TargetPart { get; } = targetPart;
-        public AcmeAuthorization Authorization { get; } = authorization.Authorization;
+        public AuthorizationContext AuthorizationContext { get; } = authorization;
         public string Label { get; } = authorization.Label;
         public string Name { get; } = plugin.Name;
     }
@@ -32,21 +32,21 @@ namespace PKISharp.WACS.Context
             ILifetimeScope scope,
             ValidationContextParameters parameters)
         {
-            if (parameters.Authorization.Identifier == null)
+            if (parameters.AuthorizationContext.Authorization.Identifier == null)
             {
-                throw new Exception();
+                throw new InvalidOperationException("Missing authorization identifier.");
             }
-            Identifier = parameters.Authorization.Identifier.Value;
+            Identifier = parameters.AuthorizationContext.Authorization.Identifier.Value;
             Label = parameters.Label;
             TargetPart = parameters.TargetPart;
-            Authorization = parameters.Authorization;
+            AuthorizationContext = parameters.AuthorizationContext;
             OrderResult = parameters.OrderContext.OrderResult;
             Scope = scope;
             PluginName = parameters.Name;
             var backend = scope.Resolve<PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>>();
             ValidationPlugin = backend.Backend;
             ChallengeTypes = backend.Capability.ChallengeTypes;
-            Valid = parameters.Authorization.Status == AcmeClient.AuthorizationValid;
+            Valid = parameters.AuthorizationContext.Authorization.Status == AcmeClient.AuthorizationValid;
         }
         public bool Valid { get; }
         public ILifetimeScope Scope { get; }
@@ -56,7 +56,7 @@ namespace PKISharp.WACS.Context
         public string PluginName { get; }
         public OrderResult OrderResult { get; }
         public TargetPart? TargetPart { get; }
-        public AcmeAuthorization Authorization { get; set; }
+        public AuthorizationContext AuthorizationContext { get; set; }
         public AcmeChallenge? Challenge { get; set; }
         public IChallengeValidationDetails? ChallengeDetails { get; set; }
         public IValidationPlugin ValidationPlugin { get; set; }

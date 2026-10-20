@@ -3,26 +3,24 @@ using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.TargetPlugins
 {
     internal class IISCapability(IUserRoleService userRole, IIISClient iisClient) : DefaultCapability
     {
-        public override State ExecutionState
+        public override Task<State> ExecutionState()
         {
-            get
+            var state = userRole.IISState;
+            if (state.Disabled)
             {
-                var state = userRole.IISState;
-                if (state.Disabled)
-                {
-                    return state;
-                }
-                if (!iisClient.Sites.Any())
-                {
-                    return State.DisabledState("No IIS sites detected.");
-                }
-                return State.EnabledState();
+                return Task.FromResult(state);
             }
+            if (!iisClient.Sites.Any())
+            {
+                return Task.FromResult(State.DisabledState("No IIS sites detected."));
+            }
+            return Task.FromResult(State.EnabledState());
         }
     }
 }

@@ -991,8 +991,6 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                 WithFlags(SSLFlags.CentralCertStore);
 
             iis.UpdateHttpSite(new[] { new DnsIdentifier("mail.example.com") }, bindingOptions, null);
-
-            Assert.IsTrue(true);
         }
 
         [TestMethod]

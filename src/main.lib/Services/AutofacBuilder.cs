@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration.Arguments;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Host.Services.Legacy;
 using PKISharp.WACS.Plugins;
@@ -102,9 +103,15 @@ namespace PKISharp.WACS.Services
             {
                 if (renewal.Settings != null)
                 {
+                    var renewalSettings = Settings.Modernize(renewal.Settings);
                     var currentSettings = main.Resolve<ISettings>();
-                    var renewalSettings = currentSettings.Merge(renewal.Settings);
-                    builder.Register(c => renewalSettings).As<ISettings>().SingleInstance();
+                    var uri = null as Uri;
+                    if (Uri.TryCreate(renewal.EndPoint, UriKind.Absolute, out var ret))
+                    {
+                        uri = ret;
+                    }
+                    var executionSettings = currentSettings.Merge(renewalSettings, uri);        
+                    builder.Register(c => executionSettings).As<ISettings>().SingleInstance();
                 }
                 builder.Register(c => runLevel).As<RunLevel>();
                 builder.RegisterType<FindPrivateKey>().SingleInstance();
@@ -249,7 +256,11 @@ namespace PKISharp.WACS.Services
             ValidationFrontend(ILifetimeScope execution, ValidationPluginOptions options, Identifier identifier)
         {
             var dummyTarget = new Target(identifier);
-            var dummyScope = Target(execution, dummyTarget).BeginLifetimeScope(b => b.Register(c => RunLevel.None).As<RunLevel>());
+            var dummyRenewal = new Renewal();
+            var dummyScope = Target(execution, dummyTarget).BeginLifetimeScope(b => {
+                b.Register(c => RunLevel.None).As<RunLevel>();
+                b.RegisterInstance(dummyRenewal);
+            });
             var pluginHelper = PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>(dummyScope, options, "dummy");
             return pluginHelper.Resolve<PluginBackend<IValidationPlugin, IValidationPluginCapability, ValidationPluginOptions>>();
         }

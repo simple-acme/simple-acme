@@ -29,7 +29,6 @@ namespace PKISharp.WACS.UnitTests.Tests.CsrPluginTests
             var fi = new FileInfo(tempFile);
             _ = new CertificateInfoCache(fi, "A8<TEpyPweWMO1m(");
             //_ = x.PostProcess(certInfo.Certificate).Result;
-            Assert.IsTrue(true);
         }
     }
 }

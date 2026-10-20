@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Configuration.Settings.Types;
+using PKISharp.WACS.Configuration.Settings.Types.Notification;
 using System;
 
 namespace PKISharp.WACS.UnitTests.Tests.SettingsTests
@@ -144,6 +145,36 @@ namespace PKISharp.WACS.UnitTests.Tests.SettingsTests
             };
             var x = new InheritSettings(renewallSettings, localSettings, globalSettings); 
             Assert.IsNull(x.Acme.PublicSuffixListUri);
+        }
+    }
+
+    [TestClass]
+    public class EmailSettingsTests
+    {
+        [TestMethod]
+        public void SmtpLocalDomainDefaultsToNull()
+        {
+            var settings = new InheritSettings(new Settings());
+
+            Assert.IsNull(settings.Notification.Email!.SmtpLocalDomain);
+        }
+
+        [TestMethod]
+        public void SmtpLocalDomainCanBeConfigured()
+        {
+            var globalSettings = new Settings
+            {
+                Notification = new NotificationSettings
+                {
+                    Email = new EmailSettings
+                    {
+                        SmtpLocalDomain = "mail.example.com"
+                    }
+                }
+            };
+            var settings = new InheritSettings(globalSettings);
+
+            Assert.AreEqual("mail.example.com", settings.Notification.Email!.SmtpLocalDomain);
         }
     }
 }

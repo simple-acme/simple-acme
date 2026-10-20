@@ -86,14 +86,14 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
                 types.Select(t => plugins.GetPlugins().First(x => x.Backend == t)),
                 chosen);
             Assert.IsNotNull(first);
-            Assert.AreEqual(first.OptionsFactory.GetType(), typeof(IISOptionsFactory));
+            Assert.AreEqual(typeof(IISOptionsFactory), first.OptionsFactory.GetType());
             chosen.Add(first.Meta);
             var second = await resolver.GetInstallationPlugin(
                 plugins.GetPlugins().First(p => p.Backend.IsAssignableTo<ITargetPlugin>()),
                 types.Select(t => plugins.GetPlugins().First(x => x.Backend == t)),
                 chosen);
             Assert.IsNotNull(second);
-            Assert.AreEqual(second.OptionsFactory.GetType(), typeof(Plugins.InstallationPlugins.NullOptionsFactory));
+            Assert.AreEqual(typeof(Plugins.InstallationPlugins.NullOptionsFactory), second.OptionsFactory.GetType());
         }
     }
 }

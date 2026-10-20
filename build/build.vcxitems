@@ -21,8 +21,8 @@
     <None Include="$(MSBuildThisFileDirectory)03-create-artifacts.ps1" />
     <None Include="$(MSBuildThisFileDirectory)05-self-sign.ps1" />
     <None Include="$(MSBuildThisFileDirectory)07-github.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)08-nuget.ps1" />
-    <None Include="$(MSBuildThisFileDirectory)09-docs.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)09-nuget.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)08-docs.ps1" />
     <None Include="$(MSBuildThisFileDirectory)10-chocolatey.ps1" />
     <None Include="$(MSBuildThisFileDirectory)11-winget.ps1" />
     <None Include="$(MSBuildThisFileDirectory)appveyor-local.ps1" />

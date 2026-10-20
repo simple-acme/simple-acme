@@ -5,39 +5,41 @@ using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using System;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
 {
     internal class SelfHostingCapability : TlsValidationCapability
     {
+        protected readonly ISettings Settings;
         protected readonly IUserRoleService UserRoleService;
         protected readonly SelfHostingOptions? SelfHostingOptions;
         protected readonly ArgumentsParser ArgumentsParser;
 
-        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args) : base(target)
+        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args, ISettings settings) : base(target)
+
         {
             UserRoleService = user;
             ArgumentsParser = args;
+            Settings = settings;
         }
 
-        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args, SelfHostingOptions? options) : base(target)
+        public SelfHostingCapability(Target target, IUserRoleService user, ArgumentsParser args, SelfHostingOptions? options, ISettings settings) : base(target)
         {
             UserRoleService = user;
             SelfHostingOptions = options;
             ArgumentsParser = args;
+            Settings = settings;
         }
 
-        public override State ExecutionState
+        public override async Task<State> ExecutionState()
         {
-            get
+            var baseState = await base.ExecutionState();
+            if (baseState.Disabled)
             {
-                var baseState = base.ExecutionState;
-                if (baseState.Disabled)
-                {
-                    return baseState;
-                }
-                return TestListener.Value;
+                return baseState;
             }
+            return TestListener.Value;
         }
 
         internal Lazy<State> TestListener
@@ -48,8 +50,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                 {
                     var args = ArgumentsParser.GetArguments<SelfHostingArguments>();
                     var (testListener, port) = SelfHostingOptions is null ?
-                        SelfHosting.CreateListener(args?.ValidationPort) :
-                        SelfHosting.CreateListener(SelfHostingOptions.Port);
+                        SelfHosting.CreateListener(Settings, args?.ValidationPort) :
+                        SelfHosting.CreateListener(Settings, SelfHostingOptions.Port);
                     try
                     {
                         testListener.Start();
@@ -61,7 +63,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                         {
                             return State.DisabledState($"Port {port} is in use by another program.");
                         }
-                        else
+                        else 
                         {
                             return State.DisabledState(ex.Message);
                         }

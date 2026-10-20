@@ -3,7 +3,7 @@ using PKISharp.WACS.Services;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
 {
-    internal class SelfHostingOptions : ValidationPluginOptions
+    internal class SelfHostingOptions : ValidationPluginOptions, ISelfHosterOptions
     {
         /// <summary>
         /// Alternative port for validation. Note that ACME always requires

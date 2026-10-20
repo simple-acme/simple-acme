@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Services
         /// </summary>
         [SupportedOSPlatform("windows")]
         public WindowsProxyUsePolicy ProxyType => 
-            settings.Proxy.Url?.ToLower().Trim() switch
+            settings.Proxy.Url?.ToLowerInvariant().Trim() switch
             {
                 "[winhttp]" => WindowsProxyUsePolicy.UseWinHttpProxy,
                 "[wininet]" => WindowsProxyUsePolicy.UseWinInetProxy,
@@ -32,7 +32,7 @@ namespace PKISharp.WACS.Services
         /// Is the user requesting the system proxy
         /// </summary>
         private bool CustomProxy =>
-            settings.Proxy.Url?.ToLower().Trim() switch
+            settings.Proxy.Url?.ToLowerInvariant().Trim() switch
             {
                 "[winhttp]" => false,
                 "[wininet]" => false,
@@ -89,7 +89,7 @@ namespace PKISharp.WACS.Services
         {
             var httpClientHandler = await GetHttpMessageHandler(checkSsl);
             var httpClient = new HttpClient(httpClientHandler);
-            httpClient.DefaultRequestHeaders.Add("User-Agent", $"simple-acme/{VersionService.SoftwareVersion} (+https://github.com/simple-acme/simple-acme)");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", $"{VersionService.DefaultClientName}/{VersionService.SoftwareVersion} (+https://github.com/simple-acme/simple-acme)");
             return httpClient;
         }
 

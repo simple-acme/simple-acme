@@ -3,6 +3,7 @@ using ACMESharp.Protocol.Resources;
 using PKISharp.WACS.Services;
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -84,27 +85,61 @@ namespace PKISharp.WACS.Clients.Acme
             {
                 return await executor();
             }
-            catch (AcmeProtocolException ape)
+            catch (Exception ex)
             {
-                if (ape.Response.StatusCode == HttpStatusCode.TooManyRequests)
+                if (ex is AcmeProtocolException ape && 
+                    ape.Response.StatusCode == HttpStatusCode.TooManyRequests && 
+                    ape.ProblemType != ProblemType.RateLimited)
                 {
-                    if (ape.ProblemType == ProblemType.RateLimited)
+                    return await Backoff(client, executor, log, attempt, "Server is too busy", ex);
+                }
+                if (ex is HttpRequestException hrex)
+                {
+                    if (hrex.StatusCode == null)
                     {
-                        // Do not keep retrying when rate limit is hit
-                        throw;
+                        return await Backoff(client, executor, log, attempt, $"Request failed ({hrex.HttpRequestError})", ex);
                     }
-                    if (attempt == 5)
+                    if (RetryCodes.Contains(hrex.StatusCode.Value))
                     {
-                        throw new Exception("Service is too busy, try again later...", ape);
+                        return await Backoff(client, executor, log, attempt, $"Error {(int)hrex.StatusCode.Value} ({hrex.StatusCode.Value})", ex);
                     }
-                    var delaySeconds = (int)Math.Pow(2, attempt + 3); // 5 retries with 8 to 128 seconds delay
-                    log.Warning("Service is busy at the moment, backing off for {n} seconds", delaySeconds);
-                    await Task.Delay(1000 * delaySeconds);
-                    return await client.Backoff(executor, log, attempt + 1);
                 }
                 throw;
             }
         }
+
+        /// <summary>
+        /// Inner method for Backoff that does the actual retrying with delay, and throws a more descriptive error message if the max attempts is reached
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="client"></param>
+        /// <param name="executor"></param>
+        /// <param name="log"></param>
+        /// <param name="attempt"></param>
+        /// <param name="errorMessage"></param>
+        /// <param name="ex"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private static async Task<T> Backoff<T>(this AcmeProtocolClient client, Func<Task<T>> executor, ILogService log, int attempt, string errorMessage, Exception ex)
+        {
+            if (attempt == 5)
+            {
+                throw new Exception($"{errorMessage}, try again later", ex);
+            }
+            var delaySeconds = (int)Math.Pow(2, attempt + 3); // 5 retries with 8 to 128 seconds delay
+            log.Warning(ex, $"{errorMessage}, backing off for {{n}} seconds...", delaySeconds);
+            await Task.Delay(1000 * delaySeconds);
+            return await client.Backoff(executor, log, attempt + 1);
+        }
+
+        /// <summary>
+        /// List of Http Status codes that we should retry on, in case of transient network errors.
+        /// </summary>
+        private static readonly HttpStatusCode[] RetryCodes = [
+            HttpStatusCode.RequestTimeout,
+            HttpStatusCode.ServiceUnavailable,
+            HttpStatusCode.GatewayTimeout
+        ];
 
         /// <summary>
         /// Prevent sending simulateous requests to the ACME service because it messes

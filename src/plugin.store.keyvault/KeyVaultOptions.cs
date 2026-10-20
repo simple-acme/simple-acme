@@ -17,13 +17,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         public bool UseMsi { get; set; }
         public string? ClientId { get; set; }
         public string? ResourceGroupName { get; set; }
-
+        /// <summary>
+        /// Client secret for authentication
+        /// </summary>
         [JsonPropertyName("SecretSafe")]
         public ProtectedString? Secret { get; set; }
 
         public string? SubscriptionId { get; set; }
         public string? TenantId { get; set; }
-        public string? VaultName { get; set; } = "";
-        public string? CertificateName { get; set; } = ""; 
+        public string? VaultName { get; set; }
+        public string? CertificateName { get; set; }
+        /// <summary>
+        /// Password for the certificate
+        /// </summary>
+        public ProtectedString? CertificatePassword { get; set; }
     }
 }

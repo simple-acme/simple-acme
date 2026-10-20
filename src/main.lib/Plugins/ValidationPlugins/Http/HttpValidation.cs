@@ -306,7 +306,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Http
                             folders.Add(folder);
                         }
                     }
-                    if (_settings.Validation.CleanupFolders)
+                    if (_settings.Validation.Http.CleanupFolders)
                     {
                         log.Debug("Deleting empty folders");
                         foreach (var folder in folders)

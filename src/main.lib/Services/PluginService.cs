@@ -138,7 +138,7 @@ namespace PKISharp.WACS.Services
             if (step == Steps.Validation)
             {
                 var validationCapability = typeof(object);
-                switch (parameter?.ToLower())
+                switch (parameter?.ToLowerInvariant())
                 {
                     case Constants.Http01ChallengeType:
                         validationCapability = typeof(HttpValidationCapability);
@@ -163,7 +163,7 @@ namespace PKISharp.WACS.Services
         private void AddPluginType<T>(Steps step)
         {
             var types = _assemblyService.GetResolvable<T>().ToList();
-            ListPlugins(types.Select(x => x.Type), step.ToString().ToLower());
+            ListPlugins(types.Select(x => x.Type), step.ToString().ToLowerInvariant());
             foreach (var type in types)
             {
                 var attributes = type.Type.GetCustomAttributes(true).OfType<IPluginMeta>();

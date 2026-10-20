@@ -1,4 +1,5 @@
 ﻿using Azure.Security.KeyVault.Certificates;
+using PKISharp.WACS.Context;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Azure.Common;
@@ -23,9 +24,9 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     {
         private readonly AzureHelpers _helpers = new(options, ssm);
 
-        public Task Delete(ICertificateInfo certificateInfo) => Task.CompletedTask;
+        public Task Delete(ICertificateInfo certificateInfo, IFriendlyNameInfo friendlyNameInfo) => Task.CompletedTask;
 
-        public async Task<StoreInfo?> Save(ICertificateInfo certificateInfo)
+        public async Task<StoreInfo?> Save(ICertificateInfo certificateInfo, IFriendlyNameInfo friendlyNameInfo)
         {
             var token = await _helpers.GetTokenCredential();
             var httpClient = await proxyService.GetHttpClient();
@@ -36,13 +37,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 new CertificateClientOptions() {
                     Transport = armOptions.Transport
                 });
-            var importOptions = new ImportCertificateOptions(
-                options.CertificateName,
-                certificateInfo.PfxBytes());
+
+            var name = friendlyNameInfo.GetIntermediate(options.CertificateName);
+            var importOptions = new ImportCertificateOptions(name, certificateInfo.PfxBytes());
+            var password = await ssm.EvaluateSecret(options.CertificatePassword);
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                importOptions.Password = password;
+            }
             try
             {
                 _ = await client.ImportCertificateAsync(importOptions);
-                return new StoreInfo() {
+                return new StoreInfo()
+                {
                     Path = options.VaultName,
                     Name = options.CertificateName
                 };

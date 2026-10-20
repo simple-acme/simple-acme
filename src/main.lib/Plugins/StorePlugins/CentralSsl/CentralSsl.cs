@@ -64,7 +64,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
 
         private string PathForIdentifier(DnsIdentifier identifier) => Path.Combine(_path, $"{identifier.Unicode(true).Value.Replace("*", "_")}.pfx");
 
-        public async Task<StoreInfo?> Save(ICertificateInfo input)
+        public async Task<StoreInfo?> Save(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo)
         {
             _log.Information("Copying certificate to the CentralSsl store");
 
@@ -95,7 +95,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             };
         }
 
-        public async Task Delete(ICertificateInfo input)
+        public async Task Delete(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo)
         {
             _log.Information("Removing certificate from the CentralSsl store");
             foreach (var identifier in input.SanNames.OfType<DnsIdentifier>())

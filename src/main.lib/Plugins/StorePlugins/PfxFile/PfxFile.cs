@@ -80,7 +80,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public async Task<StoreInfo?> Save(ICertificateInfo input)
+        public async Task<StoreInfo?> Save(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo)
         {
             try
             {
@@ -113,10 +113,13 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 }
 
                 // Save to disk
-                var dest = PathForIdentifier(_name ?? input.CommonName?.Value ?? input.SanNames.First().Value);
+                var name = string.IsNullOrEmpty(_name) ?
+                    input.CommonName?.Value ?? input.SanNames.First().Value :
+                    friendlyNameInfo.GetIntermediate(_name);
+                var dest = PathForIdentifier(name);
                 var outInfo = new CertificateInfo(output);
-                _log.Information("Copying certificate to the pfx folder {dest}", dest);
                 await outInfo.PfxSave(dest, await GetPassword());
+                _log.Information("Updated {dest}", dest);
             }
             catch (Exception ex)
             {
@@ -128,6 +131,6 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             };
         }
 
-        public Task Delete(ICertificateInfo input) => Task.CompletedTask;
+        public Task Delete(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo) => Task.CompletedTask;
     }
 }

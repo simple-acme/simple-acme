@@ -1,15 +1,16 @@
-﻿using PKISharp.WACS.Clients.Acme;
+﻿using ACMESharp.Protocol;
+using PKISharp.WACS.Clients.Acme;
+using PKISharp.WACS.Plugins.Interfaces;
 using System.Diagnostics;
-using ACMESharp.Protocol;
 
 namespace PKISharp.WACS.DomainObjects
 {
-    [DebuggerDisplay("{CacheKeyPart}")]
+    [DebuggerDisplay("CacheKeyPart: {CacheKeyPart}")]
     public class Order(
         Renewal renewal,
         Target target,
         string? cacheKeyPart = null,
-        string? friendlyNamePart = null)
+        string? friendlyNamePart = null) : IFriendlyNameInfo
     {
         public string? CacheKeyPart { get; } = cacheKeyPart;
         public string? FriendlyNamePart { get; } = friendlyNamePart;
@@ -18,9 +19,9 @@ namespace PKISharp.WACS.DomainObjects
         public Renewal Renewal { get; } = renewal;
         public AcmeOrderDetails? Details { get; set; } = null;
 
-        public bool? Valid => Details == null ? 
-            null : 
-            Details.Payload.Status == AcmeClient.OrderValid || 
+        public bool? Valid => Details == null ?
+            null :
+            Details.Payload.Status == AcmeClient.OrderValid ||
             Details.Payload.Status == AcmeClient.OrderReady;
 
         public string FriendlyNameBase
@@ -40,17 +41,14 @@ namespace PKISharp.WACS.DomainObjects
             }
         }
 
-        public string FriendlyNameIntermediate
-        {
-            get
+        public string GetIntermediate(string? baseName = null) 
+        { 
+            baseName ??= FriendlyNameBase;
+            if (!string.IsNullOrEmpty(FriendlyNamePart))
             {
-                var friendlyNameIntermediate = FriendlyNameBase;
-                if (!string.IsNullOrEmpty(FriendlyNamePart))
-                {
-                    friendlyNameIntermediate += $" [{FriendlyNamePart}]";
-                }
-                return friendlyNameIntermediate;
+                return $"{baseName} [{FriendlyNamePart}]";
             }
+            return baseName;
         }
 
     }

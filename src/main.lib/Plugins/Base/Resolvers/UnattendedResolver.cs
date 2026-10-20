@@ -34,7 +34,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
             where TOptions : PluginOptions, new()
             where TCapability : IPluginCapability;
 
-        private Task<PluginFrontend<TCapability, TOptions>?> 
+        private async Task<PluginFrontend<TCapability, TOptions>?> 
             GetPlugin<TCapability, TOptions>(
                 Steps step,
                 Type defaultBackend,
@@ -48,9 +48,9 @@ namespace PKISharp.WACS.Plugins.Resolvers
             // combination of plugin being enabled (e.g. due to missing
             // administrator rights) and being a right fit for the current
             // renewal (e.g. cannot validate wildcards using http-01)
-            State combinedConfigState(PluginFrontend<TCapability, TOptions> plugin)
+            async Task<State> combinedConfigState(PluginFrontend<TCapability, TOptions> plugin)
             {
-                var baseState = plugin.Capability.ConfigurationState;
+                var baseState = await plugin.Capability.ConfigurationState();
                 if (baseState.Disabled)
                 {
                     return baseState;
@@ -63,28 +63,26 @@ namespace PKISharp.WACS.Plugins.Resolvers
             };
 
             // Apply default sorting when no sorting has been provided yet
-            var options = pluginService.
+            var options = (await Task.WhenAll(pluginService.
                 GetPlugins(step).
                 Select(x => autofacBuilder.PluginFrontend<TCapability, TOptions>(scope, x)).
                 Select(x => x.Resolve<PluginFrontend<TCapability, TOptions>>()).
-                Select(x => new PluginChoice<TCapability, TOptions>(x.Meta, x, combinedConfigState(x), x.Capability.ExecutionState)).
-                ToList();
+                Select(async x => new PluginChoice<TCapability, TOptions>(x.Meta, x, await combinedConfigState(x), await x.Capability.ExecutionState())))).ToList();
 
             // Default out when there are no reasonable plugins to pick
-            var nullRet = Task.FromResult<PluginFrontend<TCapability, TOptions>?>(null);
             if (options.Count == 0 || options.All(x => x.ConfigurationState.Disabled))
             {
-                return nullRet;
+                return null;
             }
 
-            var className = step.ToString().ToLower();
+            var className = step.ToString().ToLowerInvariant();
             if (!string.IsNullOrEmpty(defaultParam1))
             {
                 var defaultPlugin = pluginService.GetPlugin(step, defaultParam1, defaultParam2);
                 if (defaultPlugin == null)
                 {
                     log.Error("Unable to find {n} plugin {p}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultParam1, $"--{className}");
-                    return nullRet;
+                    return null;
                 }
                 else
                 {
@@ -96,13 +94,13 @@ namespace PKISharp.WACS.Plugins.Resolvers
             if (defaultOption.ConfigurationState.Disabled)
             {
                 log.Error("{n} plugin {x} not available: {m}. Choose another plugin using the {className} switch or change the default in settings.json", step, defaultOption.Frontend.Meta.Name ?? "Unknown", defaultOption.ConfigurationState.Reason?.TrimEnd('.'), $"--{className}");
-                return nullRet;
+                return null;
             }
             if (defaultOption.ExecutionState.Disabled)
             {
                 log.Warning("{n} plugin {x} might not work: {m}. If this leads to an error, choose another plugin using the {className} switch or change the default in settings.json", step, defaultOption.Frontend.Meta.Name ?? "Unknown", defaultOption.ExecutionState.Reason?.TrimEnd('.'), $"--{className}");
             }
-            return Task.FromResult<PluginFrontend<TCapability, TOptions>?>(defaultOption.Frontend);
+            return defaultOption.Frontend;
         }
 
         /// <summary>
@@ -200,9 +198,9 @@ namespace PKISharp.WACS.Plugins.Resolvers
                 installationList = InstallationPlugins.IIS.Trigger;
             }
             var steps = installationList.ParseCsv();
-            steps ??= [InstallationPlugins.Null.Trigger];
+            steps ??= [InstallationPlugins.Null.Trigger.ToLowerInvariant()];
             var index = installation.Count();
-            var currentStep = index == steps.Count ? InstallationPlugins.Null.Trigger : steps[index];
+            var currentStep = index == steps.Count ? InstallationPlugins.Null.Trigger.ToLowerInvariant() : steps[index];
             return await GetPlugin<IInstallationPluginCapability, InstallationPluginOptions>(
                 Steps.Installation,
                 configState: x => x.CanInstall(stores.Select(x => x.Backend), installation.Select(x => x.Backend)),

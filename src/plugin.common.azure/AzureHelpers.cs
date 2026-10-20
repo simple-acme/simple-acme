@@ -63,21 +63,23 @@ namespace PKISharp.WACS.Plugins.Azure.Common
         /// </summary>
         public async Task<TokenCredential> GetTokenCredential()
         {
-            var tokenOptions = new TokenCredentialOptions() { AuthorityHost = AzureAuthorityHost };
+            var credentialOptions = new ManagedIdentityCredentialOptions() { AuthorityHost = AzureAuthorityHost };
             if (options.UseMsi && string.IsNullOrEmpty(options.ClientId))
             {
-                return new ManagedIdentityCredential(options: tokenOptions);
+                return new ManagedIdentityCredential(credentialOptions);
             }
             if (options.UseMsi && !string.IsNullOrEmpty(options.ClientId))
             {
-                return new ManagedIdentityCredential(options.ClientId, options: tokenOptions);
+                var clientId = ManagedIdentityId.FromUserAssignedClientId(options.ClientId);
+                credentialOptions = new ManagedIdentityCredentialOptions(clientId) { AuthorityHost = AzureAuthorityHost };
+                return new ManagedIdentityCredential(credentialOptions);
             }
             var clientSecret = await ssm.EvaluateSecret(options.Secret?.Value);
             return new ClientSecretCredential(
                     options.TenantId,
                     options.ClientId,
                     clientSecret,
-                    options: tokenOptions);
+                    options: credentialOptions);
         }
 
         public ArmClientOptions ArmOptions(HttpClient client)

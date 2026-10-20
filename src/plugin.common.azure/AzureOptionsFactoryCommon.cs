@@ -25,8 +25,7 @@ namespace PKISharp.WACS.Plugins.Azure.Common
             Required();
 
         private ArgumentResult<string?> ClientId => arguments.
-            GetString<T>(a => a.AzureClientId).
-            Required();
+            GetString<T>(a => a.AzureClientId);
 
         private ArgumentResult<ProtectedString?> ClientSecret => arguments.
             GetProtectedString<T>(a => a.AzureSecret).
@@ -39,7 +38,7 @@ namespace PKISharp.WACS.Plugins.Azure.Common
                 AzureEnvironments.ResourceManagerUrls()
                     .OrderBy(kvp => kvp.Key)
                     .Select(kvp =>
-                        Choice.Create<Func<Task>>(() =>
+                        Choice.Create(() =>
                         {
                             options.AzureEnvironment = kvp.Key;
                             return Task.CompletedTask;
@@ -47,7 +46,7 @@ namespace PKISharp.WACS.Plugins.Azure.Common
                     description: kvp.Key,
                     @default: kvp.Key == defaultEnvironment)))
             {
-                Choice.Create<Func<Task>>(async () => await AzureOptionsFactoryCommon<T>.InputUrl(_input, options), "Use a custom resource manager url")
+                Choice.Create(async () => await AzureOptionsFactoryCommon<T>.InputUrl(_input, options), "Use a custom resource manager url")
             };
             var chosen = await _input.ChooseFromMenu("Which Azure environment are you using?", environments);
             await chosen.Invoke();
@@ -60,8 +59,12 @@ namespace PKISharp.WACS.Plugins.Azure.Common
             {
                 // These options are only necessary for client id/secret authentication.
                 options.TenantId = await TenantId.Interactive(_input).WithLabel("Directory/tenant id").GetValue();
-                options.ClientId = await ClientId.Interactive(_input).WithLabel("Application client id").GetValue();
+                options.ClientId = await ClientId.Required().Interactive(_input).WithLabel("Application client id").GetValue();
                 options.Secret = await ClientSecret.Interactive(_input).WithLabel("Application client secret").GetValue();
+            }
+            else
+            {
+                options.ClientId = await ClientId.Interactive(_input).WithLabel("Application client id").GetValue();
             }
         }
 
@@ -73,8 +76,12 @@ namespace PKISharp.WACS.Plugins.Azure.Common
             {
                 // These options are only necessary for client id/secret authentication.
                 options.TenantId = await TenantId.GetValue();
-                options.ClientId = await ClientId.GetValue();
+                options.ClientId = await ClientId.Required().GetValue();
                 options.Secret = await ClientSecret.GetValue();
+            }
+            else
+            {
+                options.ClientId = await ClientId.GetValue();
             }
         }
 

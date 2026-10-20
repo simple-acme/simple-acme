@@ -36,8 +36,8 @@ namespace PKISharp.WACS.Services
 
         public ArgumentResult<string?> GetLowerString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
             (Expression<Func<T, string?>> expression) where T : class, IArguments, new() =>
-            new(GetArgument(expression)?.ToLower(), GetMetaData(expression),
-                async args => (await input.RequestString(args.Label)).ToLower(), log);
+            new(GetArgument(expression)?.ToLowerInvariant(), GetMetaData(expression),
+                async args => (await input.RequestString(args.Label)).ToLowerInvariant(), log);
 
         public ArgumentResult<string?> GetString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>
             (Expression<Func<T, string?>> expression1, Expression<Func<T, string?>>? expression2 = null) where T : class, IArguments, new() =>

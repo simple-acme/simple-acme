@@ -45,7 +45,7 @@ namespace PKISharp.WACS.Services
                                 runtime.ComputeDueDate(new DueDate()
                                 {
                                     Start = history.Date,
-                                    End = history.ExpireDate ?? history.Date.AddYears(1)
+                                    End = orderResult.ExpireDate ?? history.ExpireDate ?? history.Date.AddYears(1)
                                 });
 
                         if (orderResult.Success != false)

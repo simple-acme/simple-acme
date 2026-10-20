@@ -2,6 +2,7 @@
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.OrderPlugins
 {
@@ -9,20 +10,17 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
     {
         protected readonly Target Target = target;
 
-        public override State ExecutionState
+        public override Task<State> ExecutionState()
         {
-            get
+            if (Target.UserCsrBytes != null)
             {
-                if (Target.UserCsrBytes != null)
-                {
-                    return State.DisabledState("Renewals sourced from a custom CSR cannot be split up");
-                }
-                if (!Target.Parts.Any(p => p.SiteId > 0))
-                {
-                    return State.DisabledState("No site information included in source");
-                }
-                return State.EnabledState();
+                return Task.FromResult(State.DisabledState("Renewals sourced from a custom CSR cannot be split up"));
             }
-        }    
+            if (!Target.Parts.Any(p => p.SiteId > 0))
+            {
+                return Task.FromResult(State.DisabledState("No site information included in source"));
+            }
+            return Task.FromResult(State.EnabledState());
+        }
     }
 }

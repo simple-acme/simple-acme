@@ -122,11 +122,22 @@ namespace PKISharp.WACS.Configuration.Settings
                             AccessControlType.Allow));
                 }
                 di.SetAccessControl(acl);
-                log.Warning($"...done. You may manually add specific trusted accounts to the ACL.");
+                if (!created)
+                {
+                    log.Warning($"...done. You may manually add specific trusted accounts to the ACL.");
+                }          
             }
             catch (Exception ex)
             {
-                log.Error(ex, $"...failed, please take this step manually.");
+                if (!created)
+                {
+                    log.Error(ex, $"...failed, please take this step manually.");
+                }
+                else
+                {
+                    log.Error(ex, $"Error setting up folder ACL, please review the ACL manually.");
+                }
+
             }
         }
 

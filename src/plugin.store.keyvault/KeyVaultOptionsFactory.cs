@@ -2,6 +2,7 @@
 using PKISharp.WACS.Plugins.Azure.Common;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Serialization;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -17,8 +18,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             Required();
 
         private ArgumentResult<string?> CertificateName => arguments.
-            GetString<KeyVaultArguments>(a => a.CertificateName).
-            Required();
+            GetString<KeyVaultArguments>(a => a.CertificateName);
+
+        private ArgumentResult<ProtectedString?> CertificatePassword => arguments.
+            GetProtectedString<KeyVaultArguments>(a => a.CertificatePassword);
 
         public override async Task<KeyVaultOptions?> Aquire(IInputService input, RunLevel runLevel)
         {
@@ -27,6 +30,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             await common.Aquire(options, input);
             options.VaultName = await VaultName.Interactive(input).GetValue();
             options.CertificateName = await CertificateName.Interactive(input).GetValue();
+            options.CertificatePassword = await CertificatePassword.Interactive(input).GetValue();
             return options;
         }
 
@@ -37,6 +41,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             await common.Default(options);
             options.VaultName = await VaultName.GetValue();
             options.CertificateName = await CertificateName.GetValue();
+            options.CertificatePassword = await CertificatePassword.GetValue();
             return options;
         }
 

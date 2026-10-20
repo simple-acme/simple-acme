@@ -60,17 +60,21 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public async Task<StoreInfo?> Save(ICertificateInfo input)
+        public async Task<StoreInfo?> Save(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo)
         {
             try
             {
-                var dest = PathForIdentifier(_name ?? input.CommonName?.Value ?? input.SanNames.First().Value);
+                var fileName = string.IsNullOrEmpty(_name) ?
+                    input.CommonName?.Value ?? input.SanNames.First().Value :
+                    friendlyNameInfo.GetIntermediate(_name);
+                var dest = PathForIdentifier(fileName);
                 var data = input.AsCollection(X509KeyStorageFlags.EphemeralKeySet, _log, _settings).Export(X509ContentType.Pkcs7) ?? throw new Exception();
                 var fi = new FileInfo(dest);
                 using var fs = fi.Open(FileMode.Create);
                 using var stream = new MemoryStream(data);
                 await stream.CopyToAsync(fs);
                 await fs.FlushAsync();
+                _log.Information("Updated {fi}", fi.FullName);
             }
             catch (Exception ex)
             {
@@ -83,6 +87,6 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             };
         }
 
-        public Task Delete(ICertificateInfo input) => Task.CompletedTask;
+        public Task Delete(ICertificateInfo input, IFriendlyNameInfo friendlyNameInfo) => Task.CompletedTask;
     }
 }

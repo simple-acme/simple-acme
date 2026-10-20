@@ -49,7 +49,7 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         private static string GetPluginType(Plugin plugin)
         {
-            var ret = plugin.Step.ToString().ToLower();
+            var ret = plugin.Step.ToString().ToLowerInvariant();
             if (plugin.Step == Steps.Validation)
             {
                 var validationType = GetValidationType(plugin);
@@ -76,7 +76,7 @@ namespace PKISharp.WACS.Services
                     x.AppendLine($" name: {provider.Name}");
                     if (provider.Plugin != null)
                     {
-                        x.AppendLine($" pluginid: \"{provider.Plugin.Id.ToString().ToLower()}\"");
+                        x.AppendLine($" pluginid: \"{provider.Plugin.Id.ToString().ToLowerInvariant()}\"");
                         x.AppendLine($" plugintype: \"{GetPluginType(provider.Plugin)}\"");
                     }
                     if (provider.Condition != null)
@@ -118,8 +118,8 @@ namespace PKISharp.WACS.Services
             {
                 x.AppendLine($"-");
                 x.AppendLine($" name: \"{EscapeYaml(plugin.Name)}\"");
-                x.AppendLine($" id: {plugin.Id.ToString().ToLower()}");
-                x.AppendLine($" trigger: {plugin.Trigger.ToLower()}");
+                x.AppendLine($" id: {plugin.Id.ToString().ToLowerInvariant()}");
+                x.AppendLine($" trigger: {plugin.Trigger.ToLowerInvariant()}");
                 if (plugin.External == true)
                 {
                     x.AppendLine($" external: true");
@@ -326,7 +326,7 @@ namespace PKISharp.WACS.Services
                 {
                     continue;
                 }
-                metaBuilder.AppendLine($"{member.Name.ToLower()}:");
+                metaBuilder.AppendLine($"{member.Name.ToLowerInvariant()}:");
                 GenerateSettingsYamlForType2(member.PropertyType, member.Name, metaBuilder);
             }
             File.WriteAllText("settings2.yml", metaBuilder.ToString());
@@ -350,7 +350,7 @@ namespace PKISharp.WACS.Services
                 {
                     if (meta?.Split == true)
                     {
-                        x.AppendLine($"{member.Name.ToLower()}:");
+                        x.AppendLine($"{member.Name.ToLowerInvariant()}:");
                     }
                     GenerateSettingsYamlForType2(member.PropertyType, $"{prefix}.{member.Name}", x);
                 }

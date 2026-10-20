@@ -15,6 +15,7 @@ namespace PKISharp.WACS.Clients.Acme
         public required string Algorithm { get; init; }
         public required string KeyIdentifier { get; init; }
         public required string Key { get; init; }
+        public string? Contact { get; init; }
     }
 
     internal class AcmeCredentialReader
@@ -109,14 +110,20 @@ namespace PKISharp.WACS.Clients.Acme
         private async Task<EabCredential?> ZeroSslEmailRegistration(RunLevel runLevel)
         {
             var registration = await GetContacts(runLevel, zeroSsl: true);
-            var eab = await _zeroSsl.Register(registration.FirstOrDefault() ?? "");
+            if (registration.Length == 0)
+            {
+                return null;
+            }
+            var email = registration.First();
+            var eab = await _zeroSsl.Register(email);
             if (eab?.Success == true && eab.Kid != null && eab.Hmac != null)
             {
                 return new EabCredential()
                 {
                     KeyIdentifier = eab.Kid,
                     Key = eab.Hmac,
-                    Algorithm = "HS256"
+                    Algorithm = "HS256",
+                    Contact = "mailto:" + email
                 };
             }
             _log.Error("Unable to retrieve EAB credentials using the provided email address");
