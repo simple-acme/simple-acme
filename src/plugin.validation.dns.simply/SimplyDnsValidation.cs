@@ -73,7 +73,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             var client = await GetClient();
             var products = await client.GetAllProducts();
-            var product = FindBestMatch(products.ToDictionary(x => x.Domain?.NameIdn ?? "", x => x), recordName);
+            var byIdn = products
+                .Where(p => !string.IsNullOrEmpty(p.Domain?.NameIdn))
+                .GroupBy(p => p.Domain!.NameIdn!)
+                .ToDictionary(g => g.Key, g => g.First());
+            var product = FindBestMatch(byIdn, recordName);
             return product is null ? throw new Exception($"Unable to find product for record '{recordName}'") : product;
         }
     }
