@@ -266,7 +266,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             httpClient.BaseAddress = uri;
             if (uri.UserInfo != null)
             {
-                var authInfo = Convert.ToBase64String(Encoding.ASCII.GetBytes(uri.UserInfo));
+                var authInfo = Convert.ToBase64String(Encoding.ASCII.GetBytes(Uri.UnescapeDataString(uri.UserInfo)));
                 var authHeader = new AuthenticationHeaderValue("Basic", authInfo);
                 httpClient.DefaultRequestHeaders.Authorization = authHeader;
             }
