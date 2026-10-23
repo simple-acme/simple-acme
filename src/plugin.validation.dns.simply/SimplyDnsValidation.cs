@@ -26,8 +26,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         SimplyOptions options) : DnsValidation<SimplyDnsValidation, SimplyDnsClient>(dnsClient, logService, settings, proxyService)
     {
         protected override async Task<SimplyDnsClient> CreateClient(HttpClient httpClient) =>
-            new (options.Account ?? "",
-                await ssm.EvaluateSecret(options.ApiKey) ?? "",
+            new (await ssm.EvaluateSecret(options.ApiKey) ?? "",
                 httpClient);
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)

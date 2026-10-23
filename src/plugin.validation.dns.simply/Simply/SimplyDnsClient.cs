@@ -15,10 +15,10 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Simply
         private readonly HttpClient _httpClient;
         private readonly string _baseUrl = "https://api.simply.com/2";
 
-        public SimplyDnsClient(string account, string apiKey, HttpClient httpClient)
+        public SimplyDnsClient(string apiKey, HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", EncodeBasicAuth(account, apiKey));
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         }
 
         public async Task<List<Product>> GetAllProducts()
@@ -86,11 +86,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Simply
                 throw new InvalidOperationException();
             }
             return records.Records;
-        }
-
-        private static string EncodeBasicAuth(string account, string apiKey)
-        {
-            return Convert.ToBase64String(Encoding.UTF8.GetBytes(WebUtility.UrlEncode(account) + ":" + WebUtility.UrlEncode(apiKey)));
         }
     }
 }
