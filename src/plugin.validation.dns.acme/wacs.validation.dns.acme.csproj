@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\main.lib\wacs.lib.csproj" />
+    <InternalsVisibleTo Include="wacs.test" />
   </ItemGroup>
 
 </Project>
