@@ -12,10 +12,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     /// </summary>
     internal class SimplyOptionsFactory(ArgumentsInputService arguments) : PluginOptionsFactory<SimplyOptions>
     {
-        private ArgumentResult<string?> Account => arguments.
-            GetString<SimplyArguments>(a => a.Account).
-            Required();
-
         private ArgumentResult<ProtectedString?> ApiKey => arguments.
             GetProtectedString<SimplyArguments>(a => a.ApiKey).
             Required();
@@ -24,7 +20,6 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new SimplyOptions()
             {
-                Account = await Account.Interactive(input).GetValue(),
                 ApiKey = await ApiKey.Interactive(input).GetValue()
             };
         }
@@ -33,14 +28,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         {
             return new SimplyOptions()
             {
-                Account = await Account.GetValue(),
                 ApiKey = await ApiKey.GetValue()
             };
         }
 
         public override IEnumerable<(CommandLineAttribute, object?)> Describe(SimplyOptions options)
         {
-            yield return (Account.Meta, options.Account);
             yield return (ApiKey.Meta, options.ApiKey);
         }
     }

@@ -26,8 +26,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         SimplyOptions options) : DnsValidation<SimplyDnsValidation, SimplyDnsClient>(dnsClient, logService, settings, proxyService)
     {
         protected override async Task<SimplyDnsClient> CreateClient(HttpClient httpClient) =>
-            new (options.Account ?? "",
-                await ssm.EvaluateSecret(options.ApiKey) ?? "",
+            new (await ssm.EvaluateSecret(options.ApiKey) ?? "",
                 httpClient);
 
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
@@ -74,7 +73,11 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             var client = await GetClient();
             var products = await client.GetAllProducts();
-            var product = FindBestMatch(products.ToDictionary(x => x.Domain?.NameIdn ?? "", x => x), recordName);
+            var byIdn = products
+                .Where(p => !string.IsNullOrEmpty(p.Domain?.NameIdn))
+                .GroupBy(p => p.Domain!.NameIdn!)
+                .ToDictionary(g => g.Key, g => g.First());
+            var product = FindBestMatch(byIdn, recordName);
             return product is null ? throw new Exception($"Unable to find product for record '{recordName}'") : product;
         }
     }
