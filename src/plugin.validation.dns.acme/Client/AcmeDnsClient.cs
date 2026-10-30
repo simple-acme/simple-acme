@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.Clients.DNS;
+using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Services;
 using System;
@@ -19,14 +20,19 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         private readonly ILogService _log;
         private readonly string _dnsConfigPath;
         private readonly Uri _baseUri;
+        private readonly NetworkCredentialOptions? _credential;
+        private readonly SecretServiceManager _secretService;
         private readonly IInputService? _input;
         private readonly ISettings _settings;   
 
         public AcmeDnsClient(LookupClientProvider dnsClient, IProxyService proxy, ILogService log,
-                             ISettings settings, IInputService? input, Uri baseUri)
+                             ISettings settings, IInputService? input, Uri baseUri,
+                             NetworkCredentialOptions? credential, SecretServiceManager secretService)
         {
             _settings = settings;
             _baseUri = baseUri;
+            _credential = credential;
+            _secretService = secretService;
             _proxy = proxy;
             _dnsClient = dnsClient;
             _log = log;
@@ -264,9 +270,23 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
             var httpClient = await _proxy.GetHttpClient();
             var uri = _baseUri;
             httpClient.BaseAddress = uri;
-            if (uri.UserInfo != null)
+            string? userInfo = null;
+            if (_credential != null)
             {
-                var authInfo = Convert.ToBase64String(Encoding.ASCII.GetBytes(Uri.UnescapeDataString(uri.UserInfo)));
+                if (string.IsNullOrWhiteSpace(_credential.UserName) || _credential.UserName.Contains(':'))
+                {
+                    throw new ArgumentException("Basic Authentication requires a username without ':'.");
+                }
+                var credential = await _credential.GetCredential(_secretService);
+                userInfo = $"{credential.UserName}:{credential.Password}";
+            }
+            else if (!string.IsNullOrEmpty(uri.UserInfo))
+            {
+                userInfo = Uri.UnescapeDataString(uri.UserInfo);
+            }
+            if (userInfo != null)
+            {
+                var authInfo = Convert.ToBase64String(Encoding.UTF8.GetBytes(userInfo));
                 var authHeader = new AuthenticationHeaderValue("Basic", authInfo);
                 httpClient.DefaultRequestHeaders.Authorization = authHeader;
             }
