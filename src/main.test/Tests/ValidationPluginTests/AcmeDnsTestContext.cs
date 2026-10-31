@@ -4,6 +4,7 @@ using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Configuration.Settings.Types;
 using PKISharp.WACS.Configuration.Settings.Types.Validation;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Services;
@@ -61,7 +62,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
         {
             var parser = new ArgumentsParser(Log, Assemblies.Value, args);
             var arguments = new ArgumentsInputService(Log, parser, Input, Secrets);
-            return new AcmeOptionsFactory(target ?? new Target(null, (Identifier?)null, []),
+            return new AcmeOptionsFactory(target ?? new Target(null, null, []),
                 null!, Log, Settings, Proxy, Secrets, arguments);
         }
 
