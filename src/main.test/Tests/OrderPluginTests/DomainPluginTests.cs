@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.OrderPlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
@@ -15,7 +16,7 @@ namespace PKISharp.WACS.UnitTests.Tests.OrderPluginTests
         public void DomainSplit()
         {
             var parts = new TargetPart[] { new([new DnsIdentifier("x.com")]) };
-            var target = new Target("x.com", "x.com", parts);
+            var target = new Target("x.com", new DnsIdentifier("x.com"), parts);
             var renewal = new Renewal();
             var container = MockContainer.TestScope().BeginLifetimeScope(x => x.RegisterType<Domain>());
             var dps = container.Resolve<DomainParseService>();

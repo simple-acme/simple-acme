@@ -63,8 +63,8 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         [DataRow("", true, "default", "default", DisplayName = "AllowEmptyMissing")]
         [DataRow("--pfxpassword", true, "default", "", DisplayName = "AllowEmptyNull")]
         [DataRow("--pfxpassword \"\"", true, "default", "", DisplayName = "AllowEmptyEmpty")]
-        [DataRow("--pfxpassword", false, "default", "default", DisplayName = "AllowEmptyNull")]
-        [DataRow("--pfxpassword \"\"", false, "default", "default", DisplayName = "AllowEmptyEmpty")]
+        [DataRow("--pfxpassword", false, "default", "default", DisplayName = "AllowEmptyNull2")]
+        [DataRow("--pfxpassword \"\"", false, "default", "default", DisplayName = "AllowEmptyEmpty2")]
         public void SecretWithDefault(string commandLine, bool allowEmpty, string defaultValue, string? output)
         {
             var container = MockContainer.TestScope(commandLine: commandLine);

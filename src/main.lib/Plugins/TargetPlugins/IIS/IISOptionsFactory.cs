@@ -1,6 +1,8 @@
 ﻿using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
+using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
@@ -212,7 +214,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             } 
 
             // Now the common name
-            if (filtered.Select(x => x.HostUnicode).Distinct().Count() > 1)
+            if (filtered.Select(x => x.Host.Unicode).Distinct().Count() > 1)
             {
                 await InputCommonName(input, filtered, options);
             }
@@ -290,7 +292,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                     {
                         if (id > 0 && id <= sorted.Count)
                         {
-                            return sorted[id - 1].HostUnicode;
+                            return sorted[id - 1].Host.Unicode;
                         }
                     }
                     return x;
@@ -306,9 +308,9 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                 "Please pick the main host, which will be presented as the subject of the certificate",
                 sorted,
                 (x) => Choice.Create(x, 
-                        description: x.HostUnicode, 
+                        description: x.Host.Unicode, 
                         @default: sorted.IndexOf(x) == 0));
-            ParseCommonName(common.HostUnicode, filtered.Select(x => x.HostUnicode), options);
+            ParseCommonName(common.Host.Unicode, filtered.Select(x => x.Host.Unicode), options);
         }
 
         /// <summary>
@@ -398,7 +400,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         private IEnumerable<IISHelper.IISBindingOption> SortBindings(IEnumerable<IISHelper.IISBindingOption> bindings)
         {
             return bindings.
-                OrderBy(x => x.HostUnicode, new HostnameSorter(iisHelper.DomainParser)).
+                OrderBy(x => x.Host.Unicode, new HostnameSorter(iisHelper.DomainParser)).
                 ThenBy(x => x.SiteId);
         }
 
@@ -420,7 +422,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
 
         private static ConsoleColor? BindingColor(IISHelper.IISBindingOption binding, string? highlight = null)
         {
-            if (binding.HostUnicode == highlight) 
+            if (binding.Host.Unicode == highlight) 
             {
                 return ConsoleColor.Green;
             }
@@ -524,7 +526,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             var common = await CommonName.GetValue();
             if (common != null)
             {
-                if (!ParseCommonName(common, filtered.Select(x => x.HostUnicode), options))
+                if (!ParseCommonName(common, filtered.Select(x => x.Host.Unicode), options))
                 {
                     return null;
                 }
@@ -546,14 +548,14 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             Func<List<string>?> get,
             Action<List<string>> set)
         {
-            var specifiedHosts = input.ParseCsv();
+            var specifiedHosts = input.ParseCsv()?.Select(x => HostName.Parse(x));
             if (specifiedHosts != null)
             {
                 var filteredBindings = iisHelper.FilterBindings(allBindings, options);
                 foreach (var specifiedHost in specifiedHosts)
                 {
-                    var filteredBinding = filteredBindings.FirstOrDefault(x => x.HostUnicode == specifiedHost || x.HostPunycode == specifiedHost);
-                    var binding = allBindings.FirstOrDefault(x => x.HostUnicode == specifiedHost || x.HostPunycode == specifiedHost);
+                    var filteredBinding = filteredBindings.FirstOrDefault(x => x.Host == specifiedHost);
+                    var binding = allBindings.FirstOrDefault(x => x.Host == specifiedHost);
                     if (filteredBinding != null)
                     {
                         var list = get();
@@ -562,7 +564,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                             list = [];
                             set(list);
                         }
-                        list.Add(filteredBinding.HostUnicode);
+                        list.Add(filteredBinding.Host.Unicode);
                     }
                     else if (binding != null)
                     {

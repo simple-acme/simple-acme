@@ -6,6 +6,7 @@ using ACMESharp.Protocol.Resources;
 using Org.BouncyCastle.Asn1.X509;
 using PKISharp.WACS.Context;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
@@ -92,7 +93,11 @@ namespace PKISharp.WACS.Clients.Acme
                     IdentifierType.IpAddress => "ip", // rfc8738
                     _ => throw new NotImplementedException($"Identifier {i.Type} is not supported")
                 },
-                Value = i.Value
+                Value = i switch
+                {
+                    DnsIdentifier dns => dns.Host.Punycode,
+                    _ => i.Value
+                }
             });
             // Only include the "replaces" field on the order
             // when the server indicates that it supports ARI.

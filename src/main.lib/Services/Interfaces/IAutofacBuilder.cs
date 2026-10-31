@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins;
 using PKISharp.WACS.Plugins.Base;
 using PKISharp.WACS.Plugins.Base.Options;

@@ -1,5 +1,6 @@
 ﻿using ACMESharp.Protocol.Resources;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 
 namespace PKISharp.WACS.Context
 {
@@ -8,6 +9,6 @@ namespace PKISharp.WACS.Context
         public AcmeAuthorization Authorization { get; internal set; } = authorization;
         public OrderContext Order { get; } = order;
         public string Uri { get; } = uri;
-        public string Label { get; } = Identifier.Parse(authorization).Unicode(true).Value;
+        public string Label { get; } = Identifier.Parse(authorization).Value;
     }
 }

@@ -1,12 +1,15 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.TargetPlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
+using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
 {
@@ -70,6 +73,12 @@ ZkoLUgEWU5OcCkq5AIpmloeaCTC/vKrlS5M3BvjEmQ==
         [TestMethod]
         public void ScriptReceivesArguments()
         {
+            if (!OperatingSystem.IsLinux())
+            { 
+                Assert.Inconclusive("This test is only supported on Linux");
+                return;
+            }
+                
             var tempFile = Path.GetTempFileName() + ".sh";
             try
             {

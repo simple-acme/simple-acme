@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -22,7 +23,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
             var parts = new Dictionary<string, List<TargetPart>>();
             foreach (var part in target.Parts)
             {
-                foreach (var host in part.GetIdentifiers(true))
+                foreach (var host in part.GetIdentifiers())
                 {
                     var domain = host.Value;
                     switch (host)
@@ -34,7 +35,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
                             log.Warning("Unsupported identifier type {type}", host.Type);
                             break;
                     }
-                    var sourceParts = target.Parts.Where(p => p.GetIdentifiers(true).Contains(host));
+                    var sourceParts = target.Parts.Where(p => p.GetIdentifiers().Contains(host));
                     if (!ret.ContainsKey(domain))
                     {
                         var filteredParts = sourceParts.Select(p =>
@@ -42,9 +43,10 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
                                 SiteId = p.SiteId, 
                                 SiteType = p.SiteType 
                             }).ToList();
+                    
                         var newTarget = new Target(
                             target.FriendlyName,
-                            host.Value.Length <= Constants.MaxCommonName ? host : null,
+                            host is DnsIdentifier dns && dns.Host.IsCommon ? dns : null,
                             filteredParts);
                         var newOrder = new Order(
                             renewal, 

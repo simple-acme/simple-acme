@@ -1,5 +1,6 @@
 ﻿using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.X509;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.IO;
@@ -34,7 +35,7 @@ namespace PKISharp.WACS.DomainObjects
         public X509Certificate Certificate => _inner.Certificate;
         public IEnumerable<X509Certificate> Chain => _inner.Chain;
         public PfxWrapper Collection => _inner.Collection;
-        public Identifier? CommonName => _inner.CommonName;
+        public DnsIdentifier? CommonName => _inner.CommonName;
         public AsymmetricKeyParameter? PrivateKey => _inner.PrivateKey;
         public IEnumerable<Identifier> SanNames => _inner.SanNames;
         public string FriendlyName => _inner.FriendlyName;

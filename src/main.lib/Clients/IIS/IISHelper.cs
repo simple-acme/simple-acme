@@ -1,4 +1,6 @@
-﻿using PKISharp.WACS.Extensions;
+﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
+using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.TargetPlugins;
 using PKISharp.WACS.Services;
 using System;
@@ -11,40 +13,37 @@ namespace PKISharp.WACS.Clients.IIS
 {
     internal class IISHelper(ILogService log, IIISClient iisClient, DomainParseService domainParser)
     {
-        internal class IISBindingOption(string hostUnicode, string hostPunycode)
+        internal class IISBindingOption(HostName Host)
         {
             public long SiteId { get; set; }
             public IISSiteType SiteType { get; set; }
             public bool Secure { get; set; }
-            public bool Wildcard => HostUnicode.StartsWith("*.");
-            public string HostUnicode { get; private set; } = hostUnicode;
-            public string HostPunycode { get; private set; } = hostPunycode;
             public int Port { get; set; }
             public string? Protocol { get; set; }
+            public HostName Host { get; set; } = Host;
 
             public override string ToString()
             {
                 if ((Protocol == "http" && Port != 80) ||
                     (Protocol == "https" && Port != 443))
                 {
-                    return $"{HostUnicode}:{Port} (Site {SiteId}, {Protocol})";
+                    return $"{Host.Unicode}:{Port} (Site {SiteId}, {Protocol})";
                 }
-                return $"{HostUnicode} (Site {SiteId})";
+                return $"{Host.Unicode} (Site {SiteId})";
             }
         }
 
-        internal class IISSiteOption(string name, IEnumerable<string> hosts)
+        internal class IISSiteOption(string name, IEnumerable<HostName> hosts)
         {
             public long Id { get; set; }
             public IISSiteType SiteType { get; set; }
             public string Name { get; } = name;
             public bool Secure { get; set; }
-            public List<string> Hosts { get; } = hosts.ToList();
+            public List<string> Hosts { get; } = hosts.Select(x => x.Unicode).ToList();
         }
 
         public const string WebTypeFilter = "http";
         public const string FtpTypeFilter = "ftp";
-        private readonly IdnMapping _idnMapping = new();
         internal DomainParseService DomainParser { get; } = domainParser;
 
         internal List<IISBindingOption> GetBindings()
@@ -63,7 +62,7 @@ namespace PKISharp.WACS.Clients.IIS
             log.Debug("Scanning IIS bindings for host names");
             var siteBindings = sites.
                 SelectMany(site => site.Bindings, (site, binding) => new { site, binding }).
-                Where(sb => !string.IsNullOrWhiteSpace(sb.binding.Host)).
+                Where(sb => !sb.binding.Host.IsEmtpy).
                 ToList();
 
             static string lookupKey(IIISSite site, IIISBinding binding) =>
@@ -74,19 +73,19 @@ namespace PKISharp.WACS.Clients.IIS
                 .Where(sb =>
                     sb.binding.Secure ||
                     sb.site.Bindings.Any(other =>
-                        other.Secure &&
-                        string.Equals(sb.binding.Host, other.Host, StringComparison.InvariantCultureIgnoreCase)))
+                        other.Secure && 
+                        sb.binding.Host == other.Host))
                 .ToDictionary(sb => lookupKey(sb.site, sb.binding));
 
             var targets = siteBindings.
                 Select(sb => new
                 {
-                    host = sb.binding.Host.ToLower(),
+                    host = sb.binding.Host,
                     sb.site,
                     sb.binding,
                     secure = secure.ContainsKey(lookupKey(sb.site, sb.binding))
                 }).
-                Select(sbi => new IISBindingOption(sbi.host, _idnMapping.GetAscii(sbi.host))
+                Select(sbi => new IISBindingOption(sbi.host)
                 {
                     SiteId = sbi.site.Id,
                     SiteType = sbi.site.Type,
@@ -94,7 +93,7 @@ namespace PKISharp.WACS.Clients.IIS
                     Protocol = sbi.binding.Protocol,
                     Secure = sbi.secure
                 }).
-                DistinctBy(t => t.HostUnicode + "@" + t.SiteId).
+                DistinctBy(t => t.Host.Unicode + "@" + t.SiteId).
                 ToList();
 
             return targets;
@@ -125,7 +124,7 @@ namespace PKISharp.WACS.Clients.IIS
                     binding.Secure ||
                     site.Bindings.Any(other =>
                         other.Secure &&
-                        string.Equals(other.Host, binding.Host, StringComparison.InvariantCultureIgnoreCase)))).ToList();
+                        other.Host == binding.Host))).ToList();
 
             var targets = sites.
                 Select(site => new IISSiteOption(site.Name, GetHosts(site))
@@ -183,7 +182,8 @@ namespace PKISharp.WACS.Clients.IIS
             // Remove exlusions
             if (options.ExcludeHosts != null && options.ExcludeHosts.Count != 0)
             {
-                bindings = bindings.Where(x => !options.ExcludeHosts.Contains(x.HostUnicode)).ToList();
+                var excludes = options.ExcludeHosts.Select(HostName.Parse).ToList();
+                bindings = [.. bindings.Where(x => !excludes.Contains(x.Host))];
                 log.Verbose("{0} named bindings remaining after explicit exclusions", bindings.Count);
             }
 
@@ -194,8 +194,8 @@ namespace PKISharp.WACS.Clients.IIS
 
         internal static bool Matches(IISBindingOption binding, Regex regex)
         {
-            return regex.IsMatch(binding.HostUnicode)
-                || regex.IsMatch(binding.HostPunycode);
+            return regex.IsMatch(binding.Host.Unicode)
+                || regex.IsMatch(binding.Host.Punycode);
         }
 
         internal static string HostsToRegex(IEnumerable<string> hosts) =>
@@ -218,12 +218,6 @@ namespace PKISharp.WACS.Clients.IIS
             return null;
         }
 
-        private static List<string> GetHosts(IIISSite site)
-        {
-            return site.Bindings.Select(x => x.Host.ToLower()).
-                            Where(x => !string.IsNullOrWhiteSpace(x)).
-                            Distinct().
-                            ToList();
-        }
+        private static List<HostName> GetHosts(IIISSite site) => [.. site.Bindings.Select(x => x.Host).Where(x => !x.IsEmtpy).Distinct()];
     }
 }

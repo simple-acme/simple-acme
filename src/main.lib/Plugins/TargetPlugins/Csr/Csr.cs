@@ -4,6 +4,7 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
 using PKISharp.WACS.Clients;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
@@ -13,6 +14,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using GeneralName = Org.BouncyCastle.Asn1.X509.GeneralName;
+using GeneralNames = Org.BouncyCastle.Asn1.X509.GeneralNames;
 
 namespace PKISharp.WACS.Plugins.TargetPlugins
 {
@@ -45,7 +48,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
  
             // Parse CSR data and extract identifiers
             List<Identifier> alternativeNames;
-            Identifier commonName;
+            DnsIdentifier commonName;
             byte[] csrBytes;
             try
             {
@@ -153,14 +156,14 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        private static Identifier ParseCn(CertificationRequestInfo info)
+        private static DnsIdentifier ParseCn(CertificationRequestInfo info)
         {
             var subject = info.Subject;
             var cnValue = subject.GetValueList(new DerObjectIdentifier("2.5.4.3"));
             if (cnValue.Count > 0)
             {
                 var name = cnValue.Cast<string>().ElementAt(0);
-                return new DnsIdentifier(name).Unicode(true);
+                return new DnsIdentifier(name);
             } 
             else
             {
@@ -200,10 +203,10 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                 return ret;
             }
             var asn1object = Asn1Object.FromByteArray(derOctetString.GetOctets());
-            var names = Org.BouncyCastle.Asn1.X509.GeneralNames.GetInstance(asn1object);
-            return names.GetNames().Select(x => x.TagNo switch {
+            var names = GeneralNames.GetInstance(asn1object);
+            return names.GetNames().Select<GeneralName, Identifier>(x => x.TagNo switch {
                 1 => new EmailIdentifier(x.Name.ToString()!),
-                2 => new DnsIdentifier(x.Name.ToString()!).Unicode(true),
+                2 => new DnsIdentifier(x.Name.ToString()!),
                 7 => new IpIdentifier(x.Name.ToString()!),
                 _ => new UnknownIdentifier(x.Name.ToString()!)
             });

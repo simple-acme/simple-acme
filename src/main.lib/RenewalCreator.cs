@@ -5,6 +5,7 @@ using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Configuration.Settings.Types;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins;
 using PKISharp.WACS.Plugins.Base;

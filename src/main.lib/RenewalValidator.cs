@@ -3,6 +3,7 @@ using Autofac;
 using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.Context;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Plugins.ValidationPlugins.Any;
@@ -121,7 +122,7 @@ namespace PKISharp.WACS
             var plugin = validationScope.Resolve<IValidationPlugin>();
             var contexts = authorizations.Select(context =>
             {
-                var targetPart = context.Order.Target.Parts.FirstOrDefault(p => p.Identifiers.Any(i => i == Identifier.Parse(context.Authorization).Unicode(true))) ?? throw new InvalidOperationException("Authorisation found that doesn't match target");
+                var targetPart = context.Order.Target.Parts.FirstOrDefault(p => p.Identifiers.Any(i => i == Identifier.Parse(context.Authorization))) ?? throw new InvalidOperationException("Authorisation found that doesn't match target");
                 var pluginMeta = _plugin.GetPlugin(pluginOptions);
                 return new ValidationContextParameters(context, targetPart, pluginOptions, pluginMeta);
             }).ToList();

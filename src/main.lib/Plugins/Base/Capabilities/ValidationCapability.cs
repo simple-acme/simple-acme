@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Interfaces;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
         public override IEnumerable<string> ChallengeTypes => [Constants.Http01ChallengeType];
         public override Task<State> ExecutionState() => ConfigurationState();
         public override Task<State> ConfigurationState() => 
-            Target.GetIdentifiers(false).Any(x => x.Value.StartsWith("*.")) ? 
+            Target.GetIdentifiers().Any(x => x is DnsIdentifier dns && dns.Host.IsWildcard) ? 
             Task.FromResult(State.DisabledState("HTTP validation cannot be used for wildcard identifiers (e.g. *.example.com)")) : 
             Task.FromResult(State.EnabledState());
     }
@@ -40,7 +41,7 @@ namespace PKISharp.WACS.Plugins.Base.Capabilities
         public override IEnumerable<string> ChallengeTypes => [Constants.TlsAlpn01ChallengeType];
         public override Task<State> ExecutionState() => ConfigurationState();
         public override Task<State> ConfigurationState() =>
-            Target.GetIdentifiers(false).Any(x => x.Value.StartsWith("*.")) ?
+            Target.GetIdentifiers().Any(x => x is DnsIdentifier dns && dns.Host.IsWildcard) ?
             Task.FromResult(State.DisabledState("TLS-ALPN validation cannot be used for wildcard identifiers (e.g. *.example.com)")) :
             Task.FromResult(State.EnabledState());
     }
