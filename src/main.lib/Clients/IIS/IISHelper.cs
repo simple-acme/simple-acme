@@ -183,7 +183,8 @@ namespace PKISharp.WACS.Clients.IIS
             // Remove exlusions
             if (options.ExcludeHosts != null && options.ExcludeHosts.Count != 0)
             {
-                bindings = [.. bindings.Where(x => !options.ExcludeHosts.Contains(x.Host.Unicode))];
+                var excludes = options.ExcludeHosts.Select(HostName.Parse).ToList();
+                bindings = [.. bindings.Where(x => !excludes.Contains(x.Host))];
                 log.Verbose("{0} named bindings remaining after explicit exclusions", bindings.Count);
             }
 
