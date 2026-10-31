@@ -20,7 +20,7 @@ namespace PKISharp.WACS.DomainObjects
             {
                 throw new ArgumentException("Should not be an empty collection", nameof(identifiers));
             }
-            CommonName = identifiers.OfType<DnsIdentifier>().FirstOrDefault(x => x.Value.Length <= Constants.MaxCommonName);
+            CommonName = identifiers.OfType<DnsIdentifier>().FirstOrDefault(x => x.Host.IsCommon);
             FriendlyName = CommonName?.Value ?? identifiers.First().Value;
             Parts = [new TargetPart(identifiers)];
         }
