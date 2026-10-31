@@ -23,7 +23,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
                 var commonName = target.CommonName;
                 if (commonName != null && !part.Identifiers.Contains(commonName))
                 {
-                    commonName = part.Identifiers.OfType<DnsIdentifier>().FirstOrDefault(x => x.Value.Length <= Constants.MaxCommonName);
+                    commonName = part.Identifiers.OfType<DnsIdentifier>().FirstOrDefault(x => x.Host.IsCommon);
                 }
                 var newTarget = new Target(
                     target.FriendlyName,
