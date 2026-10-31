@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
@@ -47,12 +48,12 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             }
 
             // Handle common name
-            var cn = options.CommonName ?? "";
-            var cnDefined = !string.IsNullOrWhiteSpace(cn);
+            var cn = HostName.Parse(options.CommonName);
+            var cnDefined = !cn.IsEmpty;
             var cnBinding = default(IISHelper.IISBindingOption); 
             if (cnDefined)
             {
-                cnBinding = filteredBindings.FirstOrDefault(x => x.HostUnicode == cn);
+                cnBinding = filteredBindings.FirstOrDefault(x => x.Host == cn);
             }
             var cnValid = cnDefined && cnBinding != null;
             if (cnDefined && !cnValid)
@@ -96,7 +97,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                 var host = default(string);
                 if (cnBinding != null)
                 {
-                    host = cnBinding.HostUnicode;
+                    host = cnBinding.Host.Unicode;
                 }
                 host ??= options.IncludeHosts.First();
                 friendlyNameSuggestion += $" - {host}";
@@ -118,17 +119,15 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             // Return result
             var commonName = cnValid ? 
                 cn : 
-                filteredBindings.
-                    FirstOrDefault(x => x.HostUnicode.Length <= Constants.MaxCommonName)?.
-                    HostUnicode;
+                filteredBindings.FirstOrDefault(x => x.Host.IsCommon)?.Host;
             var parts = filteredBindings.
                 GroupBy(x => x.SiteId).
-                Select(group => new TargetPart(group.Select(x => new DnsIdentifier(x.HostUnicode)))
+                Select(group => new TargetPart(group.Select(x => new DnsIdentifier(x.Host)))
                 {
                     SiteId = group.Key,
                     SiteType = group.First().SiteType
                 });
-            return Task.FromResult<Target?>(new Target(friendlyNameSuggestion, commonName, parts.ToList()));
+            return Task.FromResult<Target?>(new Target(friendlyNameSuggestion, commonName != null ? new DnsIdentifier(commonName) : null, [.. parts]));
         }
     }
 }

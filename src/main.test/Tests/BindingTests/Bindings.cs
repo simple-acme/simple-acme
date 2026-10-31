@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.UnitTests.Mock.Clients;
 using System;
 using System.Collections;
@@ -75,7 +76,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = "*",
                                 Port = 80,
-                                Host = httpOnlyHost,
+                                Host = HostName.Parse(httpOnlyHost),
                                 Protocol = "http"
                             }
                         ]
@@ -100,7 +101,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             Assert.HasCount(2, httpOnlySite.Bindings);
 
             var newBinding = httpOnlySite.Bindings[1];
-            Assert.AreEqual(testHost, newBinding.Host);
+            Assert.AreEqual(HostName.Parse(testHost), newBinding.Host);
             Assert.AreEqual("https", newBinding.Protocol);
             Assert.AreEqual(storeName, newBinding.CertificateStoreName);
             if (!expectedFlags.HasFlag(SSLFlags.CentralCertStore) && iisVersion > 7)
@@ -141,19 +142,19 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = "1.1.1.1",
                                 Port = 80,
-                                Host = existingHost,
+                                Host = HostName.Parse(existingHost),
                                 Protocol = "http"
                             },
                             new() {
                                 IP = "1.1.1.1",
                                 Port = 81,
-                                Host = existingHost,
+                                Host = HostName.Parse(existingHost),
                                 Protocol = "http"
                             },
                             new() {
                                 IP = "1234:1235:1235",
                                 Port = 80,
-                                Host = existingHost,
+                                Host = HostName.Parse(existingHost),
                                 Protocol = "http"
                             }
                         ]
@@ -183,7 +184,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             var newBindings = httpOnlySite.Bindings.Except(existingBindings);
             _ = newBindings.All(newBinding =>
               {
-                  Assert.AreEqual(existingHost, newBinding.Host);
+                  Assert.AreEqual(HostName.Parse(existingHost), newBinding.Host);
                   Assert.AreEqual("https", newBinding.Protocol);
                   Assert.AreEqual(storeName, newBinding.CertificateStoreName);
                   Assert.IsTrue(StructuralComparisons.StructuralEqualityComparer.Equals(newCert, newBinding.CertificateHash));
@@ -223,13 +224,13 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                 new() {
                     IP = "*",
                     Port = 80,
-                    Host = "site1.example.com",
+                    Host = HostName.Parse("site1.example.com"),
                     Protocol = "http"
                 },
                 new() {
                     IP = "*",
                     Port = 80,
-                    Host = "site2.example.com",
+                    Host = HostName.Parse("site2.example.com"),
                     Protocol = "http"
                 }
             };
@@ -283,7 +284,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                 new() {
                     IP = "*",
                     Port = 80,
-                    Host = "*.example.com",
+                    Host = HostName.Parse("*.example.com"),
                     Protocol = "http"
                 }
             };
@@ -339,7 +340,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                 new() {
                     IP = DefaultIP,
                     Port = DefaultPort,
-                    Host = "site1.example.com",
+                    Host = HostName.Parse("site1.example.com"),
                     Protocol = "https",
                     CertificateHash = scopeCert
                 }
@@ -393,7 +394,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                 new() {
                     IP = "*",
                     Port = 80,
-                    Host = "a.example.com",
+                    Host = HostName.Parse("a.example.com"),
                     Protocol = "http"
                 }
             };
@@ -451,13 +452,13 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                         new() {
                             IP = "*",
                             Port = 80,
-                            Host = regularHost,
+                            Host = HostName.Parse(regularHost),
                             Protocol = "http"
                         },
                         new() {
                             IP = AltIP,
                             Port = AltPort,
-                            Host = regularHost,
+                            Host = HostName.Parse(regularHost),
                             Protocol = "https",
                             CertificateHash = oldCert1,
                             CertificateStoreName = AltStore,
@@ -481,7 +482,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             Assert.HasCount(2, regularSite.Bindings);
 
             var updatedBinding = regularSite.Bindings[1];
-            Assert.AreEqual(regularHost, updatedBinding.Host);
+            Assert.AreEqual(HostName.Parse(regularHost), updatedBinding.Host);
             Assert.AreEqual("https", updatedBinding.Protocol);
             Assert.AreEqual(storeName, updatedBinding.CertificateStoreName);
             Assert.IsTrue(StructuralComparisons.StructuralEqualityComparer.Equals(newCert, updatedBinding.CertificateHash));
@@ -529,7 +530,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                         new() {
                             IP = AltIP,
                             Port = AltPort,
-                            Host = "host.nl",
+                            Host = HostName.Parse("host.nl"),
                             Protocol = "https",
                             CertificateHash = oldCert1,
                             CertificateStoreName = AltStore,
@@ -568,7 +569,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = inscopeHost,
+                                Host = HostName.Parse(inscopeHost),
                                 Protocol = "https",
                                 CertificateHash = scopeCert,
                                 CertificateStoreName = DefaultStore,
@@ -582,7 +583,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = "",
+                                Host = HostName.Empty,
                                 Protocol = "https",
                                 CertificateHash = scopeCert,
                                 CertificateStoreName = DefaultStore,
@@ -621,7 +622,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = inscopeHost,
+                                Host = HostName.Parse(inscopeHost),
                                 Protocol = "https",
                                 CertificateHash = scopeCert,
                                 CertificateStoreName = DefaultStore,
@@ -635,7 +636,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = outofscopeHost,
+                                Host = HostName.Parse(outofscopeHost),
                                 Protocol = "https",
                                 CertificateHash = scopeCert,
                                 CertificateStoreName = DefaultStore,
@@ -659,7 +660,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             var updatedBinding = outofScopeSite.Bindings[0];
             Assert.AreEqual(DefaultStore, updatedBinding.CertificateStoreName);
-            Assert.AreEqual(scopeCert, updatedBinding.CertificateHash);
+            Assert.AreSequenceEqual(scopeCert, updatedBinding.CertificateHash);
         }
 
         [TestMethod]
@@ -683,6 +684,8 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
         [DataRow("*.b.c.com", new[] { "a.b.c.com", "*.b.c.com", "*.c.com", "*.com", "" }, "*.b.c.com", SSLFlags.CentralCertStore)]
         public void UpdatePiramid(string certificateHost, string[] ignoreBindings, string expectedBinding, SSLFlags flags)
         {
+            var ignores = ignoreBindings.Select(HostName.Parse).ToList();
+            var expected = HostName.Parse(expectedBinding);
             var iis = new MockIISClient(log)
             {
                 MockSites = [
@@ -692,37 +695,37 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                         new() {
                             IP = DefaultIP,
                             Port = 80,
-                            Host = "a.b.c.com",
+                            Host = HostName.Parse("a.b.c.com"),
                             Protocol = "http"
                         },
                         new() {
                             IP = DefaultIP,
                             Port = 80,
-                            Host = "*.b.c.com",
+                            Host = HostName.Parse("*.b.c.com"),
                             Protocol = "http"
                         },
                         new() {
                             IP = DefaultIP,
                             Port = 80,
-                            Host = "*.x.y.z.com",
+                            Host = HostName.Parse("*.x.y.z.com"),
                             Protocol = "http"
                         },
                         new() {
                             IP = DefaultIP,
                             Port = 80,
-                            Host = "*.c.com",
+                            Host = HostName.Parse("*.c.com"),
                             Protocol = "http"
                         },
                         new() {
                             IP = DefaultIP,
                             Port = 80,
-                            Host = "*.com",
+                            Host = HostName.Parse("*.com"),
                             Protocol = "http"
                         },
                         new() {
                             IP = DefaultIP,
                             Port = 80,
-                            Host = "",
+                            Host = HostName.Empty,
                             Protocol = "http"
                         }
                     ]
@@ -739,7 +742,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                 WithFlags(flags);
 
             var piramidSite = iis.GetSite(piramidId);
-            var originalSet = piramidSite.Bindings.Where(x => !ignoreBindings.Contains(x.Host)).ToList();
+            var originalSet = piramidSite.Bindings.Where(x => !ignores.Contains(x.Host)).ToList();
             piramidSite.Bindings = [.. originalSet.ToList().OrderBy(x => Guid.NewGuid())];
             iis.UpdateHttpSite(new[] { new DnsIdentifier(certificateHost) }, bindingOptions, scopeCert);
 
@@ -747,7 +750,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
             Assert.AreEqual(1, newBindings.Count());
 
             var newBinding = newBindings.First();
-            Assert.AreEqual(expectedBinding, newBinding.Host);
+            Assert.AreEqual(expected, newBinding.Host);
         }
 
         [TestMethod]
@@ -763,7 +766,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                         new() {
                             IP = DefaultIP,
                             Port = 80,
-                            Host = "*.b.c.com",
+                            Host = HostName.Parse("*.b.c.com"),
                             Protocol = "http"
                         }
                     ]
@@ -802,7 +805,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = sniTrapHost,
+                                Host = HostName.Parse(sniTrapHost),
                                 Protocol = "https",
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore,
@@ -816,7 +819,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = "",
+                                Host = HostName.Empty,
                                 Protocol = "https",
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore,
@@ -858,7 +861,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = sniTrapHost,
+                                Host = HostName.Parse(sniTrapHost),
                                 Protocol = "https",
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore,
@@ -872,7 +875,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = "",
+                                Host = HostName.Empty,
                                 Protocol = "https",
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore,
@@ -895,7 +898,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             var untouchedBinding = sniTrap2Site.Bindings[0];
             Assert.AreEqual(SSLFlags.None, untouchedBinding.SSLFlags);
-            Assert.AreEqual(oldCert1, untouchedBinding.CertificateHash);
+            Assert.AreSequenceEqual(oldCert1, untouchedBinding.CertificateHash);
             Assert.HasCount(1, sniTrap2Site.Bindings);
         }
 
@@ -929,7 +932,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = "",
+                                Host = HostName.Empty,
                                 Protocol = "https",
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore,
@@ -952,7 +955,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 
             var untouchedBinding = sniTrap2Site.Bindings[0];
             Assert.AreEqual(SSLFlags.None, untouchedBinding.SSLFlags);
-            Assert.AreEqual(oldCert1, untouchedBinding.CertificateHash);
+            Assert.AreSequenceEqual(oldCert1, untouchedBinding.CertificateHash);
             Assert.HasCount(2, sniTrap2Site.Bindings);
             var newBinding = sniTrap2Site.Bindings[1];
             Assert.AreEqual(SSLFlags.Sni, newBinding.SSLFlags);
@@ -976,7 +979,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = "",
+                                Host = HostName.Empty,
                                 Protocol = "http"
                             }
                         ]
@@ -1019,7 +1022,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                     new() {
                         IP = DefaultIP,
                         Port = 80,
-                        Host = "exists.example.com",
+                        Host = HostName.Parse("exists.example.com"),
                         Protocol = "http"
                     }
                 ]
@@ -1163,13 +1166,13 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = "*",
                                 Port = 80,
-                                Host = "wacs1.test.net",
+                                Host = HostName.Parse("wacs1.test.net"),
                                 Protocol = "http"
                             },
                             new() {
                                 IP = "*",
                                 Port = 443,
-                                Host = "wacs1.test.net",
+                                Host = HostName.Parse("wacs1.test.net"),
                                 Protocol = "https",
                                 SSLFlags = SSLFlags.None,
                                 CertificateHash = oldCert1,
@@ -1316,7 +1319,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                     {
                         IP = "*",
                         Port = 80,
-                        Host = host,
+                        Host = HostName.Parse(host),
                         Protocol = "http"
                     }
                 ]

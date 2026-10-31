@@ -4,6 +4,7 @@ using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -75,7 +76,9 @@ namespace PKISharp.WACS.Plugins.StorePlugins
             {
                 // Determine name
                 var name = string.IsNullOrEmpty(_name) ?
-                        input.CommonName?.Value ?? input.SanNames.First().Value :
+                        input.CommonName?.Host.Punycode ?? 
+                        input.SanNames.OfType<DnsIdentifier>().FirstOrDefault()?.Host.Punycode ?? 
+                        input.SanNames.First().Value :
                         friendlyNameInfo.GetIntermediate(_name);
                 name = name.Replace("*", "_");
 

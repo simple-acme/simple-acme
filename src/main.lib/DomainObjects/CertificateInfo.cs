@@ -2,6 +2,7 @@
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.X509;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Services;
 using System;
@@ -147,7 +148,7 @@ namespace PKISharp.WACS.DomainObjects
 
         public IEnumerable<X509Certificate> Chain { get; private set; }
 
-        public Identifier? CommonName { get; private set; }
+        public DnsIdentifier? CommonName { get; private set; }
 
         public IEnumerable<Identifier> SanNames => _san;
 

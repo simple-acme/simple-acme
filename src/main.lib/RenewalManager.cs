@@ -5,6 +5,7 @@ using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -307,7 +308,7 @@ namespace PKISharp.WACS
                         }
                         value.Add(renewal);
                     }
-                    foreach (var host in targetPart.GetIdentifiers(true))
+                    foreach (var host in targetPart.GetIdentifiers())
                     {
                         if (!foundHosts.TryGetValue(host, out var value))
                         {

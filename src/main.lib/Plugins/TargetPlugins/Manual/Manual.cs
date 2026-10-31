@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services.Serialization;
@@ -21,7 +22,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
             return Task.FromResult<Target?>(
                 new Target(
                     $"[{nameof(Manual)}] {options.CommonName ?? options.AlternativeNames.First()}",
-                    options.CommonName,
+                    !string.IsNullOrWhiteSpace(options.CommonName) ? Identifier.Parse(options.CommonName) as DnsIdentifier : null,
                     [
                         new(options.AlternativeNames.Select(Identifier.Parse))
                     ]));

@@ -244,12 +244,12 @@ namespace PKISharp.WACS.Services
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
-        private static bool Match(ICertificateInfo info, Target target)
+        private static bool Match(CertificateInfoCache info, Target target)
         {
-            var identifiers = target.GetIdentifiers(false);
-            return info.CommonName == target.CommonName?.Unicode(false) &&
+            var identifiers = target.GetIdentifiers();
+            return info.CommonName == target.CommonName &&
                 info.SanNames.Count() == identifiers.Count &&
-                info.SanNames.All(h => identifiers.Contains(h.Unicode(false)));
+                info.SanNames.All(identifiers.Contains);
         }
 
         /// <summary>
@@ -276,9 +276,9 @@ namespace PKISharp.WACS.Services
             var cacheKeyBuilder = new StringBuilder();
             cacheKeyBuilder.Append(order.CacheKeyPart);
             _ = version > 1 ?
-                cacheKeyBuilder.Append(order.Target.CommonName?.Value) :
+                cacheKeyBuilder.Append(order.Target.CommonName?.Host.Unicode) :
                 cacheKeyBuilder.Append(order.Target.CommonName);
-            cacheKeyBuilder.Append(string.Join(',', order.Target.GetIdentifiers(true).OrderBy(x => x).Select(x => x.Value.ToLower())));
+            cacheKeyBuilder.Append(string.Join(',', order.Target.GetIdentifiers().OrderBy(x => x).Select(x => x.Value.ToLower())));
             _ = order.Target.UserCsrBytes != null ?
                 cacheKeyBuilder.Append(Convert.ToBase64String(order.Target.UserCsrBytes.ToArray())) :
                 cacheKeyBuilder.Append('-');

@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.UnitTests.Mock.Clients;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
@@ -28,7 +29,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             Id = 1,
                             IP = "*",
                             Port = 443,
-                            Host = "wouter.tinus.online",
+                            Host = HostName.Parse("wouter.tinus.online"),
                             CertificateHash = oldCert1,
                             Protocol = "https"
                         },
@@ -44,7 +45,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             Id = 2,
                             IP = "*",
                             Port = 4443,
-                            Host = "wouter.tinus.online",
+                            Host = HostName.Parse("wouter.tinus.online"),
                             Protocol = "https"
                         }
                     ]
@@ -78,21 +79,21 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             Id = 7,
                             IP = "*",
                             Port = 443,
-                            Host = "*.wildcard.example.com",
+                            Host = HostName.Parse("*.wildcard.example.com"),
                             Protocol = "https"
                         },
                         new() {
                             Id = 8,
                             IP = "*",
                             Port = 443,
-                            Host = "sub.wildcard.example.com",
+                            Host = HostName.Parse("sub.wildcard.example.com"),
                             Protocol = "https"
                         },
                         new() {
                             Id = 11,
                             IP = "*",
                             Port = 443,
-                            Host = "duplicate.tinus.com",
+                            Host = HostName.Parse("duplicate.tinus.com"),
                             Protocol = "https"
                         }
                     ]

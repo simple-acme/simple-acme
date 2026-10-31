@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Services.Serialization;
@@ -22,7 +23,7 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
                 var commonName = target.CommonName;
                 if (commonName != null && !part.Identifiers.Contains(commonName))
                 {
-                    commonName = part.Identifiers.Where(x => x.Value.Length <= Constants.MaxCommonName).FirstOrDefault();
+                    commonName = part.Identifiers.OfType<DnsIdentifier>().FirstOrDefault(x => x.Host.IsCommon);
                 }
                 var newTarget = new Target(
                     target.FriendlyName,

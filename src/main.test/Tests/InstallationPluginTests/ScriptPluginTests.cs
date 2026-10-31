@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Configuration.Settings.Types;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.InstallationPlugins;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
@@ -98,7 +99,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
                     }
                 }
             );
-            var target = new Target("", "test.local", []);
+            var target = new Target("", new DnsIdentifier("test.local"), []);
             var targetOrder = new Order(renewal, target);
             var oldCert = cs.RequestCertificate(null, targetOrder).Result;
             var newCert = cs.RequestCertificate(null, targetOrder).Result;

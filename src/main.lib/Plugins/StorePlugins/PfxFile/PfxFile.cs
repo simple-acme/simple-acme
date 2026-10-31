@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -92,6 +93,11 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 }
                 var output = PfxService.GetPfx(protectionMode);
 
+                // Name
+                var certName = input.CommonName?.Host.Punycode ??
+                       input.SanNames.OfType<DnsIdentifier>().FirstOrDefault()?.Host.Punycode ??
+                       input.SanNames.First().Value;
+
                 // Copy all key and cert entries to the new archive
                 var outBc = output.Store;
                 var inBc = input.Collection.Store;
@@ -100,7 +106,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 if (keyAlias != null)
                 {
                     outBc.SetKeyEntry(
-                        input.CommonName?.Value ?? input.SanNames.First().Value,
+                        certName,
                         inBc.GetKey(keyAlias),
                         inBc.GetCertificateChain(keyAlias));
                 }
@@ -113,9 +119,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 }
 
                 // Save to disk
-                var name = string.IsNullOrEmpty(_name) ?
-                    input.CommonName?.Value ?? input.SanNames.First().Value :
-                    friendlyNameInfo.GetIntermediate(_name);
+                var name = string.IsNullOrEmpty(_name) ? certName : friendlyNameInfo.GetIntermediate(_name);
                 var dest = PathForIdentifier(name);
                 var outInfo = new CertificateInfo(output);
                 await outInfo.PfxSave(dest, await GetPassword());

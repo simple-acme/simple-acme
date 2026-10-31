@@ -1,5 +1,6 @@
 ﻿using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.X509;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
 
@@ -30,7 +31,7 @@ namespace PKISharp.WACS.DomainObjects
         /// <summary>
         /// The common name / subject name
         /// </summary>
-        Identifier? CommonName { get; }
+        DnsIdentifier? CommonName { get; }
 
         /// <summary>
         /// The Subject Alternative Names (up to 100 for Let's Encrypt)

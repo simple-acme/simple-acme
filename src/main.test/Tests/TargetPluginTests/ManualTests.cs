@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.TargetPlugins;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.UnitTests.Mock;
@@ -58,12 +59,12 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         [TestMethod]
         public void Puny()
         {
-            var options = Options($"--host xn--/-9b3b774gbbb.example.com");
+            var options = Options($"--host xn--rstz71eb1a.example.com");
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual("经/已經.example.com", options.CommonName);
-                Assert.AreEqual("经/已經.example.com", options.AlternativeNames.First());
+                Assert.AreEqual("经已經.example.com", options.CommonName);
+                Assert.AreEqual("经已經.example.com", options.AlternativeNames.First());
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
                 Assert.IsTrue(validator.IsValid(tar));
@@ -73,12 +74,12 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         [TestMethod]
         public void PunyWildcard()
         {
-            var options = Options($"--host *.xn--/-9b3b774gbbb.example.com");
+            var options = Options($"--host *.xn--rstz71eb1a.example.com");
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual("*.经/已經.example.com", options.CommonName);
-                Assert.AreEqual("*.经/已經.example.com", options.AlternativeNames.First());
+                Assert.AreEqual("*.经已經.example.com", options.CommonName);
+                Assert.AreEqual("*.经已經.example.com", options.AlternativeNames.First());
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
                 Assert.IsTrue(validator.IsValid(tar));
@@ -88,12 +89,12 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
         [TestMethod]
         public void PunySubDomain()
         {
-            var options = Options($"--host xn--/-9b3b774gbbb.xn--/-9b3b774gbbb.example.com");
+            var options = Options($"--host xn--rstz71eb1a.xn--rstz71eb1a.example.com");
             Assert.IsNotNull(options);
             if (options != null)
             {
-                Assert.AreEqual("经/已經.经/已經.example.com", options.CommonName);
-                Assert.AreEqual("经/已經.经/已經.example.com", options.AlternativeNames.First());
+                Assert.AreEqual("经已經.经已經.example.com", options.CommonName);
+                Assert.AreEqual("经已經.经已經.example.com", options.AlternativeNames.First());
                 var tar = Target(options);
                 Assert.IsNotNull(tar);
                 Assert.IsTrue(validator.IsValid(tar));

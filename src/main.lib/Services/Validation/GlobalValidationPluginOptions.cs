@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Options;
 using System.Text.RegularExpressions;
@@ -63,7 +64,11 @@ namespace PKISharp.WACS.Services
             {
                 return false;
             }
-            return regex.IsMatch(identifier.Value);
+            return identifier switch
+            {
+                DnsIdentifier dns => regex.IsMatch(dns.Host.Unicode) || regex.IsMatch(dns.Host.Punycode),
+                _ => regex.IsMatch(identifier.Value),
+            };
         }
     }
 }

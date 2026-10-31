@@ -7,7 +7,7 @@ namespace PKISharp.WACS.Services
     {
         public bool IsValid(Target target, bool validateMax = true)
         {
-            var ret = target.GetIdentifiers(true);
+            var ret = target.GetIdentifiers();
             if (validateMax)
             {
                 var max = settings.Acme.MaxDomains;
@@ -29,7 +29,7 @@ namespace PKISharp.WACS.Services
                     log.Error("Common name not contained in SAN list.");
                     return false;
                 }
-                if (target.CommonName.Value.Length > Constants.MaxCommonName)
+                if (!target.CommonName.Host.IsCommon)
                 {
                     log.Error("Common name too long (max {max} chars).", Constants.MaxCommonName);
                     return false;

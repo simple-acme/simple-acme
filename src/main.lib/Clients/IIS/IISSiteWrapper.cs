@@ -1,4 +1,6 @@
 ﻿using Microsoft.Web.Administration;
+using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -32,13 +34,9 @@ namespace PKISharp.WACS.Clients.IIS
                 ToString());
 
             Site = site;
-            Bindings = site.Bindings.Select(x =>
-            {
-                var secure = x.Protocol == "https" || ((x.Protocol == "ftp") && ftpSsl);
-                return new IISBindingWrapper(x, secure);
-            }).ToList();
+            Bindings = [.. site.Bindings.Select(x => new IISBindingWrapper(x, x.Protocol == "https" || ((x.Protocol == "ftp") && ftpSsl)))];
 
-            if (Bindings.All(b => b.Protocol == "ftp" || b.Protocol == "ftps"))
+            if (Bindings.Any() && Bindings.All(b => b.Protocol == "ftp" || b.Protocol == "ftps"))
             {
                 Type = IISSiteType.Ftp;
             } 
@@ -54,19 +52,23 @@ namespace PKISharp.WACS.Clients.IIS
     {
         internal Binding Binding { get; } = binding;
 
-        public string Host 
+        public HostName Host 
         {
             get
             {
-                if (Binding.Protocol == "ftp")
+                if (field == null)
                 {
-                    var split = BindingInformation.Split(":");
-                    if (split.Length == 3)
+                    if (Binding.Protocol == "ftp")
                     {
-                        return split[2];
+                        var split = BindingInformation.Split(":");
+                        field = split.Length == 3 ? HostName.Parse(split[2]) : HostName.Empty;
+                    }
+                    else
+                    {
+                        field = HostName.Parse(Binding.Host);
                     }
                 }
-                return Binding.Host;
+                return field;
             }
         }
 
