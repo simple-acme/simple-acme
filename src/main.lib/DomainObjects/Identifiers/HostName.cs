@@ -14,7 +14,9 @@ namespace PKISharp.WACS.DomainObjects.Identifiers
     [DebuggerDisplay("{Unicode}")]
     public class HostName : IEquatable<HostName>, IComparable, IComparable<HostName>
     {
-
+        /// <summary>
+        /// We parse wildcards, which do not meet UseStd3AsciiRules requirement
+        /// </summary>
         private static readonly IdnMapping _idn = new() { UseStd3AsciiRules = false };
         public static readonly HostName Emtpy = new(string.Empty, string.Empty) { IsEmtpy = true };
 
@@ -30,9 +32,9 @@ namespace PKISharp.WACS.DomainObjects.Identifiers
             }
             try
             {
-                var punycode = _idn.GetAscii(value);
+                var punycode = _idn.GetAscii(value.ToLowerInvariant());
                 var unicode = _idn.GetUnicode(punycode).ToLowerInvariant();
-                return new HostName(unicode, punycode) { IsValid = true };
+                return new HostName(unicode, punycode);
             }
             catch (ArgumentException ex)
             {
@@ -47,9 +49,8 @@ namespace PKISharp.WACS.DomainObjects.Identifiers
             Punycode = punycode;
         }
         public bool IsEmtpy { get; private set; }
-        public bool IsValid { get; private set; }
-        public bool IsCommon => IsValid && Unicode.Length <= Constants.MaxCommonName;
-        public bool IsWildcard => IsValid && Unicode.StartsWith("*.");
+        public bool IsCommon => Unicode.Length <= Constants.MaxCommonName;
+        public bool IsWildcard => Unicode.StartsWith("*.");
         public string Unicode { get; private set; }
         public string Punycode { get; private set; }
         public override string ToString() => Punycode;
