@@ -30,7 +30,7 @@ namespace PKISharp.WACS.DomainObjects
         /// <summary>
         /// The common name / subject name
         /// </summary>
-        Identifier? CommonName { get; }
+        DnsIdentifier? CommonName { get; }
 
         /// <summary>
         /// The Subject Alternative Names (up to 100 for Let's Encrypt)

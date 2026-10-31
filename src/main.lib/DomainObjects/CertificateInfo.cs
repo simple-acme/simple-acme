@@ -147,7 +147,7 @@ namespace PKISharp.WACS.DomainObjects
 
         public IEnumerable<X509Certificate> Chain { get; private set; }
 
-        public Identifier? CommonName { get; private set; }
+        public DnsIdentifier? CommonName { get; private set; }
 
         public IEnumerable<Identifier> SanNames => _san;
 

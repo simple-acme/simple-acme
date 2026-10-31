@@ -1,7 +1,9 @@
 ﻿using ACMESharp.Protocol.Resources;
 using MimeKit;
+using MimeKit.Cryptography;
 using PKISharp.WACS.Extensions;
 using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -18,7 +20,7 @@ namespace PKISharp.WACS.DomainObjects
         Email
     }
 
-    [DebuggerDisplay("{Type}: {Value}")]
+    [DebuggerDisplay("{Type}: {Label}")]
     public abstract class Identifier(string value, IdentifierType identifierType = IdentifierType.Unknown) : IEquatable<Identifier>, IComparable, IComparable<Identifier>
     {
 
@@ -50,11 +52,10 @@ namespace PKISharp.WACS.DomainObjects
             return new DnsIdentifier(identifier);
         }
 
-        public virtual Identifier Unicode(bool unicode) => this;
-
         public IdentifierType Type { get; set; } = identifierType;
         public string Value { get; set; } = value;
-        public override string ToString() => $"{Type}: {Value}";
+        public virtual string Label { get; } = value;
+        public override string ToString() => $"{Type}: {Label}";
         public override bool Equals(object? obj) => (obj as Identifier) == this;
         public override int GetHashCode() => ToString().GetHashCode();
         public bool Equals(Identifier? other) => other == this;
@@ -64,20 +65,12 @@ namespace PKISharp.WACS.DomainObjects
         public static bool operator !=(Identifier? a, Identifier? b) => !(a == b);
     }
 
-    public class DnsIdentifier(string value) : Identifier(value, IdentifierType.DnsName)
+    public class DnsIdentifier : Identifier
     {
-        public override Identifier Unicode(bool unicode)
-        {
-            if (unicode)
-            {
-                return new DnsIdentifier(Value.ConvertPunycode());
-            }
-            else
-            {
-                var idn = new IdnMapping();
-                return new DnsIdentifier(idn.GetAscii(Value));
-            }
-        }
+        public DnsIdentifier(string value) : base(value, IdentifierType.DnsName) => Host = HostName.Parse(value);
+        public DnsIdentifier(HostName value) : base(value.Unicode, IdentifierType.DnsName) => Host = value;
+        public HostName Host { get; }
+        public override string Label => Host.Unicode;
     }
 
     public class IpIdentifier : Identifier

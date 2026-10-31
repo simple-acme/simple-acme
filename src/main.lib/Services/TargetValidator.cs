@@ -7,7 +7,7 @@ namespace PKISharp.WACS.Services
     {
         public bool IsValid(Target target, bool validateMax = true)
         {
-            var ret = target.GetIdentifiers(true);
+            var ret = target.GetIdentifiers();
             if (validateMax)
             {
                 var max = settings.Acme.MaxDomains;

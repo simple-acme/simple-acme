@@ -110,7 +110,7 @@ namespace PKISharp.WACS.Clients.IIS
                 var current = todo.First();
                 var addOptions = current switch
                 {
-                    DnsIdentifier _ => ctx.BindingOptions.WithHost(current.Value),
+                    DnsIdentifier dns => ctx.BindingOptions.WithHost(dns.Host),
                     IpIdentifier _ => ctx.BindingOptions.WithIP(current.Value),
                     _ => throw new InvalidOperationException($"Unsupported identifier type {current.GetType().Name} for IIS binding update")
                 };
@@ -306,7 +306,7 @@ namespace PKISharp.WACS.Clients.IIS
             }
 
             // Wildcard bindings are only supported in Windows 2016+
-            if (options.Host.StartsWith("*.") && client.Version.Major < 10)
+            if (options.Host.Unicode.StartsWith("*.") && client.Version.Major < 10)
             {
                 log.Warning($"Unable to create wildcard binding on this version of IIS");
                 return false;
@@ -334,7 +334,7 @@ namespace PKISharp.WACS.Clients.IIS
                     .Where(x => !x.SSLFlags.HasFlag(SSLFlags.Sni))
                     .Any())
                 {
-                    if (!string.IsNullOrEmpty(match.Host))
+                    if (!match.Host.IsEmtpy)
                     {
                         log.Warning("Turning on SNI for existing binding to avoid conflict");
                         modified = start | SSLFlags.Sni;
@@ -359,7 +359,7 @@ namespace PKISharp.WACS.Clients.IIS
         /// <param name="host"></param>
         /// <param name="flags"></param>
         /// <returns></returns>
-        private SSLFlags CheckFlags(bool newBinding, string host, SSLFlags flags)
+        private SSLFlags CheckFlags(bool newBinding, HostName host, SSLFlags flags)
         {
             // SSL flags are not supported at all by Windows 2008
             if (client.Version.Major < 8)
@@ -369,7 +369,7 @@ namespace PKISharp.WACS.Clients.IIS
 
             // Add SNI on Windows Server 2012+ for new bindings
             if (newBinding &&
-                !string.IsNullOrEmpty(host) &&
+                !host.IsEmtpy &&
                 client.Version.Major >= 8)
             {
                 flags |= SSLFlags.Sni;
@@ -394,7 +394,7 @@ namespace PKISharp.WACS.Clients.IIS
                 // Do not allow CentralSSL flag to be set on the default binding
                 // Logic elsewhere in the program should prevent this 
                 // from happening. This is merely a sanity check
-                if (string.IsNullOrEmpty(host))
+                if (host.IsEmtpy)
                 {
                     throw new InvalidOperationException("Central SSL is not supported without a hostname");
                 }
@@ -473,6 +473,72 @@ namespace PKISharp.WACS.Clients.IIS
             }
         }
 
+        private static int FitsIp(IIISBinding binding, IpIdentifier ip)
+        {
+            if (binding.Host.IsEmtpy)
+            {
+                if (binding.IP == ip.Value)
+                {
+                    return 100;
+                }
+                if (string.IsNullOrEmpty(binding.IP) || binding.IP == "*")
+                {
+                    return 90;
+                }
+            }
+            return 0;
+        }
+
+        private static int FitsDns(IIISBinding binding, DnsIdentifier dns, SSLFlags flags)
+        {
+            // The default (empty) binding matches with all hostnames.
+            // But it's not supported with Central SSL
+            if (binding.Host.IsEmtpy && !flags.HasFlag(SSLFlags.CentralCertStore))
+            {
+                return 10;
+            }
+
+            // Match sub.example.com (identifier) with *.example.com (IIS)
+            if (binding.Host.Unicode.StartsWith("*.") && !dns.Value.StartsWith("*."))
+            {
+                if (dns.Value.ToLower().EndsWith(binding.Host.Unicode.Replace("*.", ".")))
+                {
+                    // If there is a binding for *.a.b.c.com (5) and one for *.c.com (3)
+                    // then the hostname test.a.b.c.com (5) is a better (more specific)
+                    // for the former than for the latter, so we prefer to use that.
+                    var hostLevel = dns.Value.Split('.').Length;
+                    var bindingLevel = binding.Host.Unicode.Split('.').Length;
+                    return 50 - (hostLevel - bindingLevel);
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+
+            // Match *.example.com (identifier) with sub.example.com (IIS)
+            if (!binding.Host.Unicode.StartsWith("*.") && dns.Value.StartsWith("*."))
+            {
+                if (binding.Host.Unicode.ToLower().EndsWith(dns.Value.ToLower().Replace("*.", ".")))
+                {
+                    // But it should not match with another.sub.example.com.
+                    var hostLevel = dns.Value.Split('.').Length;
+                    var bindingLevel = binding.Host.Unicode.Split('.').Length;
+                    if (hostLevel == bindingLevel)
+                    {
+                        return 90;
+                    }
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+
+            // Full match
+            return binding.Host == dns.Host ? 100 : 0;
+        }
+
         /// <summary>
         /// Test if the host fits to the binding
         /// 100: full match
@@ -486,68 +552,12 @@ namespace PKISharp.WACS.Clients.IIS
         /// <returns></returns>
         private static int Fits(IIISBinding binding, Identifier identifier, SSLFlags flags)
         {
-            if (identifier is IpIdentifier ip)
+            return identifier switch
             {
-                if (string.IsNullOrEmpty(binding.Host))
-                {
-                    if (binding.IP == ip.Value)
-                    {
-                        return 100;
-                    }
-                    if (string.IsNullOrEmpty(binding.IP) || binding.IP == "*")
-                    {
-                        return 90;
-                    }
-                }
-                return 0;
-            }
-
-            // The default (emtpy) binding matches with all hostnames.
-            // But it's not supported with Central SSL
-            if (string.IsNullOrEmpty(binding.Host) && (!flags.HasFlag(SSLFlags.CentralCertStore)))
-            {
-                return 10;
-            }
-
-            // Match sub.example.com (identifier) with *.example.com (IIS)
-            if (binding.Host.StartsWith("*.") && !identifier.Value.StartsWith("*."))
-            {
-                if (identifier.Value.ToLower().EndsWith(binding.Host.ToLower().Replace("*.", ".")))
-                {
-                    // If there is a binding for *.a.b.c.com (5) and one for *.c.com (3)
-                    // then the hostname test.a.b.c.com (5) is a better (more specific)
-                    // for the former than for the latter, so we prefer to use that.
-                    var hostLevel = identifier.Value.Split('.').Length;
-                    var bindingLevel = binding.Host.Split('.').Length;
-                    return 50 - (hostLevel - bindingLevel);
-                }
-                else
-                {
-                    return 0;
-                }
-            }
-
-            // Match *.example.com (identifier) with sub.example.com (IIS)
-            if (!binding.Host.StartsWith("*.") && identifier.Value.StartsWith("*."))
-            {
-                if (binding.Host.ToLower().EndsWith(identifier.Value.ToLower().Replace("*.", ".")))
-                {
-                    // But it should not match with another.sub.example.com.
-                    var hostLevel = identifier.Value.Split('.').Length;
-                    var bindingLevel = binding.Host.Split('.').Length;
-                    if (hostLevel == bindingLevel)
-                    {
-                        return 90;
-                    }
-                }
-                else
-                {
-                    return 0;
-                }
-            }
-
-            // Full match
-            return string.Equals(binding.Host, identifier.Value, StringComparison.CurrentCultureIgnoreCase) ? 100 : 0;
+                IpIdentifier ip => FitsIp(binding, ip),
+                DnsIdentifier dns => FitsDns(binding, dns, flags),
+                _ => throw new InvalidOperationException($"Unsupported identifier type {identifier.GetType().Name} for IIS binding update")
+            };
         }
 
         /// <summary>

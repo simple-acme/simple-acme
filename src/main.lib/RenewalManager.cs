@@ -307,7 +307,7 @@ namespace PKISharp.WACS
                         }
                         value.Add(renewal);
                     }
-                    foreach (var host in targetPart.GetIdentifiers(true))
+                    foreach (var host in targetPart.GetIdentifiers())
                     {
                         if (!foundHosts.TryGetValue(host, out var value))
                         {

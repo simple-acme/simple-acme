@@ -74,7 +74,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                     var target = Target(options);
                     Assert.IsNotNull(target);
                     Assert.IsTrue(validator.IsValid(target));
-                    Assert.AreEqual(target.CommonName?.Value, siteA.Bindings.First().Host); // First binding
+                    Assert.AreEqual(target.CommonName?.Host, siteA.Bindings.First().Host); // First binding
                     Assert.IsTrue(target.IIS);
                     Assert.HasCount(2, target.Parts);
                     Assert.AreEqual(target.Parts.First().SiteId, siteIdA);
@@ -138,7 +138,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 var target = Target(options);
                 Assert.IsNotNull(target); 
                 Assert.IsTrue(validator.IsValid(target));
-                Assert.AreEqual(target.CommonName?.Value, siteA.Bindings.ElementAt(1).Host); // 2nd binding, first is excluded
+                Assert.AreEqual(target.CommonName?.Host, siteA.Bindings.ElementAt(1).Host); // 2nd binding, first is excluded
             }
         }
 
@@ -171,7 +171,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             var target = Target(options);
             Assert.IsNotNull(target); 
             Assert.IsTrue(validator.IsValid(target));
-            Assert.AreEqual(site.Bindings.First().Host, target.CommonName?.Value);
+            Assert.AreEqual(site.Bindings.First().Host, target.CommonName?.Host);
         }
 
         [TestMethod]

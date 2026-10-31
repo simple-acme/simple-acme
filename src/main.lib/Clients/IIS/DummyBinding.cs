@@ -14,19 +14,19 @@ namespace PKISharp.WACS.Clients.IIS
         /// </summary>
         private class DummyBinding : IIISBinding
         {
-            private readonly string _host;
+            private readonly HostName _host;
             private readonly string _ip;
             public DummyBinding(Identifier identifier)
             {
                 if (identifier is DnsIdentifier dns)
                 {
                     _ip = "";
-                    _host = dns.Value;
+                    _host = HostName.Parse(dns.Value);
                 }
                 else if (identifier is IpIdentifier ip)
                 {
                     _ip = ip.Value;
-                    _host = "";
+                    _host = HostName.Emtpy;
                 }
                 else
                 {
@@ -34,7 +34,7 @@ namespace PKISharp.WACS.Clients.IIS
                 }
             }
             public bool Secure => throw new NotImplementedException();
-            string IIISBinding.Host => _host;
+            HostName IIISBinding.Host => _host;
             string IIISBinding.Protocol => throw new NotImplementedException();
             IEnumerable<byte>? IIISBinding.CertificateHash => throw new NotImplementedException();
             string IIISBinding.CertificateStoreName => throw new NotImplementedException();

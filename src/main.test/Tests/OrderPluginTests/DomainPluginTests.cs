@@ -15,7 +15,7 @@ namespace PKISharp.WACS.UnitTests.Tests.OrderPluginTests
         public void DomainSplit()
         {
             var parts = new TargetPart[] { new([new DnsIdentifier("x.com")]) };
-            var target = new Target("x.com", "x.com", parts);
+            var target = new Target("x.com", new DnsIdentifier("x.com"), parts);
             var renewal = new Renewal();
             var container = MockContainer.TestScope().BeginLifetimeScope(x => x.RegisterType<Domain>());
             var dps = container.Resolve<DomainParseService>();

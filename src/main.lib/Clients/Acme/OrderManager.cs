@@ -43,8 +43,8 @@ namespace PKISharp.WACS.Clients.Acme
             var cacheKeyBuilder = new StringBuilder();
             cacheKeyBuilder.Append(accountId);
             cacheKeyBuilder.Append(orderParameters.Profile);
-            cacheKeyBuilder.Append(order.Target.CommonName);
-            cacheKeyBuilder.Append(string.Join(',', order.Target.GetIdentifiers(true).OrderBy(x => x).Select(x => x.Value.ToLower())));
+            cacheKeyBuilder.Append(order.Target.CommonName?.Value);
+            cacheKeyBuilder.Append(string.Join(',', order.Target.GetIdentifiers().OrderBy(x => x).Select(x => x.Value.ToLower())));
             _ = order.Target.UserCsrBytes != null ?
                 cacheKeyBuilder.Append(Convert.ToBase64String(order.Target.UserCsrBytes.ToArray())) :
                 cacheKeyBuilder.Append('-');
@@ -267,7 +267,7 @@ namespace PKISharp.WACS.Clients.Acme
             try
             {
                 // Determine final shape of the certificate
-                var identifiers = target.GetIdentifiers(false);
+                var identifiers = target.GetIdentifiers();
 
                 // Create the order
                 var order = default(AcmeOrderDetails?);

@@ -35,7 +35,7 @@ namespace PKISharp.WACS.DomainObjects
                 }
                 if (string.IsNullOrEmpty(friendlyNameBase))
                 {
-                    friendlyNameBase = Target.DisplayName.Unicode(true).Value;
+                    friendlyNameBase = Target.DisplayName.Label;
                 }
                 return friendlyNameBase;
             }

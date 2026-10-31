@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using PKISharp.WACS.DomainObjects;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -26,7 +27,7 @@ namespace PKISharp.WACS.Clients.IIS
         string ip = IISClient.DefaultBindingIp,
         IEnumerable<byte>? thumbprint = null,
         string? store = null,
-        string host = "",
+        HostName? host = null,
         long? siteId = null)
     {
         /// <summary>
@@ -57,7 +58,7 @@ namespace PKISharp.WACS.Clients.IIS
         /// <summary>
         /// Hostname that should be set for the binding
         /// </summary>
-        public string Host { get; } = host;
+        public HostName Host { get; } = host ?? HostName.Emtpy;
 
         /// <summary>
         /// Optional: SiteId where new binding are supposed to be created
@@ -98,7 +99,7 @@ namespace PKISharp.WACS.Clients.IIS
         public BindingOptions WithIP(string ip) => new(Flags, Port, ip, Thumbprint, Store, Host, SiteId);
         public BindingOptions WithThumbprint(byte[] thumbprint) => new(Flags, Port, IP, thumbprint, Store, Host, SiteId);
         public BindingOptions WithStore(string? store) => new(Flags, Port, IP, Thumbprint, store, Host, SiteId);
-        public BindingOptions WithHost(string hostName) => new(Flags, Port, IP, Thumbprint, Store, hostName, SiteId);
+        public BindingOptions WithHost(HostName hostName) => new(Flags, Port, IP, Thumbprint, Store, hostName, SiteId);
         public BindingOptions WithSiteId(long? siteId) => new(Flags, Port, IP, Thumbprint, Store, Host, siteId);
     }
 }

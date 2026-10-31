@@ -64,7 +64,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual(regex, options.IncludeRegex?.ToString());
                 var target = Target(options);
                 Assert.IsNotNull(target);
-                var allHosts = target.GetIdentifiers(true);
+                var allHosts = target.GetIdentifiers();
                 Assert.IsTrue(allHosts.All(x => Regex.Match(x.Value, regex).Success));
             }
         }
@@ -81,7 +81,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
                 Assert.AreEqual($"*{pattern}*", options.IncludePattern?.ToString());
                 var target = Target(options);
                 Assert.IsNotNull(target);
-                var allHosts = target.GetIdentifiers(true);
+                var allHosts = target.GetIdentifiers();
                 Assert.IsTrue(allHosts.All(x => x.Value.Contains(pattern)));
             }
         }

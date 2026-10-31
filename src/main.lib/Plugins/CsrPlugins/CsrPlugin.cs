@@ -36,7 +36,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
 
         async Task<Pkcs10CertificationRequest> ICsrPlugin.GenerateCsr(Target target, string? keyPath)
         {
-            var identifiers = target.GetIdentifiers(false);
+            var identifiers = target.GetIdentifiers();
             var commonName = target.CommonName;
             var extensions = new Dictionary<DerObjectIdentifier, X509Extension>();
 
@@ -159,16 +159,20 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         private static void ProcessSan(List<Identifier> identifiers, Dictionary<DerObjectIdentifier, X509Extension> extensions)
         {
             // SAN
-            var names = new GeneralNames(identifiers.
+            var names = new GeneralNames([.. identifiers.
                 Select(n => new GeneralName(
                     n.Type switch
                     {
                         IdentifierType.DnsName => GeneralName.DnsName,
                         IdentifierType.IpAddress => GeneralName.IPAddress,
                         _ => GeneralName.OtherName
-                    }, 
-                    n.Value)).
-                ToArray());
+                    },
+                    n switch
+                    {
+                        DnsIdentifier dns => dns.Host.Punycode,
+                        _ => n.Value 
+                    }
+                    ))]);
             Asn1OctetString asn1ost = new DerOctetString(names);
             extensions.Add(X509Extensions.SubjectAlternativeName, new X509Extension(false, asn1ost));
         }
@@ -204,9 +208,9 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         {
             var cn = "";
             // IP addresses are not allowed in CN
-            if (commonName != null && commonName.Type == IdentifierType.DnsName)
+            if (commonName is DnsIdentifier dns)
             {
-                cn = commonName.Unicode(false).Value;
+                cn = dns.Host.Punycode;
             }
             var attrs = new Dictionary<DerObjectIdentifier, string?>
             {

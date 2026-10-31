@@ -1,4 +1,5 @@
 ﻿using Microsoft.Web.Administration;
+using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Extensions;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -54,19 +55,30 @@ namespace PKISharp.WACS.Clients.IIS
     {
         internal Binding Binding { get; } = binding;
 
-        public string Host 
+        public HostName Host 
         {
             get
             {
-                if (Binding.Protocol == "ftp")
+                if (field == null)
                 {
-                    var split = BindingInformation.Split(":");
-                    if (split.Length == 3)
+                    if (Binding.Protocol == "ftp")
                     {
-                        return split[2];
+                        var split = BindingInformation.Split(":");
+                        if (split.Length == 3)
+                        {
+                            field = HostName.Parse(split[2]);
+                        } 
+                        else
+                        {
+                            field = HostName.Parse("");
+                        }
+                    }
+                    else
+                    {
+                        field = HostName.Parse(Binding.Host);
                     }
                 }
-                return Binding.Host;
+                return field;
             }
         }
 

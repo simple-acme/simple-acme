@@ -55,7 +55,7 @@ namespace PKISharp.WACS.Clients.IIS
 
     public interface IIISBinding
     {
-        string Host { get; }
+        HostName Host { get; }
         string Protocol { get; }
         bool Secure { get; }
         IEnumerable<byte>? CertificateHash { get; }

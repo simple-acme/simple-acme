@@ -98,7 +98,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
                     }
                 }
             );
-            var target = new Target("", "test.local", []);
+            var target = new Target("", new DnsIdentifier("test.local"), []);
             var targetOrder = new Order(renewal, target);
             var oldCert = cs.RequestCertificate(null, targetOrder).Result;
             var newCert = cs.RequestCertificate(null, targetOrder).Result;

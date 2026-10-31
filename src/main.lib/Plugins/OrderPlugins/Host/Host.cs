@@ -21,14 +21,14 @@ namespace PKISharp.WACS.Plugins.OrderPlugins
             var seen = new List<Identifier>();
             foreach (var part in target.Parts)
             {
-                foreach (var host in part.GetIdentifiers(true))
+                foreach (var host in part.GetIdentifiers())
                 {
                     if (!seen.Contains(host))
                     {
-                        var parts = target.Parts.Where(p => p.GetIdentifiers(true).Contains(host));
+                        var parts = target.Parts.Where(p => p.GetIdentifiers().Contains(host));
                         var newTarget = new Target(
                             target.FriendlyName,
-                            host.Value.Length <= Constants.MaxCommonName ? host : null,
+                            host is DnsIdentifier dns && dns.Host.IsCommon ? dns : null,
                             parts.Select(p => 
                                 new TargetPart([host]) { 
                                     SiteId = p.SiteId,
