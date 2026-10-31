@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PKISharp.WACS.Clients.IIS
 {
-    public class IISHttpBindingUpdaterContext
+    public class IISBindingUpdaterContext
     {
         public IEnumerable<Identifier> PartIdentifiers { get; set; } = [];
         public IEnumerable<Identifier>? AllIdentifiers { get; set; }

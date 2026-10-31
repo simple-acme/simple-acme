@@ -27,7 +27,7 @@ namespace PKISharp.WACS.Clients.IIS
         /// <param name="flags"></param>
         /// <param name="thumbprint"></param>
         /// <param name="store"></param>
-        public void AddOrUpdateBindings(IISHttpBindingUpdaterContext ctx)
+        public void AddOrUpdateBindings(IISBindingUpdaterContext ctx)
         {
             ctx.AllBindings = GetAllSites();
             ctx.AllIdentifiers ??= ctx.PartIdentifiers;
@@ -164,7 +164,7 @@ namespace PKISharp.WACS.Clients.IIS
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        private List<(IIISSite, IIISBinding)> ChooseBindingsToReplace(IISHttpBindingUpdaterContext ctx)
+        private List<(IIISSite, IIISBinding)> ChooseBindingsToReplace(IISBindingUpdaterContext ctx)
         {
             // Choose which pre-existing https bindings
             // should be replaced with the new identifier

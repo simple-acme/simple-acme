@@ -107,6 +107,8 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             }
 
             var settingsFlags = (settings.Installation.IIS?.BindingFlags ?? SSLFlags.None) & SSLFlags.OptionalFlags;
+            var totalChanges = 0;
+            var context = default(IISBindingUpdaterContext);
 
             foreach (var part in target.Parts)
             {
@@ -141,24 +143,36 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                             bindingOptions = bindingOptions.
                                 WithSiteId(part.SiteId.Value);
                         }
-                        iisClient.UpdateHttpSite(httpIdentifiers, bindingOptions, oldCertificate?.GetHash(), newCertificate.SanNames);
+                        context = iisClient.UpdateHttpSite(httpIdentifiers, bindingOptions, oldCertificate?.GetHash(), newCertificate.SanNames);
+                        totalChanges += context.UpdatedBindings.Count;
                         if (certificateStore) 
                         {
-                            iisClient.UpdateFtpSite(0, certificateStoreName, newCertificate, oldCertificate);
+                            context = iisClient.UpdateFtpSite(0, certificateStoreName, newCertificate, oldCertificate);
+                            totalChanges += context.UpdatedBindings.Count;
                         }
                         break;
                     case IISSiteType.Ftp:
                         // Update FTP site
-                        iisClient.UpdateFtpSite(part.SiteId!.Value, certificateStoreName, newCertificate, oldCertificate);
-                        iisClient.UpdateHttpSite(httpIdentifiers, bindingOptions, oldCertificate?.GetHash(), newCertificate.SanNames);
+                        context = iisClient.UpdateFtpSite(part.SiteId!.Value, certificateStoreName, newCertificate, oldCertificate);
+                        totalChanges += context.UpdatedBindings.Count;
+                        context = iisClient.UpdateHttpSite(httpIdentifiers, bindingOptions, oldCertificate?.GetHash(), newCertificate.SanNames);
+                        totalChanges += context.UpdatedBindings.Count;
                         break;
                     default:
                         log.Error("Unknown site type");
                         break;
                 }
             }
-
-            return Task.FromResult(true);
+            
+            if (totalChanges == 0)
+            {
+                log.Error("No bindings were updated, please check the configuration");
+            }
+            else
+            {
+                log.Information("Updated {count} boindings", totalChanges);
+            }
+            return Task.FromResult(totalChanges > 0);
         }
     }
 }

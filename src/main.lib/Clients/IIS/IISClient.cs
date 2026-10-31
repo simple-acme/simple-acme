@@ -152,14 +152,14 @@ namespace PKISharp.WACS.Clients.IIS
 
         #region _ Https Install _
 
-        public IISHttpBindingUpdaterContext UpdateHttpSite(
+        public IISBindingUpdaterContext UpdateHttpSite(
             IEnumerable<Identifier> identifiers, 
             BindingOptions bindingOptions,
             byte[]? oldCertificate,
             IEnumerable<Identifier>? allIdentifiers)
         {
             var updater = new IISHttpBindingUpdater<IISSiteWrapper, IISBindingWrapper>(this, _log);
-            var context = new IISHttpBindingUpdaterContext()
+            var context = new IISBindingUpdaterContext()
             {
                 PartIdentifiers = identifiers,
                 BindingOptions = bindingOptions,
@@ -242,8 +242,9 @@ namespace PKISharp.WACS.Clients.IIS
         /// <param name="id"></param>
         /// <param name="newCertificate"></param>
         /// <param name="oldCertificate"></param>
-        public void UpdateFtpSite(long? id, string? newStore, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate)
+        public IISBindingUpdaterContext UpdateFtpSite(long? id, string? newStore, ICertificateInfo newCertificate, ICertificateInfo? oldCertificate)
         {
+            var context = new IISBindingUpdaterContext();
             var ftpSites = Sites.Where(x => x.Type == IISSiteType.Ftp).ToList();
             var oldThumbprint = oldCertificate?.Thumbprint;
             var newThumbprint = newCertificate?.Thumbprint;
@@ -251,7 +252,7 @@ namespace PKISharp.WACS.Clients.IIS
 
             if (ServerManager == null)
             {
-                return;
+                return context;
             }
 
             var sslElement = ServerManager.SiteDefaults.
@@ -264,6 +265,7 @@ namespace PKISharp.WACS.Clients.IIS
                 sslElement.SetAttributeValue("serverCertStoreName", newStore);
                 _log.Information(LogType.All, "Updating default ftp site setting");
                 updated += 1;
+                context.UpdatedBindings.Add("default");
             } 
             else
             {
@@ -283,6 +285,7 @@ namespace PKISharp.WACS.Clients.IIS
                     sslElement.SetAttributeValue("serverCertStoreName", newStore);
                     _log.Information(LogType.All, "Updating ftp site {name}", ftpSite.Site.Name);
                     updated += 1;
+                    context.UpdatedBindings.Add(ftpSite.Site.Name);
                 }
                 else
                 {
@@ -295,6 +298,7 @@ namespace PKISharp.WACS.Clients.IIS
                 _log.Information("Committing {count} {type} site changes to IIS", updated, "ftp");
                 Commit();
             }
+            return context;
         }
 
         /// <summary>
