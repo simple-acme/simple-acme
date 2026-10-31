@@ -77,7 +77,7 @@ namespace PKISharp.WACS.Plugins.StorePlugins
                 // Determine name
                 var name = string.IsNullOrEmpty(_name) ?
                         input.CommonName?.Host.Punycode ?? 
-                        input.SanNames.OfType<DnsIdentifier>().First().Host.Punycode ?? 
+                        input.SanNames.OfType<DnsIdentifier>().FirstOrDefault()?.Host.Punycode ?? 
                         input.SanNames.First().Value :
                         friendlyNameInfo.GetIntermediate(_name);
                 name = name.Replace("*", "_");

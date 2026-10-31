@@ -64,7 +64,11 @@ namespace PKISharp.WACS.Services
             {
                 return false;
             }
-            return regex.IsMatch(identifier.Value);
+            return identifier switch
+            {
+                DnsIdentifier dns => regex.IsMatch(dns.Host.Unicode) || regex.IsMatch(dns.Host.Punycode),
+                _ => regex.IsMatch(identifier.Value),
+            };
         }
     }
 }

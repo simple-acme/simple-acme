@@ -39,7 +39,10 @@ namespace PKISharp.WACS.Clients.IIS
                 var secure = x.Protocol == "https" || ((x.Protocol == "ftp") && ftpSsl);
                 try
                 {
-                    return new IISBindingWrapper(x, secure);
+                    var ret = new IISBindingWrapper(x, secure);
+                    // Force parsing of the host name to catch any errors early
+                    _ = ret.Host;
+                    return ret;
                 }
                 catch
                 {
@@ -48,7 +51,7 @@ namespace PKISharp.WACS.Clients.IIS
                 }
             }).OfType<IISBindingWrapper>()];
 
-            if (Bindings.All(b => b.Protocol == "ftp" || b.Protocol == "ftps"))
+            if (Bindings.Any() && Bindings.All(b => b.Protocol == "ftp" || b.Protocol == "ftps"))
             {
                 Type = IISSiteType.Ftp;
             } 

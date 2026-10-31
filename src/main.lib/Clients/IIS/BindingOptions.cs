@@ -87,7 +87,7 @@ namespace PKISharp.WACS.Clients.IIS
                         }
                     }
                 }
-                return $"{formattedIP}:{Port}:{Host}";
+                return $"{formattedIP}:{Port}:{Host.Unicode}";
             }
         }
 

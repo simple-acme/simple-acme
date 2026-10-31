@@ -276,7 +276,7 @@ namespace PKISharp.WACS.Services
             var cacheKeyBuilder = new StringBuilder();
             cacheKeyBuilder.Append(order.CacheKeyPart);
             _ = version > 1 ?
-                cacheKeyBuilder.Append(order.Target.CommonName?.Host.Punycode) :
+                cacheKeyBuilder.Append(order.Target.CommonName?.Host.Unicode) :
                 cacheKeyBuilder.Append(order.Target.CommonName);
             cacheKeyBuilder.Append(string.Join(',', order.Target.GetIdentifiers().OrderBy(x => x).Select(x => x.Value.ToLower())));
             _ = order.Target.UserCsrBytes != null ?
