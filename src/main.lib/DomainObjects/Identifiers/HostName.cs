@@ -1,9 +1,10 @@
-﻿using PKISharp.WACS.Extensions;
+﻿using MimeKit.Encodings;
+using PKISharp.WACS.Extensions;
 using System;
 using System.Diagnostics;
 using System.Globalization;
 
-namespace PKISharp.WACS.DomainObjects
+namespace PKISharp.WACS.DomainObjects.Identifiers
 {
 
     /// <summary>
@@ -27,41 +28,28 @@ namespace PKISharp.WACS.DomainObjects
             {
                 return Emtpy;
             }
-            value = value.ToLowerInvariant();
-            var unicode = value;
-            if (value.StartsWith("xn--") || value.Contains(".xn--"))
-            {
-                try
-                {
-                    unicode = _idn.GetUnicode(value);
-                }
-                catch (ArgumentException ex)
-                {
-                    throw new Exception($"Invalid punycode value: {value}", ex);
-                }
-            }
-            string? punycode;
             try
             {
-                punycode = _idn.GetAscii(unicode);
+                var punycode = _idn.GetAscii(value);
+                var unicode = _idn.GetUnicode(punycode).ToLowerInvariant();
+                return new HostName(unicode, punycode) { IsValid = true };
             }
             catch (ArgumentException ex)
             {
-                 throw new Exception($"Invalid unicode value: {unicode}", ex);
+                 throw new Exception($"Invalid value: {value}", ex);
 
             }
-            return new HostName(unicode, punycode) { IsValid = true };
         }
 
         private HostName(string unicode, string punycode)
         {
             Unicode = unicode;
             Punycode = punycode;
-            IsCommon = unicode.Length <= Constants.MaxCommonName;
         }
         public bool IsEmtpy { get; private set; }
         public bool IsValid { get; private set; }
-        public bool IsCommon { get; private set; }
+        public bool IsCommon => IsValid && Unicode.Length <= Constants.MaxCommonName;
+        public bool IsWildcard => IsValid && Unicode.StartsWith("*.");
         public string Unicode { get; private set; }
         public string Punycode { get; private set; }
         public override string ToString() => Punycode;

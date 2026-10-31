@@ -1,5 +1,6 @@
 ﻿using ACMESharp.Protocol.Resources;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 
 namespace PKISharp.WACS.Context
 {

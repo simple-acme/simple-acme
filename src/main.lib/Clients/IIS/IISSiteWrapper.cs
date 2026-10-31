@@ -1,5 +1,6 @@
 ﻿using Microsoft.Web.Administration;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -64,14 +65,7 @@ namespace PKISharp.WACS.Clients.IIS
                     if (Binding.Protocol == "ftp")
                     {
                         var split = BindingInformation.Split(":");
-                        if (split.Length == 3)
-                        {
-                            field = HostName.Parse(split[2]);
-                        } 
-                        else
-                        {
-                            field = HostName.Parse("");
-                        }
+                        field = split.Length == 3 ? HostName.Parse(split[2]) : HostName.Emtpy;
                     }
                     else
                     {

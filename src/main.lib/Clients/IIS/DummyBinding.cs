@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using System;
 using System.Collections.Generic;
 
@@ -21,7 +22,7 @@ namespace PKISharp.WACS.Clients.IIS
                 if (identifier is DnsIdentifier dns)
                 {
                     _ip = "";
-                    _host = HostName.Parse(dns.Value);
+                    _host = dns.Host;
                 }
                 else if (identifier is IpIdentifier ip)
                 {

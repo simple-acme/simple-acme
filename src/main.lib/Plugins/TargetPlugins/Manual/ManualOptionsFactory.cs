@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
@@ -52,7 +53,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
                 return new ManualOptions()
                 {
                     CommonName = commonName?.Host.Unicode,
-                    AlternativeNames = sanList.Select(x => x.Label).ToList()
+                    AlternativeNames = [.. sanList.Select(x => x.Value)]
                 };
             }
             else

@@ -1,5 +1,6 @@
 ﻿using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.X509;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Services;
 using System.Collections.Generic;
 using System.IO;

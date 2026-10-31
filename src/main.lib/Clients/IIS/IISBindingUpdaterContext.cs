@@ -1,4 +1,4 @@
-﻿using PKISharp.WACS.DomainObjects;
+﻿using PKISharp.WACS.DomainObjects.Identifiers;
 using System.Collections.Generic;
 
 namespace PKISharp.WACS.Clients.IIS

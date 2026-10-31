@@ -2,6 +2,7 @@
 using Microsoft.Web.Administration;
 using Microsoft.Win32;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
