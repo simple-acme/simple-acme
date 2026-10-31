@@ -284,7 +284,7 @@ namespace PKISharp.WACS.Clients.IIS
         private bool AllowAdd(BindingOptions options, IEnumerable<IIISBinding> existingBindings)
         {
             var bindingInfoShort = $"{options.IP}:{options.Port}";
-            var bindingInfoFull = $"{bindingInfoShort}:{options.Host}";
+            var bindingInfoFull = $"{bindingInfoShort}:{options.Host.Unicode}";
 
             // On Windows 2008, which does not support SNI, only one 
             // https binding can exist for each IP/port combination

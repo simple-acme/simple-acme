@@ -34,22 +34,7 @@ namespace PKISharp.WACS.Clients.IIS
                 ToString());
 
             Site = site;
-            Bindings = [.. site.Bindings.Select(x =>
-            {
-                var secure = x.Protocol == "https" || ((x.Protocol == "ftp") && ftpSsl);
-                try
-                {
-                    var ret = new IISBindingWrapper(x, secure);
-                    // Force parsing of the host name to catch any errors early
-                    _ = ret.Host;
-                    return ret;
-                }
-                catch
-                {
-                    // Invalid binding, e.g. when we're unable to parse the host name
-                    return null;
-                }
-            }).OfType<IISBindingWrapper>()];
+            Bindings = [.. site.Bindings.Select(x => new IISBindingWrapper(x, x.Protocol == "https" || ((x.Protocol == "ftp") && ftpSsl)))];
 
             if (Bindings.Any() && Bindings.All(b => b.Protocol == "ftp" || b.Protocol == "ftps"))
             {

@@ -34,10 +34,15 @@ namespace PKISharp.WACS.DomainObjects.Identifiers
                 var unicode = _idn.GetUnicode(punycode).ToLowerInvariant();
                 return new HostName(unicode, punycode);
             }
-            catch (ArgumentException ex)
+            catch
             {
-                 throw new Exception($"Invalid value: {value}", ex);
+                // If normalization fails, fall back to the raw
+                // input and hope for the best :)
 
+                // This could happen for host names that are not
+                // valid according to the IDNA2008 standard, but are
+                // still used in practice.
+                return new HostName(value, value);
             }
         }
 
