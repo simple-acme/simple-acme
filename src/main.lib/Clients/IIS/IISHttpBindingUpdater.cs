@@ -307,7 +307,7 @@ namespace PKISharp.WACS.Clients.IIS
             }
 
             // Wildcard bindings are only supported in Windows 2016+
-            if (options.Host.Unicode.StartsWith("*.") && client.Version.Major < 10)
+            if (options.Host.IsWildcard && client.Version.Major < 10)
             {
                 log.Warning($"Unable to create wildcard binding on this version of IIS");
                 return false;
@@ -500,14 +500,14 @@ namespace PKISharp.WACS.Clients.IIS
             }
 
             // Match sub.example.com (identifier) with *.example.com (IIS)
-            if (binding.Host.Unicode.StartsWith("*.") && !dns.Value.StartsWith("*."))
+            if (binding.Host.IsWildcard && !dns.Host.IsWildcard)
             {
-                if (dns.Value.ToLower().EndsWith(binding.Host.Unicode.Replace("*.", ".")))
+                if (dns.Host.Unicode.ToLower().EndsWith(binding.Host.Unicode.Replace("*.", ".")))
                 {
                     // If there is a binding for *.a.b.c.com (5) and one for *.c.com (3)
                     // then the hostname test.a.b.c.com (5) is a better (more specific)
                     // for the former than for the latter, so we prefer to use that.
-                    var hostLevel = dns.Value.Split('.').Length;
+                    var hostLevel = dns.Host.Unicode.Split('.').Length;
                     var bindingLevel = binding.Host.Unicode.Split('.').Length;
                     return 50 - (hostLevel - bindingLevel);
                 }
@@ -518,12 +518,12 @@ namespace PKISharp.WACS.Clients.IIS
             }
 
             // Match *.example.com (identifier) with sub.example.com (IIS)
-            if (!binding.Host.Unicode.StartsWith("*.") && dns.Value.StartsWith("*."))
+            if (!binding.Host.IsWildcard && dns.Host.IsWildcard)
             {
-                if (binding.Host.Unicode.ToLower().EndsWith(dns.Value.ToLower().Replace("*.", ".")))
+                if (binding.Host.Unicode.ToLower().EndsWith(dns.Host.Unicode.ToLower().Replace("*.", ".")))
                 {
                     // But it should not match with another.sub.example.com.
-                    var hostLevel = dns.Value.Split('.').Length;
+                    var hostLevel = dns.Host.Unicode.Split('.').Length;
                     var bindingLevel = binding.Host.Unicode.Split('.').Length;
                     if (hostLevel == bindingLevel)
                     {

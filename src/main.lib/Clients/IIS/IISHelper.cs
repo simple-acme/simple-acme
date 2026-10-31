@@ -18,7 +18,6 @@ namespace PKISharp.WACS.Clients.IIS
             public long SiteId { get; set; }
             public IISSiteType SiteType { get; set; }
             public bool Secure { get; set; }
-            public bool Wildcard => Host.Unicode.StartsWith("*.");
             public int Port { get; set; }
             public string? Protocol { get; set; }
             public HostName Host { get; set; } = Host;
