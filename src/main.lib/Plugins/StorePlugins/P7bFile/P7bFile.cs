@@ -1,4 +1,5 @@
 ﻿using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Capabilities;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -64,10 +65,12 @@ namespace PKISharp.WACS.Plugins.StorePlugins
         {
             try
             {
-                var fileName = string.IsNullOrEmpty(_name) ?
-                    input.CommonName?.Value ?? input.SanNames.First().Value :
-                    friendlyNameInfo.GetIntermediate(_name);
-                var dest = PathForIdentifier(fileName);
+                var name = string.IsNullOrEmpty(_name) ?
+                        input.CommonName?.Host.Punycode ??
+                        input.SanNames.OfType<DnsIdentifier>().First().Host.Punycode ??
+                        input.SanNames.First().Value :
+                        friendlyNameInfo.GetIntermediate(_name);
+                var dest = PathForIdentifier(name);
                 var data = input.AsCollection(X509KeyStorageFlags.EphemeralKeySet, _log, _settings).Export(X509ContentType.Pkcs7) ?? throw new Exception();
                 var fi = new FileInfo(dest);
                 using var fs = fi.Open(FileMode.Create);

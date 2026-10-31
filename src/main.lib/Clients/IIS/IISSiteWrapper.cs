@@ -34,11 +34,19 @@ namespace PKISharp.WACS.Clients.IIS
                 ToString());
 
             Site = site;
-            Bindings = site.Bindings.Select(x =>
+            Bindings = [.. site.Bindings.Select(x =>
             {
                 var secure = x.Protocol == "https" || ((x.Protocol == "ftp") && ftpSsl);
-                return new IISBindingWrapper(x, secure);
-            }).ToList();
+                try
+                {
+                    return new IISBindingWrapper(x, secure);
+                }
+                catch
+                {
+                    // Invalid binding, e.g. when we're unable to parse the host name
+                    return null;
+                }
+            }).OfType<IISBindingWrapper>()];
 
             if (Bindings.All(b => b.Protocol == "ftp" || b.Protocol == "ftps"))
             {
@@ -65,7 +73,7 @@ namespace PKISharp.WACS.Clients.IIS
                     if (Binding.Protocol == "ftp")
                     {
                         var split = BindingInformation.Split(":");
-                        field = split.Length == 3 ? HostName.Parse(split[2]) : HostName.Emtpy;
+                        field = split.Length == 3 ? HostName.Parse(split[2]) : HostName.Empty;
                     }
                     else
                     {

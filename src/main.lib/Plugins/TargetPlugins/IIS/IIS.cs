@@ -49,7 +49,7 @@ namespace PKISharp.WACS.Plugins.TargetPlugins
 
             // Handle common name
             var cn = HostName.Parse(options.CommonName);
-            var cnDefined = !cn.IsEmtpy;
+            var cnDefined = !cn.IsEmpty;
             var cnBinding = default(IISHelper.IISBindingOption); 
             if (cnDefined)
             {

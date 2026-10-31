@@ -59,7 +59,7 @@ namespace PKISharp.WACS.Clients.IIS
         /// <summary>
         /// Hostname that should be set for the binding
         /// </summary>
-        public HostName Host { get; } = host ?? HostName.Emtpy;
+        public HostName Host { get; } = host ?? HostName.Empty;
 
         /// <summary>
         /// Optional: SiteId where new binding are supposed to be created

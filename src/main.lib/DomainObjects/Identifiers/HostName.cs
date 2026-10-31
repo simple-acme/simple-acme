@@ -1,15 +1,13 @@
-﻿using MimeKit.Encodings;
-using PKISharp.WACS.Extensions;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Globalization;
 
 namespace PKISharp.WACS.DomainObjects.Identifiers
 {
-
     /// <summary>
-    /// Represent a potentially internatoinal hostname where
-    /// 
+    /// Represent a potentially international hostname, which can be represented
+    /// in Unicode or Punycode. The Unicode representation is used for display purposes
+    /// while the Punycode representation is used for certificate requests.
     /// </summary>
     [DebuggerDisplay("{Unicode}")]
     public class HostName : IEquatable<HostName>, IComparable, IComparable<HostName>
@@ -18,17 +16,17 @@ namespace PKISharp.WACS.DomainObjects.Identifiers
         /// We parse wildcards, which do not meet UseStd3AsciiRules requirement
         /// </summary>
         private static readonly IdnMapping _idn = new() { UseStd3AsciiRules = false };
-        public static readonly HostName Emtpy = new(string.Empty, string.Empty) { IsEmtpy = true };
+        public static readonly HostName Empty = new(string.Empty, string.Empty) { IsEmpty = true };
 
         public static HostName Parse(string? value)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                return Emtpy;
+                return Empty;
             }
             if (value == "*")
             {
-                return Emtpy;
+                return Empty;
             }
             try
             {
@@ -48,12 +46,12 @@ namespace PKISharp.WACS.DomainObjects.Identifiers
             Unicode = unicode;
             Punycode = punycode;
         }
-        public bool IsEmtpy { get; private set; }
-        public bool IsCommon => Unicode.Length <= Constants.MaxCommonName;
+        public bool IsEmpty { get; private set; }
+        public bool IsCommon => Punycode.Length <= Constants.MaxCommonName;
         public bool IsWildcard => Unicode.StartsWith("*.");
         public string Unicode { get; private set; }
         public string Punycode { get; private set; }
-        public override string ToString() => Punycode;
+        public override string ToString() => Unicode;
         public override bool Equals(object? obj) => (obj as HostName) == this;
         public override int GetHashCode() => ToString().GetHashCode();
         public bool Equals(HostName? other) => other == this;

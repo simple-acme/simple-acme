@@ -62,7 +62,7 @@ namespace PKISharp.WACS.Clients.IIS
             log.Debug("Scanning IIS bindings for host names");
             var siteBindings = sites.
                 SelectMany(site => site.Bindings, (site, binding) => new { site, binding }).
-                Where(sb => !sb.binding.Host.IsEmtpy).
+                Where(sb => !sb.binding.Host.IsEmpty).
                 ToList();
 
             static string lookupKey(IIISSite site, IIISBinding binding) =>
@@ -218,6 +218,6 @@ namespace PKISharp.WACS.Clients.IIS
             return null;
         }
 
-        private static List<HostName> GetHosts(IIISSite site) => [.. site.Bindings.Select(x => x.Host).Where(x => !x.IsEmtpy).Distinct()];
+        private static List<HostName> GetHosts(IIISSite site) => [.. site.Bindings.Select(x => x.Host).Where(x => !x.IsEmpty).Distinct()];
     }
 }

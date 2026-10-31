@@ -188,7 +188,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Clients
         }
 
         public int Id { get; set; }
-        public HostName Host { get; set; } = HostName.Emtpy;
+        public HostName Host { get; set; } = HostName.Empty;
         public string Protocol { get; set; } = "";
         public int Port { get; set; }
         public string IP { get; set; } = "";

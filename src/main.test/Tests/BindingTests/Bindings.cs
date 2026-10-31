@@ -583,7 +583,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = HostName.Emtpy,
+                                Host = HostName.Empty,
                                 Protocol = "https",
                                 CertificateHash = scopeCert,
                                 CertificateStoreName = DefaultStore,
@@ -725,7 +725,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                         new() {
                             IP = DefaultIP,
                             Port = 80,
-                            Host = HostName.Emtpy,
+                            Host = HostName.Empty,
                             Protocol = "http"
                         }
                     ]
@@ -819,7 +819,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = HostName.Emtpy,
+                                Host = HostName.Empty,
                                 Protocol = "https",
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore,
@@ -875,7 +875,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = HostName.Emtpy,
+                                Host = HostName.Empty,
                                 Protocol = "https",
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore,
@@ -932,7 +932,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = HostName.Emtpy,
+                                Host = HostName.Empty,
                                 Protocol = "https",
                                 CertificateHash = oldCert1,
                                 CertificateStoreName = DefaultStore,
@@ -979,7 +979,7 @@ namespace PKISharp.WACS.UnitTests.Tests.BindingTests
                             new() {
                                 IP = DefaultIP,
                                 Port = DefaultPort,
-                                Host = HostName.Emtpy,
+                                Host = HostName.Empty,
                                 Protocol = "http"
                             }
                         ]

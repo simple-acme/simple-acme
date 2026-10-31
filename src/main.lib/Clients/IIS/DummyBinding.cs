@@ -27,7 +27,7 @@ namespace PKISharp.WACS.Clients.IIS
                 else if (identifier is IpIdentifier ip)
                 {
                     _ip = ip.Value;
-                    _host = HostName.Emtpy;
+                    _host = HostName.Empty;
                 }
                 else
                 {

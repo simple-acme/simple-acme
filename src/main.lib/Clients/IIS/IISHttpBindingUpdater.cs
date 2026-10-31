@@ -335,7 +335,7 @@ namespace PKISharp.WACS.Clients.IIS
                     .Where(x => !x.SSLFlags.HasFlag(SSLFlags.Sni))
                     .Any())
                 {
-                    if (!match.Host.IsEmtpy)
+                    if (!match.Host.IsEmpty)
                     {
                         log.Warning("Turning on SNI for existing binding to avoid conflict");
                         modified = start | SSLFlags.Sni;
@@ -370,7 +370,7 @@ namespace PKISharp.WACS.Clients.IIS
 
             // Add SNI on Windows Server 2012+ for new bindings
             if (newBinding &&
-                !host.IsEmtpy &&
+                !host.IsEmpty &&
                 client.Version.Major >= 8)
             {
                 flags |= SSLFlags.Sni;
@@ -395,7 +395,7 @@ namespace PKISharp.WACS.Clients.IIS
                 // Do not allow CentralSSL flag to be set on the default binding
                 // Logic elsewhere in the program should prevent this 
                 // from happening. This is merely a sanity check
-                if (host.IsEmtpy)
+                if (host.IsEmpty)
                 {
                     throw new InvalidOperationException("Central SSL is not supported without a hostname");
                 }
@@ -476,7 +476,7 @@ namespace PKISharp.WACS.Clients.IIS
 
         private static int FitsIp(IIISBinding binding, IpIdentifier ip)
         {
-            if (binding.Host.IsEmtpy)
+            if (binding.Host.IsEmpty)
             {
                 if (binding.IP == ip.Value)
                 {
@@ -494,7 +494,7 @@ namespace PKISharp.WACS.Clients.IIS
         {
             // The default (empty) binding matches with all hostnames.
             // But it's not supported with Central SSL
-            if (binding.Host.IsEmtpy && !flags.HasFlag(SSLFlags.CentralCertStore))
+            if (binding.Host.IsEmpty && !flags.HasFlag(SSLFlags.CentralCertStore))
             {
                 return 10;
             }

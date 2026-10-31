@@ -49,12 +49,12 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                 { "CacheFile", cachedCertificate?.CacheFile.FullName },
                 { "CacheFolder", cachedCertificate?.CacheFile.Directory?.FullName },
                 { "CachePassword", censor ? renewal.PfxPassword?.DisplayValue : renewal.PfxPassword?.Value },
-                { "CertCommonName", newCertificate.CommonName?.Value },
+                { "CertCommonName", newCertificate.CommonName?.Host.Punycode },
                 { "CertFriendlyName", newCertificate.FriendlyName },
                 { "CertThumbprint", newCertificate.Thumbprint },
                 { "StorePath", defaultStoreInfo?.Path },
                 { "StoreType", defaultStoreInfo?.Name },
-                { "OldCertCommonName",oldCertificate?.CommonName?.Value },
+                { "OldCertCommonName",oldCertificate?.CommonName?.Host.Punycode },
                 { "OldCertFriendlyName", oldCertificate?.FriendlyName },
                 { "OldCertThumbprint", oldCertificate?.Thumbprint }
             };
