@@ -1,4 +1,6 @@
-﻿using PKISharp.WACS.Plugins.Base.Options;
+﻿using PKISharp.WACS.Configuration;
+using PKISharp.WACS.Plugins.Base.Options;
+using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
 using System.Text.Json.Serialization;
 
@@ -17,5 +19,12 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     public class AcmeOptions : ValidationPluginOptions
     {
         public string? BaseUri { get; set; }
+        public NetworkCredentialOptions? Credential { get; set; }
+
+        public override void Show(IInputService input)
+        {
+            base.Show(input);
+            Credential?.Show(input);
+        }
     }
 }

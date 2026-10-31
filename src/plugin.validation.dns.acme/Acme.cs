@@ -18,6 +18,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         ISettings settings,
         IInputService input,
         IProxyService proxy,
+        SecretServiceManager secretService,
         AcmeOptions options) : DnsValidation<Acme>(dnsClient, log, settings)
     {
 
@@ -28,7 +29,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
         /// <param name="token"></param>
         public override async Task<bool> CreateRecord(DnsValidationRecord record)
         {
-            var client = new AcmeDnsClient(_dnsClient, proxy, _log, _settings, input, new Uri(options.BaseUri!));
+            var client = new AcmeDnsClient(_dnsClient, proxy, _log, _settings, input,
+                new Uri(options.BaseUri!), options.Credential, secretService);
             return await client.Update(record.Context.Identifier, record.Value);
         }
 
