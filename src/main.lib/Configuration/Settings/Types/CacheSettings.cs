@@ -100,9 +100,9 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             "these should only be long-expired certificates, generated for abandoned renewals.")]
         public bool? DeleteStaleFiles { get; set; }
 
-        [SettingsValue(Default = "400",
-            Description = "This value may be decreased if you are working with short-lived " +
-            "certificates and enable <code>DeleteStaleFiles</code>.")]
+        [SettingsValue(NullBehaviour = "equivalent to 428 days (safe for 398 day certificates issued before March 15, 2026)",
+            Description = "This value may be only be increased above the default value, because lowering it " +
+            "can cause the program to unnecessary renew certificates.")]
         public int? DeleteStaleFilesDays { get; set; }
 
         [SettingsValue(
