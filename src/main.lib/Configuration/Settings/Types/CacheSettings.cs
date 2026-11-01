@@ -100,9 +100,10 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             "these will only be certificates expired at least than 30 days ago.")]
         public bool? DeleteStaleFiles { get; set; }
 
-        [SettingsValue(NullBehaviour = "equivalent to 428 days (safe for the last 398 day certificates issued before March 15, 2026)",
+        [SettingsValue(NullBehaviour = "equivalent to 428 days",
             Description = "This value may be only be increased above the default value, because lowering it " +
-            "can cause the program to unnecessary renew certificates.")]
+            "can cause the program to unnecessary renew certificates. The current default is safe for the last " +
+            "398 day certificates that have been issued before March 15, 2026.")]
         public int? DeleteStaleFilesDays { get; set; }
 
         [SettingsValue(
