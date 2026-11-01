@@ -97,7 +97,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         [SettingsValue(Default = "false",
             Description = "Automatically delete files older than <code>DeleteStaleFileDays</code> " +
             "many days from the folder <code>{Cache.Path}</code>. Running with default settings, " +
-            "these should only be long-expired certificates, generated for abandoned renewals.")]
+            "these will only be certificates expired at least than 30 days ago.")]
         public bool? DeleteStaleFiles { get; set; }
 
         [SettingsValue(NullBehaviour = "equivalent to 428 days (safe for 398 day certificates issued before March 15, 2026)",
