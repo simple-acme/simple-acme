@@ -96,7 +96,17 @@ namespace PKISharp.WACS.Services
             var end = validFrom.AddDays(settings.ScheduledTask.RenewalDays);
             var endSource = "rd";
 
-            // Guard rail #1: certificate should at least be valid for RenewalMinimumValidDays
+            // Guard rail #1: Percentage of lifetime should be taken into account as well
+            var renewalPercentage = Math.Max(1, settings.ScheduledTask.RenewalPercentage);
+            renewalPercentage = Math.Min(renewalPercentage, 100);
+            var endPercentage = validFrom.AddDays((validUntil - validFrom).TotalDays * renewalPercentage / 100);
+            if (endPercentage < end)
+            {
+                end = endPercentage;
+                endSource = "rp";
+            }
+
+            // Guard rail #2: certificate should at least be valid for RenewalMinimumValidDays
             var endMinValid = validUntil.AddDays(-1 * settings.ScheduledTask.RenewalMinimumValidDays);
             if (endMinValid < end)
             {
@@ -104,7 +114,7 @@ namespace PKISharp.WACS.Services
                 endSource = "mv";
             }
 
-            // Guard rail #2: server might feel the renewal should happen even earlier,
+            // Guard rail #3: server might feel the renewal should happen even earlier,
             // for example during a security incident.
             if (!settings.ScheduledTask.RenewalDisableServerSchedule && 
                 renewalInfo != null && 

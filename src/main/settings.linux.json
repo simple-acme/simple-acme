@@ -44,7 +44,7 @@
     "ProtectionMode": "default"
   },
   "ScheduledTask": {
-    "RenewalDays": 55,
+    "RenewalPercentage": 70,
     "RenewalDaysRange": 0,
     "RenewalMinimumValidDays": null,
     "RenewalDisableServerSchedule": false
