@@ -93,7 +93,7 @@ namespace PKISharp.WACS.Services
         public DueDate ComputeDueDate(DateTime validFrom, DateTime validUntil, AcmeRenewalInfo? renewalInfo = null)
         {
             // Basic rule for End: NotAfter - RenewalMinimumValidDays
-            var minValidDays = Math.Max(settings.ScheduledTask.RenewalMinimumValidDays ?? 7, 1);
+            var minValidDays = Math.Max(settings.ScheduledTask.RenewalMinimumValidDays ?? 7, 0);
             var end = validUntil.AddDays(-1 * minValidDays);
             var endSource = "mv";
 
@@ -133,7 +133,8 @@ namespace PKISharp.WACS.Services
             }
 
             // Basic rule for start: End - RenewalDaysRange
-            var start = end.AddDays(settings.ScheduledTask.RenewalDaysRange ?? 0 * -1);
+            var range = settings.ScheduledTask.RenewalDaysRange ?? 0;
+            var start = end.AddDays(range * -1);
             var startSource = "rd";
 
             // Guard rail #3: server might feel the renewal should happen even earlier,

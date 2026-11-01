@@ -50,26 +50,26 @@ namespace PKISharp.WACS.Services
             // Last issue: March 14, 2026
             // Last expire: April 16, 2027
             // 30 days grace period: May 16, 2027 
-            // Safest value until that date is 428 days
+            // Safest value until that date is 428 days (safe for everyone)
 
             // 200 day certificates: 
             // Last issue: March 14, 2027
             // Last expire: September 30, 2027
             // 30 days grace period: October 30, 2027
-            // Safe value until that date is 230 days (safe for new installs)
+            // Safe value until that date is 230 days
 
             // 100 day certificates: 
             // Last issue: March 14, 2029
             // Last expire: June 22, 2029
             // 30 days grace period: July 22, 2029
-            // Safe value until that date is 130 days (close to old default)
+            // Safe value until that date is 130 days
 
             // 47 day certificates: 
             // Forseeable future
             // Safe value from then is 77 days
 
-            var days = Math.Max(
-                _settings.Cache.DeleteStaleFilesDays, 230);
+            var safeValue = 428;
+            var days = Math.Max(_settings.Cache.DeleteStaleFilesDays ?? safeValue, safeValue);
             var files = _cache.
                 GetFiles().
                 Where(x => x.LastWriteTime < DateTime.Now.AddDays(-days));

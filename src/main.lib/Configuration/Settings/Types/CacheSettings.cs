@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         /// expired certificates, generated for abandoned
         /// renewals. However we do advise caution.
         /// </summary>
-        int DeleteStaleFilesDays { get; }
+        int? DeleteStaleFilesDays { get; }
 
         /// <summary>
         /// The path where certificates and request files are 
@@ -57,7 +57,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     internal class InheritCacheSettings(ISettings root, params IEnumerable<CacheSettings?> chain) : InheritSettings<CacheSettings>(chain), ICacheSettings
     {
         public bool DeleteStaleFiles => Get(x => x.DeleteStaleFiles) ?? false;
-        public int DeleteStaleFilesDays => Get(x => x.DeleteStaleFilesDays) ?? 230;
+        public int? DeleteStaleFilesDays => Get(x => x.DeleteStaleFilesDays);
         public string CachePath { 
             get { 
                 var userPath = Get(x => x.Path);

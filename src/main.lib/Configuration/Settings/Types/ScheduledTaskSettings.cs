@@ -41,11 +41,9 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
         [SettingsValue(
             Default = null,
-            NullBehaviour = "equivalent to 160 days",   
-            Description = "Trigger the renewal of any certificate that has passed the specified number of days of its lifetime. " +
-            "Currently publically trusted certificates have a maximum lifetime of 200 days, so we use 160 days as a default to " +
-            "have a grace period of a little more than a month.",
-            Warning = "If you increase the days, please note that you will have less time to fix any issues if the certificate doesn't renew correctly.")]
+            Description = "Trigger the renewal of any certificate that has passed the specified number of days since issuing.",
+            Warning = "This setting will continue to work for backwards compatibility and should work even for certificates " +
+            "with shorter lifetimes (due to other guardrails), but should be replaced by using <code>RenewalPercentage</code> instead.")]
         public int? RenewalDays { get; set; }
 
         [SettingsValue(
