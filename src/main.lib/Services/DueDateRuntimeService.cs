@@ -92,19 +92,36 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public DueDate ComputeDueDate(DateTime validFrom, DateTime validUntil, AcmeRenewalInfo? renewalInfo = null)
         {
-            // Basic rule for End: NotBefore + RenewalDays
-            var end = validFrom.AddDays(settings.ScheduledTask.RenewalDays);
-            var endSource = "rd";
+            // Basic rule for End: NotAfter - RenewalMinimumValidDays
+            var minValidDays = Math.Max(settings.ScheduledTask.RenewalMinimumValidDays ?? 7, 0);
+            var end = validUntil.AddDays(-1 * minValidDays);
+            var endSource = "mv";
 
-            // Guard rail #1: certificate should at least be valid for RenewalMinimumValidDays
-            var endMinValid = validUntil.AddDays(-1 * settings.ScheduledTask.RenewalMinimumValidDays);
-            if (endMinValid < end)
+            // Guard rail #1: Classic RenewalDays should be taken into account as well
+            if (settings.ScheduledTask.RenewalDays != null)
             {
-                end = endMinValid;
-                endSource = "mv";
+                var endDays = validFrom.AddDays(settings.ScheduledTask.RenewalDays.Value);
+                if (endDays < end)
+                {
+                    end = endDays;
+                    endSource = "rd";
+                }
             }
 
-            // Guard rail #2: server might feel the renewal should happen even earlier,
+            // Guard rail #2: Percentage of lifetime should be taken into account as well
+            if (settings.ScheduledTask.RenewalPercentage != null)
+            {
+                var renewalPercentage = Math.Max(1, settings.ScheduledTask.RenewalPercentage.Value);
+                renewalPercentage = Math.Min(renewalPercentage, 100);
+                var endPercentage = validFrom.AddDays((validUntil - validFrom).TotalDays * renewalPercentage / 100);
+                if (endPercentage < end)
+                {
+                    end = endPercentage;
+                    endSource = "rp";
+                }
+            }   
+
+            // Guard rail #3: server might feel the renewal should happen even earlier,
             // for example during a security incident.
             if (!settings.ScheduledTask.RenewalDisableServerSchedule && 
                 renewalInfo != null && 
@@ -116,7 +133,8 @@ namespace PKISharp.WACS.Services
             }
 
             // Basic rule for start: End - RenewalDaysRange
-            var start = end.AddDays(settings.ScheduledTask.RenewalDaysRange * -1);
+            var range = settings.ScheduledTask.RenewalDaysRange ?? 0;
+            var start = end.AddDays(range * -1);
             var startSource = "rd";
 
             // Guard rail #3: server might feel the renewal should happen even earlier,

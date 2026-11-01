@@ -13,7 +13,7 @@
         [CommandLine(Name = "eab-key-identifier", Description = "Key identifier to use for external account binding.")]
         public string? EabKeyIdentifier { get; set; }
 
-        [CommandLine(Name = "eab-key", Description = "Key to use for external account binding. Must be base64url encoded.", Secret = true)]
+        [CommandLine(Name = "eab-key", Description = "Key to use for external account binding. Must be base64url encoded. Note that if your key starts with a - you must escape it between \\\" like such: \\\"-key\\\"", Secret = true)]
         public string? EabKey { get; set; }
 
         [CommandLine(Name = "eab-algorithm", Description = "Algorithm to use for external account binding. Valid values are HS256 (default), HS384, and HS512.")]

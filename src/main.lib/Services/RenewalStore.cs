@@ -32,10 +32,6 @@ namespace PKISharp.WACS.Services
             _inputService = input;
             _settings = settings;
             _dueDateService = dueDateService;
-            if (_settings.Valid)
-            {
-                _log.Debug("Renewal period: {RenewalDays} days", _settings.ScheduledTask.RenewalDays);
-            }
         }
 
         public async Task<IEnumerable<Renewal>> FindByArguments(string? id, string? friendlyName)

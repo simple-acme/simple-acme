@@ -22,7 +22,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         /// expired certificates, generated for abandoned
         /// renewals. However we do advise caution.
         /// </summary>
-        int DeleteStaleFilesDays { get; }
+        int? DeleteStaleFilesDays { get; }
 
         /// <summary>
         /// The path where certificates and request files are 
@@ -57,7 +57,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     internal class InheritCacheSettings(ISettings root, params IEnumerable<CacheSettings?> chain) : InheritSettings<CacheSettings>(chain), ICacheSettings
     {
         public bool DeleteStaleFiles => Get(x => x.DeleteStaleFiles) ?? false;
-        public int DeleteStaleFilesDays => Get(x => x.DeleteStaleFilesDays) ?? 120;
+        public int? DeleteStaleFilesDays => Get(x => x.DeleteStaleFilesDays);
         public string CachePath { 
             get { 
                 var userPath = Get(x => x.Path);
@@ -97,12 +97,13 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         [SettingsValue(Default = "false",
             Description = "Automatically delete files older than <code>DeleteStaleFileDays</code> " +
             "many days from the folder <code>{Cache.Path}</code>. Running with default settings, " +
-            "these should only be long-expired certificates, generated for abandoned renewals.")]
+            "these will only be certificates expired at least 30 days ago.")]
         public bool? DeleteStaleFiles { get; set; }
 
-        [SettingsValue(Default = "120",
-            Description = "This value should be increased if you are working with long-lived " +
-            "certificates and enable <code>DeleteStaleFiles</code>.")]
+        [SettingsValue(NullBehaviour = "equivalent to 428 days",
+            Description = "This value may be only be increased above the default value, because lowering it " +
+            "can cause the program to unnecessary renew certificates. The current default is safe for the last " +
+            "398 day certificates that have been issued before March 15, 2026.")]
         public int? DeleteStaleFilesDays { get; set; }
 
         [SettingsValue(

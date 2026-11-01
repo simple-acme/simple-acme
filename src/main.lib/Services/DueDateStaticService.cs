@@ -45,7 +45,9 @@ namespace PKISharp.WACS.Services
                                 runtime.ComputeDueDate(new DueDate()
                                 {
                                     Start = history.Date,
-                                    End = orderResult.ExpireDate ?? history.ExpireDate ?? history.Date.AddYears(1)
+                                    End = orderResult.ExpireDate ??
+                                        history.ExpireDate ??
+                                        history.Date.AddDays(200) // Current maximum lifetime of a publically trusted certificate is 200 days
                                 });
 
                         if (orderResult.Success != false)
