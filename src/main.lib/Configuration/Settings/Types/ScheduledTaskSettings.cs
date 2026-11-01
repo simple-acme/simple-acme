@@ -7,11 +7,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     {
         TimeSpan ExecutionTimeLimit { get; }
         TimeSpan RandomDelay { get; }
-        int RenewalPercentage { get; }
-        int RenewalDays { get; }
-        int RenewalDaysRange { get; }
+        int? RenewalPercentage { get; }
+        int? RenewalDays { get; }
+        int? RenewalDaysRange { get; }
         bool RenewalDisableServerSchedule { get; }
-        int RenewalMinimumValidDays { get; }
+        int? RenewalMinimumValidDays { get; }
         TimeSpan StartBoundary { get; }
     }
 
@@ -19,11 +19,11 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     {
         public TimeSpan ExecutionTimeLimit => Get(x => x.ExecutionTimeLimit) ?? TimeSpan.Zero;
         public TimeSpan RandomDelay => Get(x => x.RandomDelay) ?? TimeSpan.Zero;
-        public int RenewalPercentage => Get(x => x.RenewalPercentage) ?? 70;
-        public int RenewalDays => Get(x => x.RenewalDays) ?? 55;
-        public int RenewalDaysRange => Get(x => x.RenewalDaysRange) ?? 0;
+        public int? RenewalPercentage => Get(x => x.RenewalPercentage);
+        public int? RenewalDays => Get(x => x.RenewalDays);
+        public int? RenewalDaysRange => Get(x => x.RenewalDaysRange);
         public bool RenewalDisableServerSchedule => Get(x => x.RenewalDisableServerSchedule) ?? false;
-        public int RenewalMinimumValidDays => Get(x => x.RenewalMinimumValidDays) ?? 7;
+        public int? RenewalMinimumValidDays => Get(x => x.RenewalMinimumValidDays);
         public TimeSpan StartBoundary => Get(x => x.StartBoundary) ?? TimeSpan.Zero;
     }
 
@@ -40,8 +40,8 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public int? RenewalPercentage { get; set; }
 
         [SettingsValue(
-            Default = "160",
-            NullBehaviour = "equivalent to 55 (for backwards compatibility)",
+            Default = null,
+            NullBehaviour = "equivalent to 160 days",   
             Description = "Trigger the renewal of any certificate that has passed the specified number of days of its lifetime. " +
             "Currently publically trusted certificates have a maximum lifetime of 200 days, so we use 160 days as a default to " +
             "have a grace period of a little more than a month.",
@@ -66,7 +66,8 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public bool? RenewalDisableServerSchedule { get; set; }
 
         [SettingsValue(
-            Default = "3",
+            Default = null,
+            NullBehaviour = "equivalent to 7 days",
             Description = "The minimum number of days a certificate should still be valid. If the certificate is valid " +
             "for a smaller number of days, it will be renewed regardless of the <code>RenewalDays</code> setting.")]
         public int? RenewalMinimumValidDays { get; set; }

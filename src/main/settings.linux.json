@@ -45,7 +45,7 @@
   },
   "ScheduledTask": {
     "RenewalPercentage": 70,
-    "RenewalDaysRange": 0,
+    "RenewalDaysRange": null,
     "RenewalMinimumValidDays": null,
     "RenewalDisableServerSchedule": false
   },

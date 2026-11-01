@@ -48,7 +48,7 @@ namespace PKISharp.WACS.Services
         {
             var days = Math.Max(
                 _settings.Cache.DeleteStaleFilesDays, 
-                _settings.ScheduledTask.RenewalDays + 30);
+                (_settings.ScheduledTask.RenewalDays ?? 0) + 30);
             var files = _cache.
                 GetFiles().
                 Where(x => x.LastWriteTime < DateTime.Now.AddDays(-days));

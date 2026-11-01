@@ -35,7 +35,7 @@ namespace PKISharp.WACS.UnitTests.Tests.RenewalExecutorTests
 
             var dueDate = dr.ComputeDueDate(validFrom: startDate, validUntil: endDate, renewalInfo: null);
             Assert.AreEqual(source, dueDate.Source);
-            Assert.AreEqual(dueDate.End, DateTime.Parse(expectedDate));
+            Assert.AreEqual(DateTime.Parse(expectedDate), dueDate.End);
 
         }
     }
