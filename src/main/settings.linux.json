@@ -39,7 +39,7 @@
   "Cache": {
     "ReuseDays": 1,
     "DeleteStaleFiles": false,
-    "DeleteStaleFilesDays": 120,
+    "DeleteStaleFilesDays": 230,
     "Path": null,
     "ProtectionMode": "default"
   },

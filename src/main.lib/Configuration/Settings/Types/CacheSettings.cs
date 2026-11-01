@@ -57,7 +57,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
     internal class InheritCacheSettings(ISettings root, params IEnumerable<CacheSettings?> chain) : InheritSettings<CacheSettings>(chain), ICacheSettings
     {
         public bool DeleteStaleFiles => Get(x => x.DeleteStaleFiles) ?? false;
-        public int DeleteStaleFilesDays => Get(x => x.DeleteStaleFilesDays) ?? 120;
+        public int DeleteStaleFilesDays => Get(x => x.DeleteStaleFilesDays) ?? 230;
         public string CachePath { 
             get { 
                 var userPath = Get(x => x.Path);
@@ -100,8 +100,8 @@ namespace PKISharp.WACS.Configuration.Settings.Types
             "these should only be long-expired certificates, generated for abandoned renewals.")]
         public bool? DeleteStaleFiles { get; set; }
 
-        [SettingsValue(Default = "120",
-            Description = "This value should be increased if you are working with long-lived " +
+        [SettingsValue(Default = "400",
+            Description = "This value may be decreased if you are working with short-lived " +
             "certificates and enable <code>DeleteStaleFiles</code>.")]
         public int? DeleteStaleFilesDays { get; set; }
 
