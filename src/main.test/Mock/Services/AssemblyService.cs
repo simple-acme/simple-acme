@@ -1,4 +1,6 @@
-﻿using PKISharp.WACS.Services;
+﻿using PKISharp.WACS.Plugins.NotificationPlugins;
+using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Interfaces;
 using System.Collections.Generic;
 
 namespace PKISharp.WACS.UnitTests.Mock.Services
@@ -11,6 +13,11 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
             if (typeof(T) == typeof(ISecretProvider))
             {
                 return [new(typeof(SecretService))];
+            }
+            // Test doubles in this assembly would otherwise be discovered as targets
+            if (typeof(T) == typeof(INotificationTarget))
+            {
+                return [new(typeof(NotificationTargetEmail)), new(typeof(NotificationTargetScript))];
             }
             return base.GetResolvable<T>();
 
