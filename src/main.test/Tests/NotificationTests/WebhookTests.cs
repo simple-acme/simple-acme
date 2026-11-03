@@ -12,6 +12,7 @@ using PKISharp.WACS.UnitTests.Mock.Services;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -156,6 +157,73 @@ namespace PKISharp.WACS.UnitTests.Tests.NotificationTests
         }
 
         [TestMethod]
+        public async Task ExpiresAtIsEarliestCurrentOrder()
+        {
+            using var context = new Fixture();
+            var renewal = Renewal();
+            renewal.History.Add(new RenewResult
+            {
+                Date = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+                Success = true,
+                OrderResults = [
+                    new OrderResult("first") { Success = true, ExpireDate = new DateTime(2026, 12, 1, 0, 0, 0, DateTimeKind.Utc) },
+                    new OrderResult("second") { Success = true, ExpireDate = new DateTime(2026, 12, 5, 0, 0, 0, DateTimeKind.Utc) }]
+            });
+            // Run that only processed the second order
+            renewal.History.Add(new RenewResult
+            {
+                Date = new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc),
+                Success = true,
+                OrderResults = [new OrderResult("second") { Success = true, ExpireDate = new DateTime(2027, 2, 1, 0, 0, 0, DateTimeKind.Utc) }]
+            });
+
+            await context.Target.SendSuccess(renewal, []);
+            var data = JsonNode.Parse(context.Handler.Requests.Last().Body)!["data"]!;
+            Assert.AreEqual(new DateTime(2026, 12, 1, 0, 0, 0, DateTimeKind.Utc), data["expiresAt"]!.GetValue<DateTime>().ToUniversalTime());
+
+            // Partially failed run that renewed the first order
+            renewal.History.Add(new RenewResult
+            {
+                Date = new DateTime(2026, 10, 15, 0, 0, 0, DateTimeKind.Utc),
+                Success = false,
+                OrderResults = [
+                    new OrderResult("first") { Success = true, ExpireDate = new DateTime(2027, 1, 15, 0, 0, 0, DateTimeKind.Utc) },
+                    new OrderResult("second") { Success = false }]
+            });
+
+            await context.Target.SendSuccess(renewal, []);
+            data = JsonNode.Parse(context.Handler.Requests.Last().Body)!["data"]!;
+            Assert.AreEqual(new DateTime(2027, 1, 15, 0, 0, 0, DateTimeKind.Utc), data["expiresAt"]!.GetValue<DateTime>().ToUniversalTime());
+        }
+
+        [TestMethod]
+        public async Task TokensUseInvariantCulture()
+        {
+            using var context = new Fixture();
+            context.Webhook.TemplatePath = context.WriteFile("template.json", """{ "expires": "{ExpiresAt}" }""");
+            var renewal = Renewal();
+            renewal.History.Add(new RenewResult
+            {
+                Success = true,
+                OrderResults = [new OrderResult("main") { Success = true, ExpireDate = new DateTime(2026, 12, 20, 10, 0, 0, DateTimeKind.Utc) }]
+            });
+            var culture = CultureInfo.CurrentCulture;
+            try
+            {
+                // Buddhist calendar and a different time separator
+                CultureInfo.CurrentCulture = new CultureInfo("th-TH") { DateTimeFormat = { TimeSeparator = "." } };
+                await context.Target.SendSuccess(renewal, []);
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = culture;
+            }
+
+            var json = JsonNode.Parse(context.Handler.Requests.Single().Body)!;
+            Assert.AreEqual("2026-12-20T10:00:00Z", json["expires"]!.GetValue<string>());
+        }
+
+        [TestMethod]
         public async Task IncludeLogLimitsLevelAndLines()
         {
             using var context = new Fixture();
@@ -198,6 +266,28 @@ namespace PKISharp.WACS.UnitTests.Tests.NotificationTests
             Assert.AreEqual("{Unknown}", json["unknown"]!.GetValue<string>());
             Assert.AreEqual("failure", json["nested"]![0]!["type"]!.GetValue<string>());
             Assert.AreEqual(42, json["nested"]![1]!.GetValue<int>());
+        }
+
+        [TestMethod]
+        public async Task TemplatePathExpandsEnvironmentVariables()
+        {
+            using var context = new Fixture();
+            context.WriteFile("template.json", """{ "type": "{EventType}" }""");
+            Environment.SetEnvironmentVariable("WACS_WEBHOOK_TEST", context.Directory);
+            try
+            {
+                context.Webhook.TemplatePath = Path.Combine("%WACS_WEBHOOK_TEST%", "template.json");
+                Assert.IsFalse(context.Target.State.Disabled);
+
+                await context.Target.SendFailure(Renewal(), [], ["error"]);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("WACS_WEBHOOK_TEST", null);
+            }
+
+            var json = JsonNode.Parse(context.Handler.Requests.Single().Body)!;
+            Assert.AreEqual("failure", json["type"]!.GetValue<string>());
         }
 
         [TestMethod]
@@ -393,6 +483,24 @@ namespace PKISharp.WACS.UnitTests.Tests.NotificationTests
         }
 
         [TestMethod]
+        public async Task NetworkErrorMessageIsNotLogged()
+        {
+            using var context = new Fixture();
+            for (var i = 0; i < 3; i++)
+            {
+                // The message may contain text from the server
+                context.Handler.Responses.Enqueue(_ => throw new HttpRequestException(
+                    HttpRequestError.InvalidResponse,
+                    "Received an invalid status line: '/services/T000/B000/SECRETPATH'"));
+            }
+
+            await context.Target.SendFailure(Renewal(), [], ["error"]);
+
+            AssertNoSecrets(context.Lines);
+            Assert.IsTrue(context.Errors.Single().Contains("InvalidResponse"));
+        }
+
+        [TestMethod]
         public async Task RequestLoggerRedactsConfidentialRequests()
         {
             var log = new Services.LogService(true, false);
@@ -453,6 +561,29 @@ namespace PKISharp.WACS.UnitTests.Tests.NotificationTests
             Assert.AreEqual(0, defaults.Headers.Count());
             Assert.IsFalse(defaults.IncludeLog);
             Assert.IsFalse(defaults.NotifyOnSuccess);
+        }
+
+        [TestMethod]
+        public void SettingsInheritPerValue()
+        {
+            var global = new Settings
+            {
+                Notification = new NotificationSettings
+                {
+                    Webhook = new WebhookNotificationSettings { Url = "https://example.com/hook", Headers = ["X-Auth: value"] }
+                }
+            };
+            var server = new Settings
+            {
+                Notification = new NotificationSettings
+                {
+                    Webhook = new WebhookNotificationSettings { NotifyOnSuccess = true }
+                }
+            };
+            var webhook = new InheritSettings(server, global).Notification.Webhook!;
+            Assert.AreEqual("https://example.com/hook", webhook.Url);
+            CollectionAssert.AreEqual(new[] { "X-Auth: value" }, webhook.Headers.ToList());
+            Assert.IsTrue(webhook.NotifyOnSuccess);
         }
 
         [TestMethod]

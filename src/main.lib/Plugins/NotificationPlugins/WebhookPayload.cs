@@ -1,6 +1,7 @@
 using PKISharp.WACS.Clients;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -88,7 +89,7 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
             { "Timestamp", FormatDate(e.Timestamp) },
             { "Severity", e.Data.Severity },
             { "Status", e.Data.Status },
-            { "ExitCode", ExitCode(e).ToString() },
+            { "ExitCode", ExitCode(e).ToString(CultureInfo.InvariantCulture) },
             { "Title", e.Data.Title },
             { "Message", e.Data.Message },
             { "RenewalId", e.Data.RenewalId ?? "" },
@@ -102,7 +103,7 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
 
         public static int ExitCode(WebhookEvent e) => e.Data.Status == "up" ? 0 : 1;
 
-        public static string FormatDate(DateTime? date) => date?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") ?? "";
+        public static string FormatDate(DateTime? date) => date?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) ?? "";
 
         /// <summary>
         /// Render the template for an event

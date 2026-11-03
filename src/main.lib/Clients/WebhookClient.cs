@@ -75,7 +75,8 @@ namespace PKISharp.WACS.Clients
                 }
                 catch (HttpRequestException ex)
                 {
-                    problem = ex.Message;
+                    // The message may contain text from the server
+                    problem = $"network error {ex.HttpRequestError}";
                 }
                 if (attempt >= RetryDelays.Length)
                 {

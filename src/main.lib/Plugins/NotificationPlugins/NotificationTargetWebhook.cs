@@ -178,7 +178,7 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
         {
             var orders = dueDate.CurrentOrders(renewal);
             data.Thumbprints = [.. orders.Select(x => x.LastThumbprint).OfType<string>().Distinct()];
-            data.ExpiresAt = renewal.History.LastOrDefault(x => x.Success == true)?.ExpireDate;
+            data.ExpiresAt = ExpiresAt(renewal, orders);
             data.NextDueAt = dueDate.DueDate(renewal)?.Start;
             try
             {
@@ -212,6 +212,24 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
             {
                 logService.Warning("Unable to read plugin information for webhook: {message}", ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Earliest expiry of the current certificates, based on
+        /// the most recent successful result of each order
+        /// </summary>
+        private static DateTime? ExpiresAt(Renewal renewal, IEnumerable<StaticOrderInfo> orders)
+        {
+            var results = renewal.History.
+                OrderBy(h => h.Date).
+                SelectMany(h => h.OrderResults.
+                    Where(r => r.Success == true).
+                    Select(r => (Key: r.Name.ToLower(), ExpireDate: r.ExpireDate ?? h.ExpireDate))).
+                ToList();
+            return orders.
+                Select(o => results.LastOrDefault(r => r.Key == o.Key).ExpireDate).
+                Where(x => x != null).
+                Min();
         }
 
         /// <summary>
@@ -259,7 +277,7 @@ namespace PKISharp.WACS.Plugins.NotificationPlugins
             {
                 if (!string.IsNullOrWhiteSpace(templatePath))
                 {
-                    var template = await File.ReadAllTextAsync(templatePath);
+                    var template = await File.ReadAllTextAsync(Environment.ExpandEnvironmentVariables(templatePath));
                     return await WebhookTemplate.Render(template, e);
                 }
                 if (Format == FormatSlack)

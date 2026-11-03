@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Configuration.Settings.Types.Notification;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PKISharp.WACS.Configuration.Settings.Types
 {
@@ -23,7 +24,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? ComputerName => Get(x => x.ComputerName);
         public IEmailSettings? Email => new InheritEmailSettings(Get(x => x.Email));
         public IScriptNotificationSettings? Script => new InheritScriptNotificationSettings(Get(x => x.Script));
-        public IWebhookNotificationSettings? Webhook => new InheritWebhookNotificationSettings(Get(x => x.Webhook));
+        public IWebhookNotificationSettings? Webhook => new InheritWebhookNotificationSettings(Chain.Select(x => x?.Webhook));
     }
 
     public class NotificationSettings
