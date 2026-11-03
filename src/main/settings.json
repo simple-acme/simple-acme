@@ -95,6 +95,7 @@
     "Dns": {
       "Servers": [ "[System]" ],
       "PropagationDelay": 0,
+      "TryAuthoritativeServers": true,
       "PreValidation": {
         "Enabled": true,
         "RetryCount": 10,
