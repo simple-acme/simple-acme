@@ -73,6 +73,7 @@ namespace PKISharp.WACS.Host
                 _ = builder.RegisterType<TargetValidator>().SingleInstance();
                 _ = builder.RegisterType<EmailClient>().SingleInstance();
                 _ = builder.RegisterType<ScriptClient>().SingleInstance();
+                _ = builder.RegisterType<WebhookClient>().SingleInstance();
                 _ = builder.RegisterType<LookupClientProvider>().SingleInstance();
                 _ = builder.RegisterType<CacheService>().As<ICacheService>().SingleInstance();
                 _ = builder.RegisterType<CertificatePicker>().SingleInstance();
