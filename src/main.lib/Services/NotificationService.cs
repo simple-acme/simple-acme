@@ -33,11 +33,13 @@ namespace PKISharp.WACS.Services
                 LogType.All, 
                 "Certificate {friendlyName} created", 
                 renewal.LastFriendlyName);
+            // Targets log while sending, so give them all the same fixed copy
+            var snapshot = log.ToList();
             foreach (var target in EnabledTargets.Where(t => t.NotifyOnSuccess))
             {
                 try
                 {
-                    await target.SendCreated(renewal, log);
+                    await target.SendCreated(renewal, snapshot);
                 } 
                 catch (Exception ex)
                 {
@@ -58,11 +60,13 @@ namespace PKISharp.WACS.Services
                 LogType.All, 
                 "Renewal for {friendlyName} succeeded" + (withErrors ? " with errors" : ""),
                 renewal.LastFriendlyName);
+            // Targets log while sending, so give them all the same fixed copy
+            var snapshot = log.ToList();
             foreach (var target in EnabledTargets.Where(t => withErrors || t.NotifyOnSuccess))
             {
                 try
                 {
-                    await target.SendSuccess(renewal, log);
+                    await target.SendSuccess(renewal, snapshot);
                 }
                 catch (Exception ex)
                 {
@@ -94,11 +98,13 @@ namespace PKISharp.WACS.Services
             // Do not send emails when running interactively      
             if (runLevel.HasFlag(RunLevel.Unattended))
             {
+                // Targets log while sending, so give them all the same fixed copy
+                var snapshot = log.ToList();
                 foreach (var target in EnabledTargets)
                 {
                     try
                     {
-                        await target.SendFailure(renewal, log, errors);
+                        await target.SendFailure(renewal, snapshot, errors);
                     }
                     catch (Exception ex)
                     {
