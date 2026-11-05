@@ -49,7 +49,6 @@ namespace PKISharp.WACS.Configuration
             var prefixes = new List<string> {
                 "--", // Regular dashes
                 "‑‑", // Non-breaking dashes (U+2011)
-                "-" // Single dash
             };
             if (OperatingSystem.IsWindows())
             {
