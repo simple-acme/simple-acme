@@ -28,6 +28,9 @@ if ($signed.Status -ne "Valid") {
     exit 1
 }
 
+# Create win-acme artifacts
+.\win-acme.ps1
+
 .\06-prepare-release.ps1
 $github = Read-Host "Publish to GitHub? (y/n)"
 if ($github -eq "y") {
