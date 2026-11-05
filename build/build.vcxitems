@@ -32,5 +32,6 @@
     <None Include="$(MSBuildThisFileDirectory)release.ps1" />
     <None Include="$(MSBuildThisFileDirectory)run.sh" />
     <None Include="$(MSBuildThisFileDirectory)tool.ps1" />
+    <None Include="$(MSBuildThisFileDirectory)win-acme.ps1" />
   </ItemGroup>
 </Project>
