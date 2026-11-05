@@ -9,6 +9,16 @@ namespace PKISharp.WACS.Services
     internal class RequestLogger(ILogService log)
     {
         /// <summary>
+        /// Requests with this option only log the scheme and host,
+        /// because the path, content or response may contain secrets
+        /// (e.g. webhook URLs)
+        /// </summary>
+        public static readonly HttpRequestOptionsKey<bool> Confidential = new("wacs.confidential");
+
+        private static bool IsConfidential(HttpRequestMessage? request) =>
+            request != null && request.Options.TryGetValue(Confidential, out var value) && value;
+
+        /// <summary>
         /// Common pre-send functionality
         /// </summary>
         /// <param name="request"></param>
@@ -16,6 +26,11 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public async Task PreSend(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            if (IsConfidential(request))
+            {
+                log.Debug("[HTTP] Send {method} to {uri}", request.Method, request.RequestUri?.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped));
+                return;
+            }
             log.Debug("[HTTP] Send {method} to {uri}", request.Method, request.RequestUri);
             if (request.Content != null)
             {
@@ -42,6 +57,10 @@ namespace PKISharp.WACS.Services
             else
             {
                 log.Debug("[HTTP] Request completed with status {s}", response.StatusCode);
+            }
+            if (IsConfidential(response.RequestMessage))
+            {
+                return;
             }
             if (response.Content != null)
             {

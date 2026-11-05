@@ -67,6 +67,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<ZeroSsl>().SingleInstance();
             _ = builder.RegisterType<EmailClient>().SingleInstance();
             _ = builder.RegisterType<ScriptClient>().SingleInstance();
+            _ = builder.RegisterType<WebhookClient>().SingleInstance();
             _ = builder.RegisterType<LookupClientProvider>().SingleInstance();
             _ = builder.RegisterType<CacheService>().As<Real.ICacheService>().SingleInstance();
             _ = builder.RegisterType<CertificateService>().As<Real.ICertificateService>().SingleInstance();
@@ -77,6 +78,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<Real.NotificationService>().SingleInstance();
             _ = builder.RegisterType<NotificationTargetEmail>().SingleInstance();
             _ = builder.RegisterType<NotificationTargetScript>().SingleInstance();
+            _ = builder.RegisterType<NotificationTargetWebhook>().SingleInstance();
             _ = builder.RegisterType<RenewalValidator>().SingleInstance();
             _ = builder.RegisterType<RenewalExecutor>().SingleInstance();
             _ = builder.RegisterType<OrderProcessor>().SingleInstance();
