@@ -38,7 +38,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             try
             {
-                var client = await GetClient();
+                // Bypass cache to avoid default headers going stale over time
+                var client = await CreateClient(await proxyService.GetHttpClient());
                 var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
                 await client.CreateRecord(domain, recordName, RecordType.TXT, record.Value);
@@ -55,7 +56,8 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins
         {
             try
             {
-                var client = await GetClient();
+                // Bypass cache to avoid default headers going stale over time
+                var client = await CreateClient(await proxyService.GetHttpClient());
                 var domain = domainParser.GetRegisterableDomain(record.Authority.Domain);
                 var recordName = RelativeRecordName(domain, record.Authority.Domain);
                 await client.DeleteRecord(domain, recordName, RecordType.TXT);
