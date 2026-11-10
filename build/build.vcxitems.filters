@@ -61,5 +61,6 @@
     <None Include="$(MSBuildThisFileDirectory)11-winget.ps1">
       <Filter>ReleaseSteps</Filter>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)win-acme.ps1" />
   </ItemGroup>
 </Project>
