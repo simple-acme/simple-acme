@@ -71,6 +71,14 @@
       "Path": null,
       "Parameters": null,
       "NotifyOnSuccess": false
+    },
+    "Webhook": {
+      "Url": null,
+      "Format": "json",
+      "TemplatePath": null,
+      "Headers": [],
+      "IncludeLog": false,
+      "NotifyOnSuccess": false
     }
   },
   "Security": {

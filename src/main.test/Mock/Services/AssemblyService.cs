@@ -17,7 +17,7 @@ namespace PKISharp.WACS.UnitTests.Mock.Services
             // Test doubles in this assembly would otherwise be discovered as targets
             if (typeof(T) == typeof(INotificationTarget))
             {
-                return [new(typeof(NotificationTargetEmail)), new(typeof(NotificationTargetScript))];
+                return [new(typeof(NotificationTargetEmail)), new(typeof(NotificationTargetScript)), new(typeof(NotificationTargetWebhook))];
             }
             return base.GetResolvable<T>();
 
