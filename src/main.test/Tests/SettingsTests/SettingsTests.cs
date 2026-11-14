@@ -24,7 +24,10 @@ namespace PKISharp.WACS.UnitTests.Tests.SettingsTests
         {
             var log = new Mock.Services.LogService();
             var proxy = new Mock.Services.ProxyService();
-            var settings = new Mock.Services.MockSettingsService();
+            var settings = new Mock.Services.MockSettingsService(new Settings
+            {
+                Acme = new AcmeSettings { PublicSuffixListUri = "" }
+            });
             var x = new DomainParseService(log, proxy, settings);
             x.Initialize().Wait();
             var ret = x.GetRegisterableDomain(full!);
