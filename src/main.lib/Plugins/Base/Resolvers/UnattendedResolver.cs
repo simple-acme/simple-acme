@@ -143,7 +143,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IPluginCapability, OrderPluginOptions>(
                 Steps.Order,
-                defaultParam1: arguments.Order,
+                defaultParam1: arguments.Order ?? settings.Order.DefaultOrder,
                 defaultBackend: typeof(OrderPlugins.Single));
         }
 
@@ -156,7 +156,7 @@ namespace PKISharp.WACS.Plugins.Resolvers
         {
             return await GetPlugin<IPluginCapability, CsrPluginOptions>(
                 Steps.Csr,
-                defaultParam1: arguments.Csr,
+                defaultParam1: arguments.Csr ?? settings.Csr.DefaultCsr,
                 defaultBackend: typeof(Rsa));
         }
 

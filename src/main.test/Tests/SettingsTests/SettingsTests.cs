@@ -2,6 +2,7 @@
 using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.Configuration.Settings.Types;
 using PKISharp.WACS.Configuration.Settings.Types.Notification;
+using PKISharp.WACS.Services;
 using System;
 
 namespace PKISharp.WACS.UnitTests.Tests.SettingsTests
@@ -9,6 +10,30 @@ namespace PKISharp.WACS.UnitTests.Tests.SettingsTests
     [TestClass]
     public class PublicSuffixListTests
     {
+        [TestMethod]
+        [DataRow("host01.sub._acme.example.com", "example.com")]
+        [DataRow("host01.sub.acme.example.com", "example.com")]
+        [DataRow("sub._acme.example.com", "example.com")]
+        [DataRow("_acme.example.com", "example.com")]
+        [DataRow("example.com", "example.com")]
+        [DataRow("eXaMplE.com", "example.com")]
+        [DataRow("frisör.com", "frisör.com")]
+        [DataRow("xn--frisr-mua.com", "xn--frisr-mua.com")]
+        [DataRow("XN--frisr-mua.com", "xn--frisr-mua.com")]
+        public void Nager(string? full, string? registerable)
+        {
+            var log = new Mock.Services.LogService();
+            var proxy = new Mock.Services.ProxyService();
+            var settings = new Mock.Services.MockSettingsService(new Settings
+            {
+                Acme = new AcmeSettings { PublicSuffixListUri = "" }
+            });
+            var x = new DomainParseService(log, proxy, settings);
+            x.Initialize().Wait();
+            var ret = x.GetRegisterableDomain(full!);
+            Assert.AreEqual(registerable, ret);
+        }
+
         [TestMethod]
         public void Basic()
         {
