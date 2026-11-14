@@ -92,6 +92,15 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public DueDate ComputeDueDate(DateTime validFrom, DateTime validUntil, AcmeRenewalInfo? renewalInfo = null)
         {
+            // Ignore ARI windows with missing start or end, or end <= start
+            var window = renewalInfo?.SuggestedWindow;
+            if (window?.Start is not DateTime serverStart ||
+                window.End is not DateTime serverEnd ||
+                serverStart.ToUniversalTime() >= serverEnd.ToUniversalTime())
+            {
+                renewalInfo = null;
+            }
+
             // Basic rule for End: NotAfter - RenewalMinimumValidDays
             var minValidDays = Math.Max(settings.ScheduledTask.RenewalMinimumValidDays ?? 7, 0);
             var end = validUntil.AddDays(-1 * minValidDays);
