@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.CsrPlugins;
+using PKISharp.WACS.Services.Encryption;
+using PKISharp.WACS.Services.Serialization;
 using System;
 using System.IO;
 using System.Reflection;
@@ -16,7 +18,8 @@ namespace PKISharp.WACS.UnitTests.Tests.CsrPluginTests
         {
             var log = new Mock.Services.LogService(false);
             var settings = new Mock.Services.MockSettingsService();
-            _ = new Rsa(log, settings, new RsaOptions());
+            var psFactory = new ProtectedStringFactory(new NullProtector(), log);
+            _ = new Rsa(log, settings, psFactory, new RsaOptions());
             var data = Assembly.
                 GetAssembly(typeof(PostProcessTest))!.
                 GetManifestResourceStream($"PKISharp.WACS.UnitTests.Tests.CsrPluginTests.{name}.pfx") ?? 

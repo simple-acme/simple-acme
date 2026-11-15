@@ -4,6 +4,7 @@ using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.InstallationPlugins;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock;
 using System.Threading.Tasks;
 
@@ -69,8 +70,9 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
         {
             var container = MockContainer.TestScope(commandLine: commandLine);
             var mock = container.Resolve<ArgumentsInputService>();
+            var fact = container.Resolve<ProtectedStringFactory>();
             var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword, allowEmpty).
-                WithDefault(defaultValue.Protect(allowEmpty)).
+                WithDefault(fact.Protect(defaultValue, allowEmpty)).
                 GetValue().
                 Result;
             Assert.AreEqual(output, result?.Value);

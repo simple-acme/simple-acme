@@ -12,7 +12,8 @@ namespace PKISharp.WACS.Services
         ILogService log,
         ArgumentsParser arguments,
         IInputService input,
-        SecretServiceManager secretService)
+        SecretServiceManager secretService,
+        ProtectedStringFactory psFactory)
     {
 
         /// <summary>
@@ -28,10 +29,10 @@ namespace PKISharp.WACS.Services
         /// <returns></returns>
         public ArgumentResult<ProtectedString?> GetProtectedString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>
             (Expression<Func<T, string?>> expression, bool allowEmtpy = false) where T : class, IArguments,
-            new() => new(GetArgument(expression).Protect(allowEmtpy), GetMetaData(expression),
+            new() => new(psFactory.Protect(GetArgument(expression), allowEmtpy), GetMetaData(expression),
                 allowEmtpy
-                    ? async args => (await secretService.GetSecret(args.Label, args.Default?.Value, "", args.Required, args.Multiline)).Protect(true)
-                    : async args => (await secretService.GetSecret(args.Label, args.Default?.Value, null, args.Required, args.Multiline)).Protect(false),
+                    ? async args => psFactory.Protect(await secretService.GetSecret(args.Label, args.Default?.Value, "", args.Required, args.Multiline), true)
+                    : async args => psFactory.Protect(await secretService.GetSecret(args.Label, args.Default?.Value, null, args.Required, args.Multiline), false),
                 log, allowEmtpy);
 
         public ArgumentResult<string?> GetLowerString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>

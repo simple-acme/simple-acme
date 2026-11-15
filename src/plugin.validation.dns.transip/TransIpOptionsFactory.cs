@@ -14,6 +14,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
     internal sealed class TransIpOptionsFactory(
         ArgumentsInputService arguments,
         SecretServiceManager ssm,
+        ProtectedStringFactory psFactory,
         ILogService log,
         IProxyService proxy) : PluginOptionsFactory<TransIpOptions>
     {
@@ -46,7 +47,7 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns
                 GetValue();
 
             var key = keyFile != null
-                ? (await File.ReadAllTextAsync(keyFile)).Protect()
+                ? psFactory.Protect(await File.ReadAllTextAsync(keyFile))
                 : await PrivateKey.GetValue();
 
             return new TransIpOptions()

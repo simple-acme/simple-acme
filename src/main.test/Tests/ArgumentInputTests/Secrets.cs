@@ -1,8 +1,8 @@
 ﻿using Autofac;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock;
 using System.Diagnostics.CodeAnalysis;
 
@@ -58,9 +58,10 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
+            var pkFactory = container.Resolve<ProtectedStringFactory>();
             var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword, true).
                 Interactive(input).
-                WithDefault(defaultValue.Protect()).
+                WithDefault(pkFactory.Protect(defaultValue)).
                 GetValue().
                 Result;
             Assert.AreEqual(output, result?.Value);

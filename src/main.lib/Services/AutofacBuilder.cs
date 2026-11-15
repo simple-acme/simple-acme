@@ -1,12 +1,10 @@
 ﻿using Autofac;
-using Microsoft.Win32;
 using PKISharp.WACS.Clients.Acme;
 using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.DomainObjects.Identifiers;
-using PKISharp.WACS.Host.Services.Legacy;
 using PKISharp.WACS.Plugins;
 using PKISharp.WACS.Plugins.Base;
 using PKISharp.WACS.Plugins.Base.Options;
@@ -45,12 +43,6 @@ namespace PKISharp.WACS.Services
                     As<MainArguments>().
                     SingleInstance();
 
-                builder.RegisterType<LegacySettingsService>().
-                    WithParameter(new TypedParameter(typeof(ISettings), realSettings)).
-                    SingleInstance();
-
-                builder.RegisterType<LegacyTaskSchedulerService>();
-
                 builder.RegisterType<TaskSchedulerService>().As<IAutoRenewService>().
                     WithParameter(new TypedParameter(typeof(MainArguments), realArguments)).
                     WithParameter(new TypedParameter(typeof(ISettings), realSettings)).
@@ -59,31 +51,6 @@ namespace PKISharp.WACS.Services
                 builder.Register((scope) => main.Resolve<IRenewalStore>()).
                     As<IRenewalStore>().
                     SingleInstance();
-
-                // Check where to load Renewals from
-                var hive = Registry.CurrentUser;
-                var key = hive.OpenSubKey($"Software\\letsencrypt-win-simple");
-                if (key == null)
-                {
-                    hive = Registry.LocalMachine;
-                    key = hive.OpenSubKey($"Software\\letsencrypt-win-simple");
-                }
-                var log = main.Resolve<ILogService>();
-                if (key != null)
-                {
-                    log.Debug("Loading legacy renewals from registry hive {name}", hive.Name);
-                    builder.RegisterType<RegistryLegacyRenewalService>().
-                            As<ILegacyRenewalService>().
-                            WithParameter(new NamedParameter("hive", hive.Name)).
-                            SingleInstance();
-                }
-                else
-                {
-                    log.Debug("Loading legacy renewals from file");
-                    builder.RegisterType<FileLegacyRenewalService>().
-                        As<ILegacyRenewalService>().
-                        SingleInstance();
-                }
 
                 builder.RegisterType<Importer>().
                     SingleInstance();

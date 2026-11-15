@@ -12,6 +12,8 @@ using PKISharp.WACS.Plugins.Interfaces;
 using PKISharp.WACS.Plugins.Resolvers;
 using PKISharp.WACS.Plugins.StorePlugins;
 using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Encryption;
+using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
 using System.Collections.Generic;
@@ -60,6 +62,8 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
             _ = builder.RegisterType<SecretService>().As<ISecretService>();
             _ = builder.RegisterType<SecretServiceManager>(); 
             _ = builder.RegisterType<AutofacBuilder>().As<IAutofacBuilder>();
+            _ = builder.RegisterType<ProtectedStringFactory>().SingleInstance();
+            _ = builder.RegisterType<DpApiProtector>().As<IProtector>().SingleInstance();
             _ = builder.RegisterInstance(new Target(new DnsIdentifier("www.example.com")));
             _ = builder.RegisterInstance(plugins).
                     As<IPluginService>().

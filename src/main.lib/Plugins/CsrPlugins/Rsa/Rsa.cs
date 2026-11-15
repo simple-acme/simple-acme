@@ -18,7 +18,8 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
     internal class Rsa(
         ILogService log,
         ISettings settings,
-        RsaOptions options) : CsrPlugin<RsaOptions>(log, settings, options)
+        ProtectedStringFactory psFactory,
+        RsaOptions options) : CsrPlugin<RsaOptions>(log, settings, psFactory, options)
     {
 
         /// <summary>

@@ -4,7 +4,6 @@ using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Operators;
 using Org.BouncyCastle.Pkcs;
-using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Options;
@@ -24,12 +23,13 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
     /// <summary>
     /// Common implementation between RSA and EC certificates
     /// </summary>
-    public abstract class CsrPlugin<TOptions>(ILogService log, ISettings settings, TOptions options) : 
+    public abstract class CsrPlugin<TOptions>(ILogService log, ISettings settings, ProtectedStringFactory psFactory, TOptions options) : 
         ICsrPlugin
         where TOptions : CsrPluginOptions
     {
         protected readonly ILogService _log = log;
         protected readonly ISettings _settings = settings;
+        protected readonly ProtectedStringFactory _psFactory = psFactory;
         protected readonly TOptions _options = options;
 
         protected string? _cacheData;
@@ -78,7 +78,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
                 var fi = new FileInfo(cachePath);
                 if (fi.Exists)
                 {
-                    var rawData = new ProtectedString(File.ReadAllText(cachePath), _log);
+                    var rawData = _psFactory.Parse(File.ReadAllText(cachePath));
                     if (!rawData.Error)
                     {
                         _cacheData = rawData.Value;
@@ -106,7 +106,7 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
         /// <param name="cachePath"></param>
         private async Task SaveToCache(string cachePath)
         {
-            var rawData = new ProtectedString(_cacheData);
+            var rawData = _psFactory.Create(_cacheData);
             await FileInfoExtensions.SafeWrite(cachePath, rawData.DiskValue(_settings.Security.EncryptConfig));
         }
 

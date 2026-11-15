@@ -11,11 +11,12 @@ namespace PKISharp.WACS.Plugins.StorePlugins
     internal class PemFilesOptionsFactory(
         ILogService log,
         ISettings settings,
+        ProtectedStringFactory psFactory,
         ArgumentsInputService arguments) : PluginOptionsFactory<PemFilesOptions>
     {
         private ArgumentResult<ProtectedString?> Password => arguments.
             GetProtectedString<PemFilesArguments>(args => args.PemPassword, true).
-            WithDefault(settings.Store.PemFiles.DefaultPassword.Protect(true)).
+            WithDefault(psFactory.Protect(settings.Store.PemFiles.DefaultPassword, true)).
             DefaultAsNull();
 
         private ArgumentResult<string?> Path => arguments.

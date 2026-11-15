@@ -3,12 +3,10 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Host;
 using PKISharp.WACS.Plugins.Base.Options;
 using PKISharp.WACS.Plugins.SecretPlugins;
-using PKISharp.WACS.Services.Legacy;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using static PKISharp.WACS.Clients.Acme.ZeroSsl;
 using static PKISharp.WACS.Clients.UpdateClient;
-using static PKISharp.WACS.Services.ValidationOptionsService;
 
 namespace PKISharp.WACS.Services.Serialization
 {
@@ -23,7 +21,6 @@ namespace PKISharp.WACS.Services.Serialization
     [JsonSerializable(typeof(GlobalValidationPluginOptions))]
     [JsonSerializable(typeof(GlobalValidationPluginOptionsCollection))]
     [JsonSerializable(typeof(ZeroSslEabCredential))]
-    [JsonSerializable(typeof(LegacyScheduledRenewal))]
     [JsonSerializable(typeof(CredentialEntryCollection))]
     internal partial class WacsJson : JsonSerializerContext 
     {

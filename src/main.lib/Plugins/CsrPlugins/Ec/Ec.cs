@@ -22,7 +22,8 @@ namespace PKISharp.WACS.Plugins.CsrPlugins
     internal class Ec(
         ILogService log,
         ISettings settings,
-        EcOptions options) : CsrPlugin<EcOptions>(log, settings, options)
+        ProtectedStringFactory psFactory,
+        EcOptions options) : CsrPlugin<EcOptions>(log, settings, psFactory, options)
     {
         internal override AsymmetricCipherKeyPair GenerateNewKeyPair()
         {

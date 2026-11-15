@@ -35,8 +35,6 @@ namespace PKISharp.WACS.Configuration
         }
 
         public NetworkCredentialOptions() { }
-
-        public NetworkCredentialOptions(string? userName, string? password) : this(userName, password.Protect()) { }
         public NetworkCredentialOptions(string? userName, ProtectedString? password)
         {
             UserName = userName;

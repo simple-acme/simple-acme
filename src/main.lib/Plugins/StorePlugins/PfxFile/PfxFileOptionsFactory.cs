@@ -11,11 +11,12 @@ namespace PKISharp.WACS.Plugins.StorePlugins
     internal class PfxFileOptionsFactory(
         ILogService log,
         ISettings settings,
+        ProtectedStringFactory psFactory,
         ArgumentsInputService arguments) : PluginOptionsFactory<PfxFileOptions>
     {
         private ArgumentResult<ProtectedString?> Password => arguments.
             GetProtectedString<PfxFileArguments>(args => args.PfxPassword, true).
-            WithDefault(PfxFile.DefaultPassword(settings).Protect(true)).
+            WithDefault(psFactory.Protect(PfxFile.DefaultPassword(settings), true)).
             DefaultAsNull();
 
         private ArgumentResult<string?> Path => arguments.

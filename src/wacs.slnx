@@ -178,7 +178,15 @@
     <Project Path="fluent-command-line-parser/FluentCommandLineParser/FluentCommandLineParser.csproj" />
   </Folder>
   <Project Path="../build/build.vcxitems" Id="64525716-9964-47e2-a71c-0d20f4497c44" />
+  <Project Path="main.lib.base/wacs.lib.base.csproj">
+    <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+    <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+  </Project>
   <Project Path="main.lib.kestrel/wacs.lib.kestrel.csproj">
+    <BuildType Solution="DebugTrimmed|*" Project="Debug" />
+    <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
+  </Project>
+  <Project Path="main.lib.protection/wacs.lib.protection.csproj">
     <BuildType Solution="DebugTrimmed|*" Project="Debug" />
     <BuildType Solution="ReleaseTrimmed|*" Project="Release" />
   </Project>

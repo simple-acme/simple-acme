@@ -64,6 +64,7 @@
   	<PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
 		<ProjectReference Include="..\ACMESharpCore\src\ACMESharp\ACMESharp.csproj" />
 		<ProjectReference Include="..\fluent-command-line-parser\FluentCommandLineParser\FluentCommandLineParser.csproj" />
+		<ProjectReference Include="..\main.lib.protection\wacs.lib.protection.csproj" />
 	</ItemGroup>
 
 </Project>

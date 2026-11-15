@@ -11,11 +11,12 @@ namespace PKISharp.WACS.Plugins.StorePlugins
     internal class CentralSslOptionsFactory(
         ILogService log,
         ISettings settings,
+        ProtectedStringFactory psFactory,
         ArgumentsInputService argumentInput) : PluginOptionsFactory<CentralSslOptions>
     {
         private ArgumentResult<ProtectedString?> PfxPassword => argumentInput.
             GetProtectedString<CentralSslArguments>(args => args.PfxPassword, true).
-            WithDefault(settings.Store.CentralSsl.DefaultPassword.Protect(true)).
+            WithDefault(psFactory.Protect(settings.Store.CentralSsl.DefaultPassword, true)).
             DefaultAsNull();
 
         private ArgumentResult<string?> Path => argumentInput.

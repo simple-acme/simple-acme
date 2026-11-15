@@ -5,6 +5,7 @@ using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Encryption;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
     {
         private static ILifetimeScope? _container;
         private static IPluginService? _plugin;
+        private static ProtectedStringFactory? _converter;
 
         [ClassInitialize]
         public static void ClassInitialize(TestContext context)
@@ -30,11 +32,14 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             _ = builder.RegisterInstance(assembly).As<AssemblyService>().SingleInstance();
             _ = builder.RegisterInstance(log).As<ILogService>();
             _ = builder.RegisterType<FtpJson>();
+            _ = builder.RegisterType<ProtectedStringFactory>().SingleInstance();
+            _ = builder.RegisterType<DpApiProtector>().As<IProtector>().SingleInstance();
             _ = builder.RegisterInstance(plugin).As<IPluginService>().SingleInstance();
             _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
             WacsJson.Configure(builder);
             _container = builder.Build();
             _plugin = _container.Resolve<IPluginService>();
+            _converter = _container.Resolve<ProtectedStringFactory>();
         }
 
         private static string Serialize(Renewal renewal)
@@ -59,7 +64,7 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
                 TargetPluginOptions = new ManualOptions(),
                 ValidationPluginOptions = new FtpOptions
                 {
-                    Credential = new NetworkCredentialOptions("user", new ProtectedString("password"))
+                    Credential = new NetworkCredentialOptions("user", _converter?.Protect("password"))
                 }
             };
             var serialize = Serialize(renewal);
@@ -87,7 +92,7 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
                 {
                     Credential = new NetworkCredentialOptions()
                     {
-                        Password = new ProtectedString("safe")
+                        Password = _converter?.Protect("safe")
                     }
                 }
             };

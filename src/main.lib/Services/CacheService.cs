@@ -27,11 +27,13 @@ namespace PKISharp.WACS.Services
         private readonly ILogService _log;
         private readonly ISettings _settings;
         private readonly DirectoryInfo _cache;
+        private readonly ProtectedStringFactory _psFactory;
 
-        public CacheService(ILogService log, ISettings settingsService)
+        public CacheService(ILogService log, ISettings settingsService, ProtectedStringFactory psFactory)
         {
             _settings = settingsService;
             _log = log;
+            _psFactory = psFactory;
             _cache = new DirectoryInfo(settingsService.Cache.CachePath);
             if (settingsService.Valid)
             {
@@ -162,7 +164,7 @@ namespace PKISharp.WACS.Services
         {
             foreach (var f in _cache.EnumerateFiles($"*{KeysPostfix}"))
             {
-                var x = new ProtectedString(File.ReadAllText(f.FullName), _log);
+                var x = _psFactory.Parse(File.ReadAllText(f.FullName));
                 _log.Information("Rewriting {x}", f.Name);
                 await f.SafeWrite(x.DiskValue(_settings.Security.EncryptConfig));
             }
@@ -447,8 +449,7 @@ namespace PKISharp.WACS.Services
 
             // Fallback to previous cache without ordername
             ret = allInfos.
-                Where(c => Regex.IsMatch(c.CacheFile.Name[renewal.Id.Length..], "^-[a-f0-9]+" + Regex.Escape(PfxPostFix))).
-                FirstOrDefault();
+                FirstOrDefault(c => Regex.IsMatch(c.CacheFile.Name[renewal.Id.Length..], "^-[a-f0-9]+" + Regex.Escape(PfxPostFix)));
             if (ret != null)
             {
                 return ret;
@@ -456,8 +457,7 @@ namespace PKISharp.WACS.Services
 
             // Fallback to extreme legacy
             return allInfos.
-                Where(c => c.CacheFile.FullName == GetPath(renewal, PfxPostFixLegacy)).
-                FirstOrDefault();
+                FirstOrDefault(c => c.CacheFile.FullName == GetPath(renewal, PfxPostFixLegacy));
         }
     }
 }
