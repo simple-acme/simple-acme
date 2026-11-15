@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Services.Serialization;
+using System;
 
 namespace PKISharp.WACS.UnitTests.Tests.EcnryptionTests
 {
@@ -7,6 +8,7 @@ namespace PKISharp.WACS.UnitTests.Tests.EcnryptionTests
     public class EncryptionTests
     {
         [TestMethod]
+        [OSCondition(OperatingSystems.Windows)]
         public void TurnOnOff()
         {
             // Create encrypted value

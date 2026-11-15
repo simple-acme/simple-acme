@@ -18,12 +18,15 @@ namespace PKISharp.WACS.Services
         /// </summary>
         private static Lazy<string> BasePath { get; } = new Lazy<string>(() =>
         {
-             if (ExeFileInfo != null && ExeFileInfo.Value != null)
-             {
-                 var resolved = ResolveParsePoints(ExeFileInfo.Value);
-                 return resolved.Directory?.FullName + Path.DirectorySeparatorChar;
-             }
-             return string.Empty;
+            if (ExeFileInfo != null && 
+                ExeFileInfo.Value != null && 
+                !ExeFileInfo.Value.Name.StartsWith("dotnet"))
+            {
+                var resolved = ResolveParsePoints(ExeFileInfo.Value);
+                return resolved.Directory?.FullName + Path.DirectorySeparatorChar;
+            }
+            // For dotnet tools and unit testing, we cannot use the exe file info
+            return AppContext.BaseDirectory;
         });
 
         /// <summary>

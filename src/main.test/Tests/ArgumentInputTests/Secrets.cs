@@ -28,7 +28,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
-            var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword).
+            var result = mock.GetProtectedString<PfxFileArguments>(x => x.PfxPassword).
                 Interactive(input).
                 GetValue().
                 Result;
@@ -58,7 +58,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
-            var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword, true).
+            var result = mock.GetProtectedString<PfxFileArguments>(x => x.PfxPassword, true).
                 Interactive(input).
                 WithDefault(defaultValue.Protect()).
                 GetValue().
@@ -90,7 +90,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<ISecretService>();
-            var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword, true).
+            var result = mock.GetProtectedString<PfxFileArguments>(x => x.PfxPassword, true).
                 Interactive(input).
                 GetValue().
                 Result;
@@ -143,7 +143,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<SecretServiceManager>();
-            var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword).
+            var result = mock.GetProtectedString<PfxFileArguments>(x => x.PfxPassword).
                 Interactive(input).
                 GetValue().
                 Result;
@@ -170,7 +170,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ArgumentInputTests
             var input = container.Resolve<IInputService>();
             var mock = container.Resolve<ArgumentsInputService>();
             var secrets = container.Resolve<SecretServiceManager>();
-            var result = mock.GetProtectedString<CentralSslArguments>(x => x.PfxPassword).
+            var result = mock.GetProtectedString<PfxFileArguments>(x => x.PfxPassword).
                 Interactive(input).
                 GetValue().
                 Result;

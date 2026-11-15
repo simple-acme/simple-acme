@@ -70,15 +70,10 @@ ZkoLUgEWU5OcCkq5AIpmloeaCTC/vKrlS5M3BvjEmQ==
             }
         }
 
+        [OSCondition(OperatingSystems.Linux)]
         [TestMethod]
         public void ScriptReceivesArguments()
-        {
-            if (!OperatingSystem.IsLinux())
-            { 
-                Assert.Inconclusive("This test is only supported on Linux");
-                return;
-            }
-                
+        {               
             var tempFile = Path.GetTempFileName() + ".sh";
             try
             {
@@ -108,6 +103,6 @@ ZkoLUgEWU5OcCkq5AIpmloeaCTC/vKrlS5M3BvjEmQ==
 fi
 cat <<'CSR'
 {csr}
-CSR";
+CSR".ReplaceLineEndings();
     }
 }

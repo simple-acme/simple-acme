@@ -3,6 +3,7 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.TargetPlugins;
 using PKISharp.WACS.UnitTests.Mock.Services;
+using System;
 using System.IO;
 using System.Linq;
 
@@ -63,6 +64,7 @@ ZkoLUgEWU5OcCkq5AIpmloeaCTC/vKrlS5M3BvjEmQ==
         }
 
         [TestMethod]
+        [OSCondition(OperatingSystems.Windows)]
         public void Script()
         {
             var tempFile = Path.GetTempFileName() + ".ps1";
