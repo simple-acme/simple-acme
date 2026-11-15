@@ -15,6 +15,7 @@ namespace PKISharp.WACS.Clients.Acme
     /// Manage the account used by the AcmeClient
     /// </summary>
     internal class AccountManager(
+        ProtectedStringFactory protectedStringFactory,
         ILogService log,
         ISettings settings)
     {
@@ -121,7 +122,7 @@ namespace PKISharp.WACS.Clients.Acme
                 try
                 {
                     log.Debug("Loading signer from {signerPath}", path);
-                    var signerString = new ProtectedString(File.ReadAllText(path), log);
+                    var signerString = protectedStringFactory.Parse(File.ReadAllText(path));
                     if (signerString.Value != null)
                     {
                         return JsonSerializer.Deserialize(signerString.Value, AcmeClientJson.Insensitive.AccountSigner);
@@ -149,7 +150,7 @@ namespace PKISharp.WACS.Clients.Acme
             if (signer != null)
             {
                 log.Debug("Saving signer to {SignerPath}", path);
-                var x = new ProtectedString(JsonSerializer.Serialize(signer, AcmeClientJson.Default.AccountSigner));
+                var x = protectedStringFactory.Create(JsonSerializer.Serialize(signer, AcmeClientJson.Default.AccountSigner));
                 await FileInfoExtensions.SafeWrite(path, x.DiskValue(settings.Security.EncryptConfig));
             }
         }

@@ -104,12 +104,6 @@ namespace PKISharp.WACS.Host
                 Choice.Create(() => UpdateAccount(RunLevel.Interactive),
                     accountManager.ListAccounts().Any() ? "ACME account details" : "Create ACME account", "A"),
 
-                Choice.Create(() => Import(RunLevel.Interactive | RunLevel.Advanced), 
-                    "Import scheduled renewals from WACS/LEWS 1.9.x", "I",
-                    state: !adminService.IsAdmin ? 
-                        State.DisabledState("Run as an administrator to allow search for legacy renewals.") : 
-                        State.EnabledState()),
-
                 Choice.Create(() => Encrypt(RunLevel.Interactive), 
                     "Encrypt/decrypt configuration", "M"),
 

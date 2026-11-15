@@ -10,6 +10,7 @@ using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Plugins.NotificationPlugins;
 using PKISharp.WACS.Plugins.Resolvers;
+using PKISharp.WACS.Services.Encryption;
 using PKISharp.WACS.Services.AutoRenew;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
@@ -86,6 +87,9 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<RenewalExecutor>().SingleInstance();
             _ = builder.RegisterType<OrderProcessor>().SingleInstance();
             _ = builder.RegisterType<RenewalManager>().SingleInstance();
+            _ = builder.RegisterType<ProtectedStringFactory>().SingleInstance();
+            _ = builder.RegisterType<MockProtector>().As<Real.IProtector>().SingleInstance();
+
             _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
 
             var ret = builder.Build();

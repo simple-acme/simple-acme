@@ -4,6 +4,8 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.TargetPlugins;
 using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Encryption;
+using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
@@ -47,7 +49,8 @@ ZkoLUgEWU5OcCkq5AIpmloeaCTC/vKrlS5M3BvjEmQ==
             var optionsParser = new ArgumentsParser(log, new MockAssemblyService(log), commandLine.Split(' '));
             var input = new Mock.Services.InputService([]);
             var secretService = new SecretServiceManager(MockContainer.TestScope(), input, plugins, log);
-            var argsInput = new ArgumentsInputService(log, optionsParser, input, secretService);
+            var psFactory = new ProtectedStringFactory(new MockProtector(), log);
+            var argsInput = new ArgumentsInputService(log, optionsParser, input, secretService, psFactory);
             var factory = new CsrOptionsFactory(log, argsInput);
             return factory.Default().Result;
         }

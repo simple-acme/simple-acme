@@ -8,6 +8,8 @@ using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Encryption;
+using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
 using System.Collections.Generic;
@@ -60,8 +62,9 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
 
         public AcmeOptionsFactory Factory(string[] args, Target? target = null)
         {
+            var psFactory = new ProtectedStringFactory(new MockProtector(), Log);
             var parser = new ArgumentsParser(Log, Assemblies.Value, args);
-            var arguments = new ArgumentsInputService(Log, parser, Input, Secrets);
+            var arguments = new ArgumentsInputService(Log, parser, Input, Secrets, psFactory);
             return new AcmeOptionsFactory(target ?? new Target(null, null, []),
                 null!, Log, Settings, Proxy, Secrets, arguments);
         }

@@ -202,20 +202,6 @@ namespace PKISharp.WACS.Extensions
             return string.Concat(hash.Select(b => b.ToString("x2")));
         }
 
-        /// <summary>
-        /// Convert regular string to a ProtectedString
-        /// </summary>
-        /// <param name="original"></param>
-        /// <param name="allowEmtpy"></param>
-        /// <returns></returns>
-        public static ProtectedString? Protect(this string? original, bool allowEmtpy = false) {
-            if (string.IsNullOrWhiteSpace(original) && !allowEmtpy)
-            {
-                return null;
-            }
-            return new ProtectedString(original);
-        }
-
         [GeneratedRegex(@"\r\n?|\n")]
         private static partial Regex NewLinesRegex();
     }

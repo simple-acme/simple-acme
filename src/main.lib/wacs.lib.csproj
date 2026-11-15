@@ -47,7 +47,6 @@
 		<PackageReference Include="Microsoft.Web.Administration" Version="11.1.0" />
 		<PackageReference Include="MorseCode.ITask" Version="2.0.3" />
 		<PackageReference Include="Nager.PublicSuffix" Version="3.8.0" />
-		<PackageReference Include="Serilog" Version="4.4.0" />
 		<PackageReference Include="Serilog.Settings.AppSettings" Version="3.0.0" />
 		<PackageReference Include="Serilog.Settings.Configuration" Version="10.0.1" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
@@ -62,8 +61,8 @@
 	<ItemGroup>
   	<PackageReference Include="MimeKit" Version="4.18.2" />
   	<PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
-		<ProjectReference Include="..\ACMESharpCore\src\ACMESharp\ACMESharp.csproj" />
 		<ProjectReference Include="..\fluent-command-line-parser\FluentCommandLineParser\FluentCommandLineParser.csproj" />
+		<ProjectReference Include="..\main.lib.protection\wacs.lib.protection.csproj" />
 	</ItemGroup>
 
 </Project>

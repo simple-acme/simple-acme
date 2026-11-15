@@ -3,7 +3,9 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Encryption;
 using PKISharp.WACS.Services.Serialization;
+using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
 using System.Linq;
 using System.Text.Json;
@@ -111,7 +113,8 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
             using var context = new AcmeDnsTestContext();
             var options = await context.Factory(["--acmednsserver", Server, "--username", "user", "--password", password]).Default();
             Assert.IsNotNull(options);
-            var jsonContext = new AcmeJson(new WacsJsonPluginsOptionsFactory(context.Log, context.Settings));
+            var psFactory = new ProtectedStringFactory(new MockProtector(), new Mock.Services.LogService());
+            var jsonContext = new AcmeJson(new WacsJsonPluginsOptionsFactory(context.Settings, psFactory));
             var json = JsonSerializer.Serialize(options, jsonContext.AcmeOptions);
             Assert.Contains("\"PasswordSafe\"", json);
             if (!password.StartsWith(SecretServiceManager.VaultPrefix))

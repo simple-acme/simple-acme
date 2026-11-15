@@ -62,7 +62,7 @@ namespace PKISharp.WACS.Services
         /// Global const to trigger vault evaluation vs. 
         /// interpreting secrets as literal strings
         /// </summary>
-        public const string VaultPrefix = "vault://";
+        public const string VaultPrefix = Constants.VaultPrefix;
 
         /// <summary>
         /// Get a secret from interactive mode setup

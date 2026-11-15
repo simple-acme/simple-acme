@@ -18,7 +18,7 @@ namespace PKISharp.WACS.Clients.Acme
     /// <summary>
     /// The OrderManager makes sure that we don't hit rate limits
     /// </summary>
-    internal class OrderManager(ILogService log, ISettings settings)
+    internal class OrderManager(ILogService log, ISettings settings, ProtectedStringFactory psFactory)
     {
         private readonly DirectoryInfo _orderPath = settings.Valid ?
                 new DirectoryInfo(Path.Combine(settings.Client.ConfigurationPath, "Orders")) :
@@ -413,7 +413,7 @@ namespace PKISharp.WACS.Clients.Acme
         {
             foreach (var f in _orderPath.EnumerateFiles($"*.{_orderKeyExtension}"))
             {
-                var x = new ProtectedString(File.ReadAllText(f.FullName), log);
+                var x = psFactory.Parse(File.ReadAllText(f.FullName));
                 log.Information("Rewriting {x}", f.Name);
                 await f.SafeWrite(x.DiskValue(settings.Security.EncryptConfig));
             }

@@ -7,12 +7,6 @@ using System.Collections.Generic;
 
 namespace PKISharp.WACS.Services
 {
-    public class MemoryEntry(LogEventLevel level, string message)
-    {
-        public LogEventLevel Level { get; set; } = level;
-        public string Message { get; set; } = message;
-    }
-
     internal class MemorySink(List<MemoryEntry> list, IFormatProvider? formatProvider = null) : ILogEventSink
     {
         public void Emit(LogEvent logEvent) => list.Add(new MemoryEntry(logEvent.Level, logEvent.RenderMessage(formatProvider)));

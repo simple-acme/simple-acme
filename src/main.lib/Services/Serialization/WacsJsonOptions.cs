@@ -9,9 +9,9 @@ namespace PKISharp.WACS.Services.Serialization
     internal class WacsJsonOptionsFactory
     {
         public WacsJsonOptionsFactory(
+            ProtectedStringFactory protectedStringFactory,
             PluginOptionsConverter pluginConverter,
             PluginOptionsListConverter pluginOptionsListConverter,
-            ILogService log,
             ISettings settings)
         {
             var options = new JsonSerializerOptions
@@ -20,7 +20,7 @@ namespace PKISharp.WACS.Services.Serialization
                 PropertyNameCaseInsensitive = true,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
-            options.Converters.Add(new ProtectedStringConverter(log, settings));
+            options.Converters.Add(new ProtectedStringConverter(settings, protectedStringFactory));
             options.Converters.Add(pluginOptionsListConverter);
             options.Converters.Add(pluginConverter);
             Options = options;

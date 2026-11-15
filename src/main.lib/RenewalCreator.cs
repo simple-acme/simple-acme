@@ -29,7 +29,8 @@ namespace PKISharp.WACS
         IValidationOptionsService validationOptions, AccountManager accountManager,
         NotificationService notification, DueDateStaticService dueDateService,
         ExceptionHandler exceptionHandler, RenewalExecutor renewalExecutor,
-        AcmeClientManager acmeClientManager, ISettings settings)
+        AcmeClientManager acmeClientManager, ISettings settings,
+        ProtectedStringFactory protectedStringFactory)
     {
         private readonly IValidationOptionsService _validation = validationOptions;
 
@@ -99,7 +100,13 @@ namespace PKISharp.WACS
         {
             log.Information(LogType.All, "Running in mode: {runLevel}", runLevel);
 
-            tempRenewal ??= Renewal.Create(settings.BaseUri, mainArgs.Id);
+            tempRenewal ??= new Renewal
+            {
+                New = true,
+                Id = string.IsNullOrEmpty(mainArgs.Id) ? ShortGuid.NewGuid().ToString() : mainArgs.Id,
+                EndPoint = settings.BaseUri.ToString(),
+                PfxPassword = protectedStringFactory.Create(PasswordGenerator.Generate())
+            };
 
             // Choose the target plugin
             var resolver = CreateResolver(container, runLevel);

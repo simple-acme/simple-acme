@@ -5,6 +5,7 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.ValidationPlugins.Dns;
 using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
+using PKISharp.WACS.Services.Encryption;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
@@ -33,6 +34,9 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             _ = builder.RegisterInstance(log).As<ILogService>();
             _ = builder.RegisterType<FtpJson>();
             _ = builder.RegisterType<AcmeJson>();
+            _ = builder.RegisterType<ProtectedStringFactory>().SingleInstance();
+            _ = builder.RegisterType<MockProtector>().As<IProtector>().SingleInstance();
+
             _ = builder.RegisterInstance(plugin).As<IPluginService>().SingleInstance();
             _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
             WacsJson.Configure(builder);

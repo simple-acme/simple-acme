@@ -19,7 +19,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
     /// </remarks>
     /// <param name="settings"></param>
     /// <param name="log"></param>
-    internal class JsonSecretService(ISettings settings, ILogService log, WacsJson wacsJson) : ISecretService
+    internal class JsonSecretService(ISettings settings, ILogService log, ProtectedStringFactory psFactory, WacsJson wacsJson) : ISecretService
     {
         private FileInfo? _file;
         private CredentialEntryCollection? _secrets;
@@ -91,7 +91,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
             var existing = data?.Entries?.FirstOrDefault(x => x.Key == identifier);
             if (existing != null)
             {
-                existing.Secret = new ProtectedString(secret);
+                existing.Secret = psFactory.Create(secret);
             } 
             else
             {
@@ -100,7 +100,7 @@ namespace PKISharp.WACS.Plugins.SecretPlugins
                 _secrets.Entries.Add(new CredentialEntry()
                 {
                     Key = identifier,
-                    Secret = new ProtectedString(secret)
+                    Secret = psFactory.Create(secret)
                 });
             }
             await Save();
