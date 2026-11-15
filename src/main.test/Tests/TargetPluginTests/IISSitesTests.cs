@@ -15,6 +15,7 @@ using System.Runtime.Versioning;
 namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
 {
     [SupportedOSPlatform("windows")]
+    [OSCondition(OperatingSystems.Windows)]
     [TestClass]
     public class IISSitesTests
     {

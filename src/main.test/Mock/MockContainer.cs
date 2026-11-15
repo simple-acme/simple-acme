@@ -11,6 +11,7 @@ using PKISharp.WACS.Configuration.Arguments;
 using PKISharp.WACS.Plugins.NotificationPlugins;
 using PKISharp.WACS.Plugins.Resolvers;
 using PKISharp.WACS.Services.Encryption;
+using PKISharp.WACS.Services.AutoRenew;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
@@ -74,6 +75,10 @@ namespace PKISharp.WACS.UnitTests.Mock
             if (OperatingSystem.IsWindows())
             {
                 _ = builder.RegisterType<Real.TaskSchedulerService>().As<Real.IAutoRenewService>().SingleInstance();
+            }
+            else if(OperatingSystem.IsLinux())
+            {
+                _ = builder.RegisterType<CronJobService>().As<Real.IAutoRenewService>().SingleInstance();
             }
             _ = builder.RegisterType<Real.NotificationService>().SingleInstance();
             _ = builder.RegisterType<NotificationTargetEmail>().SingleInstance();

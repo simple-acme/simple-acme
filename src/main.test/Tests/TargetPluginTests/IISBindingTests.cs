@@ -9,11 +9,13 @@ using PKISharp.WACS.Services.Encryption;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
+using System;
 using System.Linq;
 using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
 {
+    [OSCondition(OperatingSystems.Windows)]
     [SupportedOSPlatform("windows")]
     [TestClass]
     public class IISBindingTests

@@ -1,15 +1,18 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Clients.IIS;
-using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.UnitTests.Mock.Clients;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 {
+
     [TestClass]
+    [SupportedOSPlatform("windows")]
+    [OSCondition(OperatingSystems.Windows)]
     [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments", Justification = "Not supported by decorators")]
     public class BindingStrategyTests
     {

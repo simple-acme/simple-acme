@@ -6,10 +6,13 @@ using PKISharp.WACS.UnitTests.Mock.Clients;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
+    [SupportedOSPlatform("windows")]
     public class HelperPerformance
     {
         private readonly ILogService log;

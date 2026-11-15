@@ -2,13 +2,16 @@
 using Autofac.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Configuration;
+using PKISharp.WACS.Configuration.Settings;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.ValidationPlugins.Http;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Encryption;
 using PKISharp.WACS.Services.Serialization;
 using PKISharp.WACS.UnitTests.Mock.Services;
+using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using ManualOptions = PKISharp.WACS.Plugins.TargetPlugins.ManualOptions;
 
@@ -28,7 +31,12 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             var log = new Mock.Services.LogService();
             var assembly = new AssemblyService(log);
             var plugin = new PluginService(log, assembly);
-            _ = builder.RegisterType<MockSettingsService>().As<ISettings>();
+            var settings = new Settings();
+            if (OperatingSystem.IsLinux())
+            {
+                settings.Security = new Configuration.Settings.Types.SecuritySettings { EncryptConfig = false };
+            }
+            _ = builder.RegisterType<MockSettingsService>().WithParameter("settings", settings).As<ISettings>();
             _ = builder.RegisterInstance(assembly).As<AssemblyService>().SingleInstance();
             _ = builder.RegisterInstance(log).As<ILogService>();
             _ = builder.RegisterType<FtpJson>();

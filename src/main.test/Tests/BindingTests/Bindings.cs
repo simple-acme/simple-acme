@@ -8,9 +8,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.UnitTests.Tests.BindingTests
 {
+    [OSCondition(OperatingSystems.Windows)]
+    [SupportedOSPlatform("windows")]
     [TestClass]
     [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments", Justification = "Not supported by decorators")]
     public class BindingTests

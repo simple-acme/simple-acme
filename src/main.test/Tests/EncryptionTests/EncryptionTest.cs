@@ -2,6 +2,7 @@
 using PKISharp.WACS.Services.Encryption;
 using PKISharp.WACS.Services.Serialization;
 using System.Runtime.Versioning;
+using System;
 
 namespace PKISharp.WACS.UnitTests.Tests.EcnryptionTests
 {
@@ -10,6 +11,7 @@ namespace PKISharp.WACS.UnitTests.Tests.EcnryptionTests
     {
         [SupportedOSPlatform("windows")]
         [TestMethod]
+        [OSCondition(OperatingSystems.Windows)]
         public void TurnOnOff()
         {
             // Create encrypted value

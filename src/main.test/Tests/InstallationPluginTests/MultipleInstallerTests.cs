@@ -18,6 +18,7 @@ using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
@@ -41,6 +42,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
         /// </summary>
         /// <returns></returns>
         [TestMethod]
+        [OSCondition(OperatingSystems.Windows)]
         public async Task Regular()
         {
             var commandLine = "--installation iis";

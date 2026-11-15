@@ -16,6 +16,7 @@ using System.IO;
 namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class ScriptPluginTests
     {
         private readonly Mock.Services.LogService log;
