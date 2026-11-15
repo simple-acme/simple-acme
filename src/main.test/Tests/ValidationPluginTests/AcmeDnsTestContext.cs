@@ -62,7 +62,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
 
         public AcmeOptionsFactory Factory(string[] args, Target? target = null)
         {
-            var psFactory = new ProtectedStringFactory(new DpApiProtector(), Log);
+            var psFactory = new ProtectedStringFactory(new MockProtector(), Log);
             var parser = new ArgumentsParser(Log, Assemblies.Value, args);
             var arguments = new ArgumentsInputService(Log, parser, Input, Secrets, psFactory);
             return new AcmeOptionsFactory(target ?? new Target(null, null, []),

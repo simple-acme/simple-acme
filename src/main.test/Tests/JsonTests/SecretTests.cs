@@ -32,16 +32,12 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             var assembly = new AssemblyService(log);
             var plugin = new PluginService(log, assembly);
             var settings = new Settings();
-            if (OperatingSystem.IsLinux())
-            {
-                settings.Security = new Configuration.Settings.Types.SecuritySettings { EncryptConfig = false };
-            }
             _ = builder.RegisterType<MockSettingsService>().WithParameter("settings", settings).As<ISettings>();
             _ = builder.RegisterInstance(assembly).As<AssemblyService>().SingleInstance();
             _ = builder.RegisterInstance(log).As<ILogService>();
             _ = builder.RegisterType<FtpJson>();
             _ = builder.RegisterType<ProtectedStringFactory>().SingleInstance();
-            _ = builder.RegisterType<DpApiProtector>().As<IProtector>().SingleInstance();
+            _ = builder.RegisterType<MockProtector>().As<IProtector>().SingleInstance();
             _ = builder.RegisterInstance(plugin).As<IPluginService>().SingleInstance();
             _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
             WacsJson.Configure(builder);

@@ -43,6 +43,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
         /// <returns></returns>
         [TestMethod]
         [OSCondition(OperatingSystems.Windows)]
+        [SupportedOSPlatform("windows")]
         public async Task Regular()
         {
             var commandLine = "--installation iis";
