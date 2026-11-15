@@ -413,7 +413,7 @@ namespace PKISharp.WACS.Clients.Acme
         {
             foreach (var f in _orderPath.EnumerateFiles($"*.{_orderKeyExtension}"))
             {
-                var x = psFactory.Create(File.ReadAllText(f.FullName));
+                var x = psFactory.Parse(File.ReadAllText(f.FullName));
                 log.Information("Rewriting {x}", f.Name);
                 await f.SafeWrite(x.DiskValue(settings.Security.EncryptConfig));
             }

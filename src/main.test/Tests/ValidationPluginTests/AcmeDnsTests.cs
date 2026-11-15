@@ -2,6 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.Services.Encryption;
 using PKISharp.WACS.Services.Serialization;
+using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
 using System.Net.Http;
 using System.Text;
@@ -32,7 +33,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
         [DataRow("https://old:old-password@acme-dns.example/", "new", null, "new:")]
         [DataRow("https://acme-dns.example/", "user", "vault://mock/key1", "user:secret1")]
         public Task BasicAuthUsesSeparateCredentials(string url, string userName, string? password, string expectedCredentials) {
-            var psFactory = new ProtectedStringFactory(new NullProtector(), new Mock.Services.LogService());
+            var psFactory = new ProtectedStringFactory(new MockProtector(), new LogService());
             return AssertRequests(new Uri(url), new NetworkCredentialOptions(userName, psFactory.Create(password)), expectedCredentials);
         }
 
@@ -46,7 +47,7 @@ namespace PKISharp.WACS.UnitTests.Tests.ValidationPluginTests
             using var context = new AcmeDnsTestContext();
             var uri = new Uri("https://acme-dns.example/");
             await context.WriteRegistration(uri);
-            var psFactory = new ProtectedStringFactory(new NullProtector(), new Mock.Services.LogService());
+            var psFactory = new ProtectedStringFactory(new MockProtector(), new LogService());
             var client = context.Client(uri, new NetworkCredentialOptions("user", psFactory.Create("vault://mock/key1")));
             Assert.IsTrue(await client.Update("example.com", "token"));
             AssertAuthorization(context.Handler, "user:secret1");

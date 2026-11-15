@@ -88,7 +88,7 @@ namespace PKISharp.WACS.UnitTests.Mock
             _ = builder.RegisterType<OrderProcessor>().SingleInstance();
             _ = builder.RegisterType<RenewalManager>().SingleInstance();
             _ = builder.RegisterType<ProtectedStringFactory>().SingleInstance();
-            _ = builder.RegisterType<NullProtector>().As<Real.IProtector>().SingleInstance();
+            _ = builder.RegisterType<MockProtector>().As<Real.IProtector>().SingleInstance();
 
             _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();
 

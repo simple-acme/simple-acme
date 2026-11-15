@@ -45,7 +45,7 @@ namespace PKISharp.WACS.UnitTests.Tests.TargetPluginTests
             var optionsParser = new ArgumentsParser(log, new MockAssemblyService(log), commandLine.Split(' '));
             var input = new Mock.Services.InputService([]);
             var secretService = new SecretServiceManager(MockContainer.TestScope(), input, plugins, log);
-            var psFactory = new ProtectedStringFactory(new NullProtector(), log);
+            var psFactory = new ProtectedStringFactory(new MockProtector(), log);
             var argsInput = new ArgumentsInputService(log, optionsParser, input, secretService, psFactory);
             var args = new MainArguments();
             var x = new IISOptionsFactory(log, helper, args, argsInput);

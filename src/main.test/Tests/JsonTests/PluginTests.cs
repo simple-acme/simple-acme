@@ -35,7 +35,7 @@ namespace PKISharp.WACS.UnitTests.Tests.JsonTests
             _ = builder.RegisterType<FtpJson>();
             _ = builder.RegisterType<AcmeJson>();
             _ = builder.RegisterType<ProtectedStringFactory>().SingleInstance();
-            _ = builder.RegisterType<NullProtector>().As<IProtector>().SingleInstance();
+            _ = builder.RegisterType<MockProtector>().As<IProtector>().SingleInstance();
 
             _ = builder.RegisterInstance(plugin).As<IPluginService>().SingleInstance();
             _ = builder.Register(c => (ISharingLifetimeScope)c.Resolve<ILifetimeScope>()).As<ISharingLifetimeScope>().ExternallyOwned();

@@ -3,6 +3,7 @@ using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.Plugins.CsrPlugins;
 using PKISharp.WACS.Services.Encryption;
 using PKISharp.WACS.Services.Serialization;
+using PKISharp.WACS.UnitTests.Mock.Services;
 using System;
 using System.IO;
 using System.Reflection;
@@ -18,7 +19,7 @@ namespace PKISharp.WACS.UnitTests.Tests.CsrPluginTests
         {
             var log = new Mock.Services.LogService(false);
             var settings = new Mock.Services.MockSettingsService();
-            var psFactory = new ProtectedStringFactory(new NullProtector(), log);
+            var psFactory = new ProtectedStringFactory(new MockProtector(), log);
             _ = new Rsa(log, settings, psFactory, new RsaOptions());
             var data = Assembly.
                 GetAssembly(typeof(PostProcessTest))!.
