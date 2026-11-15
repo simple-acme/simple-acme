@@ -6,6 +6,7 @@ using PKISharp.WACS.UnitTests.Mock;
 using PKISharp.WACS.UnitTests.Mock.Services;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Versioning;
 
 namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
 {
@@ -20,6 +21,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
             log = new Mock.Services.LogService(false);
         }
 
+        [OSCondition(OperatingSystems.Windows)]
         [TestMethod]
         [DataRow(0, true)]
         [DataRow(-1, false)]
@@ -36,6 +38,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
             Assert.AreEqual(expectedSuccess, success);
         }
 
+        [OSCondition(OperatingSystems.Windows)]
         [TestMethod]
         [DataRow(0, true)]
         [DataRow(-1, false)]
@@ -52,6 +55,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
             Assert.AreEqual(expectedSuccess, success);
         }
 
+        [OSCondition(OperatingSystems.Windows)]
         [TestMethod]
         public void TestException()
         {
@@ -65,6 +69,7 @@ namespace PKISharp.WACS.UnitTests.Tests.InstallationPluginTests
             Assert.IsFalse(success);
         }
 
+        [OSCondition(OperatingSystems.Windows)]
         [TestMethod]
         public void TestExceptionCatch()
         {
