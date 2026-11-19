@@ -40,7 +40,7 @@
 		<PackageReference Include="Autofac" Version="9.3.4" />
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
 		<PackageReference Include="DnsClient" Version="1.8.0" />
-		<PackageReference Include="MailKit" Version="4.18.2" />
+		<PackageReference Include="MailKit" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="11.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="11.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="11.0.0" />
@@ -59,7 +59,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-  	<PackageReference Include="MimeKit" Version="4.18.2" />
   	<PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
 		<ProjectReference Include="..\fluent-command-line-parser\FluentCommandLineParser\FluentCommandLineParser.csproj" />
 		<ProjectReference Include="..\main.lib.protection\wacs.lib.protection.csproj" />

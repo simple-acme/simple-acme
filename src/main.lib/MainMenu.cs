@@ -26,7 +26,6 @@ namespace PKISharp.WACS.Host
             DueDateStaticService dueDateService,
             IRenewalStore renewalStore,
             ArgumentsParser argumentsParser,
-            AdminService adminService,
             RenewalCreator renewalCreator,
             RenewalManager renewalManager,
             IAutoRenewService taskScheduler,
