@@ -49,13 +49,18 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
                 return new(() =>
                 {
                     var args = ArgumentsParser.GetArguments<SelfHostingArguments>();
-                    var (testListener, port) = SelfHostingOptions is null ?
-                        SelfHosting.CreateListener(Settings, args?.ValidationPort) :
-                        SelfHosting.CreateListener(Settings, SelfHostingOptions.Port);
+                    int? port = null;
                     try
                     {
-                        testListener.Start();
-                        testListener.Stop();
+                        var (testListener, resolvedPort) = SelfHostingOptions is null ?
+                            SelfHosting.CreateListener(Settings, args?.ValidationPort) :
+                            SelfHosting.CreateListener(Settings, SelfHostingOptions.Port);
+                        port = resolvedPort;
+                        using (testListener)
+                        {
+                            testListener.Start();
+                            testListener.Stop();
+                        }
                     }
                     catch (SocketException ex)
                     {

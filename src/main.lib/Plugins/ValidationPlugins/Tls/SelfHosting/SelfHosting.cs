@@ -64,8 +64,16 @@ namespace PKISharp.WACS.Plugins.ValidationPlugins.Tls
         public static (TcpListener, int) CreateListener(ISettings settings, int? userPort)
         {
             var port = userPort ?? settings.Validation.Tls.SelfHosting.Port ?? DefaultValidationPort;
-            var testListener = new TcpListener(IPAddress.IPv6Any, port);
-            testListener.Server.DualMode = true;
+            TcpListener testListener;
+            if (Socket.OSSupportsIPv6)
+            {
+                testListener = new TcpListener(IPAddress.IPv6Any, port);
+                testListener.Server.DualMode = true;
+            }
+            else
+            {
+                testListener = new TcpListener(IPAddress.Any, port);
+            }
             if (OperatingSystem.IsWindows())
             {
                 testListener.AllowNatTraversal(true);
