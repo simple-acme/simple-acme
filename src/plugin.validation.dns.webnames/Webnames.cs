@@ -88,7 +88,7 @@ internal class Webnames(
 
             // Get client (cached) and create the record
             var client = await GetClient();
-            await client.CreateTxtRecord(zone, record.Authority.Domain, record.Value);
+            await client.CreateTxtRecord(zone, record.Authority.Domain, record.Value, (options?.TTL).GetValueOrDefault(WebnamesClient.i_DEFAULT_TTL_SECONDS));
             return true;
         }
         catch (Exception ex)

@@ -8,6 +8,7 @@ class WebnamesClient
 {
     private readonly HttpClient _httpClient;
     public static readonly String DefaultBaseURL = "https://www.webnames.ca/_/APICore";
+    public const int i_DEFAULT_TTL_SECONDS = 300;
 
     protected String _baseURL = DefaultBaseURL;
 
@@ -34,13 +35,13 @@ class WebnamesClient
     /// <param name="domainName">Root registerable domain name (zone) to update.</param>
     /// <param name="host">Hostname of TXT record to add.</param>
     /// <param name="value">Value of TXT record to add.</param>
-    internal async Task CreateTxtRecord(string domainName, string host, string value)
+    internal async Task CreateTxtRecord(string domainName, string host, string value, int ttl = i_DEFAULT_TTL_SECONDS)
     {
         domainName = System.Net.WebUtility.UrlEncode(domainName);
         host = System.Net.WebUtility.UrlEncode(host);
         value = System.Net.WebUtility.UrlEncode(value);
 
-        await _httpClient.PostAsync($"{_baseURL}/domains/{domainName}/add-txt-record?hostName={host}&txt={value}", null);
+        await _httpClient.PostAsync($"{_baseURL}/domains/{domainName}/add-txt-record?hostName={host}&txt={value}&ttl={ttl}", null);
     }
 
     /// <summary>

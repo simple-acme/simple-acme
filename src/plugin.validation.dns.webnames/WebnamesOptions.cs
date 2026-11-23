@@ -28,4 +28,6 @@ internal class WebnamesOptions : ValidationPluginOptions
     public ProtectedString? APIKey { get; set; }
 
     public string? APIOverrideBaseURL { get; set; }
+
+    public int? TTL { get; set; }
 }
