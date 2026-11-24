@@ -8,7 +8,13 @@ class WebnamesClient
 {
     private readonly HttpClient _httpClient;
     public static readonly String DefaultBaseURL = "https://www.webnames.ca/_/APICore";
+
     public const int i_DEFAULT_TTL_SECONDS = 300;
+
+    /// <summary>
+    /// TTL values (in seconds) selectable in the DNS template editor UI.
+    /// </summary>
+    public static readonly int[] ai_SUPPORTED_TTL_SECONDS = new int[] { 300, 900, 1800, 2700, 3600, 7200, 10800, 14400, 18000, 21600 };
 
     protected String _baseURL = DefaultBaseURL;
 

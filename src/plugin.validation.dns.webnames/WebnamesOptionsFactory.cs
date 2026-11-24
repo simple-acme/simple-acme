@@ -2,7 +2,9 @@
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using PKISharp.WACS.Services.Serialization;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.ValidationPlugins.Dns;
@@ -38,8 +40,8 @@ internal class WebnamesOptionsFactory(ArgumentsInputService arguments) : PluginO
     /// <summary>
     /// Getter for the TTL argument, which is optional.
     /// </summary>
-    private ArgumentResult<int?> TTL => arguments.
-        GetInt<WebnamesArguments>(a => a.TTL);
+    private ArgumentResult<string?> TTL => arguments.
+        GetString<WebnamesArguments>(a => a.TTL);
 
     /// <summary>
     /// This is called when the user is setting up a new renewal interactively
@@ -53,7 +55,7 @@ internal class WebnamesOptionsFactory(ArgumentsInputService arguments) : PluginO
             APIUsername = await APIUsername.Interactive(input).GetValue(),
             APIKey = await APIKey.Interactive(input).GetValue(),
             APIOverrideBaseURL = await APIOverrideBaseURL.Interactive(input).GetValue(),
-            TTL = await TTL.Interactive(input).GetValue()
+            TTL = ParseTTL(await TTL.Interactive(input).GetValue())
         };
     }
 
@@ -68,7 +70,7 @@ internal class WebnamesOptionsFactory(ArgumentsInputService arguments) : PluginO
             APIUsername = await APIUsername.GetValue(),
             APIKey = await APIKey.GetValue(),
             APIOverrideBaseURL = await APIOverrideBaseURL.GetValue(),
-            TTL = await TTL.GetValue()
+            TTL = ParseTTL(await TTL.GetValue())
         };
     }
 
@@ -82,5 +84,17 @@ internal class WebnamesOptionsFactory(ArgumentsInputService arguments) : PluginO
         yield return (APIKey.Meta, options.APIKey);
         yield return (APIOverrideBaseURL.Meta, options.APIOverrideBaseURL);
         yield return (TTL.Meta, options.TTL);
+    }
+
+    private int? ParseTTL(string? s)
+    {
+        if (String.IsNullOrWhiteSpace(s)) return null;
+
+        var ttl = Int32.Parse(s);
+
+        if (!WebnamesClient.ai_SUPPORTED_TTL_SECONDS.Contains(ttl))
+            throw new ArgumentException($"TTL of {ttl} not one of the supported values ({string.Join(", ", WebnamesClient.ai_SUPPORTED_TTL_SECONDS)}).", "ttl");
+
+        return ttl;
     }
 }
