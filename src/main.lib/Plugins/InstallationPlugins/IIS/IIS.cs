@@ -1,4 +1,4 @@
-﻿using PKISharp.WACS.Clients.IIS;
+using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -108,6 +108,18 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             }
 
             var settingsFlags = (settings.Installation.IIS?.BindingFlags ?? SSLFlags.None) & SSLFlags.OptionalFlags;
+            if (options.BindingFlags != null)
+            {
+                settingsFlags = SSLFlags.None;
+                foreach (var part in options.BindingFlags)
+                {
+                    if (Enum.TryParse<SSLFlags>(part, true, out var flag))
+                    {
+                        settingsFlags |= flag;
+                    }
+                }
+                settingsFlags &= SSLFlags.OptionalFlags;
+            }
 
             foreach (var part in target.Parts)
             {

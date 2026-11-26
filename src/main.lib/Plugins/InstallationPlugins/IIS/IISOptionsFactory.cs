@@ -1,10 +1,13 @@
-﻿using PKISharp.WACS.Clients.IIS;
+using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Numerics;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
@@ -27,6 +30,10 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             DefaultAsNull().
             Validate(x => Task.FromResult(x == "*" || IPAddress.Parse(x!) != null), "invalid address");
 
+        private ArgumentResult<string?> BindingFlags => arguments.
+            GetString<IISArguments>(x => x.IISBindingFlags).
+            Validate(x => Task.FromResult(TryParseBindingFlags(x.ParseCsv(), out _)), "invalid binding flags");
+
         private ArgumentResult<long?> InstallationSite => arguments.
             GetLong<IISArguments>(x => x.InstallationSiteId).
             Validate(x => Task.FromResult(iisClient.GetSite(x!.Value) != null), "invalid site");
@@ -36,12 +43,36 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             Validate(x => Task.FromResult(iisClient.GetSite(x!.Value) != null), "invalid site").
             Validate(x => Task.FromResult(iisClient.GetSite(x!.Value).Type == IISSiteType.Ftp), "not an ftp site");
 
+        internal static bool TryParseBindingFlags(IEnumerable<string>? parts, out SSLFlags flags)
+        {
+            flags = SSLFlags.None;
+            if (parts == null)
+            {
+                return false;
+            }
+            var count = 0;
+            foreach (var part in parts)
+            {
+                count++;
+                if (int.TryParse(part, out _) ||
+                    !Enum.TryParse<SSLFlags>(part, true, out var flag) ||
+                    (flag != SSLFlags.None && ((flag & ~SSLFlags.OptionalFlags) != 0 || !Enum.IsDefined(flag) || BitOperations.PopCount((uint)flag) != 1)))
+                {
+                    flags = SSLFlags.None;
+                    return false;
+                }
+                flags |= flag;
+            }
+            return count > 0;
+        }
+
         public override async Task<TOptions?> Aquire(IInputService inputService, RunLevel runLevel)
         {
             var ret = new TOptions()
             {
                 NewBindingPort = await NewBindingPort.GetValue(),
-                NewBindingIp = await NewBindingIp.GetValue()
+                NewBindingIp = await NewBindingIp.GetValue(),
+                BindingFlags = (await BindingFlags.GetValue()).ParseCsv()
             };
 
             var explained = false;
@@ -88,6 +119,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             {
                 NewBindingPort = await NewBindingPort.GetValue(),
                 NewBindingIp = await NewBindingIp.GetValue(),
+                BindingFlags = (await BindingFlags.GetValue()).ParseCsv(),
                 SiteId = siteId
             };
             return ret;
@@ -97,6 +129,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
         {
             yield return (NewBindingPort.Meta, options.NewBindingPort);
             yield return (NewBindingIp.Meta, options.NewBindingIp);
+            yield return (BindingFlags.Meta, options.BindingFlags);
             yield return (InstallationSite.Meta, options.SiteId);
         }
     }
