@@ -1,9 +1,12 @@
-﻿using PKISharp.WACS.Clients.IIS;
+using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.Configuration;
 using PKISharp.WACS.DomainObjects;
+using PKISharp.WACS.Extensions;
 using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -27,6 +30,10 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             DefaultAsNull().
             Validate(x => Task.FromResult(x == "*" || IPAddress.Parse(x!) != null), "invalid address");
 
+        private ArgumentResult<string?> BindingFlags => arguments.
+            GetString<IISArguments>(x => x.IISBindingFlags).
+            Validate(x => Task.FromResult(ValidateBindingFlags(x.ParseCsv())), "invalid binding flags");
+
         private ArgumentResult<long?> InstallationSite => arguments.
             GetLong<IISArguments>(x => x.InstallationSiteId).
             Validate(x => Task.FromResult(iisClient.GetSite(x!.Value) != null), "invalid site");
@@ -36,12 +43,27 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             Validate(x => Task.FromResult(iisClient.GetSite(x!.Value) != null), "invalid site").
             Validate(x => Task.FromResult(iisClient.GetSite(x!.Value).Type == IISSiteType.Ftp), "not an ftp site");
 
+        private static readonly HashSet<string> ValidBindingFlags = new(StringComparer.OrdinalIgnoreCase)
+        {
+            nameof(SSLFlags.None),
+            nameof(SSLFlags.DisableHTTP2),
+            nameof(SSLFlags.DisableOCSPStp),
+            nameof(SSLFlags.DisableQUIC),
+            nameof(SSLFlags.DisableTLS13),
+            nameof(SSLFlags.DisableLegacyTLS),
+            nameof(SSLFlags.NegotiateClientCert)
+        };
+
+        internal static bool ValidateBindingFlags(IEnumerable<string>? parts) =>
+            parts != null && parts.Any() && parts.All(ValidBindingFlags.Contains);
+
         public override async Task<TOptions?> Aquire(IInputService inputService, RunLevel runLevel)
         {
             var ret = new TOptions()
             {
                 NewBindingPort = await NewBindingPort.GetValue(),
-                NewBindingIp = await NewBindingIp.GetValue()
+                NewBindingIp = await NewBindingIp.GetValue(),
+                BindingFlags = (await BindingFlags.GetValue()).ParseCsv()
             };
 
             var explained = false;
@@ -88,6 +110,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             {
                 NewBindingPort = await NewBindingPort.GetValue(),
                 NewBindingIp = await NewBindingIp.GetValue(),
+                BindingFlags = (await BindingFlags.GetValue()).ParseCsv(),
                 SiteId = siteId
             };
             return ret;
@@ -97,6 +120,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
         {
             yield return (NewBindingPort.Meta, options.NewBindingPort);
             yield return (NewBindingIp.Meta, options.NewBindingIp);
+            yield return (BindingFlags.Meta, options.BindingFlags);
             yield return (InstallationSite.Meta, options.SiteId);
         }
     }

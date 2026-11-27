@@ -1,4 +1,4 @@
-﻿using PKISharp.WACS.Clients.IIS;
+using PKISharp.WACS.Clients.IIS;
 using PKISharp.WACS.DomainObjects;
 using PKISharp.WACS.DomainObjects.Identifiers;
 using PKISharp.WACS.Plugins.Interfaces;
@@ -107,12 +107,28 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
                 } 
             }
 
-            var settingsFlags = (settings.Installation.IIS?.BindingFlags ?? SSLFlags.None) & SSLFlags.OptionalFlags;
+            var bindingFlags = settings.Installation.IIS?.BindingFlags ?? SSLFlags.None;
+            if (options.BindingFlags != null)
+            {
+                bindingFlags = SSLFlags.None;
+                foreach (var part in options.BindingFlags)
+                {
+                    if (Enum.TryParse<SSLFlags>(part, true, out var flag))
+                    {
+                        bindingFlags |= flag;
+                    }
+                    else
+                    {
+                        log.Warning("Ignoring unrecognized binding flag {part}", part);
+                    }
+                }
+            }
+            bindingFlags &= SSLFlags.OptionalFlags;
 
             foreach (var part in target.Parts)
             {
                 var httpIdentifiers = part.Identifiers.OfType<DnsIdentifier>();
-                var bindingOptions = new BindingOptions().WithFlags(settingsFlags);
+                var bindingOptions = new BindingOptions().WithFlags(bindingFlags);
 
                 // Pick between CentralSsl and CertificateStore
                 bindingOptions = centralSslForHttp
