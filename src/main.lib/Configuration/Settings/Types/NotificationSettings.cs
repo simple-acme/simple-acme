@@ -1,5 +1,6 @@
 ﻿using PKISharp.WACS.Configuration.Settings.Types.Notification;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PKISharp.WACS.Configuration.Settings.Types
 {
@@ -14,6 +15,8 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         IEmailSettings? Email { get; }
 
         IScriptNotificationSettings? Script { get; }
+
+        IWebhookNotificationSettings? Webhook { get; }
     }
 
     internal class InheritNotificationSettings(params IEnumerable<NotificationSettings?> chain) : InheritSettings<NotificationSettings>(chain), INotificationSettings
@@ -21,6 +24,7 @@ namespace PKISharp.WACS.Configuration.Settings.Types
         public string? ComputerName => Get(x => x.ComputerName);
         public IEmailSettings? Email => new InheritEmailSettings(Get(x => x.Email));
         public IScriptNotificationSettings? Script => new InheritScriptNotificationSettings(Get(x => x.Script));
+        public IWebhookNotificationSettings? Webhook => new InheritWebhookNotificationSettings(Chain.Select(x => x?.Webhook));
     }
 
     public class NotificationSettings
@@ -33,6 +37,9 @@ namespace PKISharp.WACS.Configuration.Settings.Types
 
         [SettingsValue(Split = true)]
         public ScriptNotificationSettings? Script { get; set; }
+
+        [SettingsValue(Split = true)]
+        public WebhookNotificationSettings? Webhook { get; set; }
 
         // BACKWARDS COMPATIBILITY: these settings were previously in the root,
         // so we keep them here for backwards compatibility, but hide them from the

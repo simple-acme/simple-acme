@@ -81,7 +81,8 @@ namespace PKISharp.WACS.Services
 
                 // Notification targets
                 new(typeof(Plugins.NotificationPlugins.NotificationTargetEmail)),
-                new(typeof(Plugins.NotificationPlugins.NotificationTargetScript))
+                new(typeof(Plugins.NotificationPlugins.NotificationTargetScript)),
+                new(typeof(Plugins.NotificationPlugins.NotificationTargetWebhook))
             ];
         }
 
