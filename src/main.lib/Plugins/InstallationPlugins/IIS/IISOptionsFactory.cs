@@ -6,8 +6,8 @@ using PKISharp.WACS.Plugins.Base.Factories;
 using PKISharp.WACS.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
-using System.Numerics;
 using System.Threading.Tasks;
 
 namespace PKISharp.WACS.Plugins.InstallationPlugins
@@ -32,7 +32,7 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
 
         private ArgumentResult<string?> BindingFlags => arguments.
             GetString<IISArguments>(x => x.IISBindingFlags).
-            Validate(x => Task.FromResult(TryParseBindingFlags(x.ParseCsv(), out _)), "invalid binding flags");
+            Validate(x => Task.FromResult(ValidateBindingFlags(x.ParseCsv())), "invalid binding flags");
 
         private ArgumentResult<long?> InstallationSite => arguments.
             GetLong<IISArguments>(x => x.InstallationSiteId).
@@ -43,28 +43,19 @@ namespace PKISharp.WACS.Plugins.InstallationPlugins
             Validate(x => Task.FromResult(iisClient.GetSite(x!.Value) != null), "invalid site").
             Validate(x => Task.FromResult(iisClient.GetSite(x!.Value).Type == IISSiteType.Ftp), "not an ftp site");
 
-        internal static bool TryParseBindingFlags(IEnumerable<string>? parts, out SSLFlags flags)
+        private static readonly HashSet<string> ValidBindingFlags = new(StringComparer.OrdinalIgnoreCase)
         {
-            flags = SSLFlags.None;
-            if (parts == null)
-            {
-                return false;
-            }
-            var count = 0;
-            foreach (var part in parts)
-            {
-                count++;
-                if (int.TryParse(part, out _) ||
-                    !Enum.TryParse<SSLFlags>(part, true, out var flag) ||
-                    (flag != SSLFlags.None && ((flag & ~SSLFlags.OptionalFlags) != 0 || !Enum.IsDefined(flag) || BitOperations.PopCount((uint)flag) != 1)))
-                {
-                    flags = SSLFlags.None;
-                    return false;
-                }
-                flags |= flag;
-            }
-            return count > 0;
-        }
+            nameof(SSLFlags.None),
+            nameof(SSLFlags.DisableHTTP2),
+            nameof(SSLFlags.DisableOCSPStp),
+            nameof(SSLFlags.DisableQUIC),
+            nameof(SSLFlags.DisableTLS13),
+            nameof(SSLFlags.DisableLegacyTLS),
+            nameof(SSLFlags.NegotiateClientCert)
+        };
+
+        internal static bool ValidateBindingFlags(IEnumerable<string>? parts) =>
+            parts != null && parts.Any() && parts.All(ValidBindingFlags.Contains);
 
         public override async Task<TOptions?> Aquire(IInputService inputService, RunLevel runLevel)
         {
